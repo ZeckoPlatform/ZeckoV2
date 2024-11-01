@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node server/server.js",
     "build": "react-scripts build",
-    "heroku-postbuild": "npm install --legacy-peer-deps && npm run build"
+    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --legacy-peer-deps && npm run build"
   },
   "dependencies": {
     "@testing-library/dom": "10.4.0",
@@ -34,7 +34,9 @@
     "socket.io": "4.8.1",
     "socket.io-client": "4.8.1",
     "stripe": "17.2.1",
-    "styled-components": "5.3.10",
-    "typescript": "5.6.3"
+    "styled-components": "5.3.10"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.5"
   }
 }
