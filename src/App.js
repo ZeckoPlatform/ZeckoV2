@@ -4,6 +4,8 @@ import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
 import styled from 'styled-components';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/PrivateRoute';
+import AdminDashboard from './components/admin/AdminDashboard';
 
 // Import all pages
 import Home from './pages/Home';
@@ -28,6 +30,7 @@ import Profile from './pages/Profile';
 // Lazy loaded components
 const Shop = React.lazy(() => import('./pages/Shop'));
 const SecuritySettings = React.lazy(() => import('./pages/SecuritySettings'));
+const UserActivityLog = React.lazy(() => import('./pages/UserActivityLog'));
 
 // Styled components
 const AppContainer = styled.div`
@@ -112,6 +115,24 @@ function App() {
                     } 
                   />
                   <Route path="/order-confirmation/:orderId" element={<ProtectedRoute><OrderConfirmation /></ProtectedRoute>} />
+                  <Route 
+                    path="/activity-log" 
+                    element={
+                      <ProtectedRoute>
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <UserActivityLog />
+                        </Suspense>
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/*" 
+                    element={
+                      <AdminRoute>
+                        <AdminDashboard />
+                      </AdminRoute>
+                    } 
+                  />
                 </Routes>
               </Suspense>
             </MainContent>
