@@ -1,21 +1,18 @@
 {
   "name": "zeckov2",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start-server": "node server/server.js",
     "start": "node server/server.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "server": "nodemon server/server.js",
-    "dev": "concurrently --kill-others-on-fail \"npm run server\" \"npm run client\" --names \"server,client\" --prefix-colors \"blue.bold,green.bold\"",
-    "client": "react-scripts start",
+    "dev": "nodemon server/server.js",
     "create-admin": "node server/scripts/createFirstAdmin.js",
     "test-mongo": "node server/scripts/testMongo.js",
     "basic-test": "node server/scripts/basicTest.js",
-    "debug-admin": "node server/scripts/debugAdmin.js",
-    "heroku-postbuild": "npm install && npm run build"
+    "debug-admin": "node server/scripts/debugAdmin.js"
   },
   "keywords": [],
   "author": "",
@@ -67,6 +64,5 @@
     "setupFilesAfterEnv": [
       "<rootDir>/src/setupTests.js"
     ]
-  },
-  "proxy": "http://localhost:5000"
+  }
 }
