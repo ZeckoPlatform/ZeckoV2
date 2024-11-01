@@ -255,8 +255,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-server.listen(process.env.PORT || 5000, () => {
-  console.log(`Server running on port ${process.env.PORT || 5000}`);
+const port = process.env.PORT || 5000;
+
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
 });
 
 module.exports = { 
@@ -271,3 +273,19 @@ module.exports = {
 console.log('userRoutes type:', typeof userRoutes);
 console.log('activityLogRoutes type:', typeof activityLogRoutes);
 console.log('adminRoutes type:', typeof adminRoutes);
+
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (err) => {
+    console.error('Unhandled Rejection:', err);
+});
+
+if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, '../build')));
+    
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, '../build', 'index.html'));
+    });
+}
