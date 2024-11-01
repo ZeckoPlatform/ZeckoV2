@@ -1,102 +1,114 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import styled from 'styled-components';
 
 const LoginContainer = styled.div`
   max-width: 400px;
-  margin: 0 auto;
+  margin: 40px auto;
   padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
+  gap: 15px;
 `;
 
 const Input = styled.input`
-  margin-bottom: 10px;
   padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
 `;
 
 const Button = styled.button`
-  background-color: #4CAF50;
+  padding: 10px;
+  background-color: var(--primary-color);
   color: white;
   border: none;
-  padding: 10px;
+  border-radius: 4px;
+  font-size: 16px;
   cursor: pointer;
-  margin-bottom: 10px;
+
+  &:hover {
+    background-color: var(--primary-color-dark);
+  }
 `;
 
-const ErrorMessage = styled.p`
+const ErrorMessage = styled.div`
   color: red;
   margin-bottom: 10px;
 `;
 
-const RegisterLink = styled(Link)`
-  text-align: center;
+const LinkText = styled(Link)`
+  color: var(--primary-color);
+  text-decoration: none;
+  margin-top: 10px;
   display: block;
-  color: #4CAF50;
+  text-align: center;
+
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [error, setError] = useState('');
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
-
+    
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
-
-      const data = await response.json();
-      localStorage.setItem('token', data.token);
-      navigate('/');
+      await login(formData.email, formData.password);
+      navigate('/dashboard');
     } catch (err) {
-      setError('Invalid email or password');
-    } finally {
-      setLoading(false);
+      setError(err.message || 'Failed to login');
     }
   };
 
   return (
     <LoginContainer>
-      <h1>Login</h1>
+      <h2>Login</h2>
       {error && <ErrorMessage>{error}</ErrorMessage>}
       <Form onSubmit={handleSubmit}>
         <Input
           type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          name="email"
           placeholder="Email"
+          value={formData.email}
+          onChange={handleChange}
           required
         />
         <Input
           type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          name="password"
           placeholder="Password"
+          value={formData.password}
+          onChange={handleChange}
           required
         />
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Logging in...' : 'Login'}
-        </Button>
+        <Button type="submit">Login</Button>
       </Form>
-      <RegisterLink to="/register">Don't have an account? Register here</RegisterLink>
+      <LinkText to="/forgot-password">Forgot Password?</LinkText>
+      <LinkText to="/register">Don't have an account? Register</LinkText>
     </LoginContainer>
   );
 }

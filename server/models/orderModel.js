@@ -17,8 +17,33 @@ const orderSchema = new mongoose.Schema({
     zipCode: { type: String, required: true },
     country: { type: String, required: true }
   },
-  status: { type: String, enum: ['pending', 'processing', 'shipped', 'delivered'], default: 'pending' },
-  createdAt: { type: Date, default: Date.now }
+  status: { 
+    type: String, 
+    enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'], 
+    default: 'pending' 
+  },
+  createdAt: { type: Date, default: Date.now },
+  tracking: {
+    carrier: {
+      type: String,
+      enum: [
+        'Royal Mail',
+        'DHL',
+        'FedEx',
+        'UPS',
+        'USPS',
+        'DPD',
+        'Hermes',
+        'Other'
+      ]
+    },
+    trackingNumber: String,
+    trackingUrl: String,
+    updatedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }
 });
 
 module.exports = mongoose.model('Order', orderSchema);

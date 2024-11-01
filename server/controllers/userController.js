@@ -1,11 +1,10 @@
-console.log('Loading userController.js');
+console.log('Loading userController.js - START');
 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 
-// Export functions directly instead of an object
-exports.register = async (req, res) => {
+const register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
         
@@ -41,7 +40,7 @@ exports.register = async (req, res) => {
     }
 };
 
-exports.login = async (req, res) => {
+const login = async (req, res) => {
     try {
         const { email, password } = req.body;
         
@@ -71,7 +70,7 @@ exports.login = async (req, res) => {
     }
 };
 
-exports.getProfile = async (req, res) => {
+const getProfile = async (req, res) => {
     try {
         const user = await User.findById(req.user.userId).select('-password');
         if (!user) {
@@ -84,7 +83,7 @@ exports.getProfile = async (req, res) => {
     }
 };
 
-exports.updateProfile = async (req, res) => {
+const updateProfile = async (req, res) => {
     try {
         const { username, email } = req.body;
         const user = await User.findByIdAndUpdate(
@@ -102,4 +101,16 @@ exports.updateProfile = async (req, res) => {
         console.error('Profile update error:', error);
         res.status(500).json({ error: 'Server error' });
     }
-}; 
+};
+
+const controller = {
+    register,
+    login,
+    getProfile,
+    updateProfile
+};
+
+console.log('Controller object being exported:', Object.keys(controller));
+console.log('Loading userController.js - END');
+
+module.exports = controller; 

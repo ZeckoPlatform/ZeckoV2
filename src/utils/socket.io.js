@@ -30,4 +30,28 @@ export const subscribeToNotifications = (callback) => {
   socket.on('notification', callback);
 };
 
+export const emitActivity = (activity) => {
+  if (!socket) {
+    console.error('Socket not initialized. Call initializeSocket first.');
+    return;
+  }
+  socket.emit('activity', activity);
+};
+
+export const subscribeToActivityUpdates = (callback) => {
+  if (!socket) {
+    console.error('Socket not initialized. Call initializeSocket first.');
+    return;
+  }
+  socket.on('activity_update', callback);
+};
+
+export const unsubscribeFromActivityUpdates = (callback) => {
+  if (!socket) {
+    console.error('Socket not initialized. Call initializeSocket first.');
+    return;
+  }
+  socket.off('activity_update', callback);
+};
+
 export default socket;

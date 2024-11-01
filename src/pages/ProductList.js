@@ -93,6 +93,23 @@ const ProductList = () => {
     setCurrentPage(page);
   };
 
+  const addToCart = async (productId) => {
+    try {
+      const response = await fetch('/api/cart/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ productId }),
+      });
+      if (response.ok) {
+        console.log('Added to cart');
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
+  };
+
   return (
     <div>
       <h1>Products</h1>

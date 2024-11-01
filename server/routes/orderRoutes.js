@@ -1,81 +1,42 @@
 const express = require('express');
 const router = express.Router();
 const { auth } = require('../middleware/auth');
-const { 
-  createOrder,
-  getOrders,
-  getOrderById,
-  updateOrderStatus,
-  getVendorOrders
-} = require('../controllers/orderController');
+const orderController = require('../controllers/orderController');
+const Notification = require('../models/Notification');
+const io = require('../socket');
 
-// Create new order
-router.post('/', auth, createOrder);
+// Vendor routes (must come before /:id routes)
+router.get('/vendor/orders', auth, orderController.getVendorOrders);
+router.post('/bulk-update', auth, orderController.bulkUpdateOrders);
 
-// Get all orders for current user
-router.get('/', auth, getOrders);
+// Basic routes
+router.get('/', auth, orderController.getOrders);
+router.post('/', auth, orderController.createOrder);
 
-// Get specific order by ID
-router.get('/:id', auth, getOrderById);
+// Order specific routes
+router.get('/:id', auth, orderController.getOrderById);
+router.patch('/:id/status', auth, orderController.updateOrderStatus);
+router.patch('/:id/tracking', auth, orderController.updateTracking);
+router.get('/:id/tracking', auth, orderController.getTracking);
 
-// Update order status (admin/vendor only)
-router.patch('/:id/status', auth, updateOrderStatus);
-
-// Get all orders for vendor
-router.get('/vendor/orders', auth, getVendorOrders);
-
-router.post('/bulk-update', auth, async (req, res) => {
-  try {
-    const { updates } = req.body;
-    const results = [];
-
-    for (const update of updates) {
-      try {
-        const order = await Order.findById(update.orderId);
-        if (!order) {
-          results.push({
-            orderId: update.orderId,
-            success: false,
-            error: 'Order not found'
-          });
-          continue;
-        }
-
-        order.status = update.status;
-        if (update.tracking) {
-          order.tracking = {
-            ...order.tracking,
-            ...update.tracking,
-            updatedAt: new Date()
-          };
-        }
-
-        await order.save();
-
-        // Send notification to customer
-        await notificationService.createOrderNotification(
-          order.user,
-          'order_update',
-          `Order status updated to: ${update.status}`
-        );
-
-        results.push({
-          orderId: update.orderId,
-          success: true
+router.post('/create', auth, async (req, res) => {
+    try {
+        // ... order creation ...
+        
+        // Should see notification creation
+        await Notification.create({
+            recipient: req.user.id,
+            type: 'ORDER_CREATED',
+            // ...
         });
-      } catch (error) {
-        results.push({
-          orderId: update.orderId,
-          success: false,
-          error: error.message
+
+        // Should see socket emission
+        io.to(req.user.id).emit('orderNotification', {
+            // ...
         });
-      }
+    } catch (error) {
+        // ...
     }
-
-    res.json({ results });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to process bulk update' });
-  }
 });
 
 module.exports = router; 

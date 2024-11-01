@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import styled from 'styled-components';
 import Spinner from './Spinner';
 
@@ -79,10 +79,11 @@ function JobPostForm({ onJobPosted }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
     try {
       const response = await fetch('/api/jobs', {
         method: 'POST',
@@ -105,7 +106,7 @@ function JobPostForm({ onJobPosted }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [title, description, budget, onJobPosted]);
 
   return (
     <FormContainer onSubmit={handleSubmit} aria-labelledby="job-post-form-title">

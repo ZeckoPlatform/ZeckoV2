@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Business = require('../models/businessModel');
-const auth = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 
 // Create a new business profile
 router.post('/', auth, async (req, res) => {

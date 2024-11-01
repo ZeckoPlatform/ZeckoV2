@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { logActivity, ActivityTypes } from '../utils/activityLogger';
 
-// Create the context
-const AuthContext = createContext(null);
+// Create and export the context
+export const AuthContext = createContext(null);
 
 // Create the provider component
-const AuthProvider = ({ children }) => {
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -55,6 +56,7 @@ const AuthProvider = ({ children }) => {
       const data = await response.json();
       localStorage.setItem('token', data.token);
       setUser(data.user);
+      await logActivity(ActivityTypes.LOGIN, 'Successful login');
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
@@ -92,11 +94,21 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  const changePassword = async (oldPassword, newPassword) => {
+    try {
+      // ... existing password change logic ...
+      await logActivity(ActivityTypes.SECURITY, 'Changed password');
+    } catch (error) {
+      // ... error handling ...
+    }
+  };
+
   const value = {
     user,
     login,
     logout,
     register,
+    changePassword,
     loading
   };
 
@@ -112,14 +124,11 @@ const AuthProvider = ({ children }) => {
   );
 };
 
-// Create the hook
-const useAuth = () => {
+// Export the hook
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
-
-// Export everything
-export { AuthProvider, useAuth };

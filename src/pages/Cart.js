@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import styled from 'styled-components';
+
+const CartContainer = styled.div`
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+`;
 
 function Cart() {
   const [cart, setCart] = useState({ items: [] });
@@ -32,7 +39,7 @@ function Cart() {
   };
 
   return (
-    <div>
+    <CartContainer>
       <h1>Shopping Cart</h1>
       {cart.items.length === 0 ? (
         <p>Your cart is empty.</p>
@@ -51,7 +58,7 @@ function Cart() {
           </Link>
         </div>
       )}
-    </div>
+    </CartContainer>
   );
 }
 

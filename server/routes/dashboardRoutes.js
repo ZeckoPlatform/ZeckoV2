@@ -4,7 +4,7 @@ const User = require('../models/userModel');
 const Job = require('../models/jobModel');
 const Business = require('../models/businessModel');
 const Product = require('../models/productModel');
-const auth = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 
 // Get user profile
 router.get('/profile', auth, async (req, res) => {

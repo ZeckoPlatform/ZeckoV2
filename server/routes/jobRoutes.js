@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Job = require('../models/jobModel');
-const auth = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 
 // Post a new job
 router.post('/', auth, async (req, res) => {
