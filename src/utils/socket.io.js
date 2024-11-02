@@ -48,6 +48,13 @@ export const subscribeToActivityUpdates = (callback) => {
   };
 };
 
+export const unsubscribeFromActivityUpdates = () => {
+  const socket = getSocket();
+  if (socket) {
+    socket.off('activityUpdate');
+  }
+};
+
 export const subscribeToUserUpdates = (callback) => {
   const socket = getSocket();
   

@@ -25,7 +25,7 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { format, parseISO } from 'date-fns';
-import { getSocket, subscribeToActivityUpdates } from '../../utils/socket.io';
+import { getSocket, subscribeToActivityUpdates, unsubscribeFromActivityUpdates } from '../../utils/socket.io';
 
 // Register ChartJS components
 ChartJS.register(
@@ -98,14 +98,14 @@ function AdminDashboard() {
   }, [user, navigate]);
 
   useEffect(() => {
-    const unsubscribe = subscribeToActivityUpdates((data) => {
-      // Handle activity updates
+    const handleActivity = (data) => {
       console.log('New activity:', data);
-    });
+    };
 
-    // Cleanup subscription on unmount
+    subscribeToActivityUpdates(handleActivity);
+
     return () => {
-      unsubscribe();
+      unsubscribeFromActivityUpdates();
     };
   }, []);
 
