@@ -2,8 +2,10 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { logActivity, ActivityTypes } from '../utils/activityLogger';
 import axios from 'axios';
 
-// Add this near the top
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Fix the API_URL construction
+const API_URL = process.env.NODE_ENV === 'production'
+  ? 'https://zeckov2-deceb43992ac.herokuapp.com'
+  : 'http://localhost:5000';
 
 // Create and export the context
 export const AuthContext = createContext(null);
@@ -44,27 +46,41 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
+      console.log('Attempting login with:', credentials);
+      
       const response = await fetch(`${API_URL}/api/users/login`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify(credentials)
       });
 
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Login failed');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Login failed');
       }
 
       const data = await response.json();
-      localStorage.setItem('token', data.token);
-      setUser(data.user);
-      await logActivity(ActivityTypes.LOGIN, 'Successful login');
-      return { success: true };
+      console.log('Login response:', data);
+
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        setUser(data.user);
+        await logActivity(ActivityTypes.LOGIN, 'Successful login');
+        return { success: true };
+      } else {
+        throw new Error('No token received');
+      }
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, error: error.message };
+      return { 
+        success: false, 
+        error: error.message || 'Login failed. Please try again.' 
+      };
     }
   };
 
@@ -75,10 +91,30 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await axios.post(`${API_URL}/api/users/register`, userData);
-      return response.data;
+      console.log('Attempting registration with:', userData);
+      
+      const response = await fetch(`${API_URL}/api/users/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(userData)
+      });
+
+      console.log('Registration response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Registration failed');
+      }
+
+      const data = await response.json();
+      console.log('Registration response:', data);
+      return data;
     } catch (error) {
-      throw error.response?.data || error;
+      console.error('Registration error:', error);
+      throw error;
     }
   };
 

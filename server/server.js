@@ -170,7 +170,12 @@ if (process.env.NODE_ENV === 'production') {
 // Error Handling
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).json({ error: 'Something went wrong!' });
+    res.status(500).json({ message: 'Something broke!' });
+});
+
+// Add 404 handling
+app.use((req, res) => {
+    res.status(404).json({ message: 'Route not found' });
 });
 
 // Process Error Handlers
