@@ -1,26 +1,28 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/userModel');
 
 // Main authentication middleware
-const auth = (req, res, next) => {
+const auth = async (req, res, next) => {
     try {
-        // Get token from header
-        const authHeader = req.header('Authorization');
-        const token = authHeader && authHeader.startsWith('Bearer ') 
-            ? authHeader.substring(7) 
-            : null;
-
-        // Check if no token
+        const token = req.header('Authorization')?.replace('Bearer ', '');
+        
         if (!token) {
-            return res.status(401).json({ error: 'No token, authorization denied' });
+            return res.status(401).json({ message: 'No auth token' });
         }
 
-        // Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded;
+        
+        // Set both id and _id to ensure compatibility
+        req.user = {
+            id: decoded.userId,
+            _id: decoded.userId
+        };
+        
+        console.log('Auth middleware - user set:', req.user); // Debug log
         next();
-    } catch (err) {
-        console.error('Auth error:', err);
-        res.status(401).json({ error: 'Token is not valid' });
+    } catch (error) {
+        console.error('Auth middleware error:', error);
+        res.status(401).json({ message: 'Please authenticate' });
     }
 };
 

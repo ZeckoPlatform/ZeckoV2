@@ -8,22 +8,26 @@ export const activityLogService = {
   async logActivity(activityData) {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        console.warn('No token found, skipping activity log');
+        return;
+      }
 
-      // Get user agent
-      const userAgent = navigator.userAgent;
+      const decoded = JSON.parse(atob(token.split('.')[1]));
+      console.log('Decoded token:', decoded);
 
-      // Prepare the activity log data
       const logData = {
-        ...activityData,
-        userAgent,
-        ip: window.clientIP || 'unknown', // You might want to fetch this from your server
+        type: activityData.type.toLowerCase(),
+        description: activityData.description,
+        timestamp: activityData.timestamp || new Date().toISOString(),
         metadata: {
-          browser: navigator.userAgent,
-          platform: navigator.platform,
-          language: navigator.language
-        }
+          ...activityData.metadata,
+          userId: decoded.userId
+        },
+        userAgent: navigator.userAgent
       };
+
+      console.log('Sending activity log:', logData);
 
       const response = await axios.post(
         `${API_URL}/api/activity-logs`,
@@ -39,30 +43,8 @@ export const activityLogService = {
       console.log('Activity logged successfully:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error logging activity:', error);
-      throw error;
-    }
-  },
-
-  async getActivityLogs() {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return [];
-
-      const response = await axios.get(
-        `${API_URL}/api/activity-logs`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching activity logs:', error);
-      throw error;
+      console.error('Error logging activity:', error.response?.data || error);
+      return null;
     }
   }
 }; 

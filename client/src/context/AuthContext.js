@@ -46,36 +46,39 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      console.log('Attempting login with:', credentials);
-      
       const response = await fetch(`${API_URL}/api/users/login`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(credentials)
       });
 
-      console.log('Response status:', response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Login failed');
-      }
-
       const data = await response.json();
       console.log('Login response:', data);
 
-      if (data.token) {
+      if (response.ok && data.token) {
         localStorage.setItem('token', data.token);
         setUser(data.user);
-        await logActivity(ActivityTypes.LOGIN, 'User logged in successfully', {
-          email: credentials.email
-        });
+        
+        // Wait a moment for the token to be stored
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        try {
+          const decoded = JSON.parse(atob(data.token.split('.')[1]));
+          console.log('Decoded token:', decoded);
+          
+          await logActivity('login', 'User logged in successfully', {
+            email: credentials.email,
+            userId: decoded.userId
+          });
+        } catch (logError) {
+          console.error('Failed to log login activity:', logError);
+        }
+        
         return { success: true };
       } else {
-        throw new Error('No token received');
+        throw new Error(data.message || 'Login failed');
       }
     } catch (error) {
       console.error('Login error:', error);
