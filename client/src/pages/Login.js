@@ -1,36 +1,30 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { useAuth } from '../context/AuthContext';
 
 const LoginContainer = styled.div`
   max-width: 400px;
-  margin: 40px auto;
+  margin: 0 auto;
   padding: 20px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 15px;
 `;
 
 const Input = styled.input`
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  margin-bottom: 10px;
+  padding: 8px;
   font-size: 16px;
 `;
 
 const Button = styled.button`
-  padding: 10px;
   background-color: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 4px;
+  padding: 10px;
   font-size: 16px;
   cursor: pointer;
 
@@ -39,17 +33,17 @@ const Button = styled.button`
   }
 `;
 
-const ErrorMessage = styled.div`
+const ErrorMessage = styled.p`
   color: red;
-  margin-bottom: 10px;
+  margin-top: 10px;
 `;
 
-const LinkText = styled(Link)`
+const ForgotPasswordLink = styled.a`
+  text-align: right;
+  margin-bottom: 10px;
   color: var(--primary-color);
+  cursor: pointer;
   text-decoration: none;
-  margin-top: 10px;
-  display: block;
-  text-align: center;
 
   &:hover {
     text-decoration: underline;
@@ -57,37 +51,41 @@ const LinkText = styled(Link)`
 `;
 
 function Login() {
-  const navigate = useNavigate();
-  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     try {
-      await login(formData.email, formData.password);
-      navigate('/dashboard');
+      const result = await login(formData);
+      if (result.success) {
+        navigate('/dashboard');
+      } else {
+        setError(result.error || 'Login failed. Please try again.');
+      }
     } catch (err) {
-      setError(err.message || 'Failed to login');
+      setError(err.message || 'Login failed. Please try again.');
     }
   };
 
   return (
     <LoginContainer>
-      <h2>Login</h2>
-      {error && <ErrorMessage>{error}</ErrorMessage>}
+      <h2>Login to Zecko</h2>
       <Form onSubmit={handleSubmit}>
         <Input
           type="email"
@@ -105,10 +103,14 @@ function Login() {
           onChange={handleChange}
           required
         />
+        <ForgotPasswordLink 
+          onClick={() => navigate('/forgot-password')}
+        >
+          Forgot Password?
+        </ForgotPasswordLink>
         <Button type="submit">Login</Button>
+        {error && <ErrorMessage>{error}</ErrorMessage>}
       </Form>
-      <LinkText to="/forgot-password">Forgot Password?</LinkText>
-      <LinkText to="/register">Don't have an account? Register</LinkText>
     </LoginContainer>
   );
 }

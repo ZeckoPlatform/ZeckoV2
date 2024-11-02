@@ -122,6 +122,7 @@ const mountRoute = (path, router) => {
 };
 
 // API Routes
+mountRoute('/api/auth', userRoutes);
 mountRoute('/api/users', userRoutes);
 mountRoute('/api/products', productRoutes);
 mountRoute('/api/cart', cartRoutes);
