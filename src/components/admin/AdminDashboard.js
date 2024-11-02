@@ -26,6 +26,7 @@ import {
 import { Line } from 'react-chartjs-2';
 import { format, parseISO } from 'date-fns';
 import { getSocket, subscribeToActivityUpdates, unsubscribeFromActivityUpdates } from '../../utils/socket.io';
+import { activityLogService } from '../../services/activityLogService';
 
 // Register ChartJS components
 ChartJS.register(
@@ -107,6 +108,19 @@ function AdminDashboard() {
     return () => {
       unsubscribeFromActivityUpdates();
     };
+  }, []);
+
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        const activities = await activityLogService.getActivities();
+        // Handle activities data
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+
+    fetchActivities();
   }, []);
 
   const renderContent = () => {
