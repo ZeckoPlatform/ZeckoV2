@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
 import styled from 'styled-components';
@@ -9,6 +9,9 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { initSocket } from './utils/socket.io';
+import ProductManagement from './components/ProductManagement';
+import AddProduct from './components/ProductManagement/AddProduct';
+import EditProduct from './components/ProductManagement/EditProduct';
 
 // Import all pages
 import Home from './pages/Home';
@@ -140,10 +143,12 @@ function App() {
                       </AdminRoute>
                     } 
                   >
+                    <Route index element={<Navigate to="products" replace />} />
                     <Route path="products" element={<ProductManagement />} />
                     <Route path="products/add" element={<AddProduct />} />
                     <Route path="products/edit/:id" element={<EditProduct />} />
                   </Route>
+                  <Route path="/manage-products" element={<ProductManagement />} />
                 </Routes>
               </Suspense>
             </MainContent>
