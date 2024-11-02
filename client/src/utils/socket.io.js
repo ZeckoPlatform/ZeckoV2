@@ -1,36 +1,40 @@
-import { io } from 'socket.io-client';
+import io from 'socket.io-client';
+import { SOCKET_URL, SOCKET_CONFIG } from '../config/socketConfig';
 
-const SOCKET_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
-let socket;
+let socket = null;
 
 export const initSocket = () => {
-  socket = io(SOCKET_URL, {
-    transports: ['websocket'],
-    autoConnect: true
-  });
-
-  socket.on('connect', () => {
-    console.log('Socket connected');
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Socket disconnected');
-  });
-
-  return socket;
-};
-
-export const getSocket = () => {
   if (!socket) {
-    return initSocket();
+    console.log('Initializing socket connection to:', SOCKET_URL);
+    
+    socket = io(SOCKET_URL, SOCKET_CONFIG);
+
+    socket.on('connect', () => {
+      console.log('Socket connected successfully');
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error.message);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+    });
+
+    socket.on('error', (error) => {
+      console.error('Socket error:', error);
+    });
   }
   return socket;
 };
 
+export const getSocket = () => socket;
+
 export const disconnectSocket = () => {
   if (socket) {
     socket.disconnect();
+    socket = null;
+    console.log('Socket disconnected and reset');
   }
 };
 

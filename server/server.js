@@ -30,9 +30,20 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: process.env.CLIENT_URL || "http://localhost:3000",
-        methods: ["GET", "POST"]
-    }
+        origin: process.env.NODE_ENV === 'production' 
+            ? 'https://zeckov2-deceb43992ac.herokuapp.com'
+            : 'http://localhost:3000',
+        methods: ["GET", "POST"],
+        credentials: true
+    },
+    transports: ['websocket'],
+    pingTimeout: 60000,
+    pingInterval: 25000
+});
+
+// Add error handling for socket connections
+io.on('connect_error', (error) => {
+    console.error('Socket connection error:', error);
 });
 
 // Initialize global socket connections map
@@ -40,11 +51,20 @@ global.connectedClients = new Map();
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-    console.log('New client connected');
+    console.log('Client connected:', socket.id);
 
-    socket.on('authenticate', (token) => {
+    socket.on('error', (error) => {
+        console.error('Socket error:', error);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Client disconnected:', socket.id);
+    });
+
+    socket.on('authenticate', (data) => {
+        console.log('Authentication attempt for user:', data.userId);
         try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const decoded = jwt.verify(data.token, process.env.JWT_SECRET);
             socket.userId = decoded.userId;
             socket.userType = decoded.userType;
 
@@ -59,20 +79,6 @@ io.on('connection', (socket) => {
             console.error('Authentication error:', error);
             socket.emit('authenticated', { success: false, error: 'Invalid token' });
         }
-    });
-
-    socket.on('disconnect', () => {
-        if (socket.userId) {
-            const userSockets = global.connectedClients.get(socket.userId);
-            if (userSockets) {
-                userSockets.delete(socket);
-                if (userSockets.size === 0) {
-                    global.connectedClients.delete(socket.userId);
-                }
-            }
-            console.log(`User ${socket.userId} disconnected`);
-        }
-        console.log('Client disconnected');
     });
 });
 

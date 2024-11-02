@@ -8,7 +8,7 @@ import AdminRoute from './components/PrivateRoute';
 import AdminDashboard from './components/admin/AdminDashboard';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { initSocket } from './utils/socket.io';
+import { initializeNotifications, disconnectNotifications } from './services/notificationService';
 import ProductManagement from './components/ProductManagement';
 import AddProduct from './components/ProductManagement/AddProduct';
 import EditProduct from './components/ProductManagement/EditProduct';
@@ -83,7 +83,15 @@ console.log('Component Types:', {
 
 function App() {
   useEffect(() => {
-    initSocket();
+    // Initialize notifications when the app loads
+    const userId = localStorage.getItem('userId'); // or however you store the user ID
+    if (userId) {
+      initializeNotifications(userId);
+    }
+
+    return () => {
+      disconnectNotifications();
+    };
   }, []);
 
   return (
