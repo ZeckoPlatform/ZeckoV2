@@ -25,21 +25,17 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     let removeHandler = null;
 
-    const initializeSocket = () => {
-      if (user) {
-        const token = localStorage.getItem('token');
-        if (token) {
-          try {
-            socketService.connect(token);
-            removeHandler = socketService.addNotificationHandler(handleNotification);
-          } catch (error) {
-            console.error('Socket initialization error:', error);
-          }
+    if (user?.id) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          socketService.initialize(user.id);
+          removeHandler = socketService.addNotificationHandler(handleNotification);
+        } catch (error) {
+          console.error('Socket initialization error:', error);
         }
       }
-    };
-
-    initializeSocket();
+    }
 
     return () => {
       if (removeHandler) {

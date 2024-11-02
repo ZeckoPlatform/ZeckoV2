@@ -1,28 +1,28 @@
 import io from 'socket.io-client';
-
-const SOCKET_URL = process.env.NODE_ENV === 'production'
-  ? 'https://zeckov2-deceb43992ac.herokuapp.com'
-  : 'http://localhost:5000';
+import { SOCKET_URL, SOCKET_CONFIG } from '../config/socketConfig';
 
 class SocketService {
   constructor() {
     this.socket = null;
     this.handlers = new Set();
+    this.userId = null;
+  }
+
+  initialize(userId) {
+    this.userId = userId;
+    return this.connect();
   }
 
   connect(token) {
-    if (this.socket) {
-      this.socket.disconnect();
+    if (this.socket?.connected) {
+      return this.socket;
     }
 
     console.log('Connecting to socket:', SOCKET_URL);
     
     this.socket = io(SOCKET_URL, {
-      auth: { token },
-      transports: ['websocket'],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000
+      ...SOCKET_CONFIG,
+      auth: { token, userId: this.userId }
     });
 
     this.setupListeners();
@@ -34,6 +34,9 @@ class SocketService {
 
     this.socket.on('connect', () => {
       console.log('Socket connected successfully');
+      if (this.userId) {
+        this.socket.emit('authenticate', { userId: this.userId });
+      }
     });
 
     this.socket.on('notification', (data) => {
@@ -61,6 +64,7 @@ class SocketService {
       this.socket = null;
     }
     this.handlers.clear();
+    this.userId = null;
   }
 
   isConnected() {
@@ -68,4 +72,4 @@ class SocketService {
   }
 }
 
-export const socketService = new SocketService(); 
+export const socketService = new SocketService();

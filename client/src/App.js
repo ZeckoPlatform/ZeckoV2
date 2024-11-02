@@ -9,10 +9,6 @@ import AdminRoute from './components/PrivateRoute';
 import AdminDashboard from './components/admin/AdminDashboard';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { initializeNotifications, disconnectNotifications } from './services/notificationService';
-import ProductManagement from './components/ProductManagement';
-import AddProduct from './components/ProductManagement/AddProduct';
-import EditProduct from './components/ProductManagement/EditProduct';
 import axios from 'axios';
 
 // Import all pages
@@ -85,12 +81,6 @@ console.log('Component Types:', {
 
 function App() {
   useEffect(() => {
-    // Initialize notifications when the app loads
-    const userId = localStorage.getItem('userId'); // or however you store the user ID
-    if (userId) {
-      initializeNotifications(userId);
-    }
-
     const getClientIP = async () => {
       try {
         const response = await axios.get('https://api.ipify.org?format=json');
@@ -102,10 +92,6 @@ function App() {
     };
 
     getClientIP();
-
-    return () => {
-      disconnectNotifications();
-    };
   }, []);
 
   return (
