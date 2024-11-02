@@ -6,8 +6,21 @@ const socketHelpers = require('../socket');
 const notificationService = require('../services/notificationService');
 
 // Vendor routes (must come before /:id routes)
-router.get('/vendor/orders', auth, orderController.getVendorOrders);
-router.post('/bulk-update', auth, orderController.bulkUpdateOrders);
+router.get('/vendor/orders', auth, async (req, res, next) => {
+    try {
+        await orderController.getVendorOrders(req, res);
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.post('/bulk-update', auth, async (req, res, next) => {
+    try {
+        await orderController.bulkUpdateOrders(req, res);
+    } catch (error) {
+        next(error);
+    }
+});
 
 // Basic routes
 router.get('/', auth, orderController.getOrders);

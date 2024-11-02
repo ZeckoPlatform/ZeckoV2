@@ -65,12 +65,16 @@ const orderController = {
 
     // Get vendor orders
     getVendorOrders: async (req, res) => {
-        const orders = await Order.find({
-            'items.product': { 
-                $in: await Product.find({ seller: req.user._id }).select('_id') 
-            }
-        }).populate('items.product user');
-        return res.json(orders);
+        try {
+            const orders = await Order.find({
+                'items.product': { 
+                    $in: await Product.find({ seller: req.user._id }).select('_id') 
+                }
+            }).populate('items.product user');
+            res.json(orders);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
     },
 
     // Update order status
@@ -159,66 +163,69 @@ const orderController = {
 
     // Bulk update orders
     bulkUpdateOrders: async (req, res) => {
-        const { updates } = req.body;
-        const results = [];
+        try {
+            const { updates } = req.body;
+            const results = [];
 
-        for (const update of updates) {
-            try {
-                const order = await Order.findById(update.orderId);
-                
-                if (!order) {
+            for (const update of updates) {
+                try {
+                    const order = await Order.findById(update.orderId);
+                    
+                    if (!order) {
+                        results.push({
+                            orderId: update.orderId,
+                            success: false,
+                            error: 'Order not found'
+                        });
+                        continue;
+                    }
+
+                    // Check authorization
+                    if (!req.user.isAdmin && req.user._id.toString() !== order.vendor?.toString()) {
+                        results.push({
+                            orderId: update.orderId,
+                            success: false,
+                            error: 'Not authorized'
+                        });
+                        continue;
+                    }
+
+                    order.status = update.status;
+                    if (update.tracking) {
+                        order.tracking = {
+                            ...order.tracking,
+                            ...update.tracking,
+                            updatedAt: new Date()
+                        };
+                    }
+
+                    await order.save();
+
+                    // Send notification
+                    await notificationService.createNotification(
+                        order.user,
+                        'order',
+                        `Order status updated to: ${update.status}`,
+                        { orderId: order._id, status: update.status }
+                    );
+
+                    results.push({
+                        orderId: update.orderId,
+                        success: true,
+                        order
+                    });
+                } catch (error) {
                     results.push({
                         orderId: update.orderId,
                         success: false,
-                        error: 'Order not found'
+                        error: error.message
                     });
-                    continue;
                 }
-
-                // Check authorization
-                if (!req.user.isAdmin && req.user._id.toString() !== order.vendor?.toString()) {
-                    results.push({
-                        orderId: update.orderId,
-                        success: false,
-                        error: 'Not authorized'
-                    });
-                    continue;
-                }
-
-                order.status = update.status;
-                if (update.tracking) {
-                    order.tracking = {
-                        ...order.tracking,
-                        ...update.tracking,
-                        updatedAt: new Date()
-                    };
-                }
-
-                await order.save();
-
-                // Send notification
-                await notificationService.createNotification(
-                    order.user,
-                    'order',
-                    `Order status updated to: ${update.status}`,
-                    { orderId: order._id, status: update.status }
-                );
-
-                results.push({
-                    orderId: update.orderId,
-                    success: true,
-                    order
-                });
-            } catch (error) {
-                results.push({
-                    orderId: update.orderId,
-                    success: false,
-                    error: error.message
-                });
             }
+            res.json({ results });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
         }
-
-        return res.json({ results });
     },
 };
 
