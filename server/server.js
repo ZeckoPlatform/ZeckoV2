@@ -2,10 +2,10 @@ const express = require('express');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const http = require('http');
-const socketIo = require('socket.io');
-const jwt = require('jsonwebtoken');
+const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 
 dotenv.config();
 
@@ -28,11 +28,52 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 // Initialize Express and Socket.io
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
-    methods: ["GET", "POST"]
-  }
+const io = new Server(server, {
+    cors: {
+        origin: process.env.CLIENT_URL || "http://localhost:3000",
+        methods: ["GET", "POST"]
+    }
+});
+
+// Initialize global socket connections map
+global.connectedClients = new Map();
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+    console.log('New client connected');
+
+    socket.on('authenticate', (token) => {
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            socket.userId = decoded.userId;
+            socket.userType = decoded.userType;
+
+            if (!global.connectedClients.has(decoded.userId)) {
+                global.connectedClients.set(decoded.userId, new Set());
+            }
+            global.connectedClients.get(decoded.userId).add(socket);
+
+            console.log(`User ${decoded.userId} authenticated`);
+            socket.emit('authenticated', { success: true });
+        } catch (error) {
+            console.error('Authentication error:', error);
+            socket.emit('authenticated', { success: false, error: 'Invalid token' });
+        }
+    });
+
+    socket.on('disconnect', () => {
+        if (socket.userId) {
+            const userSockets = global.connectedClients.get(socket.userId);
+            if (userSockets) {
+                userSockets.delete(socket);
+                if (userSockets.size === 0) {
+                    global.connectedClients.delete(socket.userId);
+                }
+            }
+            console.log(`User ${socket.userId} disconnected`);
+        }
+        console.log('Client disconnected');
+    });
 });
 
 // MongoDB Connection
@@ -89,143 +130,16 @@ mountRoute('/api/analytics', analyticsRoutes);
 
 // API Endpoints
 app.get('/api/subscription-plans', (req, res) => {
-  const subscriptionPlans = [
-    { id: 1, name: 'Basic', price: 9.99, features: ['Feature 1', 'Feature 2'] },
-    { id: 2, name: 'Pro', price: 19.99, features: ['Feature 1', 'Feature 2', 'Feature 3'] },
-    { id: 3, name: 'Enterprise', price: 29.99, features: ['Feature 1', 'Feature 2', 'Feature 3', 'Feature 4'] },
-  ];
-  res.json(subscriptionPlans);
+    const subscriptionPlans = [
+        { id: 1, name: 'Basic', price: 9.99, features: ['Feature 1', 'Feature 2'] },
+        { id: 2, name: 'Pro', price: 19.99, features: ['Feature 1', 'Feature 2', 'Feature 3'] },
+        { id: 3, name: 'Enterprise', price: 29.99, features: ['Feature 1', 'Feature 2', 'Feature 3', 'Feature 4'] },
+    ];
+    res.json(subscriptionPlans);
 });
 
 app.get('/api', (req, res) => {
-  res.json({ message: 'Welcome to ZeckoV2 API' });
-});
-
-// Socket.IO Setup
-const connectedClients = new Map();
-
-// Socket helper functions
-const socketHelpers = {
-    emitAdminStats: async (socket) => {
-        try {
-            const stats = await require('./controllers/adminController').getAdminStats();
-            socket.emit('admin_stats_update', stats);
-        } catch (error) {
-            console.error('Error emitting admin stats:', error);
-        }
-    },
-    notifyAdmins: (type, notification) => {
-        connectedClients.forEach((sockets, userId) => {
-            sockets.forEach(socket => {
-                if (socket.userType === 'admin') {
-                    socket.emit(type, notification);
-                }
-            });
-        });
-    },
-    sendNotificationToUser: (userId, notification) => {
-        const userSockets = connectedClients.get(userId);
-        if (userSockets) {
-            userSockets.forEach(socket => {
-                socket.emit('notification', notification);
-            });
-        }
-    },
-    sendActivityNotification: (userId, activity) => {
-        const userSockets = connectedClients.get(userId);
-        if (userSockets) {
-            userSockets.forEach(socket => {
-                socket.emit('activity_update', activity);
-            });
-        }
-    },
-    sendOrderNotification: (userId, orderData) => {
-        const userSockets = connectedClients.get(userId);
-        if (userSockets) {
-            userSockets.forEach(socket => {
-                socket.emit('order_notification', orderData);
-            });
-        }
-    }
-};
-
-// Socket.IO event handlers
-io.on('connection', (socket) => {
-    console.log('New client connected');
-
-    socket.on('authenticate', (token) => {
-        try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            socket.userId = decoded.userId;
-            socket.userType = decoded.userType;
-
-            if (!connectedClients.has(decoded.userId)) {
-                connectedClients.set(decoded.userId, new Set());
-            }
-            connectedClients.get(decoded.userId).add(socket);
-
-            if (decoded.userType === 'admin') {
-                socketHelpers.emitAdminStats(socket);
-            }
-
-            console.log(`User ${decoded.userId} authenticated`);
-            socket.emit('authenticated', { success: true });
-        } catch (error) {
-            console.error('Authentication error:', error);
-            socket.emit('authenticated', { success: false, error: 'Invalid token' });
-        }
-    });
-
-    socket.on('order_created', async (order) => {
-        if (socket.userId) {
-            try {
-                await ActivityLog.create({
-                    userId: socket.userId,
-                    type: 'order_created',
-                    description: `New order created: #${order.orderNumber}`,
-                    metadata: { orderId: order._id }
-                });
-
-                socketHelpers.notifyAdmins('new_order', {
-                    message: `New order #${order.orderNumber} created`,
-                    data: order
-                });
-
-                if (order.items) {
-                    const vendorIds = new Set(order.items.map(item => item.product.seller));
-                    vendorIds.forEach(vendorId => {
-                        socketHelpers.sendNotificationToUser(vendorId, {
-                            type: 'new_order',
-                            message: `New order received: #${order.orderNumber}`,
-                            data: order
-                        });
-                    });
-                }
-            } catch (error) {
-                console.error('Error handling order creation:', error);
-            }
-        }
-    });
-
-    socket.on('admin_request_stats', () => {
-        if (socket.userType === 'admin') {
-            socketHelpers.emitAdminStats(socket);
-        }
-    });
-
-    socket.on('disconnect', () => {
-        if (socket.userId) {
-            const userSockets = connectedClients.get(socket.userId);
-            if (userSockets) {
-                userSockets.delete(socket);
-                if (userSockets.size === 0) {
-                    connectedClients.delete(socket.userId);
-                }
-            }
-            console.log(`User ${socket.userId} disconnected`);
-        }
-        console.log('Client disconnected');
-    });
+    res.json({ message: 'Welcome to ZeckoV2 API' });
 });
 
 // Production Setup
@@ -252,6 +166,31 @@ process.on('unhandledRejection', (err) => {
     console.error('Unhandled Rejection:', err);
 });
 
+// Socket helper functions
+const socketHelpers = {
+    getIO: () => io,
+    notifyAdmins: (type, notification) => {
+        global.connectedClients.forEach((sockets, userId) => {
+            sockets.forEach(socket => {
+                if (socket.userType === 'admin') {
+                    socket.emit(type, notification);
+                }
+            });
+        });
+    },
+    sendNotificationToUser: (userId, notification) => {
+        const userSockets = global.connectedClients.get(userId);
+        if (userSockets) {
+            userSockets.forEach(socket => {
+                socket.emit('notification', notification);
+            });
+        }
+    },
+    broadcastActivity: (activity) => {
+        io.emit('activityUpdate', activity);
+    }
+};
+
 // Start Server
 const port = process.env.PORT || 5000;
 server.listen(port, () => {
@@ -260,7 +199,7 @@ server.listen(port, () => {
 
 // Exports
 module.exports = {
-    io,
+    io: socketHelpers.getIO,
     ...socketHelpers
 };
 
