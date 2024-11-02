@@ -142,12 +142,21 @@ app.get('/api', (req, res) => {
     res.json({ message: 'Welcome to ZeckoV2 API' });
 });
 
-// Production Setup
+// Production Setup - Update this section
 if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, '../build')));
+    // Log the build path
+    console.log('Serving static files from:', path.join(__dirname, '../client/build'));
+    
+    // Serve static files from the client/build directory
+    app.use(express.static(path.join(__dirname, '../client/build')));
+    
+    // Handle all other routes by serving the index.html
     app.get('*', (req, res, next) => {
-        if (req.url.startsWith('/api/')) return next();
-        res.sendFile(path.join(__dirname, '../build', 'index.html'));
+        if (req.url.startsWith('/api/')) {
+            return next();
+        }
+        console.log('Serving index.html for path:', req.path);
+        res.sendFile(path.join(__dirname, '../client/build/index.html'));
     });
 }
 
