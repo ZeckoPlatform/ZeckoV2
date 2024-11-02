@@ -35,9 +35,9 @@ import Profile from './pages/Profile';
 const Shop = React.lazy(() => import('./pages/Shop'));
 const SecuritySettings = React.lazy(() => import('./pages/SecuritySettings'));
 const UserActivityLog = React.lazy(() => import('./pages/UserActivityLog'));
-const ProductManagement = React.lazy(() => import('./pages/admin/ProductManagement'));
-const AddProduct = React.lazy(() => import('./pages/admin/AddProduct'));
-const EditProduct = React.lazy(() => import('./pages/admin/EditProduct'));
+const ProductManagement = React.lazy(() => import('./components/admin/ProductManagement'));
+const AddProduct = React.lazy(() => import('./components/admin/products/AddProduct'));
+const EditProduct = React.lazy(() => import('./components/admin/products/EditProduct'));
 
 // Styled components
 const AppContainer = styled.div`

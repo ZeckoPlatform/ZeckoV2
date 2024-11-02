@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import DeleteProduct from './products/DeleteProduct';
 
 function ProductManagement() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newProduct, setNewProduct] = useState({ name: '', description: '', price: '' });
   const [editingProduct, setEditingProduct] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
 
   useEffect(() => {
     fetchProducts();
@@ -95,12 +98,15 @@ function ProductManagement() {
     }
   };
 
-  const handleDeleteProduct = async (productId) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) return;
+  const handleDeleteProduct = (product) => {
+    setProductToDelete(product);
+    setShowDeleteModal(true);
+  };
 
+  const confirmDelete = async () => {
     const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`/api/dashboard/products/${productId}`, {
+      const response = await fetch(`/api/dashboard/products/${productToDelete._id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -108,7 +114,7 @@ function ProductManagement() {
       });
 
       if (response.ok) {
-        setProducts(prev => prev.filter(p => p._id !== productId));
+        setProducts(prev => prev.filter(p => p._id !== productToDelete._id));
         alert('Product deleted successfully!');
       } else {
         throw new Error('Failed to delete product');
@@ -116,6 +122,9 @@ function ProductManagement() {
     } catch (error) {
       console.error('Error deleting product:', error);
       alert('Failed to delete product. Please try again.');
+    } finally {
+      setShowDeleteModal(false);
+      setProductToDelete(null);
     }
   };
 
@@ -201,12 +210,22 @@ function ProductManagement() {
                   <p>{product.description}</p>
                   <p>Price: ${product.price}</p>
                   <button onClick={() => setEditingProduct(product)}>Edit</button>
-                  <button onClick={() => handleDeleteProduct(product._id)}>Delete</button>
+                  <button onClick={() => handleDeleteProduct(product)}>Delete</button>
                 </>
               )}
             </li>
           ))}
         </ul>
+      )}
+      {showDeleteModal && productToDelete && (
+        <DeleteProduct
+          product={productToDelete}
+          onConfirm={confirmDelete}
+          onCancel={() => {
+            setShowDeleteModal(false);
+            setProductToDelete(null);
+          }}
+        />
       )}
     </div>
   );
