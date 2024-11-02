@@ -24,30 +24,26 @@ const auth = (req, res, next) => {
     }
 };
 
-// Admin authentication middleware
-const adminAuth = (req, res, next) => {
-    auth(req, res, () => {
-        if (req.user && req.user.role === 'admin') {
-            next();
-        } else {
-            res.status(403).json({ error: 'Access denied. Admin privileges required.' });
-        }
-    });
+// Admin check middleware
+const isAdmin = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
+        next();
+    } else {
+        res.status(403).json({ error: 'Access denied. Admin privileges required.' });
+    }
 };
 
-// Vendor authentication middleware (if needed)
-const vendorAuth = (req, res, next) => {
-    auth(req, res, () => {
-        if (req.user && (req.user.role === 'vendor' || req.user.role === 'admin')) {
-            next();
-        } else {
-            res.status(403).json({ error: 'Access denied. Vendor privileges required.' });
-        }
-    });
+// Vendor check middleware
+const isVendor = (req, res, next) => {
+    if (req.user && (req.user.role === 'vendor' || req.user.role === 'admin')) {
+        next();
+    } else {
+        res.status(403).json({ error: 'Access denied. Vendor privileges required.' });
+    }
 };
 
 module.exports = {
     auth,
-    adminAuth,
-    vendorAuth
+    isAdmin,
+    isVendor
 };
