@@ -35,6 +35,9 @@ import Profile from './pages/Profile';
 const Shop = React.lazy(() => import('./pages/Shop'));
 const SecuritySettings = React.lazy(() => import('./pages/SecuritySettings'));
 const UserActivityLog = React.lazy(() => import('./pages/UserActivityLog'));
+const ProductManagement = React.lazy(() => import('./pages/admin/ProductManagement'));
+const AddProduct = React.lazy(() => import('./pages/admin/AddProduct'));
+const EditProduct = React.lazy(() => import('./pages/admin/EditProduct'));
 
 // Styled components
 const AppContainer = styled.div`
@@ -144,6 +147,8 @@ function App() {
                         </ProtectedRoute>
                       } 
                     />
+
+                    {/* Admin Routes */}
                     <Route 
                       path="/admin" 
                       element={
@@ -153,11 +158,43 @@ function App() {
                       } 
                     >
                       <Route index element={<Navigate to="products" replace />} />
-                      <Route path="products" element={<ProductManagement />} />
-                      <Route path="products/add" element={<AddProduct />} />
-                      <Route path="products/edit/:id" element={<EditProduct />} />
+                      <Route 
+                        path="products" 
+                        element={
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <ProductManagement />
+                          </Suspense>
+                        } 
+                      />
+                      <Route 
+                        path="products/add" 
+                        element={
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <AddProduct />
+                          </Suspense>
+                        } 
+                      />
+                      <Route 
+                        path="products/edit/:id" 
+                        element={
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <EditProduct />
+                          </Suspense>
+                        } 
+                      />
                     </Route>
-                    <Route path="/manage-products" element={<ProductManagement />} />
+                    
+                    {/* Standalone Product Management Route */}
+                    <Route 
+                      path="/manage-products" 
+                      element={
+                        <AdminRoute>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <ProductManagement />
+                          </Suspense>
+                        </AdminRoute>
+                      } 
+                    />
                   </Routes>
                 </Suspense>
               </MainContent>
