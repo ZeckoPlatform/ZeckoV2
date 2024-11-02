@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import zxcvbn from 'zxcvbn';
+import { zxcvbn } from '@zxcvbn-ts/core';
+import { dictionary } from '@zxcvbn-ts/language-common';
 import { useAuth } from '../context/AuthContext';
 
 const RegisterContainer = styled.div`

@@ -12,7 +12,6 @@ import UserManagement from './UserManagement';
 import ProductManagement from './ProductManagement';
 import OrderManagement from './OrderManagement';
 import DashboardStats from './DashboardStats';
-import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const DashboardContainer = styled.div`

@@ -6,6 +6,8 @@ import styled from 'styled-components';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/PrivateRoute';
 import AdminDashboard from './components/admin/AdminDashboard';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Import all pages
 import Home from './pages/Home';
@@ -141,6 +143,7 @@ function App() {
               </Suspense>
             </MainContent>
           </Layout>
+          <ToastContainer />
         </BrowserRouter>
       </AuthProvider>
     </AppContainer>
