@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { logActivity, ActivityTypes } from '../utils/activityLogger';
 
+// Add this near the top
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 // Create and export the context
 export const AuthContext = createContext(null);
 
@@ -15,7 +18,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const response = await fetch('http://localhost:5000/api/auth/verify', {
+          const response = await fetch(`${API_URL}/api/auth/verify`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -40,7 +43,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -71,7 +74,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -96,7 +99,6 @@ export const AuthProvider = ({ children }) => {
 
   const changePassword = async (oldPassword, newPassword) => {
     try {
-      // ... existing password change logic ...
       await logActivity(ActivityTypes.SECURITY, 'Changed password');
     } catch (error) {
       // ... error handling ...

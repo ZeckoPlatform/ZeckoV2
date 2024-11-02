@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { useAuth } from '../context/AuthContext';
 import { 
   Users, 
   Package, 
