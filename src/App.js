@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
@@ -8,6 +8,7 @@ import AdminRoute from './components/PrivateRoute';
 import AdminDashboard from './components/admin/AdminDashboard';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { initSocket } from './utils/socket.io';
 
 // Import all pages
 import Home from './pages/Home';
@@ -78,6 +79,10 @@ console.log('Component Types:', {
 });
 
 function App() {
+  useEffect(() => {
+    initSocket();
+  }, []);
+
   return (
     <AppContainer>
       <AuthProvider>

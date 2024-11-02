@@ -1,57 +1,35 @@
-import io from 'socket.io-client';
+import { io } from 'socket.io-client';
+
+const SOCKET_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 let socket;
 
-export const initializeSocket = (token) => {
-  socket = io('http://localhost:5000', {
-    auth: { token },
-    reconnection: true,
-    reconnectionAttempts: 5,
-    reconnectionDelay: 1000,
+export const initSocket = () => {
+  socket = io(SOCKET_URL, {
+    transports: ['websocket'],
+    autoConnect: true
   });
 
   socket.on('connect', () => {
-    console.log('Connected to server');
+    console.log('Socket connected');
   });
 
-  socket.on('connect_error', (error) => {
-    console.error('Connection error:', error);
+  socket.on('disconnect', () => {
+    console.log('Socket disconnected');
   });
 
   return socket;
 };
 
-export const subscribeToNotifications = (callback) => {
+export const getSocket = () => {
   if (!socket) {
-    console.error('Socket not initialized. Call initializeSocket first.');
-    return;
+    return initSocket();
   }
-
-  socket.on('notification', callback);
+  return socket;
 };
 
-export const emitActivity = (activity) => {
-  if (!socket) {
-    console.error('Socket not initialized. Call initializeSocket first.');
-    return;
+export const disconnectSocket = () => {
+  if (socket) {
+    socket.disconnect();
   }
-  socket.emit('activity', activity);
 };
-
-export const subscribeToActivityUpdates = (callback) => {
-  if (!socket) {
-    console.error('Socket not initialized. Call initializeSocket first.');
-    return;
-  }
-  socket.on('activity_update', callback);
-};
-
-export const unsubscribeFromActivityUpdates = (callback) => {
-  if (!socket) {
-    console.error('Socket not initialized. Call initializeSocket first.');
-    return;
-  }
-  socket.off('activity_update', callback);
-};
-
-export default socket;

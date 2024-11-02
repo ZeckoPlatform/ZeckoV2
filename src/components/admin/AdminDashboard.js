@@ -25,6 +25,7 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { format, parseISO } from 'date-fns';
+import { getSocket } from '../../utils/socket.io';
 
 // Register ChartJS components
 ChartJS.register(
@@ -88,6 +89,7 @@ function AdminDashboard() {
   const [activeSection, setActiveSection] = useState('dashboard');
   const { user } = useAuth();
   const navigate = useNavigate();
+  const socket = getSocket();
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
