@@ -23,19 +23,15 @@ export const NotificationProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    let subscription = null;
+    let removeHandler = null;
 
-    const initializeSocket = async () => {
+    const initializeSocket = () => {
       if (user) {
         const token = localStorage.getItem('token');
         if (token) {
           try {
             socketService.connect(token);
-            const observable = socketService.getNotificationObservable();
-            subscription = observable.subscribe({
-              next: handleNotification,
-              error: (error) => console.error('Notification error:', error)
-            });
+            removeHandler = socketService.addNotificationHandler(handleNotification);
           } catch (error) {
             console.error('Socket initialization error:', error);
           }
@@ -46,8 +42,8 @@ export const NotificationProvider = ({ children }) => {
     initializeSocket();
 
     return () => {
-      if (subscription) {
-        subscription.unsubscribe();
+      if (removeHandler) {
+        removeHandler();
       }
       socketService.disconnect();
     };
@@ -57,13 +53,8 @@ export const NotificationProvider = ({ children }) => {
     setNotifications([]);
   }, []);
 
-  const value = {
-    notifications,
-    clearNotifications
-  };
-
   return (
-    <NotificationContext.Provider value={value}>
+    <NotificationContext.Provider value={{ notifications, clearNotifications }}>
       {children}
     </NotificationContext.Provider>
   );

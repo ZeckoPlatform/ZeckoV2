@@ -1,5 +1,4 @@
 import io from 'socket.io-client';
-import { Subject } from 'rxjs';
 
 const SOCKET_URL = process.env.NODE_ENV === 'production'
   ? 'https://zeckov2-deceb43992ac.herokuapp.com'
@@ -8,7 +7,7 @@ const SOCKET_URL = process.env.NODE_ENV === 'production'
 class SocketService {
   constructor() {
     this.socket = null;
-    this.notificationSubject = new Subject();
+    this.handlers = new Set();
   }
 
   connect(token) {
@@ -16,6 +15,8 @@ class SocketService {
       this.socket.disconnect();
     }
 
+    console.log('Connecting to socket:', SOCKET_URL);
+    
     this.socket = io(SOCKET_URL, {
       auth: { token },
       transports: ['websocket'],
@@ -37,7 +38,7 @@ class SocketService {
 
     this.socket.on('notification', (data) => {
       console.log('Received notification:', data);
-      this.notificationSubject.next(data);
+      this.handlers.forEach(handler => handler(data));
     });
 
     this.socket.on('disconnect', () => {
@@ -49,8 +50,9 @@ class SocketService {
     });
   }
 
-  getNotificationObservable() {
-    return this.notificationSubject.asObservable();
+  addNotificationHandler(handler) {
+    this.handlers.add(handler);
+    return () => this.handlers.delete(handler);
   }
 
   disconnect() {
@@ -58,7 +60,11 @@ class SocketService {
       this.socket.disconnect();
       this.socket = null;
     }
-    // Don't complete the subject, just clean up socket
+    this.handlers.clear();
+  }
+
+  isConnected() {
+    return this.socket?.connected || false;
   }
 }
 
