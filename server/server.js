@@ -20,6 +20,8 @@ const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const activityLogRoutes = require('./routes/activityLogRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 
 dotenv.config();
 
@@ -42,7 +44,9 @@ console.log({
     subscriptionRoutes: typeof subscriptionRoutes,
     notificationRoutes: typeof notificationRoutes,
     activityLogRoutes: typeof activityLogRoutes,
-    adminRoutes: typeof adminRoutes
+    adminRoutes: typeof adminRoutes,
+    reviewRoutes: typeof reviewRoutes,
+    analyticsRoutes: typeof analyticsRoutes
 });
 
 // Middleware
@@ -95,6 +99,8 @@ mountRoute('/api/subscriptions', subscriptionRoutes);
 mountRoute('/api/notifications', notificationRoutes);
 mountRoute('/api/activity-logs', activityLogRoutes);
 mountRoute('/api/admin', adminRoutes);
+mountRoute('/api/reviews', reviewRoutes);
+mountRoute('/api/analytics', analyticsRoutes);
 
 // Debug log
 console.log('Routes mounted');
@@ -257,15 +263,21 @@ app.use((err, req, res, next) => {
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
+    // Serve static files
     app.use(express.static(path.join(__dirname, '../build')));
     
-    app.get('*', (req, res) => {
+    // Handle React routing, return all requests to React app
+    app.get('*', function(req, res) {
+        // Skip API routes
+        if (req.url.startsWith('/api/')) {
+            return next();
+        }
         res.sendFile(path.join(__dirname, '../build', 'index.html'));
     });
 }
 
 const port = process.env.PORT || 5000;
-app.listen(port, () => {
+server.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
 
@@ -288,4 +300,14 @@ process.on('uncaughtException', (err) => {
 
 process.on('unhandledRejection', (err) => {
     console.error('Unhandled Rejection:', err);
+});
+
+// Add near the top after dotenv.config()
+mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => {
+    console.log('Connected to MongoDB');
+}).catch(err => {
+    console.error('MongoDB connection error:', err);
 });
