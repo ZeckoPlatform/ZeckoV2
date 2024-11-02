@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { auth } = require('../middleware/auth');
 const orderController = require('../controllers/orderController');
-const Notification = require('../models/Notification');
+const Notification = require('../models/notificationModel');
 const io = require('../socket');
 
 // Vendor routes (must come before /:id routes)
