@@ -1,3 +1,5 @@
+console.log('Loading orderRoutes.js - START');
+
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
@@ -5,19 +7,13 @@ const auth = require('../middleware/auth');
 const socketHelpers = require('../socket');
 const notificationService = require('../services/notificationService');
 
-// Vendor routes (must come before /:id routes)
-router.get('/vendor/orders', auth, (req, res, next) => {
-    orderController.getVendorOrders(req, res).catch(next);
-});
+console.log('orderController methods in routes:', Object.keys(orderController));
 
-router.post('/bulk-update', auth, (req, res, next) => {
-    orderController.bulkUpdateOrders(req, res).catch(next);
-});
+// Vendor routes
+router.get('/vendor/orders', auth, orderController.getVendorOrders());
 
 // Basic routes
-router.get('/', auth, (req, res, next) => {
-    orderController.getOrders(req, res).catch(next);
-});
+router.get('/', auth, orderController.getOrders());
 
 router.post('/', auth, async (req, res) => {
     try {
@@ -30,7 +26,6 @@ router.post('/', auth, async (req, res) => {
             data: order
         });
 
-        // Send notification through service
         await notificationService.createNotification(
             req.user._id,
             'order',
@@ -46,20 +41,8 @@ router.post('/', auth, async (req, res) => {
 });
 
 // Order specific routes
-router.get('/:id', auth, (req, res, next) => {
-    orderController.getOrderById(req, res).catch(next);
-});
+router.get('/:id', auth, orderController.getOrderById());
 
-router.patch('/:id/status', auth, (req, res, next) => {
-    orderController.updateOrderStatus(req, res).catch(next);
-});
-
-router.patch('/:id/tracking', auth, (req, res, next) => {
-    orderController.updateTracking(req, res).catch(next);
-});
-
-router.get('/:id/tracking', auth, (req, res, next) => {
-    orderController.getTracking(req, res).catch(next);
-});
+console.log('Loading orderRoutes.js - END');
 
 module.exports = router;

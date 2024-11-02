@@ -1,11 +1,40 @@
+console.log('Loading orderController.js - START');
+
 const Order = require('../models/orderModel');
 const Cart = require('../models/cartModel');
 const Product = require('../models/productModel');
 const notificationService = require('../services/notificationService');
 
 const orderController = {
-    // Create order
-    createOrder: async (orderData, userId) => {
+    getVendorOrders: function(req, res) {
+        return async function(req, res) {
+            try {
+                const orders = await Order.find({
+                    'items.product': { 
+                        $in: await Product.find({ seller: req.user._id }).select('_id') 
+                    }
+                }).populate('items.product user');
+                res.json(orders);
+            } catch (error) {
+                res.status(500).json({ error: error.message });
+            }
+        };
+    },
+
+    getOrders: function(req, res) {
+        return async function(req, res) {
+            try {
+                const orders = await Order.find({ user: req.user._id })
+                    .populate('items.product')
+                    .sort({ createdAt: -1 });
+                res.json(orders);
+            } catch (error) {
+                res.status(500).json({ error: error.message });
+            }
+        };
+    },
+
+    createOrder: async function(orderData, userId) {
         const { items, shippingAddress, totalAmount } = orderData;
 
         // Validate items stock
@@ -42,42 +71,24 @@ const orderController = {
         return order;
     },
 
-    // Get all orders
-    getOrders: async (req, res) => {
-        const orders = await Order.find({ user: req.user._id })
-            .populate('items.product')
-            .sort({ createdAt: -1 });
-        return res.json(orders);
-    },
-
-    // Get order by ID
-    getOrderById: async (req, res) => {
-        const order = await Order.findOne({
-            _id: req.params.id,
-            user: req.user._id
-        }).populate('items.product');
-        
-        if (!order) {
-            return res.status(404).json({ error: 'Order not found' });
-        }
-        return res.json(order);
-    },
-
-    // Get vendor orders
-    getVendorOrders: async (req, res) => {
-        try {
-            const orders = await Order.find({
-                'items.product': { 
-                    $in: await Product.find({ seller: req.user._id }).select('_id') 
+    getOrderById: function(req, res) {
+        return async function(req, res) {
+            try {
+                const order = await Order.findOne({
+                    _id: req.params.id,
+                    user: req.user._id
+                }).populate('items.product');
+                
+                if (!order) {
+                    return res.status(404).json({ error: 'Order not found' });
                 }
-            }).populate('items.product user');
-            res.json(orders);
-        } catch (error) {
-            res.status(500).json({ error: error.message });
-        }
+                res.json(order);
+            } catch (error) {
+                res.status(500).json({ error: error.message });
+            }
+        };
     },
 
-    // Update order status
     updateOrderStatus: async (req, res) => {
         const { status } = req.body;
         const order = await Order.findById(req.params.id);
@@ -105,7 +116,6 @@ const orderController = {
         return res.json(order);
     },
 
-    // Update tracking
     updateTracking: async (req, res) => {
         const order = await Order.findById(req.params.id);
         
@@ -143,7 +153,6 @@ const orderController = {
         return res.json(order);
     },
 
-    // Get tracking
     getTracking: async (req, res) => {
         const order = await Order.findById(req.params.id);
         
@@ -161,7 +170,6 @@ const orderController = {
         return res.json(order.tracking || {});
     },
 
-    // Bulk update orders
     bulkUpdateOrders: async (req, res) => {
         try {
             const { updates } = req.body;
@@ -228,5 +236,8 @@ const orderController = {
         }
     },
 };
+
+console.log('orderController methods:', Object.keys(orderController));
+console.log('Loading orderController.js - END');
 
 module.exports = orderController;
