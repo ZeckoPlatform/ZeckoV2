@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { logActivity, ActivityTypes } from '../utils/activityLogger';
 import axios from 'axios';
 import { socketService } from '../services/socketService';
+import { useNavigate } from 'react-router-dom';
 
 // Fix the API_URL construction
 const API_URL = process.env.NODE_ENV === 'production'
@@ -15,94 +16,65 @@ export const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  // Check if user is already logged in on mount
+  const login = useCallback(async (credentials) => {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials)
+      });
+
+      if (!response.ok) throw new Error('Login failed');
+
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
+      setUser(data.user);
+      socketService.initialize(data.user._id);
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }, []);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('token');
+    setUser(null);
+    socketService.disconnect();
+    navigate('/login');
+  }, [navigate]);
+
   useEffect(() => {
     const verifyToken = async () => {
       const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const response = await fetch('/api/auth/verify', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          
-          if (response.ok) {
-            const userData = await response.json();
-            setUser(userData);
-            socketService.initialize(userData._id);
-          } else {
-            localStorage.removeItem('token');
-            setUser(null);
-          }
-        } catch (error) {
-          console.error('Token verification failed:', error);
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/verify', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+          socketService.initialize(userData._id);
+        } else {
           localStorage.removeItem('token');
           setUser(null);
         }
+      } catch (error) {
+        localStorage.removeItem('token');
+        setUser(null);
       }
       setLoading(false);
     };
 
     verifyToken();
   }, []);
-
-  const login = async (credentials) => {
-    try {
-      const response = await fetch(`${API_URL}/api/users/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(credentials)
-      });
-
-      const data = await response.json();
-      console.log('Login response:', data);
-
-      if (response.ok && data.token) {
-        localStorage.setItem('token', data.token);
-        setUser(data.user);
-        
-        // Wait a moment for the token to be stored
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        try {
-          const decoded = JSON.parse(atob(data.token.split('.')[1]));
-          console.log('Decoded token:', decoded);
-          
-          await logActivity('login', 'User logged in successfully', {
-            email: credentials.email,
-            userId: decoded.userId
-          });
-        } catch (logError) {
-          console.error('Failed to log login activity:', logError);
-        }
-        
-        return { success: true };
-      } else {
-        throw new Error(data.message || 'Login failed');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Login failed. Please try again.' 
-      };
-    }
-  };
-
-  const logout = async () => {
-    try {
-      await logActivity(ActivityTypes.SECURITY, 'User logged out');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      setUser(null);
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
 
   const register = async (userData) => {
     try {

@@ -54,34 +54,6 @@ const MainContent = styled.main`
   width: 100%;
 `;
 
-console.log('Component Check:', {
-  Home,
-  ProductList,
-  ProductDetails,
-  BusinessDirectory,
-  JobBoard,
-  Dashboard,
-  SecuritySettings
-});
-
-console.log('Component Types:', {
-  BusinessDirectory: typeof BusinessDirectory,
-  JobBoard: typeof JobBoard,
-  Home: typeof Home,
-  ProductList: typeof ProductList,
-  ProductDetails: typeof ProductDetails,
-  Cart: typeof Cart,
-  Login: typeof Login,
-  Register: typeof Register,
-  Profile: typeof Profile,
-  Checkout: typeof Checkout,
-  Wishlist: typeof Wishlist,
-  ChangePassword: typeof ChangePassword,
-  OrderConfirmation: typeof OrderConfirmation,
-  Shop: typeof Shop,
-  SecuritySettings: typeof SecuritySettings
-});
-
 function App() {
   useEffect(() => {
     const getClientIP = async () => {

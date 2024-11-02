@@ -15,25 +15,26 @@ export const NotificationProvider = ({ children }) => {
     // Try to play notification sound
     try {
       const audio = new Audio('/notification.mp3');
-      audio.play().catch(e => console.log('Audio play failed:', e));
+      audio.play().catch(() => {});
     } catch (error) {
-      console.error('Error playing notification sound:', error);
+      // Silently fail if audio fails
     }
   }, []);
 
   useEffect(() => {
+    let cleanup = null;
+    
     if (user?.id) {
       // Initialize socket connection
       socketService.initialize(user.id);
       
       // Add notification handler
-      const cleanup = socketService.addNotificationHandler(handleNotification);
-
-      return () => {
-        if (cleanup) cleanup();
-        socketService.disconnect();
-      };
+      cleanup = socketService.addNotificationHandler(handleNotification);
     }
+
+    return () => {
+      if (cleanup) cleanup();
+    };
   }, [user, handleNotification]);
 
   const clearNotifications = useCallback(() => {

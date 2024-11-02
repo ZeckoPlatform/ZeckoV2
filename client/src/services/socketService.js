@@ -6,10 +6,11 @@ class SocketService {
     this.socket = null;
     this.handlers = new Set();
     this.userId = null;
+    this.isInitialized = false;
   }
 
   initialize(userId) {
-    if (this.socket?.connected && this.userId === userId) {
+    if (this.isInitialized && this.userId === userId) {
       return;
     }
 
@@ -17,13 +18,13 @@ class SocketService {
     const token = localStorage.getItem('token');
 
     if (!this.socket) {
-      console.log('Connecting to socket:', SOCKET_URL);
       this.socket = io(SOCKET_URL, {
         ...SOCKET_CONFIG,
         auth: { token, userId }
       });
 
       this.setupListeners();
+      this.isInitialized = true;
     }
   }
 
@@ -31,19 +32,13 @@ class SocketService {
     if (!this.socket) return;
 
     this.socket.on('connect', () => {
-      console.log('Socket connected successfully');
       if (this.userId) {
         this.socket.emit('authenticate', { userId: this.userId });
       }
     });
 
     this.socket.on('notification', (data) => {
-      console.log('Received notification:', data);
       this.handlers.forEach(handler => handler(data));
-    });
-
-    this.socket.on('disconnect', () => {
-      console.log('Socket disconnected');
     });
 
     this.socket.on('connect_error', (error) => {
@@ -63,6 +58,7 @@ class SocketService {
     }
     this.handlers.clear();
     this.userId = null;
+    this.isInitialized = false;
   }
 
   isConnected() {
