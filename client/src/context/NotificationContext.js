@@ -2,7 +2,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { socketService } from '../services/socketService';
 import { useAuth } from './AuthContext';
 
-const NotificationContext = createContext(null);
+// Export the context itself
+export const NotificationContext = createContext(null);
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);

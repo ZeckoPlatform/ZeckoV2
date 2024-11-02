@@ -17,8 +17,7 @@ class SocketService {
 
     this.socket = io(SOCKET_URL, {
       auth: { token },
-      transports: ['websocket'],
-      reconnection: true
+      transports: ['websocket']
     });
 
     this.setupListeners();
@@ -38,10 +37,6 @@ class SocketService {
 
     this.socket.on('disconnect', () => {
       console.log('Socket disconnected');
-    });
-
-    this.socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
     });
   }
 
