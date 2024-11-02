@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { logActivity, ActivityTypes } from '../utils/activityLogger';
 import axios from 'axios';
+import { socketService } from '../services/socketService';
 
 // Fix the API_URL construction
 const API_URL = process.env.NODE_ENV === 'production'
@@ -17,11 +18,11 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is already logged in on mount
   useEffect(() => {
-    const checkAuthStatus = async () => {
+    const verifyToken = async () => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const response = await fetch(`${API_URL}/api/auth/verify`, {
+          const response = await fetch('/api/auth/verify', {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -30,18 +31,21 @@ export const AuthProvider = ({ children }) => {
           if (response.ok) {
             const userData = await response.json();
             setUser(userData);
+            socketService.initialize(userData._id);
           } else {
             localStorage.removeItem('token');
+            setUser(null);
           }
         } catch (error) {
-          console.error('Auth verification error:', error);
+          console.error('Token verification failed:', error);
           localStorage.removeItem('token');
+          setUser(null);
         }
       }
       setLoading(false);
     };
 
-    checkAuthStatus();
+    verifyToken();
   }, []);
 
   const login = async (credentials) => {

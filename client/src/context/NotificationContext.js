@@ -10,10 +10,9 @@ export const NotificationProvider = ({ children }) => {
   const { user } = useAuth();
 
   const handleNotification = useCallback((notification) => {
-    console.log('Handling notification:', notification);
     setNotifications(prev => [...prev, notification]);
     
-    // Play notification sound
+    // Try to play notification sound
     try {
       const audio = new Audio('/notification.mp3');
       audio.play().catch(e => console.log('Audio play failed:', e));
@@ -23,26 +22,18 @@ export const NotificationProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    let removeHandler = null;
-
     if (user?.id) {
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          socketService.initialize(user.id);
-          removeHandler = socketService.addNotificationHandler(handleNotification);
-        } catch (error) {
-          console.error('Socket initialization error:', error);
-        }
-      }
-    }
+      // Initialize socket connection
+      socketService.initialize(user.id);
+      
+      // Add notification handler
+      const cleanup = socketService.addNotificationHandler(handleNotification);
 
-    return () => {
-      if (removeHandler) {
-        removeHandler();
-      }
-      socketService.disconnect();
-    };
+      return () => {
+        if (cleanup) cleanup();
+        socketService.disconnect();
+      };
+    }
   }, [user, handleNotification]);
 
   const clearNotifications = useCallback(() => {
@@ -50,7 +41,11 @@ export const NotificationProvider = ({ children }) => {
   }, []);
 
   return (
-    <NotificationContext.Provider value={{ notifications, clearNotifications }}>
+    <NotificationContext.Provider value={{ 
+      notifications, 
+      clearNotifications,
+      addNotification: handleNotification // Export the handler if needed
+    }}>
       {children}
     </NotificationContext.Provider>
   );

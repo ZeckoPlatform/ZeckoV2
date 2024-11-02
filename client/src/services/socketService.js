@@ -9,24 +9,22 @@ class SocketService {
   }
 
   initialize(userId) {
-    this.userId = userId;
-    return this.connect();
-  }
-
-  connect(token) {
-    if (this.socket?.connected) {
-      return this.socket;
+    if (this.socket?.connected && this.userId === userId) {
+      return;
     }
 
-    console.log('Connecting to socket:', SOCKET_URL);
-    
-    this.socket = io(SOCKET_URL, {
-      ...SOCKET_CONFIG,
-      auth: { token, userId: this.userId }
-    });
+    this.userId = userId;
+    const token = localStorage.getItem('token');
 
-    this.setupListeners();
-    return this.socket;
+    if (!this.socket) {
+      console.log('Connecting to socket:', SOCKET_URL);
+      this.socket = io(SOCKET_URL, {
+        ...SOCKET_CONFIG,
+        auth: { token, userId }
+      });
+
+      this.setupListeners();
+    }
   }
 
   setupListeners() {
