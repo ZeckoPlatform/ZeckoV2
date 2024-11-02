@@ -35,7 +35,10 @@
     "socket.io": "4.8.1",
     "socket.io-client": "4.8.1",
     "stripe": "17.2.1",
-    "styled-components": "5.3.10"
+    "styled-components": "5.3.10",
+    "zxcvbn": "^4.4.2",
+    "@zxcvbn-ts/core": "^3.0.4",
+    "@zxcvbn-ts/language-common": "^3.0.4"
   },
   "devDependencies": {
     "typescript": "^4.9.5"
