@@ -5,8 +5,8 @@ const Cart = require('../models/cartModel');
 const Product = require('../models/productModel');
 const notificationService = require('../services/notificationService');
 
+// Define all controller functions
 const getVendorOrders = async (req, res) => {
-    console.log('getVendorOrders called');
     try {
         const orders = await Order.find({
             'items.product': { 
@@ -15,7 +15,6 @@ const getVendorOrders = async (req, res) => {
         }).populate('items.product user');
         res.json(orders);
     } catch (error) {
-        console.error('getVendorOrders error:', error);
         res.status(500).json({ error: error.message });
     }
 };
@@ -29,43 +28,6 @@ const getOrders = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
-};
-
-const createOrder = async (orderData, userId) => {
-    const { items, shippingAddress, totalAmount } = orderData;
-
-    // Validate items stock
-    for (const item of items) {
-        const product = await Product.findById(item.product);
-        if (!product || product.stock < item.quantity) {
-            throw new Error(`Insufficient stock for product ${item.product}`);
-        }
-    }
-
-    const order = new Order({
-        user: userId,
-        items,
-        shippingAddress,
-        totalAmount,
-        status: 'pending'
-    });
-
-    await order.save();
-
-    // Update product stock
-    for (const item of items) {
-        await Product.findByIdAndUpdate(item.product, {
-            $inc: { stock: -item.quantity }
-        });
-    }
-
-    // Clear cart
-    await Cart.findOneAndUpdate(
-        { user: userId },
-        { items: [] }
-    );
-
-    return order;
 };
 
 const getOrderById = async (req, res) => {
@@ -84,6 +46,21 @@ const getOrderById = async (req, res) => {
     }
 };
 
+const createOrder = async (req, res) => {
+    try {
+        const order = new Order({
+            user: req.user._id,
+            items: req.body.items,
+            shippingAddress: req.body.shippingAddress,
+            totalAmount: req.body.totalAmount
+        });
+        await order.save();
+        res.status(201).json(order);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 const updateOrderStatus = async (req, res) => {
     try {
         const { status } = req.body;
@@ -91,11 +68,6 @@ const updateOrderStatus = async (req, res) => {
 
         if (!order) {
             return res.status(404).json({ error: 'Order not found' });
-        }
-
-        // Check authorization
-        if (!req.user.isAdmin && req.user._id.toString() !== order.vendor?.toString()) {
-            return res.status(403).json({ error: 'Not authorized' });
         }
 
         order.status = status;
@@ -114,6 +86,7 @@ const updateOrderStatus = async (req, res) => {
     }
 };
 
+// Create controller object
 const controller = {
     getVendorOrders,
     getOrders,
@@ -123,7 +96,6 @@ const controller = {
 };
 
 console.log('orderController methods:', Object.keys(controller));
-console.log('getVendorOrders type:', typeof controller.getVendorOrders);
 console.log('Loading orderController.js - END');
 
 module.exports = controller;

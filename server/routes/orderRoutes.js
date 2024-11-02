@@ -3,45 +3,24 @@ console.log('Loading orderRoutes.js - START');
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
-const { auth, vendorAuth } = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
+const socketHelpers = require('../socket');
+const notificationService = require('../services/notificationService');
 
 // Debug logging
 console.log('orderController type:', typeof orderController);
 console.log('getVendorOrders type:', typeof orderController.getVendorOrders);
 
 // Vendor routes
-router.get('/vendor/orders', vendorAuth, orderController.getVendorOrders);
+router.get('/vendor/orders', auth, orderController.getVendorOrders);
 
 // Basic routes
 router.get('/', auth, orderController.getOrders);
-
-router.post('/', auth, async (req, res) => {
-    try {
-        const order = await orderController.createOrder(req.body, req.user._id);
-        
-        // Send notifications
-        socketHelpers.sendOrderNotification(req.user.id, order);
-        socketHelpers.notifyAdmins('new_order', {
-            message: `New order #${order.orderNumber} created`,
-            data: order
-        });
-
-        await notificationService.createNotification(
-            req.user._id,
-            'order',
-            'Your order has been placed successfully',
-            { orderId: order._id }
-        );
-
-        res.status(201).json(order);
-    } catch (error) {
-        console.error('Order creation error:', error);
-        res.status(500).json({ error: error.message || 'Failed to create order' });
-    }
-});
+router.post('/', auth, orderController.createOrder);
 
 // Order specific routes
 router.get('/:id', auth, orderController.getOrderById);
+router.patch('/:id/status', auth, orderController.updateOrderStatus);
 
 console.log('Loading orderRoutes.js - END');
 
