@@ -6,24 +6,19 @@ const socketHelpers = require('../socket');
 const notificationService = require('../services/notificationService');
 
 // Vendor routes (must come before /:id routes)
-router.get('/vendor/orders', auth, async (req, res, next) => {
-    try {
-        await orderController.getVendorOrders(req, res);
-    } catch (error) {
-        next(error);
-    }
+router.get('/vendor/orders', auth, (req, res, next) => {
+    orderController.getVendorOrders(req, res).catch(next);
 });
 
-router.post('/bulk-update', auth, async (req, res, next) => {
-    try {
-        await orderController.bulkUpdateOrders(req, res);
-    } catch (error) {
-        next(error);
-    }
+router.post('/bulk-update', auth, (req, res, next) => {
+    orderController.bulkUpdateOrders(req, res).catch(next);
 });
 
 // Basic routes
-router.get('/', auth, orderController.getOrders);
+router.get('/', auth, (req, res, next) => {
+    orderController.getOrders(req, res).catch(next);
+});
+
 router.post('/', auth, async (req, res) => {
     try {
         const order = await orderController.createOrder(req.body, req.user._id);
@@ -51,9 +46,20 @@ router.post('/', auth, async (req, res) => {
 });
 
 // Order specific routes
-router.get('/:id', auth, orderController.getOrderById);
-router.patch('/:id/status', auth, orderController.updateOrderStatus);
-router.patch('/:id/tracking', auth, orderController.updateTracking);
-router.get('/:id/tracking', auth, orderController.getTracking);
+router.get('/:id', auth, (req, res, next) => {
+    orderController.getOrderById(req, res).catch(next);
+});
+
+router.patch('/:id/status', auth, (req, res, next) => {
+    orderController.updateOrderStatus(req, res).catch(next);
+});
+
+router.patch('/:id/tracking', auth, (req, res, next) => {
+    orderController.updateTracking(req, res).catch(next);
+});
+
+router.get('/:id/tracking', auth, (req, res, next) => {
+    orderController.getTracking(req, res).catch(next);
+});
 
 module.exports = router;
