@@ -7,13 +7,11 @@ const auth = require('../middleware/auth');
 const socketHelpers = require('../socket');
 const notificationService = require('../services/notificationService');
 
-console.log('orderController methods in routes:', Object.keys(orderController));
-
 // Vendor routes
-router.get('/vendor/orders', auth, orderController.getVendorOrders());
+router.get('/vendor/orders', auth, orderController.getVendorOrders);
 
 // Basic routes
-router.get('/', auth, orderController.getOrders());
+router.get('/', auth, orderController.getOrders);
 
 router.post('/', auth, async (req, res) => {
     try {
@@ -41,7 +39,7 @@ router.post('/', auth, async (req, res) => {
 });
 
 // Order specific routes
-router.get('/:id', auth, orderController.getOrderById());
+router.get('/:id', auth, orderController.getOrderById);
 
 console.log('Loading orderRoutes.js - END');
 
