@@ -1,4 +1,5 @@
 import io from 'socket.io-client';
+import { Subject } from 'rxjs';
 
 const SOCKET_URL = process.env.NODE_ENV === 'production'
   ? 'https://zeckov2-deceb43992ac.herokuapp.com'
@@ -7,7 +8,7 @@ const SOCKET_URL = process.env.NODE_ENV === 'production'
 class SocketService {
   constructor() {
     this.socket = null;
-    this.subscribers = new Set();
+    this.notificationSubject = new Subject();
   }
 
   connect(token) {
@@ -17,7 +18,10 @@ class SocketService {
 
     this.socket = io(SOCKET_URL, {
       auth: { token },
-      transports: ['websocket']
+      transports: ['websocket'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
     });
 
     this.setupListeners();
@@ -28,25 +32,25 @@ class SocketService {
     if (!this.socket) return;
 
     this.socket.on('connect', () => {
-      console.log('Socket connected');
+      console.log('Socket connected successfully');
     });
 
     this.socket.on('notification', (data) => {
-      this.notifySubscribers(data);
+      console.log('Received notification:', data);
+      this.notificationSubject.next(data);
     });
 
     this.socket.on('disconnect', () => {
       console.log('Socket disconnected');
     });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+    });
   }
 
-  subscribe(callback) {
-    this.subscribers.add(callback);
-    return () => this.subscribers.delete(callback);
-  }
-
-  notifySubscribers(data) {
-    this.subscribers.forEach(callback => callback(data));
+  getNotificationObservable() {
+    return this.notificationSubject.asObservable();
   }
 
   disconnect() {
@@ -54,7 +58,7 @@ class SocketService {
       this.socket.disconnect();
       this.socket = null;
     }
-    this.subscribers.clear();
+    // Don't complete the subject, just clean up socket
   }
 }
 
