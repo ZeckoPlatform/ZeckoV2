@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { logActivity, ActivityTypes } from '../utils/activityLogger';
+import axios from 'axios';
 
 // Add this near the top
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -74,26 +75,10 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(userData)
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Registration failed');
-      }
-
-      const data = await response.json();
-      localStorage.setItem('token', data.token);
-      setUser(data.user);
-      return { success: true };
+      const response = await axios.post(`${API_URL}/api/users/register`, userData);
+      return response.data;
     } catch (error) {
-      console.error('Registration error:', error);
-      return { success: false, error: error.message };
+      throw error.response?.data || error;
     }
   };
 

@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { zxcvbn } from '@zxcvbn-ts/core';
 import { dictionary } from '@zxcvbn-ts/language-common';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 
 const RegisterContainer = styled.div`
   max-width: 400px;
@@ -185,23 +186,17 @@ function Register() {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/users/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const API_URL = process.env.NODE_ENV === 'production'
+        ? 'https://zeckov2-deceb43992ac.herokuapp.com'
+        : 'http://localhost:5000';
 
-      const data = await response.json();
+      const response = await axios.post(`${API_URL}/api/users/register`, formData);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
+      if (response.data) {
+        navigate('/login');
       }
-
-      navigate('/login');
     } catch (error) {
-      setError(error.message);
+      setError(error.response?.data?.error || error.message || 'Registration failed');
     }
   };
 
