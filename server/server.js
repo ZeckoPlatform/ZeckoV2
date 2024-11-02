@@ -53,31 +53,35 @@ global.connectedClients = new Map();
 io.on('connection', (socket) => {
     console.log('Client connected:', socket.id);
 
-    socket.on('error', (error) => {
-        console.error('Socket error:', error);
-    });
-
-    socket.on('disconnect', () => {
-        console.log('Client disconnected:', socket.id);
-    });
-
-    socket.on('authenticate', (data) => {
-        console.log('Authentication attempt for user:', data.userId);
+    // Authenticate socket connection
+    const token = socket.handshake.auth.token;
+    if (token) {
         try {
-            const decoded = jwt.verify(data.token, process.env.JWT_SECRET);
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
             socket.userId = decoded.userId;
-            socket.userType = decoded.userType;
-
+            
+            // Store socket connection
             if (!global.connectedClients.has(decoded.userId)) {
                 global.connectedClients.set(decoded.userId, new Set());
             }
             global.connectedClients.get(decoded.userId).add(socket);
-
-            console.log(`User ${decoded.userId} authenticated`);
-            socket.emit('authenticated', { success: true });
+            
+            console.log(`Authenticated socket for user: ${decoded.userId}`);
         } catch (error) {
-            console.error('Authentication error:', error);
-            socket.emit('authenticated', { success: false, error: 'Invalid token' });
+            console.error('Socket authentication failed:', error);
+        }
+    }
+
+    socket.on('disconnect', () => {
+        console.log('Client disconnected:', socket.id);
+        if (socket.userId) {
+            const userSockets = global.connectedClients.get(socket.userId);
+            if (userSockets) {
+                userSockets.delete(socket);
+                if (userSockets.size === 0) {
+                    global.connectedClients.delete(socket.userId);
+                }
+            }
         }
     });
 });
