@@ -12,6 +12,7 @@ import { initializeNotifications, disconnectNotifications } from './services/not
 import ProductManagement from './components/ProductManagement';
 import AddProduct from './components/ProductManagement/AddProduct';
 import EditProduct from './components/ProductManagement/EditProduct';
+import axios from 'axios';
 
 // Import all pages
 import Home from './pages/Home';
@@ -88,6 +89,18 @@ function App() {
     if (userId) {
       initializeNotifications(userId);
     }
+
+    const getClientIP = async () => {
+      try {
+        const response = await axios.get('https://api.ipify.org?format=json');
+        window.clientIP = response.data.ip;
+      } catch (error) {
+        console.error('Failed to get client IP:', error);
+        window.clientIP = 'unknown';
+      }
+    };
+
+    getClientIP();
 
     return () => {
       disconnectNotifications();

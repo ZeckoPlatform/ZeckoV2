@@ -70,7 +70,9 @@ export const AuthProvider = ({ children }) => {
       if (data.token) {
         localStorage.setItem('token', data.token);
         setUser(data.user);
-        await logActivity(ActivityTypes.LOGIN, 'Successful login');
+        await logActivity(ActivityTypes.LOGIN, 'User logged in successfully', {
+          email: credentials.email
+        });
         return { success: true };
       } else {
         throw new Error('No token received');
@@ -84,9 +86,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
+  const logout = async () => {
+    try {
+      await logActivity(ActivityTypes.SECURITY, 'User logged out');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const register = async (userData) => {
