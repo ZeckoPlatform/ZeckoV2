@@ -47,6 +47,4 @@ export const disconnectNotifications = () => {
 
 // Initialize socket when the service is imported
 initializeSocket();
-
-export default socket; 
-}; 
+export default socket;
