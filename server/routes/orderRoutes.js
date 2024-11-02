@@ -3,12 +3,14 @@ console.log('Loading orderRoutes.js - START');
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
-const auth = require('../middleware/auth');
-const socketHelpers = require('../socket');
-const notificationService = require('../services/notificationService');
+const { auth, vendorAuth } = require('../middleware/auth');
+
+// Debug logging
+console.log('orderController type:', typeof orderController);
+console.log('getVendorOrders type:', typeof orderController.getVendorOrders);
 
 // Vendor routes
-router.get('/vendor/orders', auth, orderController.getVendorOrders);
+router.get('/vendor/orders', vendorAuth, orderController.getVendorOrders);
 
 // Basic routes
 router.get('/', auth, orderController.getOrders);

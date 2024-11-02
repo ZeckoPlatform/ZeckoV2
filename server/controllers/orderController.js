@@ -5,8 +5,8 @@ const Cart = require('../models/cartModel');
 const Product = require('../models/productModel');
 const notificationService = require('../services/notificationService');
 
-// Direct function declarations like userController
 const getVendorOrders = async (req, res) => {
+    console.log('getVendorOrders called');
     try {
         const orders = await Order.find({
             'items.product': { 
@@ -15,6 +15,7 @@ const getVendorOrders = async (req, res) => {
         }).populate('items.product user');
         res.json(orders);
     } catch (error) {
+        console.error('getVendorOrders error:', error);
         res.status(500).json({ error: error.message });
     }
 };
@@ -113,17 +114,16 @@ const updateOrderStatus = async (req, res) => {
     }
 };
 
-// Create the controller object at the end
 const controller = {
     getVendorOrders,
     getOrders,
     createOrder,
     getOrderById,
-    updateOrderStatus,
-    // ... add other methods ...
+    updateOrderStatus
 };
 
-console.log('Controller object being exported:', Object.keys(controller));
+console.log('orderController methods:', Object.keys(controller));
+console.log('getVendorOrders type:', typeof controller.getVendorOrders);
 console.log('Loading orderController.js - END');
 
 module.exports = controller;
