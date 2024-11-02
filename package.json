@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node server/server.js",
-    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false cd client && npm install --legacy-peer-deps && npm run build"
+    "heroku-postbuild": "cd client && npm install --legacy-peer-deps --force && SKIP_PREFLIGHT_CHECK=true DISABLE_ESLINT_PLUGIN=true npm run build"
   },
   "dependencies": {
     "bcryptjs": "2.4.3",
