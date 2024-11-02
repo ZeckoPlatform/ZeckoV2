@@ -126,13 +126,17 @@ function App() {
                     } 
                   />
                   <Route 
-                    path="/admin/*" 
+                    path="/admin" 
                     element={
                       <AdminRoute>
                         <AdminDashboard />
                       </AdminRoute>
                     } 
-                  />
+                  >
+                    <Route path="products" element={<ProductManagement />} />
+                    <Route path="products/add" element={<AddProduct />} />
+                    <Route path="products/edit/:id" element={<EditProduct />} />
+                  </Route>
                 </Routes>
               </Suspense>
             </MainContent>
