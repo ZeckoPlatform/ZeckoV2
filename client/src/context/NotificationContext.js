@@ -10,9 +10,9 @@ export const NotificationProvider = ({ children }) => {
   const { user } = useAuth();
 
   const handleNotification = useCallback((notification) => {
-    setNotifications(prev => [...prev, notification]);
+    if (!notification) return;
     
-    // Try to play notification sound
+    setNotifications(prev => [...prev, notification]);
     try {
       const audio = new Audio('/notification.mp3');
       audio.play().catch(() => {});
@@ -24,16 +24,19 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     let cleanup = null;
     
-    if (user?.id) {
-      // Initialize socket connection
-      socketService.initialize(user.id);
-      
-      // Add notification handler
-      cleanup = socketService.addNotificationHandler(handleNotification);
+    if (user?._id) {
+      try {
+        socketService.initialize(user._id);
+        cleanup = socketService.addNotificationHandler(handleNotification);
+      } catch (error) {
+        console.error('Error initializing notifications:', error);
+      }
     }
 
     return () => {
-      if (cleanup) cleanup();
+      if (typeof cleanup === 'function') {
+        cleanup();
+      }
     };
   }, [user, handleNotification]);
 
@@ -44,8 +47,7 @@ export const NotificationProvider = ({ children }) => {
   return (
     <NotificationContext.Provider value={{ 
       notifications, 
-      clearNotifications,
-      addNotification: handleNotification // Export the handler if needed
+      clearNotifications 
     }}>
       {children}
     </NotificationContext.Provider>
