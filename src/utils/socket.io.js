@@ -33,3 +33,36 @@ export const disconnectSocket = () => {
     socket.disconnect();
   }
 };
+
+export const subscribeToActivityUpdates = (callback) => {
+  const socket = getSocket();
+  
+  socket.on('activityUpdate', (data) => {
+    if (callback) {
+      callback(data);
+    }
+  });
+
+  return () => {
+    socket.off('activityUpdate');
+  };
+};
+
+export const subscribeToUserUpdates = (callback) => {
+  const socket = getSocket();
+  
+  socket.on('userUpdate', (data) => {
+    if (callback) {
+      callback(data);
+    }
+  });
+
+  return () => {
+    socket.off('userUpdate');
+  };
+};
+
+export const emitActivity = (activityData) => {
+  const socket = getSocket();
+  socket.emit('newActivity', activityData);
+};
