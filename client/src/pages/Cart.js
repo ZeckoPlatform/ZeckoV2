@@ -58,6 +58,17 @@ const Button = styled.button`
   }
 `;
 
+const CartButton = styled(Button)`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #4CAF50;
+  
+  svg {
+    font-size: 18px;
+  }
+`;
+
 const ItemDetails = styled.div`
   flex-grow: 1;
 `;
@@ -122,10 +133,10 @@ function Cart() {
         <div>
           <p>Your cart is empty.</p>
           <Link to="/shop">
-            <Button checkout>
-              <FaStore />
+            <CartButton>
+              <FaShoppingCart />
               Continue Shopping
-            </Button>
+            </CartButton>
           </Link>
         </div>
       ) : (
@@ -147,10 +158,10 @@ function Cart() {
           ))}
           <h3>Total: ${cart.total ? cart.total.toFixed(2) : '0.00'}</h3>
           <Link to="/checkout">
-            <Button checkout>
+            <CartButton>
               Proceed to Checkout
               <FaArrowRight />
-            </Button>
+            </CartButton>
           </Link>
         </div>
       )}
