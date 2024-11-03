@@ -27,6 +27,7 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const jobRoutes = require('./routes/jobRoutes');
 const businessRoutes = require('./routes/businessRoutes');
+const securityRoutes = require('./routes/securityRoutes');
 
 // Initialize Express and Socket.io
 const app = express();
@@ -135,6 +136,7 @@ mountRoute('/api/dashboard', dashboardRoutes);
 mountRoute('/api/admin/dashboard', adminRoutes);
 mountRoute('/api/jobs', jobRoutes);
 mountRoute('/api/businesses', businessRoutes);
+mountRoute('/api/security-settings', securityRoutes);
 mountRoute('/api', productRoutes);
 
 // API Endpoints
