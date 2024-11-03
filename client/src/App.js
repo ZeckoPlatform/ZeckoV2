@@ -54,23 +54,9 @@ const MainContent = styled.main`
 `;
 
 function App() {
-  useEffect(() => {
-    const getClientIP = async () => {
-      try {
-        const response = await axios.get('https://api.ipify.org?format=json');
-        window.clientIP = response.data.ip;
-      } catch (error) {
-        console.error('Failed to get client IP:', error);
-        window.clientIP = 'unknown';
-      }
-    };
-
-    getClientIP();
-  }, []);
-
   return (
-    <AppContainer>
-      <AuthProvider>
+    <AuthProvider>
+      <AppContainer>
         <BrowserRouter>
           <Layout>
             <MainContent>
@@ -170,8 +156,8 @@ function App() {
             </MainContent>
           </Layout>
         </BrowserRouter>
-      </AuthProvider>
-    </AppContainer>
+      </AppContainer>
+    </AuthProvider>
   );
 }
 
