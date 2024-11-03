@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const ProfileContainer = styled.div`
   max-width: 1200px;
@@ -51,6 +51,7 @@ function Profile() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchOrders();
@@ -102,7 +103,10 @@ function Profile() {
         <h2>Order History</h2>
         <OrderHistory>
           {orders.length === 0 ? (
-            <p>No orders yet. <Link to="/products">Start shopping!</Link></p>
+            <div>
+              <p>No orders yet.</p>
+              <Button onClick={() => navigate('/shop')}>Start Shopping</Button>
+            </div>
           ) : (
             orders.map(order => (
               <OrderCard key={order._id}>

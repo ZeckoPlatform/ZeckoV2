@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const DashboardContainer = styled.div`
   max-width: 1200px;
@@ -22,8 +23,23 @@ const DashboardCard = styled.div`
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 `;
 
+const Button = styled.button`
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+
+  &:hover {
+    opacity: 0.9;
+  }
+`;
+
 function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -61,7 +77,7 @@ function Dashboard() {
         <DashboardCard>
           <h2>Profile Overview</h2>
           <p>Welcome back, {user?.username}</p>
-          {/* Add more profile information */}
+          <Button onClick={() => navigate('/shop')}>Start Shopping</Button>
         </DashboardCard>
 
         <DashboardCard>
