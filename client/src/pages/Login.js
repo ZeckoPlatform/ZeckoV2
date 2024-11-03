@@ -57,7 +57,7 @@ function Login() {
   });
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { setUser } = useAuth();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -72,14 +72,25 @@ function Login() {
     setError('');
 
     try {
-      const result = await login(formData);
-      if (result.success) {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('token', data.token);
+        setUser(data.user);
         navigate('/dashboard');
       } else {
-        setError(result.error || 'Login failed. Please try again.');
+        setError(data.message || 'Login failed. Please try again.');
       }
     } catch (err) {
-      setError(err.message || 'Login failed. Please try again.');
+      setError('Login failed. Please try again.');
     }
   };
 
