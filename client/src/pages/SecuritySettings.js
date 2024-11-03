@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import QRCode from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 
 const SecurityContainer = styled.div`
   max-width: 800px;
@@ -243,7 +243,7 @@ const SecuritySettings = () => {
             <h3>Setup Two-Factor Authentication</h3>
             <p>Scan this QR code with your authenticator app:</p>
             {twoFactorSecret && (
-              <QRCode 
+              <QRCodeSVG 
                 value={`otpauth://totp/${user.email}?secret=${twoFactorSecret}&issuer=YourApp`}
                 size={256}
               />
