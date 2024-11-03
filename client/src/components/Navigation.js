@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { useAuth } from '../context/AuthContext';
 import { Bell, BellOff } from 'react-feather';
-import notificationService from '../services/notificationService';
-import { playNotificationSound, toggleNotificationSound, isNotificationMuted } from '../services/notificationSound';
 import VolumeControl from './VolumeControl';
 
 const Nav = styled.nav`
@@ -185,40 +183,83 @@ const SoundToggle = styled.button`
 `;
 
 function Navigation() {
-  const { user, logout } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [recentNotifications, setRecentNotifications] = useState([]);
-  const [hasNewNotification, setHasNewNotification] = useState(false);
-  const [isMuted, setIsMuted] = useState(isNotificationMuted);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const { socket, user } = useAuth();
+  const [isMuted, setIsMuted] = useState(() => {
+    return localStorage.getItem('notificationsMuted') === 'true';
+  });
 
   useEffect(() => {
-    if (user) {
-      const unsubscribe = notificationService.subscribe(notifications => {
-        const unread = notifications.filter(n => !n.read).length;
-        
-        if (unread > unreadCount) {
-          setHasNewNotification(true);
-          playNotificationSound();
-          
-          setTimeout(() => {
-            setHasNewNotification(false);
-          }, 2000);
-        }
-        
-        setUnreadCount(unread);
-        setRecentNotifications(notifications.slice(0, 5));
-      });
+    if (socket && user) {
+      const handleNotification = (data) => {
+        setNotifications(prev => [...prev, data]);
+        playNotificationSound();
+      };
 
-      notificationService.fetchNotifications();
+      socket.on('notification', handleNotification);
+      fetchNotifications(); // Initial fetch
 
-      return () => unsubscribe();
+      return () => {
+        socket.off('notification', handleNotification);
+      };
     }
-  }, [user, unreadCount]);
+  }, [socket, user]);
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await fetch('/api/notifications', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
+  const markAsRead = async (notificationId) => {
+    try {
+      await fetch(`/api/notifications/${notificationId}/read`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      setNotifications(prev => 
+        prev.map(n => n._id === notificationId ? { ...n, read: true } : n)
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
 
   const handleSoundToggle = () => {
     const newMutedState = toggleNotificationSound();
     setIsMuted(newMutedState);
+  };
+
+  const playNotificationSound = () => {
+    try {
+      const volume = localStorage.getItem('notificationVolume') || 0.5;
+      const audio = new Audio('/notification.mp3');
+      audio.volume = parseFloat(volume);
+      audio.play().catch(() => {});
+    } catch (error) {
+      console.error('Error playing notification sound:', error);
+    }
+  };
+
+  const toggleNotificationSound = () => {
+    const newMutedState = !isMuted;
+    setIsMuted(newMutedState);
+    localStorage.setItem('notificationsMuted', newMutedState);
+    return newMutedState;
   };
 
   return (
@@ -250,17 +291,14 @@ function Navigation() {
             <>
               <NavLink to="/profile">Profile</NavLink>
               <NavLink to="/cart">Cart</NavLink>
-              <NotificationIcon 
-                onClick={() => setIsOpen(!isOpen)}
-                hasNewNotification={hasNewNotification}
-              >
+              <NotificationIcon onClick={() => markAsRead(notification._id)}>
                 <Bell size={20} />
-                {unreadCount > 0 && (
-                  <Badge hasNewNotification={hasNewNotification}>
-                    {unreadCount}
+                {notifications.length > 0 && (
+                  <Badge hasNewNotification={true}>
+                    {notifications.length}
                   </Badge>
                 )}
-                <NotificationDropdown isOpen={isOpen}>
+                <NotificationDropdown isOpen={showNotifications}>
                   <div style={{ 
                     padding: '10px', 
                     borderBottom: '1px solid #eee',
@@ -281,13 +319,13 @@ function Navigation() {
                     </SoundToggle>
                   </div>
                   {!isMuted && <VolumeControl />}
-                  {recentNotifications.length === 0 ? (
+                  {notifications.length === 0 ? (
                     <div style={{ padding: '10px', textAlign: 'center' }}>
                       No new notifications
                     </div>
                   ) : (
                     <>
-                      {recentNotifications.map(notification => (
+                      {notifications.map(notification => (
                         <div 
                           key={notification._id}
                           style={{ 
@@ -295,10 +333,7 @@ function Navigation() {
                             borderBottom: '1px solid #eee',
                             backgroundColor: notification.read ? 'white' : '#f0f7ff'
                           }}
-                          onClick={() => {
-                            notificationService.markAsRead(notification._id);
-                            setIsOpen(false);
-                          }}
+                          onClick={() => markAsRead(notification._id)}
                         >
                           <div>{notification.message}</div>
                           <small style={{ color: '#666' }}>
@@ -315,7 +350,7 @@ function Navigation() {
                           color: 'var(--primary-color)',
                           textDecoration: 'none'
                         }}
-                        onClick={() => setIsOpen(false)}
+                        onClick={() => setShowNotifications(false)}
                       >
                         View All Notifications
                       </Link>

@@ -1,85 +1,154 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import notificationService from '../services/notificationService';
+import { Bell, X } from 'react-feather';
+import { useAuth } from '../context/AuthContext';
+import { playNotificationSound } from '../services/notificationSound';
 
 const NotificationContainer = styled.div`
-  max-width: 600px;
-  margin: 20px auto;
-  padding: 20px;
-  background-color: #f5f5f5;
+  position: relative;
+  display: inline-block;
+`;
+
+const NotificationIcon = styled.div`
+  cursor: pointer;
+  position: relative;
+`;
+
+const NotificationBadge = styled.span`
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: red;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+`;
+
+const NotificationPanel = styled.div`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: white;
   border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  z-index: 1000;
+  display: ${props => props.show ? 'block' : 'none'};
 `;
 
 const NotificationItem = styled.div`
   padding: 10px;
-  margin-bottom: 10px;
-  background-color: ${props => props.read ? '#fff' : '#e6f7ff'};
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  
+  &:hover {
+    background: #f5f5f5;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
 `;
 
-const NotificationMessage = styled.p`
-  margin: 0;
+const EmptyNotification = styled.div`
+  padding: 20px;
+  text-align: center;
+  color: #666;
 `;
 
-const NotificationDate = styled.span`
-  font-size: 0.8em;
-  color: #888;
-`;
-
-function Notifications() {
+const Notifications = () => {
+  const [showPanel, setShowPanel] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const { socket, user } = useAuth();
+  const [isMuted, setIsMuted] = useState(() => {
+    return localStorage.getItem('notificationsMuted') === 'true';
+  });
 
   useEffect(() => {
-    // Initial fetch
-    notificationService.fetchNotifications()
-      .then(data => setNotifications(data))
-      .catch(error => console.error('Error fetching notifications:', error));
+    if (socket && user) {
+      const handleNotification = (data) => {
+        setNotifications(prev => [...prev, data]);
+        if (!isMuted) {
+          playNotificationSound();
+        }
+      };
 
-    // Subscribe to updates
-    const unsubscribe = notificationService.subscribe(updatedNotifications => {
-      setNotifications(updatedNotifications);
-    });
+      socket.on('notification', handleNotification);
 
-    return () => unsubscribe();
-  }, []);
+      // Fetch existing notifications
+      fetchNotifications();
 
-  const handleMarkAsRead = async (notificationId) => {
+      return () => {
+        socket.off('notification', handleNotification);
+      };
+    }
+  }, [socket, user, isMuted]);
+
+  const fetchNotifications = async () => {
     try {
-      await notificationService.markAsRead(notificationId);
+      const response = await fetch('/api/notifications', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
+  const markAsRead = async (notificationId) => {
+    try {
+      await fetch(`/api/notifications/${notificationId}/read`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      setNotifications(prev => 
+        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+      );
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
   };
 
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   return (
     <NotificationContainer>
-      <h2>Notifications ({notificationService.getUnreadCount()})</h2>
-      {notifications.length === 0 ? (
-        <p>No notifications</p>
-      ) : (
-        <>
-          {notifications.some(n => !n.read) && (
-            <button onClick={() => notificationService.markAllAsRead()}>
-              Mark all as read
-            </button>
-          )}
-          {notifications.map(notification => (
+      <NotificationIcon onClick={() => setShowPanel(!showPanel)}>
+        <Bell size={20} />
+        {unreadCount > 0 && <NotificationBadge>{unreadCount}</NotificationBadge>}
+      </NotificationIcon>
+
+      <NotificationPanel show={showPanel}>
+        {notifications.length === 0 ? (
+          <EmptyNotification>No notifications</EmptyNotification>
+        ) : (
+          notifications.map(notification => (
             <NotificationItem 
-              key={notification._id} 
-              read={notification.read} 
-              onClick={() => handleMarkAsRead(notification._id)}
+              key={notification.id}
+              onClick={() => markAsRead(notification.id)}
+              style={{ 
+                background: notification.read ? 'white' : '#f0f7ff'
+              }}
             >
-              <NotificationMessage>{notification.message}</NotificationMessage>
-              <NotificationDate>
-                {new Date(notification.createdAt).toLocaleString()}
-              </NotificationDate>
+              <div>{notification.message}</div>
+              <small>{new Date(notification.createdAt).toLocaleString()}</small>
             </NotificationItem>
-          ))}
-        </>
-      )}
+          ))
+        )}
+      </NotificationPanel>
     </NotificationContainer>
   );
-}
+};
 
 export default Notifications;

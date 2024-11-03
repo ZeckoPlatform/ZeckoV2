@@ -1,11 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import styled from 'styled-components';
 import { Volume1, Volume2, VolumeX } from 'react-feather';
-import { 
-  setNotificationVolume, 
-  getNotificationVolume,
-  playTestSound 
-} from '../services/notificationSound';
 
 const VolumeContainer = styled.div`
   display: flex;
@@ -74,27 +69,44 @@ const TestButton = styled.button`
 `;
 
 function VolumeControl() {
-  const [volume, setVolume] = useState(getNotificationVolume());
+  const [volume, setVolume] = useState(() => {
+    const savedVolume = localStorage.getItem('notificationVolume');
+    return savedVolume ? parseFloat(savedVolume) : 0.5;
+  });
 
-  const handleVolumeChange = (e) => {
+  const handleVolumeChange = useCallback((e) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
-    setNotificationVolume(newVolume);
-  };
+    localStorage.setItem('notificationVolume', newVolume);
+  }, []);
 
-  const getVolumeIcon = () => {
+  const toggleMute = useCallback(() => {
+    const newVolume = volume === 0 ? 0.5 : 0;
+    setVolume(newVolume);
+    localStorage.setItem('notificationVolume', newVolume);
+  }, [volume]);
+
+  const playTestSound = useCallback(() => {
+    try {
+      const audio = new Audio('/notification.mp3');
+      audio.volume = volume;
+      audio.play().catch(() => {
+        console.error('Failed to play test sound');
+      });
+    } catch (error) {
+      console.error('Error playing test sound:', error);
+    }
+  }, [volume]);
+
+  const getVolumeIcon = useCallback(() => {
     if (volume === 0) return <VolumeX size={16} />;
     if (volume < 0.5) return <Volume1 size={16} />;
     return <Volume2 size={16} />;
-  };
+  }, [volume]);
 
   return (
     <VolumeContainer>
-      <VolumeIcon onClick={() => {
-        const newVolume = volume === 0 ? 0.5 : 0;
-        setVolume(newVolume);
-        setNotificationVolume(newVolume);
-      }}>
+      <VolumeIcon onClick={toggleMute}>
         {getVolumeIcon()}
       </VolumeIcon>
       <VolumeSlider
