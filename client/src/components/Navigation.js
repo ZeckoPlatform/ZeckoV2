@@ -185,7 +185,7 @@ const SoundToggle = styled.button`
 function Navigation() {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  const { socket, user } = useAuth();
+  const { socket, user, logout } = useAuth();
   const [isMuted, setIsMuted] = useState(() => {
     return localStorage.getItem('notificationsMuted') === 'true';
   });
@@ -359,7 +359,7 @@ function Navigation() {
                 </NotificationDropdown>
               </NotificationIcon>
               <NavLink to="/security-settings">Security</NavLink>
-              <Button onClick={logout}>Logout</Button>
+              <Button onClick={() => logout()}>Logout</Button>
             </>
           ) : (
             <>
