@@ -64,42 +64,69 @@ const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const { socket, user } = useAuth();
   const [isMuted, setIsMuted] = useState(() => {
-    return localStorage.getItem('notificationsMuted') === 'true';
+    try {
+      return localStorage.getItem('notificationsMuted') === 'true';
+    } catch (error) {
+      console.error('Error reading mute state:', error);
+      return false;
+    }
   });
 
   useEffect(() => {
-    if (socket && user) {
-      const handleNotification = (data) => {
+    if (!socket || !user) {
+      return; // Exit early if dependencies aren't ready
+    }
+
+    const handleNotification = (data) => {
+      try {
         setNotifications(prev => [...prev, data]);
-        if (!isMuted) {
+        if (!isMuted && data) {
           playNotificationSound();
         }
-      };
+      } catch (error) {
+        console.error('Error handling notification:', error);
+      }
+    };
 
+    try {
       socket.on('notification', handleNotification);
-
-      // Fetch existing notifications
       fetchNotifications();
 
       return () => {
         socket.off('notification', handleNotification);
       };
+    } catch (error) {
+      console.error('Error setting up socket listener:', error);
     }
   }, [socket, user, isMuted]);
 
   const fetchNotifications = async () => {
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+
       const response = await fetch('/api/notifications', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
-      if (response.ok) {
-        const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      if (Array.isArray(data)) {
         setNotifications(data);
+      } else {
+        console.error('Received invalid notifications data:', data);
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
+      setNotifications([]); // Set to empty array on error
     }
   };
 
