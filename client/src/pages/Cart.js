@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
 import { fetchCart, removeFromCart } from '../services/cartService';
+import { FaShoppingCart, FaTrash, FaArrowRight, FaStore } from 'react-icons/fa';
 
 const CartContainer = styled.div`
   padding: 20px;
@@ -10,11 +11,30 @@ const CartContainer = styled.div`
   margin: 0 auto;
 `;
 
+const CartHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  
+  h1 {
+    margin: 0;
+  }
+  
+  svg {
+    font-size: 24px;
+    color: #4CAF50;
+  }
+`;
+
 const CartItem = styled.div`
   border: 1px solid #ddd;
   padding: 15px;
   margin-bottom: 10px;
   border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 `;
 
 const Button = styled.button`
@@ -25,10 +45,27 @@ const Button = styled.button`
   cursor: pointer;
   background-color: ${props => props.checkout ? '#4CAF50' : '#ff4444'};
   color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 
   &:hover {
     opacity: 0.9;
   }
+
+  svg {
+    font-size: 16px;
+  }
+`;
+
+const ItemDetails = styled.div`
+  flex-grow: 1;
+`;
+
+const ItemActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
 `;
 
 function Cart() {
@@ -77,29 +114,43 @@ function Cart() {
 
   return (
     <CartContainer>
-      <h1>Shopping Cart</h1>
+      <CartHeader>
+        <FaShoppingCart />
+        <h1>Shopping Cart</h1>
+      </CartHeader>
       {cart.items.length === 0 ? (
         <div>
           <p>Your cart is empty.</p>
           <Link to="/shop">
-            <Button checkout>Continue Shopping</Button>
+            <Button checkout>
+              <FaStore />
+              Continue Shopping
+            </Button>
           </Link>
         </div>
       ) : (
         <div>
           {cart.items.map((item) => (
             <CartItem key={item.product._id}>
-              <h3>{item.product.name}</h3>
-              <p>Quantity: {item.quantity}</p>
-              <p>Price: ${(item.product.price * item.quantity).toFixed(2)}</p>
-              <Button onClick={() => handleRemoveFromCart(item.product._id)}>
-                Remove
-              </Button>
+              <ItemDetails>
+                <h3>{item.product.name}</h3>
+                <p>Quantity: {item.quantity}</p>
+                <p>Price: ${(item.product.price * item.quantity).toFixed(2)}</p>
+              </ItemDetails>
+              <ItemActions>
+                <Button onClick={() => handleRemoveFromCart(item.product._id)}>
+                  <FaTrash />
+                  Remove
+                </Button>
+              </ItemActions>
             </CartItem>
           ))}
           <h3>Total: ${cart.total ? cart.total.toFixed(2) : '0.00'}</h3>
           <Link to="/checkout">
-            <Button checkout>Proceed to Checkout</Button>
+            <Button checkout>
+              Proceed to Checkout
+              <FaArrowRight />
+            </Button>
           </Link>
         </div>
       )}
