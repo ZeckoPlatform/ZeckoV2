@@ -1,50 +1,37 @@
 import axios from 'axios';
+import { API_URL } from '../config/constants';
 
-const API_URL = process.env.NODE_ENV === 'production'
-  ? 'https://zeckov2-deceb43992ac.herokuapp.com'
-  : 'http://localhost:5000';
-
-export const activityLogService = {
-  async logActivity(activityData) {
+class ActivityLogService {
+  async getActivityLog(filters) {
     try {
       const token = localStorage.getItem('token');
-      if (!token) {
-        console.warn('No token found, skipping activity log');
-        return;
-      }
-
-      const decoded = JSON.parse(atob(token.split('.')[1]));
-      console.log('Decoded token:', decoded);
-
-      const logData = {
-        type: activityData.type.toLowerCase(),
-        description: activityData.description,
-        timestamp: activityData.timestamp || new Date().toISOString(),
-        metadata: {
-          ...activityData.metadata,
-          userId: decoded.userId
+      const response = await axios.get(`${API_URL}/api/activity-logs`, {
+        headers: {
+          Authorization: `Bearer ${token}`
         },
-        userAgent: navigator.userAgent
-      };
-
-      console.log('Sending activity log:', logData);
-
-      const response = await axios.post(
-        `${API_URL}/api/activity-logs`,
-        logData,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      console.log('Activity logged successfully:', response.data);
+        params: filters
+      });
       return response.data;
     } catch (error) {
-      console.error('Error logging activity:', error.response?.data || error);
-      return null;
+      console.error('Error fetching activity log:', error);
+      throw error;
     }
   }
-}; 
+
+  async createActivity(activityData) {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API_URL}/api/activity-logs`, activityData, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error creating activity:', error);
+      throw error;
+    }
+  }
+}
+
+export const activityLogService = new ActivityLogService(); 
