@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const speakeasy = require('speakeasy');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -67,7 +68,19 @@ const userSchema = new mongoose.Schema({
     loginAlerts: {
       type: Boolean,
       default: true
+    },
+    lastSecurityUpdate: {
+      type: Date,
+      default: Date.now
     }
+  },
+  twoFactorSecret: {
+    type: String,
+    select: false
+  },
+  tempSecret: {
+    type: String,
+    select: false
   }
 }, {
   timestamps: true
@@ -85,6 +98,17 @@ userSchema.methods.updateLastLogin = async function() {
   this.activity.lastLogin = new Date();
   this.activity.loginCount += 1;
   await this.save();
+};
+
+userSchema.methods.verifyTwoFactorToken = function(token) {
+  if (!this.twoFactorSecret) return false;
+  
+  return speakeasy.totp.verify({
+    secret: this.twoFactorSecret,
+    encoding: 'base32',
+    token: token,
+    window: 2
+  });
 };
 
 module.exports = mongoose.model('User', userSchema);

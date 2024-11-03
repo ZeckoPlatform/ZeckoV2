@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import QRCode from 'qrcode.react';
 
 const SecurityContainer = styled.div`
   max-width: 800px;
@@ -39,6 +40,43 @@ const Toggle = styled.label`
   margin: 10px 0;
 `;
 
+const Modal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 8px;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+`;
+
 const SecuritySettings = () => {
   const { user } = useAuth();
   const [settings, setSettings] = useState({
@@ -49,6 +87,11 @@ const SecuritySettings = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  const [showTwoFactorModal, setShowTwoFactorModal] = useState(false);
+  const [twoFactorSecret, setTwoFactorSecret] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [setupError, setSetupError] = useState('');
 
   useEffect(() => {
     fetchSecuritySettings();
@@ -97,6 +140,51 @@ const SecuritySettings = () => {
     navigate('/activity-log');
   };
 
+  const setup2FA = async () => {
+    try {
+      const response = await fetch('/api/users/2fa/setup', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to setup 2FA');
+      
+      const data = await response.json();
+      setTwoFactorSecret(data.secret);
+      setShowTwoFactorModal(true);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const verify2FA = async () => {
+    try {
+      const response = await fetch('/api/users/2fa/verify', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          code: verificationCode,
+          secret: twoFactorSecret
+        })
+      });
+
+      if (!response.ok) throw new Error('Invalid verification code');
+
+      await updateSetting('twoFactorEnabled', true);
+      setShowTwoFactorModal(false);
+      setVerificationCode('');
+      setSetupError('');
+    } catch (err) {
+      setSetupError(err.message);
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -115,7 +203,7 @@ const SecuritySettings = () => {
           Enable Two-Factor Authentication
         </Toggle>
         {settings.twoFactorEnabled && (
-          <Button onClick={() => {/* Handle 2FA setup */}}>
+          <Button onClick={setup2FA}>
             Setup 2FA
           </Button>
         )}
@@ -148,6 +236,40 @@ const SecuritySettings = () => {
           View Full Activity Log
         </Button>
       </Section>
+
+      {showTwoFactorModal && (
+        <Modal>
+          <ModalContent>
+            <h3>Setup Two-Factor Authentication</h3>
+            <p>Scan this QR code with your authenticator app:</p>
+            {twoFactorSecret && (
+              <QRCode 
+                value={`otpauth://totp/${user.email}?secret=${twoFactorSecret}&issuer=YourApp`}
+                size={256}
+              />
+            )}
+            <Input
+              type="text"
+              placeholder="Enter verification code"
+              value={verificationCode}
+              onChange={(e) => setVerificationCode(e.target.value)}
+            />
+            {setupError && <p style={{ color: 'red' }}>{setupError}</p>}
+            <ButtonGroup>
+              <Button onClick={verify2FA}>Verify</Button>
+              <Button 
+                onClick={() => {
+                  setShowTwoFactorModal(false);
+                  setVerificationCode('');
+                  setSetupError('');
+                }}
+              >
+                Cancel
+              </Button>
+            </ButtonGroup>
+          </ModalContent>
+        </Modal>
+      )}
     </SecurityContainer>
   );
 };

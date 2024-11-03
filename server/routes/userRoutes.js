@@ -5,6 +5,7 @@ const { auth } = require('../middleware/auth');
 const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const speakeasy = require('speakeasy');
 
 console.log('Loading userRoutes.js - START');
 
@@ -103,6 +104,67 @@ router.patch('/security-settings', auth, async (req, res) => {
   } catch (error) {
     console.error('Error updating security settings:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// 2FA routes
+router.post('/2fa/setup', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId || req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Generate new secret
+    const secret = speakeasy.generateSecret({
+      name: `YourApp:${user.email}`
+    });
+
+    // Store temporary secret
+    user.tempSecret = secret.base32;
+    await user.save();
+
+    res.json({ 
+      secret: secret.base32,
+      message: '2FA setup initiated'
+    });
+  } catch (error) {
+    console.error('2FA setup error:', error);
+    res.status(500).json({ message: 'Error setting up 2FA' });
+  }
+});
+
+router.post('/2fa/verify', auth, async (req, res) => {
+  try {
+    const { code, secret } = req.body;
+    const user = await User.findById(req.user.userId || req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Verify the token
+    const verified = speakeasy.totp.verify({
+      secret: secret,
+      encoding: 'base32',
+      token: code,
+      window: 2 // Allow 2 time steps for clock drift
+    });
+
+    if (!verified) {
+      return res.status(400).json({ message: 'Invalid verification code' });
+    }
+
+    // Store the verified secret and enable 2FA
+    user.twoFactorSecret = secret;
+    user.tempSecret = undefined;
+    user.securitySettings.twoFactorEnabled = true;
+    await user.save();
+
+    res.json({ message: '2FA setup successful' });
+  } catch (error) {
+    console.error('2FA verification error:', error);
+    res.status(500).json({ message: 'Error verifying 2FA' });
   }
 });
 
