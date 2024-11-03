@@ -80,4 +80,27 @@ router.get('/subscription', auth, async (req, res) => {
   }
 });
 
+// Add this new route at the top of your existing dashboardRoutes.js
+router.get('/', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    const dashboardData = {
+      user: {
+        name: user.username,
+        email: user.email,
+        role: user.role
+      },
+      stats: {
+        notifications: 0,
+        messages: 0
+      }
+    };
+
+    res.json(dashboardData);
+  } catch (error) {
+    console.error('Dashboard Error:', error);
+    res.status(500).json({ message: 'Error fetching dashboard data' });
+  }
+});
+
 module.exports = router;

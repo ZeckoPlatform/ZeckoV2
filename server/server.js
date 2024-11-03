@@ -24,6 +24,7 @@ const activityLogRoutes = require('./routes/activityLogRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 // Initialize Express and Socket.io
 const app = express();
@@ -128,6 +129,8 @@ mountRoute('/api/activity-logs', activityLogRoutes);
 mountRoute('/api/admin', adminRoutes);
 mountRoute('/api/reviews', reviewRoutes);
 mountRoute('/api/analytics', analyticsRoutes);
+mountRoute('/api/dashboard', dashboardRoutes);
+mountRoute('/api/admin/dashboard', adminRoutes);
 
 // API Endpoints
 app.get('/api/subscription-plans', (req, res) => {
