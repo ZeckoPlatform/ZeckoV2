@@ -150,6 +150,14 @@ function UserActivityLog() {
     dateRange: 'week'
   });
 
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   useEffect(() => {
     fetchActivityLog();
 
