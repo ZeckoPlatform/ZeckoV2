@@ -102,15 +102,16 @@ const NavButton = styled(Link)`
   }
 `;
 
-const NotificationIcon = styled.div`
-  position: relative;
-  cursor: pointer;
-  padding: 8px;
+const NotificationButton = styled.div`
   display: flex;
   align-items: center;
-
-  svg {
-    animation: ${props => props.hasNewNotification ? `${shake} 1s ease-in-out` : 'none'};
+  gap: 5px;
+  cursor: pointer;
+  padding: 8px;
+  color: var(--text-color);
+  
+  &:hover {
+    color: var(--primary-color);
   }
 `;
 
@@ -295,8 +296,11 @@ function Navigation() {
                 <FaShoppingCart style={{ marginRight: '5px' }} />
                 Cart
               </NavLink>
-              <NotificationIcon onClick={() => markAsRead(notification._id)}>
+              <NotificationButton 
+                onClick={() => setShowNotifications(!showNotifications)}
+              >
                 <Bell size={20} />
+                Notifications
                 {notifications.length > 0 && (
                   <Badge hasNewNotification={true}>
                     {notifications.length}
@@ -337,7 +341,10 @@ function Navigation() {
                             borderBottom: '1px solid #eee',
                             backgroundColor: notification.read ? 'white' : '#f0f7ff'
                           }}
-                          onClick={() => markAsRead(notification._id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markAsRead(notification._id);
+                          }}
                         >
                           <div>{notification.message}</div>
                           <small style={{ color: '#666' }}>
@@ -361,7 +368,7 @@ function Navigation() {
                     </>
                   )}
                 </NotificationDropdown>
-              </NotificationIcon>
+              </NotificationButton>
               <NavLink to="/security-settings">Security</NavLink>
               <Button onClick={() => logout()}>Logout</Button>
             </>
