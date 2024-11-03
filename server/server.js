@@ -42,37 +42,74 @@ const io = new Server(server, {
     },
     transports: ['websocket'],
     pingTimeout: 60000,
-    pingInterval: 25000
+    pingInterval: 25000,
+    connectTimeout: 45000,
+    // Add these options for better reliability
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000
 });
 
-// Add error handling for socket connections
-io.on('connect_error', (error) => {
-    console.error('Socket connection error:', error);
+// Add middleware for socket authentication
+io.use((socket, next) => {
+    const token = socket.handshake.auth.token;
+    if (!token) {
+        return next(new Error('Authentication token missing'));
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        socket.userId = decoded.userId;
+        socket.userType = decoded.userType; // Add user type for admin checks
+        next();
+    } catch (error) {
+        return next(new Error('Authentication failed'));
+    }
 });
 
-// Initialize global socket connections map
-global.connectedClients = new Map();
-
-// Socket.IO connection handling
+// Enhanced Socket.IO connection handling
 io.on('connection', (socket) => {
     console.log('Client connected:', socket.id);
 
-    // Authenticate socket connection
-    const token = socket.handshake.auth.token;
-    if (token) {
-        try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            socket.userId = decoded.userId;
-            console.log('Socket authenticated for user:', decoded.userId);
-        } catch (error) {
-            console.error('Socket authentication failed:', error);
-            socket.disconnect();
-            return;
+    // Store socket connection
+    if (socket.userId) {
+        if (!global.connectedClients.has(socket.userId)) {
+            global.connectedClients.set(socket.userId, new Set());
         }
+        global.connectedClients.get(socket.userId).add(socket);
     }
+
+    // Handle activity updates
+    socket.on('newActivity', (activity) => {
+        try {
+            socketHelpers.broadcastActivity(activity);
+        } catch (error) {
+            console.error('Error broadcasting activity:', error);
+        }
+    });
+
+    // Handle user updates
+    socket.on('userUpdate', (update) => {
+        try {
+            if (socket.userId) {
+                socketHelpers.sendNotificationToUser(socket.userId, update);
+            }
+        } catch (error) {
+            console.error('Error sending user update:', error);
+        }
+    });
 
     socket.on('disconnect', () => {
         console.log('Client disconnected:', socket.id);
+        if (socket.userId) {
+            const userSockets = global.connectedClients.get(socket.userId);
+            if (userSockets) {
+                userSockets.delete(socket);
+                if (userSockets.size === 0) {
+                    global.connectedClients.delete(socket.userId);
+                }
+            }
+        }
     });
 
     socket.on('error', (error) => {
@@ -191,28 +228,43 @@ process.on('unhandledRejection', (err) => {
     console.error('Unhandled Rejection:', err);
 });
 
-// Socket helper functions
+// Enhanced socket helpers
 const socketHelpers = {
     getIO: () => io,
+    
     notifyAdmins: (type, notification) => {
-        global.connectedClients.forEach((sockets, userId) => {
-            sockets.forEach(socket => {
-                if (socket.userType === 'admin') {
-                    socket.emit(type, notification);
-                }
+        try {
+            global.connectedClients.forEach((sockets, userId) => {
+                sockets.forEach(socket => {
+                    if (socket.userType === 'admin') {
+                        socket.emit(type, notification);
+                    }
+                });
             });
-        });
-    },
-    sendNotificationToUser: (userId, notification) => {
-        const userSockets = global.connectedClients.get(userId);
-        if (userSockets) {
-            userSockets.forEach(socket => {
-                socket.emit('notification', notification);
-            });
+        } catch (error) {
+            console.error('Error notifying admins:', error);
         }
     },
+
+    sendNotificationToUser: (userId, notification) => {
+        try {
+            const userSockets = global.connectedClients.get(userId);
+            if (userSockets) {
+                userSockets.forEach(socket => {
+                    socket.emit('notification', notification);
+                });
+            }
+        } catch (error) {
+            console.error('Error sending notification to user:', error);
+        }
+    },
+
     broadcastActivity: (activity) => {
-        io.emit('activityUpdate', activity);
+        try {
+            io.emit('activityUpdate', activity);
+        } catch (error) {
+            console.error('Error broadcasting activity:', error);
+        }
     }
 };
 

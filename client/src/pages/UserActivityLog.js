@@ -161,45 +161,60 @@ function UserActivityLog() {
   useEffect(() => {
     fetchActivityLog();
 
-    // Check initial socket connection
+    // Initialize socket connection
     const socket = getSocket();
-    setSocketConnected(socket?.connected || false);
+    if (socket) {
+      setSocketConnected(socket.connected);
 
-    // Handle socket connection status
-    const handleConnect = () => setSocketConnected(true);
-    const handleDisconnect = () => setSocketConnected(false);
-    const handleError = (error) => {
-      console.error('Socket error:', error);
-      setError('Real-time updates unavailable');
-    };
+      // Handle socket connection status
+      const handleConnect = () => {
+        console.log('Socket connected');
+        setSocketConnected(true);
+      };
 
-    socket?.on('connect', handleConnect);
-    socket?.on('disconnect', handleDisconnect);
-    socket?.on('error', handleError);
+      const handleDisconnect = () => {
+        console.log('Socket disconnected');
+        setSocketConnected(false);
+      };
 
-    // Handle real-time activity updates
-    const handleActivityUpdate = (newActivity) => {
-      setActivities(prevActivities => {
-        const updatedActivities = [newActivity, ...prevActivities];
-        return updatedActivities.sort((a, b) => 
-          new Date(b.timestamp) - new Date(a.timestamp)
-        );
-      });
-      
-      // Show update indicator
-      setRealtimeUpdate(true);
-      setTimeout(() => setRealtimeUpdate(false), 3000);
-    };
+      const handleError = (error) => {
+        console.error('Socket error:', error);
+        setError('Real-time updates unavailable');
+        setSocketConnected(false);
+      };
 
-    subscribeToActivityUpdates(handleActivityUpdate);
+      // Add event listeners
+      socket.on('connect', handleConnect);
+      socket.on('disconnect', handleDisconnect);
+      socket.on('error', handleError);
 
-    // Cleanup
-    return () => {
-      unsubscribeFromActivityUpdates(handleActivityUpdate);
-      socket?.off('connect', handleConnect);
-      socket?.off('disconnect', handleDisconnect);
-      socket?.off('error', handleError);
-    };
+      // Handle real-time activity updates
+      const handleActivityUpdate = (newActivity) => {
+        if (newActivity) {
+          setActivities(prevActivities => {
+            const updatedActivities = [newActivity, ...prevActivities];
+            return updatedActivities.sort((a, b) => 
+              new Date(b.timestamp) - new Date(a.timestamp)
+            );
+          });
+          
+          setRealtimeUpdate(true);
+          setTimeout(() => setRealtimeUpdate(false), 3000);
+        }
+      };
+
+      const cleanup = subscribeToActivityUpdates(handleActivityUpdate);
+
+      // Cleanup function
+      return () => {
+        cleanup();
+        if (socket) {
+          socket.off('connect', handleConnect);
+          socket.off('disconnect', handleDisconnect);
+          socket.off('error', handleError);
+        }
+      };
+    }
   }, [filters]);
 
   const fetchActivityLog = async () => {
@@ -207,25 +222,31 @@ function UserActivityLog() {
       setLoading(true);
       setError(null);
       const data = await activityLogService.getActivityLog(filters);
-      setActivities(data);
+      if (data) {
+        setActivities(data);
+      }
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching activity log:', err);
+      setError(err.message || 'Error fetching activities');
     } finally {
       setLoading(false);
     }
   };
 
-  // Add retry connection function
   const handleRetryConnection = () => {
     const socket = getSocket();
     if (socket) {
+      console.log('Attempting to reconnect socket...');
       socket.connect();
     }
   };
 
-  // Add test function
   const handleTestUpdate = () => {
-    testActivityUpdate();
+    try {
+      testActivityUpdate();
+    } catch (err) {
+      console.error('Error testing update:', err);
+    }
   };
 
   return (

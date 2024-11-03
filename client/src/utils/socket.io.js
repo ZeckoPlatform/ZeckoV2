@@ -5,30 +5,40 @@ let socket = null;
 
 export const initSocket = () => {
   if (!socket) {
-    console.log('Initializing socket connection to:', SOCKET_URL);
-    
-    socket = io(SOCKET_URL, SOCKET_CONFIG);
+    try {
+      console.log('Initializing socket connection to:', SOCKET_URL);
+      
+      socket = io(SOCKET_URL, SOCKET_CONFIG);
 
-    socket.on('connect', () => {
-      console.log('Socket connected successfully');
-    });
+      socket.on('connect', () => {
+        console.log('Socket connected successfully');
+      });
 
-    socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error.message);
-    });
+      socket.on('connect_error', (error) => {
+        console.error('Socket connection error:', error.message);
+      });
 
-    socket.on('disconnect', (reason) => {
-      console.log('Socket disconnected:', reason);
-    });
+      socket.on('disconnect', (reason) => {
+        console.log('Socket disconnected:', reason);
+      });
 
-    socket.on('error', (error) => {
-      console.error('Socket error:', error);
-    });
+      socket.on('error', (error) => {
+        console.error('Socket error:', error);
+      });
+    } catch (error) {
+      console.error('Failed to initialize socket:', error);
+      return null;
+    }
   }
   return socket;
 };
 
-export const getSocket = () => socket;
+export const getSocket = () => {
+  if (!socket) {
+    return initSocket();
+  }
+  return socket;
+};
 
 export const disconnectSocket = () => {
   if (socket) {
@@ -40,15 +50,20 @@ export const disconnectSocket = () => {
 
 export const subscribeToActivityUpdates = (callback) => {
   const socket = getSocket();
+  if (!socket) return () => {};
   
-  socket.on('activityUpdate', (data) => {
+  const handleUpdate = (data) => {
     if (callback) {
       callback(data);
     }
-  });
+  };
+
+  socket.on('activityUpdate', handleUpdate);
 
   return () => {
-    socket.off('activityUpdate');
+    if (socket) {
+      socket.off('activityUpdate', handleUpdate);
+    }
   };
 };
 
@@ -61,19 +76,26 @@ export const unsubscribeFromActivityUpdates = () => {
 
 export const subscribeToUserUpdates = (callback) => {
   const socket = getSocket();
+  if (!socket) return () => {};
   
-  socket.on('userUpdate', (data) => {
+  const handleUpdate = (data) => {
     if (callback) {
       callback(data);
     }
-  });
+  };
+
+  socket.on('userUpdate', handleUpdate);
 
   return () => {
-    socket.off('userUpdate');
+    if (socket) {
+      socket.off('userUpdate', handleUpdate);
+    }
   };
 };
 
 export const emitActivity = (activityData) => {
   const socket = getSocket();
-  socket.emit('newActivity', activityData);
+  if (socket) {
+    socket.emit('newActivity', activityData);
+  }
 };
