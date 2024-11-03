@@ -135,6 +135,7 @@ mountRoute('/api/dashboard', dashboardRoutes);
 mountRoute('/api/admin/dashboard', adminRoutes);
 mountRoute('/api/jobs', jobRoutes);
 mountRoute('/api/businesses', businessRoutes);
+mountRoute('/api', productRoutes);
 
 // API Endpoints
 app.get('/api/subscription-plans', (req, res) => {

@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/productModel');
-const Business = require('../models/businessModel');
 const { auth } = require('../middleware/auth');
 
 // List a new product
@@ -62,6 +61,56 @@ router.get('/seller/:sellerId', async (req, res) => {
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching seller products', error: error.message });
+  }
+});
+
+// Get all shop products
+router.get('/shop/products', async (req, res) => {
+  try {
+    const products = await Product.find({ isPublished: true })
+      .sort({ createdAt: -1 })
+      .populate('seller', 'name');
+    res.json(products);
+  } catch (error) {
+    console.error('Error fetching shop products:', error);
+    res.status(500).json({ message: 'Error fetching shop products' });
+  }
+});
+
+// Get featured shop products
+router.get('/shop/featured', async (req, res) => {
+  try {
+    const featuredProducts = await Product.find({ 
+      isPublished: true,
+      isFeatured: true 
+    })
+    .sort({ createdAt: -1 })
+    .populate('seller', 'name');
+    res.json(featuredProducts);
+  } catch (error) {
+    console.error('Error fetching featured products:', error);
+    res.status(500).json({ message: 'Error fetching featured products' });
+  }
+});
+
+// Search shop products
+router.get('/shop/search', async (req, res) => {
+  try {
+    const { query } = req.query;
+    const products = await Product.find({
+      isPublished: true,
+      $or: [
+        { name: { $regex: query, $options: 'i' } },
+        { description: { $regex: query, $options: 'i' } },
+        { category: { $regex: query, $options: 'i' } }
+      ]
+    })
+    .sort({ createdAt: -1 })
+    .populate('seller', 'name');
+    res.json(products);
+  } catch (error) {
+    console.error('Error searching products:', error);
+    res.status(500).json({ message: 'Error searching products' });
   }
 });
 
