@@ -25,6 +25,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const jobRoutes = require('./routes/jobRoutes');
 
 // Initialize Express and Socket.io
 const app = express();
@@ -131,6 +132,7 @@ mountRoute('/api/reviews', reviewRoutes);
 mountRoute('/api/analytics', analyticsRoutes);
 mountRoute('/api/dashboard', dashboardRoutes);
 mountRoute('/api/admin/dashboard', adminRoutes);
+mountRoute('/api/jobs', jobRoutes);
 
 // API Endpoints
 app.get('/api/subscription-plans', (req, res) => {
