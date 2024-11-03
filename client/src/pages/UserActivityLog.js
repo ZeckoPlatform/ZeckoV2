@@ -222,12 +222,11 @@ function UserActivityLog() {
       setLoading(true);
       setError(null);
       const data = await activityLogService.getActivityLog(filters);
-      if (data) {
-        setActivities(data);
-      }
+      setActivities(data?.activities || []);
     } catch (err) {
       console.error('Error fetching activity log:', err);
       setError(err.message || 'Error fetching activities');
+      setActivities([]);
     } finally {
       setLoading(false);
     }
@@ -305,12 +304,12 @@ function UserActivityLog() {
           Error: {error}
           <button onClick={fetchActivityLog}>Retry</button>
         </div>
-      ) : activities.length === 0 ? (
+      ) : !activities || activities.length === 0 ? (
         <NoActivities>No activities found for the selected filters.</NoActivities>
       ) : (
         <>
           {activities.map(activity => (
-            <ActivityItem key={activity.id}>
+            <ActivityItem key={activity._id || activity.id}>
               <ActivityInfo>
                 <ActivityType type={activity.type}>
                   {activity.type.charAt(0).toUpperCase() + activity.type.slice(1)}

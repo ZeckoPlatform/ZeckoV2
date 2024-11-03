@@ -11,7 +11,9 @@ class ActivityLogService {
         },
         params: filters
       });
-      return response.data;
+      return {
+        activities: response.data?.activities || []
+      };
     } catch (error) {
       console.error('Error fetching activity log:', error);
       throw error;
