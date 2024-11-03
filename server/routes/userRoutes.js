@@ -61,6 +61,49 @@ router.post('/login', async (req, res) => {
 router.get('/profile', auth, userController.getProfile);
 router.put('/profile', auth, userController.updateProfile);
 
+// Add these routes to your existing userRoutes.js
+router.get('/security-settings', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Return default settings if none exist
+    const securitySettings = user.securitySettings || {
+      twoFactorEnabled: false,
+      emailNotifications: true,
+      loginAlerts: true
+    };
+
+    res.json(securitySettings);
+  } catch (error) {
+    console.error('Error fetching security settings:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.patch('/security-settings', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update security settings
+    user.securitySettings = {
+      ...user.securitySettings,
+      ...req.body
+    };
+
+    await user.save();
+    res.json(user.securitySettings);
+  } catch (error) {
+    console.error('Error updating security settings:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 console.log('Loading userRoutes.js - END');
 
 module.exports = router;

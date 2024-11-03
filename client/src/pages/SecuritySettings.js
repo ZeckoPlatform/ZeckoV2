@@ -56,7 +56,7 @@ const SecuritySettings = () => {
 
   const fetchSecuritySettings = async () => {
     try {
-      const response = await fetch('/api/security-settings', {
+      const response = await fetch('/api/users/security-settings', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -73,7 +73,7 @@ const SecuritySettings = () => {
 
   const updateSetting = async (setting, value) => {
     try {
-      const response = await fetch('/api/security-settings', {
+      const response = await fetch('/api/users/security-settings', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

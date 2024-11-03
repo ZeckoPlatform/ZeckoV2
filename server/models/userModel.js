@@ -54,7 +54,21 @@ const userSchema = new mongoose.Schema({
   wishlist: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product'
-  }]
+  }],
+  securitySettings: {
+    twoFactorEnabled: {
+      type: Boolean,
+      default: false
+    },
+    emailNotifications: {
+      type: Boolean,
+      default: true
+    },
+    loginAlerts: {
+      type: Boolean,
+      default: true
+    }
+  }
 }, {
   timestamps: true
 });

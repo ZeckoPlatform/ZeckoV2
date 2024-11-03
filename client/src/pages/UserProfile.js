@@ -25,7 +25,11 @@ function UserProfile() {
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
-        const response = await fetch(`/api/users/${user.id}/profile`);
+        const response = await fetch('/api/users/profile', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch profile data');
         }
