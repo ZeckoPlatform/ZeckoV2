@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Link } from 'react-router-dom';
+import { productService } from '../services/productService';
 
 const ShopContainer = styled.div`
   padding: 20px;
@@ -66,24 +66,24 @@ function Shop() {
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     category: '',
-    priceRange: '',
-    sortBy: 'newest'
+    price: '',
+    sort: ''
   });
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [filters]);
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('/api/shop/products');
-      if (!response.ok) {
-        throw new Error('Failed to fetch products');
-      }
-      const data = await response.json();
-      setProducts(data);
+      setLoading(true);
+      setError(null);
+      const data = await productService.getProducts(filters);
+      setProducts(data?.products || []);
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching products:', err);
+      setError(err.message || 'Error fetching products');
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -102,12 +102,12 @@ function Shop() {
       return product.category === filters.category;
     })
     .filter(product => {
-      if (!filters.priceRange) return true;
-      const [min, max] = filters.priceRange.split('-').map(Number);
+      if (!filters.price) return true;
+      const [min, max] = filters.price.split('-').map(Number);
       return product.price >= min && product.price <= max;
     })
     .sort((a, b) => {
-      switch (filters.sortBy) {
+      switch (filters.sort) {
         case 'price-low':
           return a.price - b.price;
         case 'price-high':
@@ -138,8 +138,8 @@ function Shop() {
         </Select>
 
         <Select
-          name="priceRange"
-          value={filters.priceRange}
+          name="price"
+          value={filters.price}
           onChange={handleFilterChange}
         >
           <option value="">All Prices</option>
@@ -150,8 +150,8 @@ function Shop() {
         </Select>
 
         <Select
-          name="sortBy"
-          value={filters.sortBy}
+          name="sort"
+          value={filters.sort}
           onChange={handleFilterChange}
         >
           <option value="newest">Newest First</option>
@@ -163,13 +163,11 @@ function Shop() {
       <ProductGrid>
         {filteredProducts.map((product) => (
           <ProductCard key={product._id}>
-            <Link to={`/shop/product/${product._id}`}>
-              <ProductImage src={product.image} alt={product.name} />
-              <ProductInfo>
-                <ProductTitle>{product.name}</ProductTitle>
-                <ProductPrice>${product.price}</ProductPrice>
-              </ProductInfo>
-            </Link>
+            <ProductImage src={product.image} alt={product.name} />
+            <ProductInfo>
+              <ProductTitle>{product.name}</ProductTitle>
+              <ProductPrice>${product.price}</ProductPrice>
+            </ProductInfo>
           </ProductCard>
         ))}
       </ProductGrid>
