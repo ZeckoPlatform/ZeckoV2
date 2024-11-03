@@ -7,11 +7,21 @@ class ProductService {
       const response = await axios.get(`${API_URL}/api/products`, {
         params: filters
       });
-      return {
-        products: response.data?.products || []
-      };
+      
+      console.log('Raw API Response:', response.data); // Debug log
+      
+      // Handle different response formats
+      if (Array.isArray(response.data)) {
+        return { products: response.data };
+      }
+      
+      if (response.data?.products) {
+        return response.data;
+      }
+      
+      return { products: [] };
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error('Error in getProducts:', error);
       throw error;
     }
   }

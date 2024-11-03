@@ -78,8 +78,12 @@ function Shop() {
     try {
       setLoading(true);
       setError(null);
-      const data = await productService.getProducts(filters);
-      setProducts(data?.products || []);
+      const response = await productService.getProducts(filters);
+      console.log('API Response:', response); // Debug log
+      
+      // Handle different possible response formats
+      const productsData = response?.products || response || [];
+      setProducts(Array.isArray(productsData) ? productsData : []);
     } catch (err) {
       console.error('Error fetching products:', err);
       setError(err.message || 'Error fetching products');
@@ -90,37 +94,43 @@ function Shop() {
   };
 
   const handleFilterChange = (e) => {
-    setFilters({
-      ...filters,
+    setFilters(prev => ({
+      ...prev,
       [e.target.name]: e.target.value
-    });
+    }));
   };
 
-  const filteredProducts = products
-    .filter(product => {
-      if (!filters.category) return true;
-      return product.category === filters.category;
-    })
-    .filter(product => {
-      if (!filters.price) return true;
-      const [min, max] = filters.price.split('-').map(Number);
-      return product.price >= min && product.price <= max;
-    })
-    .sort((a, b) => {
-      switch (filters.sort) {
-        case 'price-low':
-          return a.price - b.price;
-        case 'price-high':
-          return b.price - a.price;
-        case 'newest':
-          return new Date(b.createdAt) - new Date(a.createdAt);
-        default:
-          return 0;
-      }
-    });
+  const getFilteredProducts = () => {
+    if (!Array.isArray(products)) return [];
+    
+    return products
+      .filter(product => {
+        if (!filters.category) return true;
+        return product?.category === filters.category;
+      })
+      .filter(product => {
+        if (!filters.price) return true;
+        const [min, max] = filters.price.split('-').map(Number);
+        return product?.price >= min && product?.price <= max;
+      })
+      .sort((a, b) => {
+        switch (filters.sort) {
+          case 'price-low':
+            return (a?.price || 0) - (b?.price || 0);
+          case 'price-high':
+            return (b?.price || 0) - (a?.price || 0);
+          case 'newest':
+            return new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0);
+          default:
+            return 0;
+        }
+      });
+  };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading) return <div>Loading products...</div>;
+  if (error) return <div>Error: {error} <button onClick={fetchProducts}>Retry</button></div>;
+
+  const filteredProducts = getFilteredProducts();
 
   return (
     <ShopContainer>
@@ -160,17 +170,27 @@ function Shop() {
         </Select>
       </FiltersContainer>
 
-      <ProductGrid>
-        {filteredProducts.map((product) => (
-          <ProductCard key={product._id}>
-            <ProductImage src={product.image} alt={product.name} />
-            <ProductInfo>
-              <ProductTitle>{product.name}</ProductTitle>
-              <ProductPrice>${product.price}</ProductPrice>
-            </ProductInfo>
-          </ProductCard>
-        ))}
-      </ProductGrid>
+      {!filteredProducts || filteredProducts.length === 0 ? (
+        <div>No products found matching your criteria.</div>
+      ) : (
+        <ProductGrid>
+          {filteredProducts.map((product) => (
+            <ProductCard key={product?._id || Math.random()}>
+              <ProductImage 
+                src={product?.image || 'placeholder-image-url'} 
+                alt={product?.name || 'Product'} 
+                onError={(e) => {
+                  e.target.src = 'placeholder-image-url';
+                }}
+              />
+              <ProductInfo>
+                <ProductTitle>{product?.name || 'Unnamed Product'}</ProductTitle>
+                <ProductPrice>${product?.price || 'N/A'}</ProductPrice>
+              </ProductInfo>
+            </ProductCard>
+          ))}
+        </ProductGrid>
+      )}
     </ShopContainer>
   );
 }
