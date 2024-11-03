@@ -4,6 +4,7 @@ import styled, { keyframes } from 'styled-components';
 import { useAuth } from '../context/AuthContext';
 import { Bell, BellOff } from 'react-feather';
 import VolumeControl from './VolumeControl';
+import { FaShoppingCart } from 'react-icons/fa';
 
 const Nav = styled.nav`
   background-color: white;
@@ -290,7 +291,10 @@ function Navigation() {
           {user ? (
             <>
               <NavLink to="/profile">Profile</NavLink>
-              <NavLink to="/cart">Cart</NavLink>
+              <NavLink to="/cart">
+                <FaShoppingCart style={{ marginRight: '5px' }} />
+                Cart
+              </NavLink>
               <NotificationIcon onClick={() => markAsRead(notification._id)}>
                 <Bell size={20} />
                 {notifications.length > 0 && (
