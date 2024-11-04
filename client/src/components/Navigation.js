@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { useAuth } from '../context/AuthContext';
 import { Bell, BellOff } from 'react-feather';
@@ -191,6 +191,7 @@ function Navigation() {
   const [isMuted, setIsMuted] = useState(() => {
     return localStorage.getItem('notificationsMuted') === 'true';
   });
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (socket && user) {
@@ -262,6 +263,11 @@ function Navigation() {
     setIsMuted(newMutedState);
     localStorage.setItem('notificationsMuted', newMutedState);
     return newMutedState;
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
   };
 
   return (
@@ -370,7 +376,7 @@ function Navigation() {
                 </NotificationDropdown>
               </NotificationButton>
               <NavLink to="/security-settings">Security</NavLink>
-              <Button onClick={() => logout()}>Logout</Button>
+              <Button onClick={handleLogout}>Logout</Button>
             </>
           ) : (
             <>
