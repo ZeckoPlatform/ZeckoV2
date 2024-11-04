@@ -5,6 +5,9 @@ class ActivityLogService {
   constructor() {
     this.socket = null;
     this.connectionCallback = null;
+    this.activityCallback = null;
+    this.retryAttempts = 0;
+    this.maxRetries = 3;
   }
 
   initializeSocket() {
@@ -27,20 +30,20 @@ class ActivityLogService {
       
       this.socket = io(API_URL, {
         auth: {
-          token: `Bearer ${token}` // Add Bearer prefix
+          token: token // Send raw token
         },
         extraHeaders: {
           Authorization: `Bearer ${token}`
         },
         transports: ['websocket'],
         reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-        query: { token: `Bearer ${token}` } // Add token to query params
+        reconnectionAttempts: this.maxRetries,
+        reconnectionDelay: 1000
       });
 
       this.socket.on('connect', () => {
         console.log('Socket connected successfully');
+        this.retryAttempts = 0;
         this.updateConnectionStatus(true);
       });
 
@@ -52,11 +55,25 @@ class ActivityLogService {
       this.socket.on('connect_error', (error) => {
         console.error('Socket connection error:', error.message);
         this.updateConnectionStatus(false);
+        
+        if (this.retryAttempts < this.maxRetries) {
+          this.retryAttempts++;
+          setTimeout(() => this.initializeSocket(), 2000);
+        }
       });
 
-      this.socket.on('error', (error) => {
-        console.error('Socket error:', error);
-        this.updateConnectionStatus(false);
+      this.socket.on('initialActivities', (activities) => {
+        console.log('Received initial activities:', activities);
+        if (this.activityCallback) {
+          this.activityCallback(activities);
+        }
+      });
+
+      this.socket.on('activityUpdate', (activity) => {
+        console.log('Received activity update:', activity);
+        if (this.activityCallback) {
+          this.activityCallback([activity]);
+        }
       });
 
     } catch (error) {
@@ -82,23 +99,22 @@ class ActivityLogService {
       this.socket = null;
       this.updateConnectionStatus(false);
     }
+    this.retryAttempts = 0;
   }
 
   subscribeToUpdates(callback) {
+    this.activityCallback = callback;
     if (!this.socket) {
       console.log('No socket connection available');
       return;
     }
-
-    this.socket.on('activityUpdate', (activities) => {
-      console.log('Received activity update:', activities);
-      callback(activities);
-    });
   }
 
   unsubscribeFromUpdates() {
+    this.activityCallback = null;
     if (this.socket) {
       this.socket.off('activityUpdate');
+      this.socket.off('initialActivities');
     }
   }
 
@@ -122,6 +138,13 @@ class ActivityLogService {
       throw error;
     }
   }
+
+  async reconnect() {
+    this.disconnect();
+    this.retryAttempts = 0;
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    this.initializeSocket();
+  }
 }
 
-export const activityLogService = new ActivityLogService(); 
+export const activityLogService = new ActivityLogService();

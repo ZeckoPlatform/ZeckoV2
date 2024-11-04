@@ -1,6 +1,7 @@
 const socketIo = require('socket.io');
 const jwt = require('jsonwebtoken');
 const User = require('./models/userModel');
+const ActivityLog = require('./models/ActivityLog');
 
 function initializeSocket(server) {
   const io = socketIo(server, {
@@ -12,10 +13,20 @@ function initializeSocket(server) {
     }
   });
 
+  // Debug middleware
+  io.use((socket, next) => {
+    console.log('Socket connection attempt with:', {
+      headers: socket.handshake.headers,
+      auth: socket.handshake.auth,
+      query: socket.handshake.query
+    });
+    next();
+  });
+
   // Authentication middleware
   io.use(async (socket, next) => {
     try {
-      // Get token from different possible sources
+      // Get token from all possible sources
       const authHeader = socket.handshake.headers.authorization;
       const authToken = socket.handshake.auth.token;
       const queryToken = socket.handshake.query.token;
@@ -55,29 +66,65 @@ function initializeSocket(server) {
     }
   });
 
-  io.on('connection', (socket) => {
+  io.on('connection', async (socket) => {
     console.log('User connected:', socket.user._id);
 
     // Join user's room
     const userRoom = `user_${socket.user._id}`;
     socket.join(userRoom);
 
-    // Send initial connection status
+    try {
+      // Send initial activities on connection
+      const activities = await ActivityLog.find({ userId: socket.user._id })
+        .sort({ timestamp: -1 })
+        .limit(100);
+      socket.emit('initialActivities', activities);
+    } catch (error) {
+      console.error('Error fetching initial activities:', error);
+    }
+
+    // Send connection status
     socket.emit('connectionStatus', true);
 
     // Handle activity updates
-    socket.on('activity', (data) => {
-      console.log('Activity received:', data);
-      io.to(userRoom).emit('activityUpdate', data);
+    socket.on('activity', async (data) => {
+      try {
+        console.log('Activity received:', data);
+        
+        // Save activity to database
+        if (data.save) {
+          const log = new ActivityLog({
+            userId: socket.user._id,
+            type: data.type,
+            description: data.description,
+            timestamp: new Date(),
+            metadata: data.metadata || {}
+          });
+          await log.save();
+        }
+
+        // Broadcast to user's room
+        io.to(userRoom).emit('activityUpdate', {
+          ...data,
+          userId: socket.user._id,
+          timestamp: new Date()
+        });
+      } catch (error) {
+        console.error('Error handling activity:', error);
+      }
     });
 
     socket.on('disconnect', () => {
       console.log('User disconnected:', socket.user._id);
       socket.leave(userRoom);
     });
+
+    socket.on('error', (error) => {
+      console.error('Socket error for user:', socket.user._id, error);
+    });
   });
 
   return io;
 }
 
-module.exports = initializeSocket; 
+module.exports = initializeSocket;
