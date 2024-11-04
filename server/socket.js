@@ -12,22 +12,42 @@ function initializeSocket(server) {
     }
   });
 
+  // Authentication middleware
   io.use(async (socket, next) => {
     try {
-      const token = socket.handshake.auth.token;
+      // Get token from different possible sources
+      const authHeader = socket.handshake.headers.authorization;
+      const authToken = socket.handshake.auth.token;
+      const queryToken = socket.handshake.query.token;
       
+      let token = authHeader || authToken || queryToken;
+
       if (!token) {
+        console.log('No token found in socket connection');
         return next(new Error('Authentication token missing'));
       }
 
+      // Remove Bearer prefix if present
+      token = token.replace('Bearer ', '');
+
+      // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.userId);
       
+      if (!decoded || !decoded.userId) {
+        console.log('Invalid token:', decoded);
+        return next(new Error('Invalid token'));
+      }
+
+      // Get user
+      const user = await User.findById(decoded.userId);
       if (!user) {
+        console.log('User not found:', decoded.userId);
         return next(new Error('User not found'));
       }
 
+      // Attach user to socket
       socket.user = user;
+      console.log('Socket authenticated for user:', user._id);
       next();
     } catch (error) {
       console.error('Socket authentication error:', error);
@@ -37,7 +57,7 @@ function initializeSocket(server) {
 
   io.on('connection', (socket) => {
     console.log('User connected:', socket.user._id);
-    
+
     // Join user's room
     const userRoom = `user_${socket.user._id}`;
     socket.join(userRoom);
@@ -45,13 +65,15 @@ function initializeSocket(server) {
     // Send initial connection status
     socket.emit('connectionStatus', true);
 
+    // Handle activity updates
+    socket.on('activity', (data) => {
+      console.log('Activity received:', data);
+      io.to(userRoom).emit('activityUpdate', data);
+    });
+
     socket.on('disconnect', () => {
       console.log('User disconnected:', socket.user._id);
       socket.leave(userRoom);
-    });
-
-    socket.on('error', (error) => {
-      console.error('Socket error:', error);
     });
   });
 

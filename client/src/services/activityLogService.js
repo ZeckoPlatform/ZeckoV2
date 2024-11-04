@@ -9,42 +9,53 @@ class ActivityLogService {
 
   initializeSocket() {
     const token = localStorage.getItem('token');
+    
     if (!token) {
       console.log('No token found, skipping socket initialization');
       this.updateConnectionStatus(false);
       return;
     }
 
-    if (this.socket?.connected) {
-      console.log('Socket already connected');
-      this.updateConnectionStatus(true);
-      return;
+    // Close existing connection if any
+    if (this.socket) {
+      this.socket.close();
+      this.socket = null;
     }
 
     try {
+      console.log('Initializing socket with token:', token.substring(0, 20) + '...');
+      
       this.socket = io(API_URL, {
-        auth: { token },
+        auth: {
+          token: `Bearer ${token}` // Add Bearer prefix
+        },
         extraHeaders: {
           Authorization: `Bearer ${token}`
         },
         transports: ['websocket'],
         reconnection: true,
         reconnectionAttempts: 5,
-        reconnectionDelay: 1000
+        reconnectionDelay: 1000,
+        query: { token: `Bearer ${token}` } // Add token to query params
       });
 
       this.socket.on('connect', () => {
-        console.log('Activity log socket connected successfully');
+        console.log('Socket connected successfully');
         this.updateConnectionStatus(true);
       });
 
-      this.socket.on('disconnect', () => {
-        console.log('Activity log socket disconnected');
+      this.socket.on('disconnect', (reason) => {
+        console.log('Socket disconnected:', reason);
         this.updateConnectionStatus(false);
       });
 
       this.socket.on('connect_error', (error) => {
-        console.error('Activity log socket error:', error.message);
+        console.error('Socket connection error:', error.message);
+        this.updateConnectionStatus(false);
+      });
+
+      this.socket.on('error', (error) => {
+        console.error('Socket error:', error);
         this.updateConnectionStatus(false);
       });
 
@@ -56,7 +67,6 @@ class ActivityLogService {
 
   onConnectionStatus(callback) {
     this.connectionCallback = callback;
-    // Initial status
     this.updateConnectionStatus(this.socket?.connected || false);
   }
 
@@ -75,11 +85,15 @@ class ActivityLogService {
   }
 
   subscribeToUpdates(callback) {
-    if (this.socket) {
-      this.socket.on('activityUpdate', (activities) => {
-        callback(activities);
-      });
+    if (!this.socket) {
+      console.log('No socket connection available');
+      return;
     }
+
+    this.socket.on('activityUpdate', (activities) => {
+      console.log('Received activity update:', activities);
+      callback(activities);
+    });
   }
 
   unsubscribeFromUpdates() {
