@@ -13,55 +13,115 @@ const DashboardContainer = styled.div`
   padding: 20px;
 `;
 
+const DashboardHeader = styled.h1`
+  color: var(--primary-color);
+  margin-bottom: 30px;
+  font-size: 2.5rem;
+  font-weight: 600;
+`;
+
 const DashboardGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
+  gap: 25px;
+  margin-bottom: 40px;
 `;
 
 const DashboardCard = styled.div`
   background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+`;
+
+const CardHeader = styled.h2`
+  color: var(--primary-color);
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+  font-weight: 500;
+`;
+
+const WelcomeText = styled.p`
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 20px;
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 `;
 
 const Button = styled.button`
   background-color: var(--primary-color);
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
+  padding: 12px 24px;
+  border-radius: 6px;
   cursor: pointer;
-  margin-top: 10px;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 120px;
+  max-width: 200px;
 
   &:hover {
     opacity: 0.9;
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 `;
 
 const TabContainer = styled.div`
-  margin-top: 20px;
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 30px;
 `;
 
 const TabButtons = styled.div`
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 15px;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #eee;
 `;
 
 const TabButton = styled.button`
-  padding: 10px 20px;
-  background-color: ${props => props.active ? 'var(--primary-color)' : '#f0f0f0'};
-  color: ${props => props.active ? 'white' : 'black'};
+  padding: 12px 24px;
+  background-color: ${props => props.active ? 'var(--primary-color)' : '#f5f5f5'};
+  color: ${props => props.active ? 'white' : '#666'};
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
 
   &:hover {
     opacity: 0.9;
+    transform: translateY(-2px);
   }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+const ContentSection = styled.div`
+  margin-top: 20px;
 `;
 
 function Dashboard() {
@@ -107,24 +167,26 @@ function Dashboard() {
 
   return (
     <DashboardContainer>
-      <h1>Dashboard</h1>
+      <DashboardHeader>Dashboard</DashboardHeader>
       <DashboardGrid>
         <DashboardCard>
-          <h2>Profile Overview</h2>
-          <p>Welcome back, {user?.username}</p>
-          <Button onClick={() => navigate('/shop')}>Start Shopping</Button>
-          <Button onClick={() => setShowPostForm(!showPostForm)}>
-            {showPostForm ? 'Cancel Post' : 'Post a Job'}
-          </Button>
+          <CardHeader>Profile Overview</CardHeader>
+          <WelcomeText>Welcome back, {user?.username}</WelcomeText>
+          <ButtonContainer>
+            <Button onClick={() => navigate('/shop')}>Start Shopping</Button>
+            <Button onClick={() => setShowPostForm(!showPostForm)}>
+              {showPostForm ? 'Cancel Post' : 'Post a Job'}
+            </Button>
+          </ButtonContainer>
         </DashboardCard>
 
         <DashboardCard>
-          <h2>Recent Activity</h2>
+          <CardHeader>Recent Activity</CardHeader>
           {/* Add recent activity information */}
         </DashboardCard>
 
         <DashboardCard>
-          <h2>Statistics</h2>
+          <CardHeader>Statistics</CardHeader>
           {/* Add statistics information */}
         </DashboardCard>
       </DashboardGrid>
@@ -145,17 +207,19 @@ function Dashboard() {
           </TabButton>
         </TabButtons>
 
-        {showPostForm && (
-          <JobPostForm onJobPosted={handleJobPosted} />
-        )}
+        <ContentSection>
+          {showPostForm && (
+            <JobPostForm onJobPosted={handleJobPosted} />
+          )}
 
-        <JobCarousel />
+          <JobCarousel />
 
-        {activeTab === 'jobs' ? (
-          <JobListing />
-        ) : (
-          <JobSearch />
-        )}
+          {activeTab === 'jobs' ? (
+            <JobListing />
+          ) : (
+            <JobSearch />
+          )}
+        </ContentSection>
       </TabContainer>
     </DashboardContainer>
   );
