@@ -242,6 +242,28 @@ router.post('/2fa/verify', auth, async (req, res) => {
   }
 });
 
+// Add this route to your existing userRoutes.js
+router.post('/refresh-token', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Generate new token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({ token });
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    res.status(500).json({ message: 'Error refreshing token' });
+  }
+});
+
 console.log('Loading userRoutes.js - END');
 
 module.exports = router;

@@ -37,7 +37,8 @@ const server = http.createServer(app);
 // Configure CORS
 app.use(cors({
   origin: process.env.CLIENT_URL || "https://zeckov2-deceb43992ac.herokuapp.com",
-  credentials: true
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Initialize socket with the server

@@ -17,34 +17,52 @@ class ActivityLogService {
 
     try {
       this.socket = io(API_URL, {
-        auth: { token: `Bearer ${token}` },
+        extraHeaders: {
+          Authorization: `Bearer ${token}`
+        },
+        auth: {
+          token: token
+        },
         transports: ['websocket'],
         reconnection: true,
         reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-        query: { token: `Bearer ${token}` }
+        reconnectionDelay: 1000
       });
 
       this.socket.on('connect', () => {
-        console.log('Activity log socket connected with token');
+        console.log('Activity log socket connected successfully');
       });
 
       this.socket.on('connect_error', (error) => {
         console.error('Activity log socket error:', error.message);
         if (error.message.includes('Authentication')) {
-          setTimeout(() => this.reconnect(), 5000);
+          this.refreshToken();
         }
       });
 
-      this.socket.on('disconnect', (reason) => {
-        console.log('Socket disconnected:', reason);
-        if (reason === 'io server disconnect') {
-          setTimeout(() => this.reconnect(), 5000);
-        }
+      this.socket.on('error', (error) => {
+        console.error('Socket error:', error);
       });
 
     } catch (error) {
       console.error('Socket initialization error:', error);
+    }
+  }
+
+  async refreshToken() {
+    try {
+      const response = await axios.post(`${API_URL}/api/users/refresh-token`, {}, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        this.reconnect();
+      }
+    } catch (error) {
+      console.error('Token refresh failed:', error);
     }
   }
 
