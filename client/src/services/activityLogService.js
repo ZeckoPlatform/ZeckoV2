@@ -15,33 +15,38 @@ class ActivityLogService {
       const token = localStorage.getItem('token');
       
       if (!token) {
-        console.log('No token found, skipping socket initialization');
+        console.error('No token available for socket connection');
         this.updateConnectionStatus(false);
         return;
       }
 
       // Close existing connection if any
+      if (this.socket?.connected) {
+        console.log('Socket already connected');
+        return;
+      }
+
       if (this.socket) {
         this.socket.disconnect();
         this.socket = null;
       }
 
-      console.log('Initializing socket connection...');
+      console.log('Initializing socket connection with token');
       
       this.socket = io(API_URL, {
         auth: {
-          token // Send raw token without Bearer prefix
+          token
         },
-        transports: ['websocket', 'polling'], // Allow fallback to polling
+        query: {
+          token
+        },
+        transports: ['websocket', 'polling'],
         reconnection: true,
         reconnectionAttempts: this.maxRetries,
         reconnectionDelay: 1000,
-        timeout: 20000,
-        forceNew: true,
-        autoConnect: false // Don't connect automatically
+        timeout: 20000
       });
 
-      // Set up event handlers before connecting
       this.socket.on('connect', () => {
         console.log('Socket connected successfully');
         this.retryAttempts = 0;
@@ -81,9 +86,6 @@ class ActivityLogService {
         }
       });
 
-      // Connect after setting up handlers
-      this.socket.connect();
-
     } catch (error) {
       console.error('Socket initialization error:', error);
       this.updateConnectionStatus(false);
@@ -92,6 +94,7 @@ class ActivityLogService {
 
   onConnectionStatus(callback) {
     this.connectionCallback = callback;
+    // Send current connection status
     if (this.socket) {
       callback(this.socket.connected);
     } else {
