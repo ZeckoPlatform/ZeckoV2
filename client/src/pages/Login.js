@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
+import { activityLogService } from '../services/activityLogService';
 
 const LoginContainer = styled.div`
   max-width: 400px;
@@ -108,6 +109,7 @@ function Login() {
       if (response.ok) {
         localStorage.setItem('token', data.token);
         setUser(data.user);
+        activityLogService.initializeSocket();
         navigate('/dashboard');
       } else {
         setError(data.message || 'Login failed. Please try again.');

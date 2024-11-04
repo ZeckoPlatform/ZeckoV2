@@ -5,7 +5,6 @@ import io from 'socket.io-client';
 class ActivityLogService {
   constructor() {
     this.socket = null;
-    this.initializeSocket();
   }
 
   initializeSocket() {
@@ -15,13 +14,16 @@ class ActivityLogService {
       return;
     }
 
+    if (this.socket?.connected) {
+      console.log('Socket already connected');
+      return;
+    }
+
     try {
       this.socket = io(API_URL, {
+        auth: { token },
         extraHeaders: {
           Authorization: `Bearer ${token}`
-        },
-        auth: {
-          token: token
         },
         transports: ['websocket'],
         reconnection: true,
@@ -35,17 +37,17 @@ class ActivityLogService {
 
       this.socket.on('connect_error', (error) => {
         console.error('Activity log socket error:', error.message);
-        if (error.message.includes('Authentication')) {
-          this.refreshToken();
-        }
-      });
-
-      this.socket.on('error', (error) => {
-        console.error('Socket error:', error);
       });
 
     } catch (error) {
       console.error('Socket initialization error:', error);
+    }
+  }
+
+  disconnect() {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
     }
   }
 
@@ -160,14 +162,6 @@ class ActivityLogService {
     this.initializeSocket();
   }
 
-  // Method to disconnect socket
-  disconnect() {
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-    }
-  }
-
   // Method to check connection status
   isConnected() {
     return this.socket?.connected || false;
@@ -180,8 +174,4 @@ class ActivityLogService {
   }
 }
 
-// Create singleton instance
-const activityLogService = new ActivityLogService();
-
-// Export singleton instance
-export { activityLogService }; 
+export const activityLogService = new ActivityLogService(); 

@@ -1,54 +1,48 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import io from 'socket.io-client';
+import { activityLogService } from '../services/activityLogService';
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [socket, setSocket] = useState(null);
-
-  const logout = () => {
-    // Clear user data
-    setUser(null);
-    
-    // Clear token
-    localStorage.removeItem('token');
-    
-    // Close socket connection if it exists
-    if (socket) {
-      socket.close();
-      setSocket(null);
-    }
-  };
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      const token = localStorage.getItem('token');
-      const newSocket = io(process.env.REACT_APP_API_URL || '', {
-        auth: { token },
-        transports: ['websocket', 'polling'],
-        withCredentials: true
-      });
-
-      setSocket(newSocket);
-
-      return () => newSocket.close();
+    // Check for existing token and user data
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (token && userData) {
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      // Initialize socket only if we have a valid user
+      activityLogService.initializeSocket();
     }
-  }, [user]);
+    
+    setLoading(false);
+  }, []);
+
+  const login = (token, userData) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+    // Initialize socket after successful login
+    activityLogService.initializeSocket();
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    // Disconnect socket on logout
+    activityLogService.disconnect();
+  };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, socket, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-export default AuthProvider;
+export const useAuth = () => useContext(AuthContext);
