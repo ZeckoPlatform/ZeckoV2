@@ -124,30 +124,39 @@ function Login() {
     setError('');
 
     try {
+      console.log('Sending 2FA verification:', {
+        tempToken,
+        code: formData.twoFactorCode
+      });
+
       const response = await fetch('/api/users/verify-2fa', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${tempToken}`
         },
         body: JSON.stringify({
-          tempToken,
           code: formData.twoFactorCode
         })
       });
 
       const data = await response.json();
 
-      if (response.ok) {
-        localStorage.setItem('token', data.token);
-        setUser(data.user);
-        activityLogService.initializeSocket();
-        navigate('/dashboard');
-      } else {
-        setError(data.message || 'Invalid verification code');
+      if (!response.ok) {
+        throw new Error(data.message || 'Verification failed');
       }
+
+      console.log('2FA verification successful:', data);
+
+      localStorage.setItem('token', data.token);
+      setUser(data.user);
+      
+      activityLogService.initializeSocket();
+      
+      navigate('/dashboard');
     } catch (err) {
       console.error('2FA Verification error:', err);
-      setError('Verification failed. Please try again.');
+      setError(err.message || 'Verification failed. Please try again.');
     }
   };
 
@@ -163,12 +172,16 @@ function Login() {
               name="twoFactorCode"
               placeholder="Enter code"
               value={formData.twoFactorCode}
-              onChange={handleChange}
+              onChange={(e) => setFormData({
+                ...formData,
+                twoFactorCode: e.target.value.replace(/\D/g, '').slice(0, 6)
+              })}
               maxLength="6"
+              pattern="\d{6}"
               required
             />
-            <Button type="submit">Verify</Button>
             {error && <ErrorMessage>{error}</ErrorMessage>}
+            <Button type="submit">Verify</Button>
           </Form>
         </TwoFactorContainer>
       </LoginContainer>

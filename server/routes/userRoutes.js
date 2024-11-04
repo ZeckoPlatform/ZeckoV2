@@ -69,16 +69,30 @@ router.post('/login', async (req, res) => {
 // Add a new route for 2FA verification during login
 router.post('/verify-2fa', async (req, res) => {
   try {
-    const { tempToken, code } = req.body;
-
-    if (!tempToken || !code) {
-      return res.status(400).json({ message: 'Missing required fields' });
+    // Get token from Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ message: 'No authorization token provided' });
     }
 
-    // Verify temp token
-    const decoded = jwt.verify(tempToken, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.tempUserId).select('+twoFactorSecret');
+    const token = authHeader.replace('Bearer ', '');
+    const { code } = req.body;
 
+    if (!code) {
+      return res.status(400).json({ message: 'Verification code is required' });
+    }
+
+    // Log the verification attempt
+    console.log('2FA verification attempt:', { code });
+
+    // Verify temp token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded.tempUserId) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    // Find user and include twoFactorSecret
+    const user = await User.findById(decoded.tempUserId).select('+twoFactorSecret');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -88,42 +102,36 @@ router.post('/verify-2fa', async (req, res) => {
       secret: user.twoFactorSecret,
       encoding: 'base32',
       token: code,
-      window: 2 // Allow 2 time steps for clock drift
+      window: 2
     });
 
     if (!verified) {
-      console.log('Failed 2FA verification attempt:', {
-        userId: user._id,
-        code: code,
-        timestamp: new Date()
-      });
+      console.log('Invalid 2FA code:', { code, userId: user._id });
       return res.status(401).json({ message: 'Invalid verification code' });
     }
 
     // Generate new token
-    const token = jwt.sign(
+    const newToken = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
-    // Send user data without sensitive fields
-    const userData = {
-      id: user._id,
-      email: user.email,
-      name: user.name,
-      role: user.role
-    };
-
+    // Return success response
     res.json({
-      token,
-      user: userData,
+      token: newToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role
+      },
       message: '2FA verification successful'
     });
 
   } catch (error) {
     console.error('2FA verification error:', error);
-    res.status(500).json({ message: 'Error verifying 2FA code' });
+    res.status(500).json({ message: 'Server error during verification' });
   }
 });
 
