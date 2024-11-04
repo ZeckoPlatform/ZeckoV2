@@ -16,9 +16,9 @@ const userController = require('../controllers/userController');
 router.post('/register', userController.register);
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, twoFactorCode } = req.body;
     
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+twoFactorSecret');
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -26,6 +26,33 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Check if 2FA is enabled
+    if (user.securitySettings?.twoFactorEnabled) {
+      // If no 2FA code provided, return need2FA flag
+      if (!twoFactorCode) {
+        return res.json({
+          need2FA: true,
+          tempToken: jwt.sign(
+            { tempUserId: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: '5m' }
+          )
+        });
+      }
+
+      // Verify 2FA code
+      const verified = speakeasy.totp.verify({
+        secret: user.twoFactorSecret,
+        encoding: 'base32',
+        token: twoFactorCode,
+        window: 2
+      });
+
+      if (!verified) {
+        return res.status(401).json({ message: 'Invalid 2FA code' });
+      }
     }
 
     const token = jwt.sign(
@@ -45,6 +72,53 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Add a new route for 2FA verification during login
+router.post('/verify-2fa', async (req, res) => {
+  try {
+    const { tempToken, twoFactorCode } = req.body;
+
+    // Verify temp token
+    const decoded = jwt.verify(tempToken, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.tempUserId).select('+twoFactorSecret');
+
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid session' });
+    }
+
+    // Verify 2FA code
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFactorSecret,
+      encoding: 'base32',
+      token: twoFactorCode,
+      window: 2
+    });
+
+    if (!verified) {
+      return res.status(401).json({ message: 'Invalid 2FA code' });
+    }
+
+    // Issue final token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('2FA verification error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

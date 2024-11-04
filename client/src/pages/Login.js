@@ -50,12 +50,26 @@ const ForgotPasswordLink = styled.a`
   }
 `;
 
+const TwoFactorContainer = styled.div`
+  text-align: center;
+  margin-top: 20px;
+`;
+
+const CodeInput = styled(Input)`
+  text-align: center;
+  letter-spacing: 4px;
+  font-size: 20px;
+`;
+
 function Login() {
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
+    twoFactorCode: ''
   });
   const [error, setError] = useState('');
+  const [showTwoFactor, setShowTwoFactor] = useState(false);
+  const [tempToken, setTempToken] = useState('');
   const navigate = useNavigate();
   const { setUser } = useAuth();
 
@@ -72,15 +86,24 @@ function Login() {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/users/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
       });
 
       const data = await response.json();
+
+      if (data.need2FA) {
+        setShowTwoFactor(true);
+        setTempToken(data.tempToken);
+        return;
+      }
 
       if (response.ok) {
         localStorage.setItem('token', data.token);
@@ -93,6 +116,60 @@ function Login() {
       setError('Login failed. Please try again.');
     }
   };
+
+  const handleVerify2FA = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    try {
+      const response = await fetch('/api/users/verify-2fa', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tempToken,
+          twoFactorCode: formData.twoFactorCode
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('token', data.token);
+        setUser(data.user);
+        navigate('/dashboard');
+      } else {
+        setError(data.message || 'Invalid verification code');
+      }
+    } catch (err) {
+      setError('Verification failed. Please try again.');
+    }
+  };
+
+  if (showTwoFactor) {
+    return (
+      <LoginContainer>
+        <h2>Two-Factor Authentication</h2>
+        <TwoFactorContainer>
+          <p>Please enter the verification code from your authenticator app</p>
+          <Form onSubmit={handleVerify2FA}>
+            <CodeInput
+              type="text"
+              name="twoFactorCode"
+              placeholder="Enter code"
+              value={formData.twoFactorCode}
+              onChange={handleChange}
+              maxLength="6"
+              required
+            />
+            <Button type="submit">Verify</Button>
+            {error && <ErrorMessage>{error}</ErrorMessage>}
+          </Form>
+        </TwoFactorContainer>
+      </LoginContainer>
+    );
+  }
 
   return (
     <LoginContainer>
