@@ -1,21 +1,23 @@
-import axios from 'axios';
-import { API_URL } from '../config/constants';
 import io from 'socket.io-client';
+import { API_URL } from '../config/constants';
 
 class ActivityLogService {
   constructor() {
     this.socket = null;
+    this.connectionCallback = null;
   }
 
   initializeSocket() {
     const token = localStorage.getItem('token');
     if (!token) {
       console.log('No token found, skipping socket initialization');
+      this.updateConnectionStatus(false);
       return;
     }
 
     if (this.socket?.connected) {
       console.log('Socket already connected');
+      this.updateConnectionStatus(true);
       return;
     }
 
@@ -33,14 +35,34 @@ class ActivityLogService {
 
       this.socket.on('connect', () => {
         console.log('Activity log socket connected successfully');
+        this.updateConnectionStatus(true);
+      });
+
+      this.socket.on('disconnect', () => {
+        console.log('Activity log socket disconnected');
+        this.updateConnectionStatus(false);
       });
 
       this.socket.on('connect_error', (error) => {
         console.error('Activity log socket error:', error.message);
+        this.updateConnectionStatus(false);
       });
 
     } catch (error) {
       console.error('Socket initialization error:', error);
+      this.updateConnectionStatus(false);
+    }
+  }
+
+  onConnectionStatus(callback) {
+    this.connectionCallback = callback;
+    // Initial status
+    this.updateConnectionStatus(this.socket?.connected || false);
+  }
+
+  updateConnectionStatus(status) {
+    if (this.connectionCallback) {
+      this.connectionCallback(status);
     }
   }
 
@@ -48,23 +70,7 @@ class ActivityLogService {
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
-    }
-  }
-
-  async refreshToken() {
-    try {
-      const response = await axios.post(`${API_URL}/api/users/refresh-token`, {}, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        this.reconnect();
-      }
-    } catch (error) {
-      console.error('Token refresh failed:', error);
+      this.updateConnectionStatus(false);
     }
   }
 
@@ -85,92 +91,22 @@ class ActivityLogService {
   async getActivityLog(filters) {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/api/activity-logs`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        params: filters
-      });
-      return {
-        activities: response.data?.activities || []
-      };
-    } catch (error) {
-      console.error('Error fetching activity log:', error);
-      throw error;
-    }
-  }
-
-  async createActivity(activityData) {
-    try {
-      const token = localStorage.getItem('token');
-      
-      // Send via REST API
-      const response = await axios.post(`${API_URL}/api/activity-logs`, activityData, {
+      const response = await fetch(`${API_URL}/api/activity-logs`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
-
-      // Emit via Socket
-      if (this.socket) {
-        this.socket.emit('activity', activityData);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch activity log');
       }
 
-      return response.data;
+      const data = await response.json();
+      return data.activities || [];
     } catch (error) {
-      console.error('Error creating activity:', error);
+      console.error('Error fetching activity log:', error);
       throw error;
     }
-  }
-
-  // New method for real-time filtering
-  setFilters(filters) {
-    if (this.socket) {
-      this.socket.emit('setFilters', filters);
-    }
-  }
-
-  // New method for pagination
-  async getMoreActivities(page, limit) {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/api/activity-logs`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        params: { page, limit }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching more activities:', error);
-      throw error;
-    }
-  }
-
-  // Method to reconnect socket
-  reconnect() {
-    console.log('Attempting to reconnect socket...');
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.log('No token available for reconnection');
-      return;
-    }
-
-    if (this.socket) {
-      this.socket.disconnect();
-    }
-    this.initializeSocket();
-  }
-
-  // Method to check connection status
-  isConnected() {
-    return this.socket?.connected || false;
-  }
-
-  // Method to handle token refresh
-  updateToken(newToken) {
-    localStorage.setItem('token', newToken);
-    this.reconnect();
   }
 }
 

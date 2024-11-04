@@ -1,43 +1,70 @@
 import React, { useEffect, useState } from 'react';
+import styled from 'styled-components';
 import { activityLogService } from '../services/activityLogService';
+import { useAuth } from '../context/AuthContext';
+
+const RetryButton = styled.button`
+  padding: 5px 10px;
+  margin-left: 10px;
+  cursor: pointer;
+`;
+
+const StatusIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  color: ${props => props.isConnected ? 'green' : 'red'};
+`;
 
 function ActivityLog() {
   const [activities, setActivities] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const { user } = useAuth();
+  const token = localStorage.getItem('token');
+
+  const initializeRealTimeUpdates = () => {
+    if (token && user) {
+      activityLogService.disconnect(); // Disconnect any existing connection
+      activityLogService.initializeSocket();
+      
+      // Subscribe to connection status
+      activityLogService.onConnectionStatus((status) => {
+        setIsConnected(status);
+      });
+
+      // Subscribe to activity updates
+      activityLogService.subscribeToUpdates((newActivities) => {
+        setActivities(newActivities);
+      });
+    }
+  };
 
   useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        const { activities: initialActivities } = await activityLogService.getActivityLog();
-        setActivities(initialActivities);
-        setLoading(false);
-      } catch (err) {
-        setError(err.message);
-        setLoading(false);
-      }
-    };
+    initializeRealTimeUpdates();
 
-    // Subscribe to real-time updates
-    activityLogService.subscribeToUpdates((updatedActivities) => {
-      setActivities(updatedActivities);
-    });
-
-    fetchActivities();
-
-    // Cleanup
     return () => {
-      activityLogService.unsubscribeFromUpdates();
+      activityLogService.disconnect();
     };
-  }, []);
+  }, [user, token]);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  const handleRetryConnection = () => {
+    initializeRealTimeUpdates();
+  };
 
   return (
     <div>
-      {activities.map((activity) => (
-        <div key={activity._id}>
+      <StatusIndicator isConnected={isConnected}>
+        Real-time updates {isConnected ? 'enabled' : 'disabled'}
+        {!isConnected && (
+          <RetryButton onClick={handleRetryConnection}>
+            Retry
+          </RetryButton>
+        )}
+      </StatusIndicator>
+      
+      {/* Activity list */}
+      {activities.map((activity, index) => (
+        <div key={index}>
           <h3>{activity.type}</h3>
           <p>{activity.details}</p>
           <small>{new Date(activity.timestamp).toLocaleString()}</small>
