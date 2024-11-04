@@ -1,126 +1,71 @@
-const { Server } = require('socket.io');
-let io;
+const socketIo = require('socket.io');
+const jwt = require('jsonwebtoken');
+const User = require('./models/userModel');
 
-const socketHelpers = {
-    init: (server) => {
-        io = new Server(server, {
-            cors: {
-                origin: process.env.CLIENT_URL || "http://localhost:3000",
-                methods: ["GET", "POST"]
-            }
-        });
-
-        global.connectedClients = new Map();
-
-        io.on('connection', (socket) => {
-            console.log('New client connected');
-
-            socket.on('authenticate', (token) => {
-                try {
-                    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                    socket.userId = decoded.userId;
-                    socket.userType = decoded.userType;
-
-                    if (!global.connectedClients.has(decoded.userId)) {
-                        global.connectedClients.set(decoded.userId, new Set());
-                    }
-                    global.connectedClients.get(decoded.userId).add(socket);
-
-                    if (decoded.userType === 'admin') {
-                        socketHelpers.emitAdminStats(socket);
-                    }
-
-                    console.log(`User ${decoded.userId} authenticated`);
-                    socket.emit('authenticated', { success: true });
-                } catch (error) {
-                    console.error('Authentication error:', error);
-                    socket.emit('authenticated', { success: false, error: 'Invalid token' });
-                }
-            });
-
-            socket.on('disconnect', () => {
-                if (socket.userId) {
-                    const userSockets = global.connectedClients.get(socket.userId);
-                    if (userSockets) {
-                        userSockets.delete(socket);
-                        if (userSockets.size === 0) {
-                            global.connectedClients.delete(socket.userId);
-                        }
-                    }
-                    console.log(`User ${socket.userId} disconnected`);
-                }
-                console.log('Client disconnected');
-            });
-
-            socket.on('newActivity', (activityData) => {
-                socketHelpers.broadcastActivity(activityData);
-            });
-        });
-
-        return io;
-    },
-
-    emitAdminStats: async (socket) => {
-        try {
-            const stats = await require('./controllers/adminController').getAdminStats();
-            socket.emit('admin_stats_update', stats);
-        } catch (error) {
-            console.error('Error emitting admin stats:', error);
-        }
-    },
-
-    notifyAdmins: (type, notification) => {
-        if (!global.connectedClients) return;
-        global.connectedClients.forEach((sockets, userId) => {
-            sockets.forEach(socket => {
-                if (socket.userType === 'admin') {
-                    socket.emit(type, notification);
-                }
-            });
-        });
-    },
-
-    sendNotificationToUser: (userId, notification) => {
-        if (!global.connectedClients) return;
-        const userSockets = global.connectedClients.get(userId);
-        if (userSockets) {
-            userSockets.forEach(socket => {
-                socket.emit('notification', notification);
-            });
-        }
-    },
-
-    broadcastActivity: (activity) => {
-        if (!io) return;
-        io.emit('activityUpdate', activity);
-    },
-
-    sendActivityNotification: (userId, activity) => {
-        if (!global.connectedClients) return;
-        const userSockets = global.connectedClients.get(userId);
-        if (userSockets) {
-            userSockets.forEach(socket => {
-                socket.emit('activity_update', activity);
-            });
-        }
-    },
-
-    sendOrderNotification: (userId, orderData) => {
-        if (!global.connectedClients) return;
-        const userSockets = global.connectedClients.get(userId);
-        if (userSockets) {
-            userSockets.forEach(socket => {
-                socket.emit('order_notification', orderData);
-            });
-        }
-    },
-
-    getIO: () => {
-        if (!io) {
-            throw new Error('Socket.io not initialized');
-        }
-        return io;
+function initializeSocket(server) {
+  const io = socketIo(server, {
+    cors: {
+      origin: process.env.CLIENT_URL || "https://zeckov2-deceb43992ac.herokuapp.com",
+      methods: ["GET", "POST"]
     }
-};
+  });
 
-module.exports = socketHelpers; 
+  // Authentication middleware
+  io.use(async (socket, next) => {
+    try {
+      const token = socket.handshake.auth.token;
+      
+      if (!token) {
+        return next(new Error('Authentication token missing'));
+      }
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.userId);
+      
+      if (!user) {
+        return next(new Error('User not found'));
+      }
+
+      socket.user = user;
+      next();
+    } catch (error) {
+      next(new Error('Authentication error'));
+    }
+  });
+
+  io.on('connection', (socket) => {
+    console.log('User connected:', socket.user._id);
+
+    // Join user's personal room
+    socket.join(socket.user._id.toString());
+
+    // Handle activity log updates
+    socket.on('activity', async (activity) => {
+      try {
+        const user = await User.findById(socket.user._id);
+        if (user) {
+          // Add activity to user's log
+          user.activity.push({
+            type: activity.type,
+            timestamp: new Date(),
+            details: activity.details
+          });
+          await user.save();
+
+          // Emit to user's room
+          io.to(socket.user._id.toString()).emit('activityUpdate', user.activity);
+        }
+      } catch (error) {
+        console.error('Activity log error:', error);
+      }
+    });
+
+    socket.on('disconnect', () => {
+      console.log('User disconnected:', socket.user._id);
+    });
+  });
+
+  return io;
+}
+
+module.exports = initializeSocket; 

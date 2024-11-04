@@ -6,6 +6,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
 const jwt = require('jsonwebtoken');
+const initializeSocket = require('./socket');
 
 dotenv.config();
 
@@ -32,23 +33,7 @@ const securityRoutes = require('./routes/securityRoutes');
 // Initialize Express and Socket.io
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: process.env.NODE_ENV === 'production' 
-            ? 'https://zeckov2-deceb43992ac.herokuapp.com'
-            : 'http://localhost:3000',
-        methods: ["GET", "POST"],
-        credentials: true
-    },
-    transports: ['websocket'],
-    pingTimeout: 60000,
-    pingInterval: 25000,
-    connectTimeout: 45000,
-    // Add these options for better reliability
-    reconnection: true,
-    reconnectionAttempts: 5,
-    reconnectionDelay: 1000
-});
+const io = initializeSocket(server);
 
 // Add middleware for socket authentication
 io.use((socket, next) => {
