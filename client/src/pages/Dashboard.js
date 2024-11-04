@@ -124,6 +124,101 @@ const ContentSection = styled.div`
   margin-top: 20px;
 `;
 
+const PostLeadButton = styled.button`
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+  }
+`;
+
+const LeadForm = styled.form`
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+`;
+
+const FormGroup = styled.div`
+  margin-bottom: 20px;
+`;
+
+const Label = styled.label`
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
+  }
+`;
+
+const TextArea = styled.textarea`
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  min-height: 100px;
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
+  }
+`;
+
+const Select = styled.select`
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary-color);
+  }
+`;
+
+const SubmitButton = styled.button`
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+
+  &:hover {
+    opacity: 0.9;
+  }
+`;
+
 function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -132,6 +227,15 @@ function Dashboard() {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('jobs');
   const [showPostForm, setShowPostForm] = useState(false);
+  const [editingLead, setEditingLead] = useState(null);
+  const [newLead, setNewLead] = useState({
+    title: '',
+    description: '',
+    company: '',
+    location: '',
+    salary: '',
+    type: 'fulltime'
+  });
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -162,6 +266,45 @@ function Dashboard() {
     setActiveTab('jobs');
   };
 
+  const handleLeadInputChange = (e) => {
+    setNewLead({
+      ...newLead,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmitLead = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/jobs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(newLead)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to post lead');
+      }
+
+      const postedLead = await response.json();
+      setShowPostForm(false);
+      setNewLead({
+        title: '',
+        description: '',
+        company: '',
+        location: '',
+        salary: '',
+        type: 'fulltime'
+      });
+      // Optionally refresh your leads list here
+    } catch (err) {
+      console.error('Error posting lead:', err);
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -174,9 +317,9 @@ function Dashboard() {
           <WelcomeText>Welcome back, {user?.username}</WelcomeText>
           <ButtonContainer>
             <Button onClick={() => navigate('/shop')}>Start Shopping</Button>
-            <Button onClick={() => setShowPostForm(!showPostForm)}>
-              {showPostForm ? 'Cancel Post' : 'Post a Job'}
-            </Button>
+            <PostLeadButton onClick={() => setShowPostForm(!showPostForm)}>
+              {showPostForm ? 'Cancel' : 'Post a Lead'}
+            </PostLeadButton>
           </ButtonContainer>
         </DashboardCard>
 
@@ -190,6 +333,86 @@ function Dashboard() {
           {/* Add statistics information */}
         </DashboardCard>
       </DashboardGrid>
+
+      {showPostForm && (
+        <LeadForm onSubmit={handleSubmitLead}>
+          <FormGroup>
+            <Label htmlFor="title">Lead Title</Label>
+            <Input
+              type="text"
+              id="title"
+              name="title"
+              value={newLead.title}
+              onChange={handleLeadInputChange}
+              required
+            />
+          </FormGroup>
+
+          <FormGroup>
+            <Label htmlFor="description">Description</Label>
+            <TextArea
+              id="description"
+              name="description"
+              value={newLead.description}
+              onChange={handleLeadInputChange}
+              required
+            />
+          </FormGroup>
+
+          <FormGroup>
+            <Label htmlFor="company">Company</Label>
+            <Input
+              type="text"
+              id="company"
+              name="company"
+              value={newLead.company}
+              onChange={handleLeadInputChange}
+              required
+            />
+          </FormGroup>
+
+          <FormGroup>
+            <Label htmlFor="location">Location</Label>
+            <Input
+              type="text"
+              id="location"
+              name="location"
+              value={newLead.location}
+              onChange={handleLeadInputChange}
+              required
+            />
+          </FormGroup>
+
+          <FormGroup>
+            <Label htmlFor="salary">Budget</Label>
+            <Input
+              type="number"
+              id="salary"
+              name="salary"
+              value={newLead.salary}
+              onChange={handleLeadInputChange}
+              required
+            />
+          </FormGroup>
+
+          <FormGroup>
+            <Label htmlFor="type">Lead Type</Label>
+            <Select
+              id="type"
+              name="type"
+              value={newLead.type}
+              onChange={handleLeadInputChange}
+              required
+            >
+              <option value="fulltime">Full-time</option>
+              <option value="contract">Contract</option>
+              <option value="temporary">Temporary</option>
+            </Select>
+          </FormGroup>
+
+          <SubmitButton type="submit">Post Lead</SubmitButton>
+        </LeadForm>
+      )}
 
       <TabContainer>
         <TabButtons>
@@ -208,10 +431,6 @@ function Dashboard() {
         </TabButtons>
 
         <ContentSection>
-          {showPostForm && (
-            <JobPostForm onJobPosted={handleJobPosted} />
-          )}
-
           <JobCarousel />
 
           {activeTab === 'jobs' ? (
