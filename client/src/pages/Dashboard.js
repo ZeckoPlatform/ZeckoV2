@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { JobCarousel } from '../components/JobCarousel';
+import JobListing from '../components/JobListing';
+import JobPostForm from '../components/JobPostForm';
+import JobSearch from '../components/JobSearch';
 
 const DashboardContainer = styled.div`
   max-width: 1200px;
@@ -37,12 +41,37 @@ const Button = styled.button`
   }
 `;
 
+const TabContainer = styled.div`
+  margin-top: 20px;
+`;
+
+const TabButtons = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+`;
+
+const TabButton = styled.button`
+  padding: 10px 20px;
+  background-color: ${props => props.active ? 'var(--primary-color)' : '#f0f0f0'};
+  color: ${props => props.active ? 'white' : 'black'};
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.9;
+  }
+`;
+
 function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('jobs');
+  const [showPostForm, setShowPostForm] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -67,6 +96,12 @@ function Dashboard() {
     fetchDashboardData();
   }, []);
 
+  const handleJobPosted = (newJob) => {
+    setShowPostForm(false);
+    // Optionally refresh job listings
+    setActiveTab('jobs');
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -78,6 +113,9 @@ function Dashboard() {
           <h2>Profile Overview</h2>
           <p>Welcome back, {user?.username}</p>
           <Button onClick={() => navigate('/shop')}>Start Shopping</Button>
+          <Button onClick={() => setShowPostForm(!showPostForm)}>
+            {showPostForm ? 'Cancel Post' : 'Post a Job'}
+          </Button>
         </DashboardCard>
 
         <DashboardCard>
@@ -90,6 +128,35 @@ function Dashboard() {
           {/* Add statistics information */}
         </DashboardCard>
       </DashboardGrid>
+
+      <TabContainer>
+        <TabButtons>
+          <TabButton 
+            active={activeTab === 'jobs'} 
+            onClick={() => setActiveTab('jobs')}
+          >
+            Job Listings
+          </TabButton>
+          <TabButton 
+            active={activeTab === 'search'} 
+            onClick={() => setActiveTab('search')}
+          >
+            Search Jobs
+          </TabButton>
+        </TabButtons>
+
+        {showPostForm && (
+          <JobPostForm onJobPosted={handleJobPosted} />
+        )}
+
+        <JobCarousel />
+
+        {activeTab === 'jobs' ? (
+          <JobListing />
+        ) : (
+          <JobSearch />
+        )}
+      </TabContainer>
     </DashboardContainer>
   );
 }
