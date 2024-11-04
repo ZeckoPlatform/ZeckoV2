@@ -4,12 +4,14 @@ const activityLogSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    index: true
   },
   type: {
     type: String,
     required: true,
-    enum: ['login', 'security', 'profile', 'order', 'other']
+    enum: ['login', 'security', 'profile', 'order', 'other'],
+    index: true
   },
   description: {
     type: String,
@@ -25,18 +27,33 @@ const activityLogSchema = new mongoose.Schema({
   },
   timestamp: {
     type: Date,
-    default: Date.now
+    default: Date.now,
+    index: true
   },
   metadata: {
     type: Map,
     of: mongoose.Schema.Types.Mixed,
     default: {}
   }
+}, {
+  timestamps: true // Adds createdAt and updatedAt
 });
 
-// Index for faster queries
+// Compound indexes for common queries
 activityLogSchema.index({ userId: 1, timestamp: -1 });
 activityLogSchema.index({ type: 1, timestamp: -1 });
+activityLogSchema.index({ userId: 1, type: 1, timestamp: -1 });
+
+// Add method to format activity for client
+activityLogSchema.methods.toClient = function() {
+  return {
+    id: this._id,
+    type: this.type,
+    description: this.description,
+    timestamp: this.timestamp,
+    metadata: this.metadata
+  };
+};
 
 const ActivityLog = mongoose.model('ActivityLog', activityLogSchema);
 

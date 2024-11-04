@@ -16,12 +16,18 @@ export const logActivity = async (type, description, metadata = {}) => {
       type = ActivityTypes.OTHER;
     }
 
-    await activityLogService.logActivity({
+    const activityData = {
       type,
       description,
       timestamp: new Date().toISOString(),
-      metadata
-    });
+      metadata,
+      save: true // Indicate this should be saved to database
+    };
+
+    await activityLogService.logActivity(activityData);
+    
+    // If socket is connected, it will handle real-time updates
+    console.log('Activity logged successfully:', activityData);
   } catch (error) {
     console.error('Failed to log activity:', error);
     // Don't throw the error - just log it

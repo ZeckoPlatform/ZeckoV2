@@ -9,10 +9,26 @@ console.log('Setting up activityLogRoutes');
 // Get all activities for a user
 router.get('/', auth, async (req, res) => {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 100;
+        const skip = (page - 1) * limit;
+
         const activities = await ActivityLog.find({ userId: req.user.id })
             .sort({ timestamp: -1 })
-            .limit(100); // Limit to last 100 activities for performance
-        res.json({ activities });
+            .skip(skip)
+            .limit(limit);
+
+        const total = await ActivityLog.countDocuments({ userId: req.user.id });
+        
+        res.json({ 
+            activities: activities.map(a => a.toClient()),
+            pagination: {
+                page,
+                limit,
+                total,
+                pages: Math.ceil(total / limit)
+            }
+        });
     } catch (error) {
         console.error('Error fetching activity logs:', error);
         res.status(500).json({ error: error.message });
@@ -22,59 +38,35 @@ router.get('/', auth, async (req, res) => {
 // Create new activity log
 router.post('/', auth, async (req, res) => {
     try {
-        console.log('Received activity log request:', req.body);
-        
-        if (!req.user || (!req.user.id && !req.user._id)) {
-            throw new Error('User ID not found in request');
-        }
-
         const userId = req.user.id || req.user._id;
-        
-        const ip = req.ip || 
-                  req.connection.remoteAddress || 
-                  req.headers['x-forwarded-for'] || 
-                  'unknown';
+        const ip = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'] || 'unknown';
 
         const log = new ActivityLog({
-            userId: userId,
+            userId,
             type: req.body.type,
             description: req.body.description,
-            ip: ip,
+            ip,
             userAgent: req.headers['user-agent'] || 'unknown',
             timestamp: req.body.timestamp || new Date(),
             metadata: req.body.metadata || {}
         });
 
-        console.log('Creating activity log with data:', log);
         const savedLog = await log.save();
-        console.log('Successfully saved activity log:', savedLog);
 
-        // Emit real-time update through socket if available
+        // Emit real-time update
         if (req.io) {
             const userRoom = `user_${userId}`;
-            req.io.to(userRoom).emit('activityUpdate', {
-                type: 'new',
-                activity: savedLog
-            });
+            req.io.to(userRoom).emit('activityUpdate', savedLog.toClient());
         }
-        
-        // Get updated activities list
-        const updatedActivities = await ActivityLog.find({ userId })
-            .sort({ timestamp: -1 })
-            .limit(100);
 
         res.status(201).json({
-            activity: savedLog,
-            activities: updatedActivities
+            activity: savedLog.toClient()
         });
     } catch (error) {
         console.error('Error creating activity log:', error);
-        console.error('Stack trace:', error.stack);
         res.status(500).json({ 
             error: 'Failed to create activity log',
-            details: error.message,
-            userId: req.user?.id || req.user?._id,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            details: error.message
         });
     }
 });
