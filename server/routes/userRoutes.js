@@ -16,9 +16,9 @@ const userController = require('../controllers/userController');
 router.post('/register', userController.register);
 router.post('/login', async (req, res) => {
   try {
-    const { email, password, twoFactorCode } = req.body;
+    const { email, password } = req.body;
     
-    const user = await User.findOne({ email }).select('+twoFactorSecret');
+    const user = await User.findOne({ email }).select('+password +twoFactorSecret');
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -30,31 +30,20 @@ router.post('/login', async (req, res) => {
 
     // Check if 2FA is enabled
     if (user.securitySettings?.twoFactorEnabled) {
-      // If no 2FA code provided, return need2FA flag
-      if (!twoFactorCode) {
-        return res.json({
-          need2FA: true,
-          tempToken: jwt.sign(
-            { tempUserId: user._id },
-            process.env.JWT_SECRET,
-            { expiresIn: '5m' }
-          )
-        });
-      }
+      // Return temp token for 2FA verification
+      const tempToken = jwt.sign(
+        { tempUserId: user._id },
+        process.env.JWT_SECRET,
+        { expiresIn: '5m' }
+      );
 
-      // Verify 2FA code
-      const verified = speakeasy.totp.verify({
-        secret: user.twoFactorSecret,
-        encoding: 'base32',
-        token: twoFactorCode,
-        window: 2
+      return res.json({
+        need2FA: true,
+        tempToken
       });
-
-      if (!verified) {
-        return res.status(401).json({ message: 'Invalid 2FA code' });
-      }
     }
 
+    // If 2FA is not enabled, proceed with normal login
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET,
@@ -65,11 +54,12 @@ router.post('/login', async (req, res) => {
       token,
       user: {
         id: user._id,
-        name: user.name,
         email: user.email,
+        name: user.name,
         role: user.role
       }
     });
+
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -79,47 +69,61 @@ router.post('/login', async (req, res) => {
 // Add a new route for 2FA verification during login
 router.post('/verify-2fa', async (req, res) => {
   try {
-    const { tempToken, twoFactorCode } = req.body;
+    const { tempToken, code } = req.body;
+
+    if (!tempToken || !code) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
 
     // Verify temp token
     const decoded = jwt.verify(tempToken, process.env.JWT_SECRET);
     const user = await User.findById(decoded.tempUserId).select('+twoFactorSecret');
 
     if (!user) {
-      return res.status(401).json({ message: 'Invalid session' });
+      return res.status(404).json({ message: 'User not found' });
     }
 
     // Verify 2FA code
     const verified = speakeasy.totp.verify({
       secret: user.twoFactorSecret,
       encoding: 'base32',
-      token: twoFactorCode,
-      window: 2
+      token: code,
+      window: 2 // Allow 2 time steps for clock drift
     });
 
     if (!verified) {
-      return res.status(401).json({ message: 'Invalid 2FA code' });
+      console.log('Failed 2FA verification attempt:', {
+        userId: user._id,
+        code: code,
+        timestamp: new Date()
+      });
+      return res.status(401).json({ message: 'Invalid verification code' });
     }
 
-    // Issue final token
+    // Generate new token
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
+    // Send user data without sensitive fields
+    const userData = {
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role
+    };
+
     res.json({
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
+      user: userData,
+      message: '2FA verification successful'
     });
+
   } catch (error) {
     console.error('2FA verification error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Error verifying 2FA code' });
   }
 });
 

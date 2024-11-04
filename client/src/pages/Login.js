@@ -131,7 +131,7 @@ function Login() {
         },
         body: JSON.stringify({
           tempToken,
-          twoFactorCode: formData.twoFactorCode
+          code: formData.twoFactorCode
         })
       });
 
@@ -140,11 +140,13 @@ function Login() {
       if (response.ok) {
         localStorage.setItem('token', data.token);
         setUser(data.user);
+        activityLogService.initializeSocket();
         navigate('/dashboard');
       } else {
         setError(data.message || 'Invalid verification code');
       }
     } catch (err) {
+      console.error('2FA Verification error:', err);
       setError('Verification failed. Please try again.');
     }
   };
