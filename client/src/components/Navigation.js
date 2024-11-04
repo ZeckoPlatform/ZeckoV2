@@ -185,13 +185,13 @@ const SoundToggle = styled.button`
 `;
 
 function Navigation() {
+  const navigate = useNavigate();
+  const { socket, user, logout } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  const { socket, user, logout } = useAuth();
   const [isMuted, setIsMuted] = useState(() => {
     return localStorage.getItem('notificationsMuted') === 'true';
   });
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (socket && user) {
@@ -201,13 +201,22 @@ function Navigation() {
       };
 
       socket.on('notification', handleNotification);
-      fetchNotifications(); // Initial fetch
+      fetchNotifications();
 
       return () => {
         socket.off('notification', handleNotification);
       };
     }
   }, [socket, user]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   const fetchNotifications = async () => {
     try {
@@ -265,11 +274,6 @@ function Navigation() {
     return newMutedState;
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
   return (
     <Nav>
       <TopBar>
@@ -283,8 +287,8 @@ function Navigation() {
             </>
           ) : (
             <>
-              <Button as={Link} to="/login">Login</Button>
-              <Button as={Link} to="/register">Register</Button>
+              <TopBarButton as={Link} to="/login">Login</TopBarButton>
+              <TopBarButton as={Link} to="/register">Register</TopBarButton>
             </>
           )}
         </TopBarContent>
@@ -306,76 +310,12 @@ function Navigation() {
                 onClick={() => setShowNotifications(!showNotifications)}
               >
                 <Bell size={20} />
-                Notifications
                 {notifications.length > 0 && (
                   <Badge hasNewNotification={true}>
                     {notifications.length}
                   </Badge>
                 )}
-                <NotificationDropdown isOpen={showNotifications}>
-                  <div style={{ 
-                    padding: '10px', 
-                    borderBottom: '1px solid #eee',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}>
-                    <h4 style={{ margin: 0 }}>Notifications</h4>
-                    <SoundToggle 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSoundToggle();
-                      }}
-                      isMuted={isMuted}
-                    >
-                      {isMuted ? <BellOff size={14} /> : <Bell size={14} />}
-                      {isMuted ? 'Unmute' : 'Mute'}
-                    </SoundToggle>
-                  </div>
-                  {!isMuted && <VolumeControl />}
-                  {notifications.length === 0 ? (
-                    <div style={{ padding: '10px', textAlign: 'center' }}>
-                      No new notifications
-                    </div>
-                  ) : (
-                    <>
-                      {notifications.map(notification => (
-                        <div 
-                          key={notification._id}
-                          style={{ 
-                            padding: '10px', 
-                            borderBottom: '1px solid #eee',
-                            backgroundColor: notification.read ? 'white' : '#f0f7ff'
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            markAsRead(notification._id);
-                          }}
-                        >
-                          <div>{notification.message}</div>
-                          <small style={{ color: '#666' }}>
-                            {new Date(notification.createdAt).toLocaleString()}
-                          </small>
-                        </div>
-                      ))}
-                      <Link 
-                        to="/notifications"
-                        style={{ 
-                          display: 'block', 
-                          padding: '10px', 
-                          textAlign: 'center',
-                          color: 'var(--primary-color)',
-                          textDecoration: 'none'
-                        }}
-                        onClick={() => setShowNotifications(false)}
-                      >
-                        View All Notifications
-                      </Link>
-                    </>
-                  )}
-                </NotificationDropdown>
               </NotificationButton>
-              <NavLink to="/security-settings">Security</NavLink>
               <Button onClick={handleLogout}>Logout</Button>
             </>
           ) : (
