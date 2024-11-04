@@ -33,6 +33,14 @@ const securityRoutes = require('./routes/securityRoutes');
 // Initialize Express and Socket.io
 const app = express();
 const server = http.createServer(app);
+
+// Configure CORS
+app.use(cors({
+  origin: process.env.CLIENT_URL || "https://zeckov2-deceb43992ac.herokuapp.com",
+  credentials: true
+}));
+
+// Initialize socket with the server
 const io = initializeSocket(server);
 
 // Add middleware for socket authentication

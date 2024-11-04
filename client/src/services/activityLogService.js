@@ -10,22 +10,41 @@ class ActivityLogService {
 
   initializeSocket() {
     const token = localStorage.getItem('token');
-    if (token) {
+    if (!token) {
+      console.log('No token found, skipping socket initialization');
+      return;
+    }
+
+    try {
       this.socket = io(API_URL, {
-        auth: { token },
+        auth: { token: `Bearer ${token}` },
         transports: ['websocket'],
         reconnection: true,
         reconnectionAttempts: 5,
-        reconnectionDelay: 1000
+        reconnectionDelay: 1000,
+        query: { token: `Bearer ${token}` }
       });
 
       this.socket.on('connect', () => {
-        console.log('Activity log socket connected');
+        console.log('Activity log socket connected with token');
       });
 
       this.socket.on('connect_error', (error) => {
-        console.error('Activity log socket error:', error);
+        console.error('Activity log socket error:', error.message);
+        if (error.message.includes('Authentication')) {
+          setTimeout(() => this.reconnect(), 5000);
+        }
       });
+
+      this.socket.on('disconnect', (reason) => {
+        console.log('Socket disconnected:', reason);
+        if (reason === 'io server disconnect') {
+          setTimeout(() => this.reconnect(), 5000);
+        }
+      });
+
+    } catch (error) {
+      console.error('Socket initialization error:', error);
     }
   }
 
@@ -110,6 +129,13 @@ class ActivityLogService {
 
   // Method to reconnect socket
   reconnect() {
+    console.log('Attempting to reconnect socket...');
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('No token available for reconnection');
+      return;
+    }
+
     if (this.socket) {
       this.socket.disconnect();
     }
@@ -131,11 +157,8 @@ class ActivityLogService {
 
   // Method to handle token refresh
   updateToken(newToken) {
-    if (this.socket) {
-      this.socket.disconnect();
-    }
     localStorage.setItem('token', newToken);
-    this.initializeSocket();
+    this.reconnect();
   }
 }
 
