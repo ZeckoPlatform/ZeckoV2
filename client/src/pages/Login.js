@@ -72,7 +72,7 @@ function Login() {
   const [showTwoFactor, setShowTwoFactor] = useState(false);
   const [tempToken, setTempToken] = useState('');
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { login } = useAuth();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -108,7 +108,7 @@ function Login() {
 
       if (response.ok) {
         localStorage.setItem('token', data.token);
-        setUser(data.user);
+        login(data.token, data.user);
         activityLogService.initializeSocket();
         navigate('/dashboard');
       } else {
@@ -124,11 +124,6 @@ function Login() {
     setError('');
 
     try {
-      console.log('Sending 2FA verification:', {
-        tempToken,
-        code: formData.twoFactorCode
-      });
-
       const response = await fetch('/api/users/verify-2fa', {
         method: 'POST',
         headers: {
@@ -146,10 +141,7 @@ function Login() {
         throw new Error(data.message || 'Verification failed');
       }
 
-      console.log('2FA verification successful:', data);
-
-      localStorage.setItem('token', data.token);
-      setUser(data.user);
+      login(data.token, data.user);
       
       activityLogService.initializeSocket();
       
