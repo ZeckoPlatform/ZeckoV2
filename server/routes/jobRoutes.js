@@ -125,4 +125,17 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+// Add this new route for getting all jobs/leads
+router.get('/', auth, async (req, res) => {
+  try {
+    const jobs = await Job.find()
+      .populate('postedBy', 'username')
+      .sort({ createdAt: -1 });
+    res.json(jobs);
+  } catch (error) {
+    console.error('Error fetching leads:', error);
+    res.status(500).json({ message: 'Error fetching leads' });
+  }
+});
+
 module.exports = router;
