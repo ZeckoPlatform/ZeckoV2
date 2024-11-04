@@ -296,7 +296,7 @@ function Navigation() {
       <NavContainer>
         <Logo to="/">Zecko</Logo>
         <NavLinks>
-          <NavLink to="/jobs">Job Board</NavLink>
+          <NavLink to="/jobs">Leads Board</NavLink>
           <NavLink to="/directory">Business Directory</NavLink>
           <NavLink to="/shop">Shop</NavLink>
           {user ? (
