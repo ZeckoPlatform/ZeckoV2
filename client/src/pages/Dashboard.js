@@ -420,13 +420,13 @@ function Dashboard() {
             active={activeTab === 'jobs'} 
             onClick={() => setActiveTab('jobs')}
           >
-            Job Listings
+            Lead Listings
           </TabButton>
           <TabButton 
             active={activeTab === 'search'} 
             onClick={() => setActiveTab('search')}
           >
-            Search Jobs
+            Search Leads
           </TabButton>
         </TabButtons>
 
