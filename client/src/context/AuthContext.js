@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { activityLogService } from '../services/activityLogService';
-import { useNavigate } from 'react-router-dom';
 
 export const AuthContext = createContext(null);
 
@@ -8,7 +7,6 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -25,14 +23,13 @@ export const AuthProvider = ({ children }) => {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           setError('Session expired. Please login again.');
-          navigate('/login');
         }
       }
       setLoading(false);
     };
 
     initializeAuth();
-  }, [navigate]);
+  }, []);
 
   const login = async (token, userData) => {
     try {
@@ -55,14 +52,13 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('user');
       setUser(null);
       setError(null);
-      navigate('/');
+      window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error);
-      // Still clear everything even if there's an error
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       setUser(null);
-      navigate('/');
+      window.location.href = '/';
     }
   };
 
