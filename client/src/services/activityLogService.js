@@ -11,42 +11,37 @@ class ActivityLogService {
   }
 
   initializeSocket() {
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
-      console.log('No token found, skipping socket initialization');
-      this.updateConnectionStatus(false);
-      return;
-    }
-
-    // Close existing connection if any
-    if (this.socket) {
-      this.socket.close();
-      this.socket = null;
-    }
-
     try {
-      console.log('Initializing socket with token:', token.substring(0, 20) + '...');
+      const token = localStorage.getItem('token');
       
-      // Create socket connection with token in query AND auth
+      if (!token) {
+        console.log('No token found, skipping socket initialization');
+        this.updateConnectionStatus(false);
+        return;
+      }
+
+      // Close existing connection if any
+      if (this.socket) {
+        this.socket.disconnect();
+        this.socket = null;
+      }
+
+      console.log('Initializing socket connection...');
+      
       this.socket = io(API_URL, {
         auth: {
-          token: `Bearer ${token}`
+          token // Send raw token without Bearer prefix
         },
-        query: {
-          token: `Bearer ${token}`
-        },
-        extraHeaders: {
-          'Authorization': `Bearer ${token}`
-        },
-        transports: ['websocket'],
+        transports: ['websocket', 'polling'], // Allow fallback to polling
         reconnection: true,
         reconnectionAttempts: this.maxRetries,
         reconnectionDelay: 1000,
-        timeout: 10000
+        timeout: 20000,
+        forceNew: true,
+        autoConnect: false // Don't connect automatically
       });
 
-      // Connection event handlers
+      // Set up event handlers before connecting
       this.socket.on('connect', () => {
         console.log('Socket connected successfully');
         this.retryAttempts = 0;
@@ -69,31 +64,25 @@ class ActivityLogService {
             console.log('Attempting to reconnect...');
             this.reconnect();
           }, 2000);
-        } else {
-          console.log('Max retry attempts reached');
         }
       });
 
-      // Activity event handlers
       this.socket.on('initialActivities', (activities) => {
-        console.log('Received initial activities:', activities);
+        console.log('Received initial activities');
         if (this.activityCallback) {
           this.activityCallback(activities);
         }
       });
 
       this.socket.on('activityUpdate', (activity) => {
-        console.log('Received activity update:', activity);
+        console.log('Received activity update');
         if (this.activityCallback) {
           this.activityCallback([activity]);
         }
       });
 
-      // Error handler
-      this.socket.on('error', (error) => {
-        console.error('Socket error:', error);
-        this.updateConnectionStatus(false);
-      });
+      // Connect after setting up handlers
+      this.socket.connect();
 
     } catch (error) {
       console.error('Socket initialization error:', error);
@@ -103,7 +92,6 @@ class ActivityLogService {
 
   onConnectionStatus(callback) {
     this.connectionCallback = callback;
-    // Send current connection status
     if (this.socket) {
       callback(this.socket.connected);
     } else {
@@ -124,6 +112,13 @@ class ActivityLogService {
     }
     this.retryAttempts = 0;
     this.updateConnectionStatus(false);
+  }
+
+  async reconnect() {
+    console.log('Reconnecting socket...');
+    this.disconnect();
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    this.initializeSocket();
   }
 
   subscribeToUpdates(callback) {
@@ -163,18 +158,6 @@ class ActivityLogService {
     }
   }
 
-  async reconnect() {
-    console.log('Reconnecting socket...');
-    this.disconnect();
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    this.initializeSocket();
-  }
-
-  // Helper method to check if socket is connected
-  isConnected() {
-    return this.socket?.connected || false;
-  }
-
   async logActivity(activityData) {
     try {
       const token = localStorage.getItem('token');
@@ -211,6 +194,11 @@ class ActivityLogService {
       console.error('Error logging activity:', error);
       throw error;
     }
+  }
+
+  // Helper method to check if socket is connected
+  isConnected() {
+    return this.socket?.connected || false;
   }
 }
 

@@ -10,7 +10,10 @@ function initializeSocket(server) {
       methods: ["GET", "POST"],
       credentials: true,
       allowedHeaders: ["Authorization"]
-    }
+    },
+    transports: ['websocket', 'polling'],
+    pingTimeout: 60000,
+    pingInterval: 25000
   });
 
   // Debug middleware
@@ -26,22 +29,13 @@ function initializeSocket(server) {
   // Authentication middleware
   io.use(async (socket, next) => {
     try {
-      // Get token from all possible sources
-      const authHeader = socket.handshake.headers.authorization;
-      const authToken = socket.handshake.auth.token;
-      const queryToken = socket.handshake.query.token;
+      const token = socket.handshake.auth.token;
       
-      let token = authHeader || authToken || queryToken;
-
       if (!token) {
-        console.log('No token found in socket connection');
+        console.log('No token provided');
         return next(new Error('Authentication token missing'));
       }
 
-      // Remove Bearer prefix if present
-      token = token.replace('Bearer ', '');
-
-      // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
       if (!decoded || !decoded.userId) {
@@ -49,14 +43,12 @@ function initializeSocket(server) {
         return next(new Error('Invalid token'));
       }
 
-      // Get user
       const user = await User.findById(decoded.userId);
       if (!user) {
         console.log('User not found:', decoded.userId);
         return next(new Error('User not found'));
       }
 
-      // Attach user to socket
       socket.user = user;
       console.log('Socket authenticated for user:', user._id);
       next();
