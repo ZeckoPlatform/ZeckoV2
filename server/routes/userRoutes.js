@@ -6,6 +6,7 @@ const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const speakeasy = require('speakeasy');
+const mongoose = require('mongoose');
 
 console.log('Loading userRoutes.js - START');
 
@@ -137,7 +138,44 @@ router.post('/verify-2fa', async (req, res) => {
 
 // Protected routes
 router.get('/profile', auth, userController.getProfile);
-router.put('/profile', auth, userController.updateProfile);
+router.put('/profile', auth, async (req, res) => {
+  try {
+    const { name, email, phone, bio } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.name = name || user.name;
+    user.email = email || user.email;
+    user.profile.phone = phone || user.profile.phone;
+    user.profile.bio = bio || user.profile.bio;
+
+    await user.save();
+    res.json(user);
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ message: 'Error updating profile' });
+  }
+});
+
+// Delete account
+router.delete('/profile', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    await User.findByIdAndDelete(req.user.id);
+    res.json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('Account deletion error:', error);
+    res.status(500).json({ message: 'Error deleting account' });
+  }
+});
 
 // Security Settings routes
 router.get('/security-settings', auth, async (req, res) => {
@@ -273,6 +311,96 @@ router.post('/refresh-token', auth, async (req, res) => {
   } catch (error) {
     console.error('Token refresh error:', error);
     res.status(500).json({ message: 'Error refreshing token' });
+  }
+});
+
+// Get all addresses
+router.get('/addresses', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user.profile.address || []);
+  } catch (error) {
+    console.error('Error fetching addresses:', error);
+    res.status(500).json({ message: 'Error fetching addresses' });
+  }
+});
+
+// Add address
+router.post('/addresses', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!Array.isArray(user.profile.address)) {
+      user.profile.address = [];
+    }
+
+    const newAddress = {
+      _id: new mongoose.Types.ObjectId(),
+      ...req.body
+    };
+
+    user.profile.address.push(newAddress);
+    await user.save();
+
+    res.status(201).json(newAddress);
+  } catch (error) {
+    console.error('Error adding address:', error);
+    res.status(500).json({ message: 'Error adding address' });
+  }
+});
+
+// Update address
+router.put('/addresses/:addressId', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const addressIndex = user.profile.address.findIndex(
+      addr => addr._id.toString() === req.params.addressId
+    );
+
+    if (addressIndex === -1) {
+      return res.status(404).json({ message: 'Address not found' });
+    }
+
+    user.profile.address[addressIndex] = {
+      ...user.profile.address[addressIndex],
+      ...req.body
+    };
+
+    await user.save();
+    res.json(user.profile.address[addressIndex]);
+  } catch (error) {
+    console.error('Error updating address:', error);
+    res.status(500).json({ message: 'Error updating address' });
+  }
+});
+
+// Delete address
+router.delete('/addresses/:addressId', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.profile.address = user.profile.address.filter(
+      addr => addr._id.toString() !== req.params.addressId
+    );
+
+    await user.save();
+    res.json({ message: 'Address deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting address:', error);
+    res.status(500).json({ message: 'Error deleting address' });
   }
 });
 

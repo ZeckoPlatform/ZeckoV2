@@ -29,6 +29,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import OrderConfirmation from './pages/OrderConfirmation';
 import Profile from './pages/Profile';
+import AddressManagement from './pages/AddressManagement';
 
 // Lazy loaded components
 const Shop = React.lazy(() => import('./pages/Shop'));
@@ -151,6 +152,9 @@ function App() {
                       </AdminRoute>
                     } 
                   />
+
+                  {/* Address Management Route */}
+                  <Route path="/addresses" element={<AddressManagement />} />
                 </Routes>
               </Suspense>
             </MainContent>
