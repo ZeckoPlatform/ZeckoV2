@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { useAuth } from '../context/AuthContext';
-import { Bell, BellOff } from 'react-feather';
-import VolumeControl from './VolumeControl';
+import { Bell } from 'react-feather';
 import { FaShoppingCart } from 'react-icons/fa';
 
 const Nav = styled.nav`
@@ -186,102 +185,18 @@ const SoundToggle = styled.button`
 
 function Navigation() {
   const navigate = useNavigate();
-  const { socket, user, logout } = useAuth();
+  const { user, logout } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [isMuted, setIsMuted] = useState(() => {
-    return localStorage.getItem('notificationsMuted') === 'true';
-  });
-
-  useEffect(() => {
-    if (socket && user) {
-      const handleNotification = (data) => {
-        setNotifications(prev => [...prev, data]);
-        playNotificationSound();
-      };
-
-      socket.on('notification', handleNotification);
-      fetchNotifications();
-
-      return () => {
-        socket.off('notification', handleNotification);
-      };
-    }
-  }, [socket, user]);
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
-
-  const fetchNotifications = async () => {
-    try {
-      const response = await fetch('/api/notifications', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data);
-      }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
-
-  const markAsRead = async (notificationId) => {
-    try {
-      await fetch(`/api/notifications/${notificationId}/read`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      setNotifications(prev => 
-        prev.map(n => n._id === notificationId ? { ...n, read: true } : n)
-      );
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
-  };
-
-  const handleSoundToggle = () => {
-    const newMutedState = toggleNotificationSound();
-    setIsMuted(newMutedState);
-  };
-
-  const playNotificationSound = () => {
-    try {
-      const volume = localStorage.getItem('notificationVolume') || 0.5;
-      const audio = new Audio('/notification.mp3');
-      audio.volume = parseFloat(volume);
-      audio.play().catch(() => {});
-    } catch (error) {
-      console.error('Error playing notification sound:', error);
-    }
-  };
-
-  const toggleNotificationSound = () => {
-    const newMutedState = !isMuted;
-    setIsMuted(newMutedState);
-    localStorage.setItem('notificationsMuted', newMutedState);
-    return newMutedState;
-  };
 
   return (
     <Nav>
       <TopBar>
         <TopBarContent>
-          <TopBarButton to="/help">Help</TopBarButton>
-          <TopBarButton to="/contact">Contact</TopBarButton>
           {user ? (
             <>
+              <TopBarButton to="/help">Help</TopBarButton>
+              <TopBarButton to="/contact">Contact</TopBarButton>
               <TopBarButton to="/dashboard">My Dashboard</TopBarButton>
               <TopBarButton to="/security-settings">Security</TopBarButton>
             </>
@@ -296,11 +211,11 @@ function Navigation() {
       <NavContainer>
         <Logo to="/">Zecko</Logo>
         <NavLinks>
-          <NavLink to="/jobs">Leads Board</NavLink>
-          <NavLink to="/directory">Business Directory</NavLink>
-          <NavLink to="/shop">Shop</NavLink>
           {user ? (
             <>
+              <NavLink to="/jobs">Leads Board</NavLink>
+              <NavLink to="/directory">Business Directory</NavLink>
+              <NavLink to="/shop">Shop</NavLink>
               <NavLink to="/profile">Profile</NavLink>
               <NavLink to="/cart">
                 <FaShoppingCart style={{ marginRight: '5px' }} />
@@ -320,7 +235,7 @@ function Navigation() {
             </>
           ) : (
             <>
-              <NavLink to="/login">Login</NavLink>
+              <Button as={Link} to="/login">Login</Button>
               <Button as={Link} to="/register">Register</Button>
             </>
           )}
