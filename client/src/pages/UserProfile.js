@@ -88,6 +88,22 @@ const AddressActions = styled.div`
   gap: 8px;
 `;
 
+const PersonalInfoSection = styled(ProfileSection)`
+  position: relative;
+  
+  .info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .info-actions {
+    display: flex;
+    gap: 10px;
+  }
+`;
+
 function UserProfile() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -111,6 +127,13 @@ function UserProfile() {
     state: '',
     zipCode: '',
     country: ''
+  });
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    bio: ''
   });
 
   useEffect(() => {
@@ -313,6 +336,67 @@ function UserProfile() {
     }
   };
 
+  useEffect(() => {
+    if (profileData) {
+      setProfileForm({
+        name: profileData.name || '',
+        email: profileData.email || '',
+        phone: profileData.profile?.phone || '',
+        bio: profileData.profile?.bio || ''
+      });
+    }
+  }, [profileData]);
+
+  const handleProfileChange = (e) => {
+    setProfileForm({
+      ...profileForm,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/users/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(profileForm)
+      });
+
+      if (!response.ok) throw new Error('Failed to update profile');
+
+      const updatedProfile = await response.json();
+      setProfileData(updatedProfile);
+      setIsEditingProfile(false);
+      setSuccess('Profile updated successfully');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleDeleteProfile = async () => {
+    if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      try {
+        const response = await fetch('/api/users/profile', {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        if (!response.ok) throw new Error('Failed to delete account');
+
+        await logout();
+        navigate('/');
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
   if (!user) return <div>Please log in to view your profile</div>;
@@ -324,17 +408,29 @@ function UserProfile() {
       {error && <ErrorMessage>{error}</ErrorMessage>}
       {success && <SuccessMessage>{success}</SuccessMessage>}
 
-      <ProfileSection>
-        <h2>Personal Information</h2>
-        {isEditing ? (
-          <>
+      <PersonalInfoSection>
+        <div className="info-header">
+          <h2>Personal Information</h2>
+          <div className="info-actions">
+            {!isEditingProfile && (
+              <>
+                <Button onClick={() => setIsEditingProfile(true)}>Edit Profile</Button>
+                <Button danger onClick={handleDeleteProfile}>Delete Account</Button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {isEditingProfile ? (
+          <form onSubmit={handleUpdateProfile}>
             <FormGroup>
               <Label>Name:</Label>
               <Input
                 type="text"
                 name="name"
-                value={editedData.name}
-                onChange={handleChange}
+                value={profileForm.name}
+                onChange={handleProfileChange}
+                required
               />
             </FormGroup>
             <FormGroup>
@@ -342,8 +438,9 @@ function UserProfile() {
               <Input
                 type="email"
                 name="email"
-                value={editedData.email}
-                onChange={handleChange}
+                value={profileForm.email}
+                onChange={handleProfileChange}
+                required
               />
             </FormGroup>
             <FormGroup>
@@ -351,8 +448,8 @@ function UserProfile() {
               <Input
                 type="tel"
                 name="phone"
-                value={editedData.phone}
-                onChange={handleChange}
+                value={profileForm.phone}
+                onChange={handleProfileChange}
               />
             </FormGroup>
             <FormGroup>
@@ -360,24 +457,36 @@ function UserProfile() {
               <Input
                 as="textarea"
                 name="bio"
-                value={editedData.bio}
-                onChange={handleChange}
+                value={profileForm.bio}
+                onChange={handleProfileChange}
               />
             </FormGroup>
-            <Button onClick={handleSave}>Save Changes</Button>
-            <Button onClick={() => setIsEditing(false)}>Cancel</Button>
-          </>
+            <Button type="submit">Save Changes</Button>
+            <Button 
+              type="button" 
+              secondary 
+              onClick={() => {
+                setIsEditingProfile(false);
+                setProfileForm({
+                  name: profileData.name || '',
+                  email: profileData.email || '',
+                  phone: profileData.profile?.phone || '',
+                  bio: profileData.profile?.bio || ''
+                });
+              }}
+            >
+              Cancel
+            </Button>
+          </form>
         ) : (
           <>
             <p><strong>Name:</strong> {profileData?.name}</p>
             <p><strong>Email:</strong> {profileData?.email}</p>
             <p><strong>Phone:</strong> {profileData?.profile?.phone || 'Not provided'}</p>
             <p><strong>Bio:</strong> {profileData?.profile?.bio || 'No bio provided'}</p>
-            <Button onClick={handleEdit}>Edit Profile</Button>
-            <Button danger onClick={handleDeleteAccount}>Delete Account</Button>
           </>
         )}
-      </ProfileSection>
+      </PersonalInfoSection>
 
       <AddressSection>
         <div className="address-header">
