@@ -336,15 +336,15 @@ router.post('/addresses', auth, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    if (!Array.isArray(user.profile.address)) {
-      user.profile.address = [];
-    }
-
     const newAddress = {
       _id: new mongoose.Types.ObjectId(),
       ...req.body
     };
 
+    if (!Array.isArray(user.profile.address)) {
+      user.profile.address = [];
+    }
+    
     user.profile.address.push(newAddress);
     await user.save();
 
