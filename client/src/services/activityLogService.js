@@ -8,9 +8,10 @@ class ActivityLogService {
     this.activityCallback = null;
     this.retryAttempts = 0;
     this.maxRetries = 3;
+    this.reconnectTimeout = null;
   }
 
-  initializeSocket() {
+  async initializeSocket() {
     try {
       const token = localStorage.getItem('token');
       
@@ -20,26 +21,20 @@ class ActivityLogService {
         return;
       }
 
-      // Close existing connection if any
+      // Prevent multiple connections
       if (this.socket?.connected) {
         console.log('Socket already connected');
         return;
       }
 
-      if (this.socket) {
-        this.socket.disconnect();
-        this.socket = null;
-      }
+      // Clean up existing socket
+      this.cleanupSocket();
 
       console.log('Initializing socket connection with token');
       
       this.socket = io(API_URL, {
-        auth: {
-          token
-        },
-        query: {
-          token
-        },
+        auth: { token },
+        query: { token },
         transports: ['websocket', 'polling'],
         reconnection: true,
         reconnectionAttempts: this.maxRetries,
@@ -47,54 +42,76 @@ class ActivityLogService {
         timeout: 20000
       });
 
-      this.socket.on('connect', () => {
-        console.log('Socket connected successfully');
-        this.retryAttempts = 0;
-        this.updateConnectionStatus(true);
-      });
-
-      this.socket.on('disconnect', (reason) => {
-        console.log('Socket disconnected:', reason);
-        this.updateConnectionStatus(false);
-      });
-
-      this.socket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error.message);
-        this.updateConnectionStatus(false);
-        
-        if (this.retryAttempts < this.maxRetries) {
-          this.retryAttempts++;
-          console.log(`Retry attempt ${this.retryAttempts} of ${this.maxRetries}`);
-          setTimeout(() => {
-            console.log('Attempting to reconnect...');
-            this.reconnect();
-          }, 2000);
-        }
-      });
-
-      this.socket.on('initialActivities', (activities) => {
-        console.log('Received initial activities');
-        if (this.activityCallback) {
-          this.activityCallback(activities);
-        }
-      });
-
-      this.socket.on('activityUpdate', (activity) => {
-        console.log('Received activity update');
-        if (this.activityCallback) {
-          this.activityCallback([activity]);
-        }
-      });
+      this.setupSocketListeners();
 
     } catch (error) {
       console.error('Socket initialization error:', error);
       this.updateConnectionStatus(false);
+      throw error; // Propagate error for better handling
+    }
+  }
+
+  setupSocketListeners() {
+    if (!this.socket) return;
+
+    this.socket.on('connect', () => {
+      console.log('Socket connected successfully');
+      this.retryAttempts = 0;
+      this.updateConnectionStatus(true);
+      if (this.reconnectTimeout) {
+        clearTimeout(this.reconnectTimeout);
+        this.reconnectTimeout = null;
+      }
+    });
+
+    this.socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+      this.updateConnectionStatus(false);
+    });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error.message);
+      this.updateConnectionStatus(false);
+      
+      if (this.retryAttempts < this.maxRetries) {
+        this.retryAttempts++;
+        console.log(`Retry attempt ${this.retryAttempts} of ${this.maxRetries}`);
+        this.reconnectTimeout = setTimeout(() => {
+          console.log('Attempting to reconnect...');
+          this.reconnect();
+        }, 2000);
+      }
+    });
+
+    this.socket.on('initialActivities', (activities) => {
+      console.log('Received initial activities');
+      if (this.activityCallback) {
+        this.activityCallback(activities);
+      }
+    });
+
+    this.socket.on('activityUpdate', (activity) => {
+      console.log('Received activity update');
+      if (this.activityCallback) {
+        this.activityCallback([activity]);
+      }
+    });
+  }
+
+  cleanupSocket() {
+    if (this.socket) {
+      this.socket.removeAllListeners();
+      this.socket.disconnect();
+      this.socket = null;
+    }
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
     }
   }
 
   onConnectionStatus(callback) {
     this.connectionCallback = callback;
-    // Send current connection status
     if (this.socket) {
       callback(this.socket.connected);
     } else {
@@ -109,19 +126,16 @@ class ActivityLogService {
   }
 
   disconnect() {
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-    }
+    this.cleanupSocket();
     this.retryAttempts = 0;
     this.updateConnectionStatus(false);
   }
 
   async reconnect() {
     console.log('Reconnecting socket...');
-    this.disconnect();
+    this.cleanupSocket();
     await new Promise(resolve => setTimeout(resolve, 1000));
-    this.initializeSocket();
+    await this.initializeSocket();
   }
 
   subscribeToUpdates(callback) {

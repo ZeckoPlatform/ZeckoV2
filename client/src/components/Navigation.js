@@ -189,6 +189,15 @@ function Navigation() {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Navigation is handled in the AuthContext logout function
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   return (
     <Nav>
       <TopBar>
