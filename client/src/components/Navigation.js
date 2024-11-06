@@ -230,7 +230,6 @@ function Navigation() {
                 <FaShoppingCart style={{ marginRight: '5px' }} />
                 Cart
               </NavLink>
-              <NavLink to="/addresses">Manage Addresses</NavLink>
               <NotificationButton 
                 onClick={() => setShowNotifications(!showNotifications)}
               >

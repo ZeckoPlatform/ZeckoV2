@@ -59,6 +59,35 @@ const SuccessMessage = styled.div`
   margin: 10px 0;
 `;
 
+const AddressSection = styled(ProfileSection)`
+  .address-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+`;
+
+const AddressCard = styled.div`
+  border: 1px solid #ddd;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 4px;
+  position: relative;
+  
+  &:hover {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+`;
+
+const AddressActions = styled.div`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+`;
+
 function UserProfile() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -72,6 +101,16 @@ function UserProfile() {
     email: '',
     phone: '',
     bio: ''
+  });
+  const [addresses, setAddresses] = useState([]);
+  const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState(null);
+  const [addressForm, setAddressForm] = useState({
+    street: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: ''
   });
 
   useEffect(() => {
@@ -104,6 +143,27 @@ function UserProfile() {
       fetchProfileData();
     }
   }, [user]);
+
+  useEffect(() => {
+    fetchAddresses();
+  }, []);
+
+  const fetchAddresses = async () => {
+    try {
+      const response = await fetch('/api/users/addresses', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch addresses');
+
+      const data = await response.json();
+      setAddresses(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -162,6 +222,95 @@ function UserProfile() {
       ...editedData,
       [e.target.name]: e.target.value
     });
+  };
+
+  const handleAddressChange = (e) => {
+    setAddressForm({
+      ...addressForm,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleAddAddress = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/users/addresses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(addressForm)
+      });
+
+      if (!response.ok) throw new Error('Failed to add address');
+
+      const newAddress = await response.json();
+      setAddresses([...addresses, newAddress]);
+      setIsAddingAddress(false);
+      setAddressForm({
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: ''
+      });
+      setSuccess('Address added successfully');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleEditAddress = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`/api/users/addresses/${editingAddressId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(addressForm)
+      });
+
+      if (!response.ok) throw new Error('Failed to update address');
+
+      const updatedAddress = await response.json();
+      setAddresses(addresses.map(addr => 
+        addr._id === editingAddressId ? updatedAddress : addr
+      ));
+      setEditingAddressId(null);
+      setAddressForm({
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: ''
+      });
+      setSuccess('Address updated successfully');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleDeleteAddress = async (addressId) => {
+    if (window.confirm('Are you sure you want to delete this address?')) {
+      try {
+        const response = await fetch(`/api/users/addresses/${addressId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        if (!response.ok) throw new Error('Failed to delete address');
+
+        setAddresses(addresses.filter(addr => addr._id !== addressId));
+        setSuccess('Address deleted successfully');
+      } catch (err) {
+        setError(err.message);
+      }
+    }
   };
 
   if (loading) return <div>Loading...</div>;
@@ -229,6 +378,113 @@ function UserProfile() {
           </>
         )}
       </ProfileSection>
+
+      <AddressSection>
+        <div className="address-header">
+          <h2>Saved Addresses</h2>
+          {!isAddingAddress && !editingAddressId && (
+            <Button onClick={() => setIsAddingAddress(true)}>Add New Address</Button>
+          )}
+        </div>
+
+        {(isAddingAddress || editingAddressId) && (
+          <AddressForm onSubmit={editingAddressId ? handleEditAddress : handleAddAddress}>
+            <FormGroup>
+              <Label>Street Address:</Label>
+              <Input
+                name="street"
+                value={addressForm.street}
+                onChange={handleAddressChange}
+                required
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label>City:</Label>
+              <Input
+                name="city"
+                value={addressForm.city}
+                onChange={handleAddressChange}
+                required
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label>State:</Label>
+              <Input
+                name="state"
+                value={addressForm.state}
+                onChange={handleAddressChange}
+                required
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label>ZIP Code:</Label>
+              <Input
+                name="zipCode"
+                value={addressForm.zipCode}
+                onChange={handleAddressChange}
+                required
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label>Country:</Label>
+              <Input
+                name="country"
+                value={addressForm.country}
+                onChange={handleAddressChange}
+                required
+              />
+            </FormGroup>
+            <Button type="submit">
+              {editingAddressId ? 'Update Address' : 'Add Address'}
+            </Button>
+            <Button 
+              type="button" 
+              secondary 
+              onClick={() => {
+                setIsAddingAddress(false);
+                setEditingAddressId(null);
+                setAddressForm({
+                  street: '',
+                  city: '',
+                  state: '',
+                  zipCode: '',
+                  country: ''
+                });
+              }}
+            >
+              Cancel
+            </Button>
+          </AddressForm>
+        )}
+
+        {addresses.length === 0 ? (
+          <EmptyState>
+            <h3>No addresses saved yet</h3>
+            <p>Add your first address to get started</p>
+          </EmptyState>
+        ) : (
+          addresses.map(address => (
+            <AddressCard key={address._id}>
+              <p>{address.street}</p>
+              <p>{address.city}, {address.state} {address.zipCode}</p>
+              <p>{address.country}</p>
+              <AddressActions>
+                <Button onClick={() => {
+                  setEditingAddressId(address._id);
+                  setAddressForm({
+                    street: address.street,
+                    city: address.city,
+                    state: address.state,
+                    zipCode: address.zipCode,
+                    country: address.country
+                  });
+                }}>Edit</Button>
+                <Button danger onClick={() => handleDeleteAddress(address._id)}>Delete</Button>
+              </AddressActions>
+            </AddressCard>
+          ))
+        )}
+      </AddressSection>
 
       {profileData && (
         <>
