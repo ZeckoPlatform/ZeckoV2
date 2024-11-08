@@ -1,65 +1,113 @@
 const express = require('express');
 const router = express.Router();
-const Business = require('../models/businessModel');
 const { auth } = require('../middleware/auth');
+const BusinessUser = require('../models/businessUserModel');
 
-// Create a new business profile
-router.post('/', auth, async (req, res) => {
-  try {
-    const { name, description, category, location, contactEmail, contactPhone, website } = req.body;
-    const newBusiness = new Business({
-      name,
-      description,
-      category,
-      location,
-      contactEmail,
-      contactPhone,
-      website,
-      owner: req.user.id
-    });
-    const savedBusiness = await newBusiness.save();
-    res.json(savedBusiness);
-  } catch (error) {
-    res.status(500).json({ message: 'Error creating business profile', error: error.message });
-  }
+// Get business profile with addresses
+router.get('/profile', auth, async (req, res) => {
+    try {
+        const business = await BusinessUser.findById(req.user.id)
+            .select('-password');
+
+        if (!business) {
+            return res.status(404).json({ message: 'Business profile not found' });
+        }
+
+        res.json({
+            profile: business,
+            addresses: business.addresses || []
+        });
+    } catch (error) {
+        console.error('Error fetching business profile:', error);
+        res.status(500).json({ message: 'Error fetching business profile' });
+    }
 });
 
-// Get all businesses
-router.get('/', async (req, res) => {
-  try {
-    const businesses = await Business.find().sort({ createdAt: -1 });
-    res.json(businesses);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching businesses', error: error.message });
-  }
+// Update business profile
+router.put('/profile', auth, async (req, res) => {
+    try {
+        const updates = req.body;
+        const business = await BusinessUser.findById(req.user.id);
+
+        if (!business) {
+            return res.status(404).json({ message: 'Business not found' });
+        }
+
+        // Update allowed fields
+        const allowedUpdates = [
+            'businessName',
+            'email',
+            'phone',
+            'description',
+            'website',
+            'addresses'
+        ];
+
+        allowedUpdates.forEach(field => {
+            if (updates[field] !== undefined) {
+                business[field] = updates[field];
+            }
+        });
+
+        await business.save();
+        res.json(business);
+    } catch (error) {
+        console.error('Error updating business profile:', error);
+        res.status(500).json({ message: 'Error updating business profile' });
+    }
 });
 
-// Search businesses
-router.get('/search', async (req, res) => {
-  try {
-    const { query } = req.query;
-    const businesses = await Business.find({
-      $or: [
-        { name: { $regex: query, $options: 'i' } },
-        { description: { $regex: query, $options: 'i' } },
-        { category: { $regex: query, $options: 'i' } },
-        { location: { $regex: query, $options: 'i' } }
-      ]
-    }).sort({ createdAt: -1 });
-    res.json(businesses);
-  } catch (error) {
-    res.status(500).json({ message: 'Error searching businesses', error: error.message });
-  }
+// Add business address
+router.post('/addresses', auth, async (req, res) => {
+    try {
+        const business = await BusinessUser.findById(req.user.id);
+        if (!business) {
+            return res.status(404).json({ message: 'Business not found' });
+        }
+
+        const { street, city, state, zipCode, country, isDefault } = req.body;
+        const newAddress = {
+            street,
+            city,
+            state,
+            zipCode,
+            country,
+            isDefault: isDefault || false
+        };
+
+        if (!business.addresses) {
+            business.addresses = [];
+        }
+
+        // If this is the first address or marked as default, update other addresses
+        if (isDefault || business.addresses.length === 0) {
+            business.addresses.forEach(addr => addr.isDefault = false);
+            newAddress.isDefault = true;
+        }
+
+        business.addresses.push(newAddress);
+        await business.save();
+
+        res.status(201).json(newAddress);
+    } catch (error) {
+        console.error('Error adding business address:', error);
+        res.status(500).json({ message: 'Error adding business address' });
+    }
 });
 
-// Get featured businesses
-router.get('/featured', async (req, res) => {
-  try {
-    const featuredBusinesses = await Business.find({ isFeatured: true }).sort({ createdAt: -1 });
-    res.json(featuredBusinesses);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching featured businesses', error: error.message });
-  }
+// Get business addresses
+router.get('/addresses', auth, async (req, res) => {
+    try {
+        const business = await BusinessUser.findById(req.user.id);
+        if (!business) {
+            return res.status(404).json({ message: 'Business not found' });
+        }
+
+        res.json(business.addresses || []);
+    } catch (error) {
+        console.error('Error fetching business addresses:', error);
+        res.status(500).json({ message: 'Error fetching business addresses' });
+    }
 });
 
 module.exports = router;
