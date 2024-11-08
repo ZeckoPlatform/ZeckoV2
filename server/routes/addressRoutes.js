@@ -5,11 +5,13 @@ const User = require('../models/userModel');
 const BusinessUser = require('../models/businessUserModel');
 const VendorUser = require('../models/vendorUserModel');
 
-// Get all addresses for a user
+// Get user addresses
 router.get('/', auth, async (req, res) => {
     try {
         let user;
-        switch(req.user.accountType) {
+        const accountType = req.user.accountType || 'personal';
+
+        switch(accountType) {
             case 'business':
                 user = await BusinessUser.findById(req.user.id);
                 break;
@@ -24,20 +26,26 @@ router.get('/', auth, async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        res.json(user.addresses || []);
+        // Initialize addresses array if it doesn't exist
+        if (!user.addresses) {
+            user.addresses = [];
+            await user.save();
+        }
+
+        res.json(user.addresses);
     } catch (error) {
         console.error('Error fetching addresses:', error);
         res.status(500).json({ message: 'Error fetching addresses' });
     }
 });
 
-// Add a new address
+// Add address
 router.post('/', auth, async (req, res) => {
     try {
-        const { street, city, state, zipCode, country, isDefault } = req.body;
-
         let user;
-        switch(req.user.accountType) {
+        const accountType = req.user.accountType || 'personal';
+
+        switch(accountType) {
             case 'business':
                 user = await BusinessUser.findById(req.user.id);
                 break;
@@ -50,6 +58,12 @@ router.post('/', auth, async (req, res) => {
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
+        }
+
+        const { street, city, state, zipCode, country, isDefault } = req.body;
+        
+        if (!user.addresses) {
+            user.addresses = [];
         }
 
         const newAddress = {
@@ -58,17 +72,12 @@ router.post('/', auth, async (req, res) => {
             state,
             zipCode,
             country,
-            isDefault: isDefault || false
+            isDefault: isDefault || user.addresses.length === 0 // Make first address default
         };
 
-        if (!user.addresses) {
-            user.addresses = [];
-        }
-
-        // If this is the first address or marked as default, update other addresses
-        if (isDefault || user.addresses.length === 0) {
+        if (newAddress.isDefault) {
+            // Set all other addresses to non-default
             user.addresses.forEach(addr => addr.isDefault = false);
-            newAddress.isDefault = true;
         }
 
         user.addresses.push(newAddress);

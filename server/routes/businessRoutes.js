@@ -3,6 +3,34 @@ const router = express.Router();
 const { auth } = require('../middleware/auth');
 const BusinessUser = require('../models/businessUserModel');
 
+// Get all businesses
+router.get('/', async (req, res) => {
+    try {
+        const businesses = await BusinessUser.find()
+            .select('-password -__v')
+            .sort({ createdAt: -1 });
+        res.json(businesses);
+    } catch (error) {
+        console.error('Error fetching businesses:', error);
+        res.status(500).json({ message: 'Error fetching businesses' });
+    }
+});
+
+// Get single business
+router.get('/:id', async (req, res) => {
+    try {
+        const business = await BusinessUser.findById(req.params.id)
+            .select('-password -__v');
+        if (!business) {
+            return res.status(404).json({ message: 'Business not found' });
+        }
+        res.json(business);
+    } catch (error) {
+        console.error('Error fetching business:', error);
+        res.status(500).json({ message: 'Error fetching business' });
+    }
+});
+
 // Get business profile with addresses
 router.get('/profile', auth, async (req, res) => {
     try {
