@@ -78,35 +78,17 @@ router.get('/:id', async (req, res) => {
 // Get business profile
 router.get('/profile', auth, async (req, res) => {
     try {
-        console.log('Fetching business profile for user:', req.user.id);
-        
         const business = await BusinessUser.findById(req.user.id)
             .select('-password');
 
         if (!business) {
-            console.log('Business not found');
             return res.status(404).json({ 
                 message: 'Business profile not found',
                 success: false 
             });
         }
 
-        // Ensure all required fields exist
-        const profile = {
-            _id: business._id,
-            businessName: business.businessName || '',
-            email: business.email || '',
-            phone: business.phone || '',
-            description: business.description || '',
-            website: business.website || '',
-            category: business.category || '',
-            addresses: business.addresses || [],
-            createdAt: business.createdAt,
-            updatedAt: business.updatedAt
-        };
-
-        console.log('Returning business profile:', profile);
-        res.json(profile);
+        res.json(business);
     } catch (error) {
         console.error('Error fetching business profile:', error);
         res.status(500).json({ 
@@ -119,9 +101,6 @@ router.get('/profile', auth, async (req, res) => {
 // Update business profile
 router.put('/profile', auth, async (req, res) => {
     try {
-        console.log('Updating business profile for user:', req.user.id);
-        console.log('Update data:', req.body);
-
         const business = await BusinessUser.findById(req.user.id);
 
         if (!business) {
@@ -131,7 +110,6 @@ router.put('/profile', auth, async (req, res) => {
             });
         }
 
-        // Update allowed fields
         const allowedUpdates = [
             'businessName',
             'email',
@@ -148,12 +126,7 @@ router.put('/profile', auth, async (req, res) => {
         });
 
         await business.save();
-
-        res.json({
-            message: 'Profile updated successfully',
-            success: true,
-            profile: business
-        });
+        res.json(business);
     } catch (error) {
         console.error('Error updating business profile:', error);
         res.status(500).json({ 
