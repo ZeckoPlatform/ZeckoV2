@@ -115,12 +115,12 @@ function BusinessProfile() {
         setError(null);
         
         const token = localStorage.getItem('token');
+        console.log('Token exists:', !!token);
+
         if (!token) {
             throw new Error('No authentication token found');
         }
 
-        console.log('Fetching business profile...');
-        
         const response = await fetch('/api/business/profile', {
             method: 'GET',
             headers: {
@@ -130,14 +130,15 @@ function BusinessProfile() {
         });
 
         const data = await response.json();
-        console.log('Profile response:', data);
+        console.log('Profile API response:', data);
 
         if (!response.ok) {
-            throw new Error(data.message || 'Error fetching business profile');
+            throw new Error(data.message || 'Failed to fetch profile');
         }
 
         if (!data.success || !data.business) {
-            throw new Error('Invalid response format');
+            console.error('Invalid response format:', data);
+            throw new Error('Invalid server response');
         }
 
         setProfile({
@@ -150,8 +151,8 @@ function BusinessProfile() {
             addresses: Array.isArray(data.business.addresses) ? data.business.addresses : []
         });
     } catch (error) {
-        console.error('Error fetching profile:', error);
-        setError(error.message || 'Failed to load business profile');
+        console.error('Profile fetch error:', error);
+        setError(error.message);
     } finally {
         setLoading(false);
     }
