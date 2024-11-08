@@ -89,7 +89,6 @@ function Login() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    twoFactorCode: '',
     accountType: 'personal'
   });
   const [error, setError] = useState('');
@@ -97,6 +96,7 @@ function Login() {
   const [tempToken, setTempToken] = useState('');
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [selectedType, setSelectedType] = useState('personal');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -115,13 +115,11 @@ function Login() {
             ? 'https://zeckov2-deceb43992ac.herokuapp.com'
             : 'http://localhost:5000';
 
-        // Log the current account type
-        console.log('Current account type:', formData.accountType);
+        console.log('Submitting with account type:', selectedType);
 
-        // Determine endpoint
-        const endpoint = `${API_URL}/api/${formData.accountType === 'vendor' 
+        const endpoint = `${API_URL}/api/${selectedType === 'vendor' 
             ? 'vendor' 
-            : formData.accountType === 'business' 
+            : selectedType === 'business' 
                 ? 'business' 
                 : 'users'}/login`;
 
@@ -130,15 +128,15 @@ function Login() {
         const response = await axios.post(endpoint, {
             email: formData.email,
             password: formData.password,
-            accountType: formData.accountType
+            accountType: selectedType
         });
 
         if (response.data && response.data.token) {
             localStorage.setItem('token', response.data.token);
-            localStorage.setItem('accountType', formData.accountType);
+            localStorage.setItem('accountType', selectedType);
             login(response.data.token, {
                 ...response.data.user,
-                accountType: formData.accountType
+                accountType: selectedType
             });
             navigate('/dashboard');
         }
@@ -181,9 +179,9 @@ function Login() {
     }
   };
 
-  // Make sure the account type is set when selecting account type
   const handleAccountTypeSelect = (type) => {
     console.log('Selecting account type:', type);
+    setSelectedType(type);
     setFormData(prev => ({
         ...prev,
         accountType: type
@@ -225,21 +223,21 @@ function Login() {
       <AccountTypeSelector>
         <AccountTypeButton
           type="button"
-          selected={formData.accountType === 'personal'}
+          selected={selectedType === 'personal'}
           onClick={() => handleAccountTypeSelect('personal')}
         >
           Personal Account
         </AccountTypeButton>
         <AccountTypeButton
           type="button"
-          selected={formData.accountType === 'business'}
+          selected={selectedType === 'business'}
           onClick={() => handleAccountTypeSelect('business')}
         >
           Business Account
         </AccountTypeButton>
         <AccountTypeButton
           type="button"
-          selected={formData.accountType === 'vendor'}
+          selected={selectedType === 'vendor'}
           onClick={() => handleAccountTypeSelect('vendor')}
         >
           Vendor Account
@@ -263,12 +261,7 @@ function Login() {
           onChange={handleChange}
           required
         />
-        <ForgotPasswordLink 
-          onClick={() => navigate('/forgot-password')}
-        >
-          Forgot Password?
-        </ForgotPasswordLink>
-        <Button type="submit">Login</Button>
+        <Button type="submit">Login as {selectedType}</Button>
         {error && <ErrorMessage>{error}</ErrorMessage>}
       </Form>
     </LoginContainer>

@@ -93,30 +93,19 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
     try {
-        const { email, password, accountType } = req.body;
+        const { email, password } = req.body;
+        
+        console.log('Login attempt for:', email);
 
-        // Debug log
-        console.log('Login attempt:', { email, accountType });
-
-        let user;
-        // Find user based on account type
-        switch(accountType) {
-            case 'business':
-                user = await BusinessUser.findOne({ email });
-                break;
-            case 'vendor':
-                user = await VendorUser.findOne({ email });
-                break;
-            default:
-                user = await User.findOne({ email });
-        }
-
+        const user = await User.findOne({ email });
+        
         if (!user) {
             console.log('No user found with email:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         const isMatch = await user.comparePassword(password);
+        
         if (!isMatch) {
             console.log('Password mismatch for user:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
@@ -125,8 +114,8 @@ router.post('/login', async (req, res) => {
         const token = jwt.sign(
             { 
                 userId: user._id,
-                accountType: accountType || 'personal',
-                role: user.role
+                role: user.role,
+                accountType: 'personal'
             },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
@@ -141,12 +130,15 @@ router.post('/login', async (req, res) => {
                 email: user.email,
                 username: user.username,
                 role: user.role,
-                accountType: accountType || 'personal'
+                accountType: 'personal'
             }
         });
     } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ error: 'Login failed' });
+        console.error('Server error during login:', error);
+        res.status(500).json({ 
+            error: 'Login failed',
+            details: error.message 
+        });
     }
 });
 
