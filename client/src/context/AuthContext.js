@@ -33,9 +33,17 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (token, userData) => {
     try {
+      const normalizedUserData = {
+        id: userData.id,
+        email: userData.email,
+        role: userData.role,
+        accountType: userData.accountType,
+        businessName: userData.businessName
+      };
+
       localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(normalizedUserData));
+      setUser(normalizedUserData);
       await activityLogService.initializeSocket();
       setError(null);
     } catch (error) {

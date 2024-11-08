@@ -92,9 +92,10 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
+        // Create token with consistent format
         const token = jwt.sign(
             { 
-                userId: businessUser._id,
+                userId: businessUser._id.toString(), // Ensure string format
                 accountType: 'business',
                 role: 'business'
             },
@@ -102,16 +103,19 @@ router.post('/login', async (req, res) => {
             { expiresIn: '24h' }
         );
 
+        // Store user data in consistent format
+        const userData = {
+            id: businessUser._id.toString(),
+            email: businessUser.email,
+            businessName: businessUser.businessName,
+            role: 'business',
+            accountType: 'business'
+        };
+
         res.json({
             success: true,
             token,
-            user: {
-                id: businessUser._id,
-                email: businessUser.email,
-                businessName: businessUser.businessName,
-                role: 'business',
-                accountType: 'business'
-            }
+            user: userData
         });
     } catch (error) {
         console.error('Business login error:', error);

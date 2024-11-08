@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const User = require('../models/userModel');
 const BusinessUser = require('../models/businessUserModel');
 
@@ -12,29 +13,44 @@ const auth = async (req, res, next) => {
             return res.status(401).json({ message: 'No auth token' });
         }
 
-        console.log('Verifying token...');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log('Decoded token:', { userId: decoded.userId, accountType: decoded.accountType });
+        console.log('Token received:', token.substring(0, 20) + '...');
         
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log('Decoded token:', {
+            userId: decoded.userId,
+            accountType: decoded.accountType,
+            role: decoded.role
+        });
+
+        // Ensure userId is a valid ObjectId
+        if (!mongoose.Types.ObjectId.isValid(decoded.userId)) {
+            throw new Error('Invalid user ID format');
+        }
+
         let user;
         if (decoded.accountType === 'business') {
-            user = await BusinessUser.findOne({ _id: decoded.userId });
+            user = await BusinessUser.findById(decoded.userId)
+                .select('-password')
+                .lean();
+            console.log('Business user found:', !!user);
         } else {
-            user = await User.findOne({ _id: decoded.userId });
+            user = await User.findById(decoded.userId)
+                .select('-password')
+                .lean();
+            console.log('Regular user found:', !!user);
         }
 
         if (!user) {
-            console.log('No user found for token');
+            console.log('No user found for ID:', decoded.userId);
             throw new Error('User not found');
         }
 
-        console.log('User found:', { id: user._id, role: user.role });
-        
         req.user = {
             id: user._id,
             email: user.email,
             role: decoded.accountType || user.role,
-            accountType: decoded.accountType
+            accountType: decoded.accountType,
+            businessName: user.businessName // Include for business users
         };
         
         next();
