@@ -12,7 +12,9 @@ router.post('/register', async (req, res) => {
             email,
             password,
             businessName,
-            businessType
+            businessType,
+            location,
+            description
         } = req.body;
 
         // Check if email already exists
@@ -36,18 +38,26 @@ router.post('/register', async (req, res) => {
         // Create associated business profile
         const business = new Business({
             name: businessName,
-            description: businessType,
+            description: description || businessType,
             category: businessType,
+            location: location || '',
             contactEmail: email,
             owner: businessUser._id
         });
 
         await business.save();
 
+        // Update the business user with the business reference
+        businessUser.business = business._id;
+        await businessUser.save();
+
         res.status(201).json({ message: 'Business registration successful' });
     } catch (error) {
         console.error('Business registration error:', error);
-        res.status(500).json({ error: 'Registration failed', details: error.message });
+        res.status(500).json({ 
+            error: 'Registration failed', 
+            details: error.message 
+        });
     }
 });
 

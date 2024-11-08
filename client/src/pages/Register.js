@@ -97,7 +97,9 @@ function Register() {
     accountType: '',
     businessName: '',
     businessType: '',
-    vendorCategory: ''
+    vendorCategory: '',
+    location: '',
+    description: ''
   });
   const [error, setError] = useState('');
   const [passwordScore, setPasswordScore] = useState(0);
@@ -158,6 +160,48 @@ function Register() {
             <option value="manufacturer">Manufacturer</option>
             <option value="service">Service Provider</option>
           </Select>
+        </>
+      );
+    }
+    return null;
+  };
+
+  const renderBusinessFields = () => {
+    if (formData.accountType === 'business') {
+      return (
+        <>
+          <Input
+            type="text"
+            placeholder="Business Name"
+            name="businessName"
+            value={formData.businessName}
+            onChange={handleChange}
+            required
+          />
+          <Input
+            type="text"
+            placeholder="Business Type"
+            name="businessType"
+            value={formData.businessType}
+            onChange={handleChange}
+            required
+          />
+          <Input
+            type="text"
+            placeholder="Business Location"
+            name="location"
+            value={formData.location}
+            onChange={handleChange}
+            required
+          />
+          <Input
+            type="text"
+            placeholder="Business Description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            required
+          />
         </>
       );
     }
@@ -251,7 +295,8 @@ function Register() {
           onChange={handleChange}
           required
         />
-        {renderVendorFields()}
+        {formData.accountType === 'business' && renderBusinessFields()}
+        {formData.accountType === 'vendor' && renderVendorFields()}
         <Input
           type="password"
           placeholder="Password"

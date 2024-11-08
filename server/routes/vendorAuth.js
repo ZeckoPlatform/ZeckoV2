@@ -44,24 +44,33 @@ router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         
-        const vendorUser = await VendorUser.findOne({ email, role: 'vendor' });
+        // Debug log
+        console.log('Attempting vendor login for:', email);
+        
+        const vendorUser = await VendorUser.findOne({ email });
         if (!vendorUser) {
+            console.log('No vendor found with email:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         const isMatch = await vendorUser.comparePassword(password);
         if (!isMatch) {
+            console.log('Password mismatch for vendor:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         const token = jwt.sign(
             { 
                 userId: vendorUser._id,
-                accountType: 'vendor'
+                accountType: 'vendor',
+                role: 'vendor'
             },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
+
+        // Debug log
+        console.log('Vendor login successful:', vendorUser._id);
 
         res.json({
             token,
@@ -73,7 +82,7 @@ router.post('/login', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('Vendor login error:', error);
         res.status(500).json({ error: 'Login failed' });
     }
 });

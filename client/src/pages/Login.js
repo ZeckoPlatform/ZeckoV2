@@ -87,35 +87,47 @@ function Login() {
     setError('');
 
     try {
-      const response = await fetch('/api/users/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
-        })
-      });
+        const API_URL = process.env.NODE_ENV === 'production'
+            ? 'https://zeckov2-deceb43992ac.herokuapp.com'
+            : 'http://localhost:5000';
 
-      const data = await response.json();
+        // Choose endpoint based on account type
+        let endpoint = '';
+        switch(formData.accountType) {
+            case 'business':
+                endpoint = `${API_URL}/api/business/login`;
+                break;
+            case 'vendor':
+                endpoint = `${API_URL}/api/vendor/login`;
+                break;
+            default:
+                endpoint = `${API_URL}/api/users/login`;
+        }
 
-      if (data.need2FA) {
-        setShowTwoFactor(true);
-        setTempToken(data.tempToken);
-        return;
-      }
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                email: formData.email,
+                password: formData.password
+            })
+        });
 
-      if (response.ok) {
-        localStorage.setItem('token', data.token);
-        login(data.token, data.user);
-        activityLogService.initializeSocket();
-        navigate('/dashboard');
-      } else {
-        setError(data.message || 'Login failed. Please try again.');
-      }
+        const data = await response.json();
+
+        if (response.ok) {
+            localStorage.setItem('token', data.token);
+            login(data.token, data.user);
+            activityLogService.initializeSocket();
+            navigate('/dashboard');
+        } else {
+            setError(data.error || 'Login failed. Please try again.');
+        }
     } catch (err) {
-      setError('Login failed. Please try again.');
+        console.error('Login error:', err);
+        setError('Login failed. Please try again.');
     }
   };
 
