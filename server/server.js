@@ -2,10 +2,8 @@ const express = require('express');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const http = require('http');
-const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
-const jwt = require('jsonwebtoken');
 const initializeSocket = require('./socket');
 
 dotenv.config();
@@ -13,7 +11,7 @@ dotenv.config();
 // Debug logs at the top
 console.log('Loading routes...');
 
-// Import routes (only once)
+// Import routes (keep your existing route imports)
 const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
@@ -33,7 +31,7 @@ const businessAuthRoutes = require('./routes/businessAuth');
 const vendorAuthRoutes = require('./routes/vendorAuth');
 const addressRoutes = require('./routes/addressRoutes');
 
-// Initialize Express and Socket.io
+// Initialize Express and create server
 const app = express();
 const server = http.createServer(app);
 
@@ -47,72 +45,11 @@ app.use(cors({
 // Initialize socket with the server
 const io = initializeSocket(server);
 
-// Add middleware for socket authentication
-io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
-    if (!token) {
-        return next(new Error('Authentication token missing'));
-    }
+// Initialize global socket clients map
+global.connectedClients = new Map();
 
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        socket.userId = decoded.userId;
-        socket.userType = decoded.userType; // Add user type for admin checks
-        next();
-    } catch (error) {
-        return next(new Error('Authentication failed'));
-    }
-});
-
-// Enhanced Socket.IO connection handling
-io.on('connection', (socket) => {
-    console.log('Client connected:', socket.id);
-
-    // Store socket connection
-    if (socket.userId) {
-        if (!global.connectedClients.has(socket.userId)) {
-            global.connectedClients.set(socket.userId, new Set());
-        }
-        global.connectedClients.get(socket.userId).add(socket);
-    }
-
-    // Handle activity updates
-    socket.on('newActivity', (activity) => {
-        try {
-            socketHelpers.broadcastActivity(activity);
-        } catch (error) {
-            console.error('Error broadcasting activity:', error);
-        }
-    });
-
-    // Handle user updates
-    socket.on('userUpdate', (update) => {
-        try {
-            if (socket.userId) {
-                socketHelpers.sendNotificationToUser(socket.userId, update);
-            }
-        } catch (error) {
-            console.error('Error sending user update:', error);
-        }
-    });
-
-    socket.on('disconnect', () => {
-        console.log('Client disconnected:', socket.id);
-        if (socket.userId) {
-            const userSockets = global.connectedClients.get(socket.userId);
-            if (userSockets) {
-                userSockets.delete(socket);
-                if (userSockets.size === 0) {
-                    global.connectedClients.delete(socket.userId);
-                }
-            }
-        }
-    });
-
-    socket.on('error', (error) => {
-        console.error('Socket error:', error);
-    });
-});
+// Add socket instance to app context
+app.set('io', io);
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI, {
@@ -127,7 +64,6 @@ mongoose.connect(process.env.MONGODB_URI, {
 // Middleware Setup
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-app.use(cors());
 
 // Headers Middleware
 app.use((req, res, next) => {
@@ -143,9 +79,9 @@ app.use((req, res, next) => {
 // Favicon handler
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
-// Mount Routes
+// Mount Routes helper
 const mountRoute = (path, router) => {
-    console.log(`Mounting route ${path}, type:`, typeof router);
+    console.log(`Mounting route ${path}`);
     if (typeof router === 'function') {
         app.use(path, router);
     } else {
@@ -153,7 +89,7 @@ const mountRoute = (path, router) => {
     }
 };
 
-// API Routes
+// Mount your routes (keep your existing route mounting)
 mountRoute('/api/auth', userRoutes);
 mountRoute('/api/users', userRoutes);
 mountRoute('/api/products', productRoutes);
@@ -176,7 +112,7 @@ mountRoute('/api/business', businessAuthRoutes);
 mountRoute('/api/vendor', vendorAuthRoutes);
 mountRoute('/api/users/addresses', addressRoutes);
 
-// API Endpoints
+// API Endpoints (keep your existing endpoints)
 app.get('/api/subscription-plans', (req, res) => {
     const subscriptionPlans = [
         { id: 1, name: 'Basic', price: 9.99, features: ['Feature 1', 'Feature 2'] },
@@ -186,19 +122,10 @@ app.get('/api/subscription-plans', (req, res) => {
     res.json(subscriptionPlans);
 });
 
-app.get('/api', (req, res) => {
-    res.json({ message: 'Welcome to ZeckoV2 API' });
-});
-
-// Production Setup - Update this section
+// Production Setup
 if (process.env.NODE_ENV === 'production') {
-    // Log the build path
     console.log('Serving static files from:', path.join(__dirname, '../client/build'));
-    
-    // Serve static files from the client/build directory
     app.use(express.static(path.join(__dirname, '../client/build')));
-    
-    // Handle all other routes by serving the index.html
     app.get('*', (req, res, next) => {
         if (req.url.startsWith('/api/')) {
             return next();
@@ -214,7 +141,7 @@ app.use((err, req, res, next) => {
     res.status(500).json({ message: 'Something broke!' });
 });
 
-// Add 404 handling
+// 404 handling
 app.use((req, res) => {
     res.status(404).json({ message: 'Route not found' });
 });
@@ -228,7 +155,7 @@ process.on('unhandledRejection', (err) => {
     console.error('Unhandled Rejection:', err);
 });
 
-// Enhanced socket helpers
+// Socket helpers
 const socketHelpers = {
     getIO: () => io,
     
@@ -236,7 +163,7 @@ const socketHelpers = {
         try {
             global.connectedClients.forEach((sockets, userId) => {
                 sockets.forEach(socket => {
-                    if (socket.userType === 'admin') {
+                    if (socket.user?.role === 'admin') {
                         socket.emit(type, notification);
                     }
                 });

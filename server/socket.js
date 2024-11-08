@@ -1,6 +1,8 @@
 const socketIo = require('socket.io');
 const jwt = require('jsonwebtoken');
 const User = require('./models/userModel');
+const BusinessUser = require('./models/businessUserModel');
+const VendorUser = require('./models/vendorUserModel');
 const ActivityLog = require('./models/ActivityLog');
 
 function initializeSocket(server) {
@@ -18,7 +20,7 @@ function initializeSocket(server) {
 
   // Debug middleware
   io.use((socket, next) => {
-    console.log('Socket connection attempt with:', {
+    console.log('Socket connection attempt:', {
       headers: socket.handshake.headers,
       auth: socket.handshake.auth,
       query: socket.handshake.query
@@ -43,14 +45,30 @@ function initializeSocket(server) {
         return next(new Error('Invalid token'));
       }
 
-      const user = await User.findById(decoded.userId);
+      let user;
+      switch(decoded.accountType) {
+        case 'business':
+          user = await BusinessUser.findById(decoded.userId);
+          break;
+        case 'vendor':
+          user = await VendorUser.findById(decoded.userId);
+          break;
+        default:
+          user = await User.findById(decoded.userId);
+      }
+
       if (!user) {
         console.log('User not found:', decoded.userId);
         return next(new Error('User not found'));
       }
 
-      socket.user = user;
-      console.log('Socket authenticated for user:', user._id);
+      socket.user = {
+        _id: user._id,
+        accountType: decoded.accountType,
+        role: decoded.role
+      };
+      
+      console.log('Socket authenticated for user:', socket.user);
       next();
     } catch (error) {
       console.error('Socket authentication error:', error);
@@ -66,7 +84,7 @@ function initializeSocket(server) {
     socket.join(userRoom);
 
     try {
-      // Send initial activities on connection
+      // Send initial activities
       const activities = await ActivityLog.find({ userId: socket.user._id })
         .sort({ timestamp: -1 })
         .limit(100);
@@ -75,15 +93,16 @@ function initializeSocket(server) {
       console.error('Error fetching initial activities:', error);
     }
 
-    // Send connection status
-    socket.emit('connectionStatus', true);
+    socket.emit('connectionStatus', { 
+      connected: true, 
+      userId: socket.user._id,
+      accountType: socket.user.accountType
+    });
 
-    // Handle activity updates
     socket.on('activity', async (data) => {
       try {
         console.log('Activity received:', data);
         
-        // Save activity to database
         if (data.save) {
           const log = new ActivityLog({
             userId: socket.user._id,
@@ -95,7 +114,6 @@ function initializeSocket(server) {
           await log.save();
         }
 
-        // Broadcast to user's room
         io.to(userRoom).emit('activityUpdate', {
           ...data,
           userId: socket.user._id,
