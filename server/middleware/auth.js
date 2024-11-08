@@ -15,7 +15,9 @@ const auth = async (req, res, next) => {
         // Set both id and _id to ensure compatibility
         req.user = {
             id: decoded.userId,
-            _id: decoded.userId
+            _id: decoded.userId,
+            accountType: decoded.accountType || 'personal',
+            role: decoded.role
         };
         
         console.log('Auth middleware - user set:', req.user); // Debug log

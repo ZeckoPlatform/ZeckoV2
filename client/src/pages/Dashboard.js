@@ -305,6 +305,32 @@ function Dashboard() {
     }
   };
 
+  const renderMetrics = () => {
+    if (dashboardData?.businessMetrics) {
+      return (
+        <DashboardCard>
+          <CardHeader>Business Metrics</CardHeader>
+          <div>Orders: {dashboardData.businessMetrics.totalOrders}</div>
+          <div>Revenue: ${dashboardData.businessMetrics.revenue}</div>
+          <div>Products: {dashboardData.businessMetrics.products}</div>
+        </DashboardCard>
+      );
+    }
+    
+    if (dashboardData?.vendorMetrics) {
+      return (
+        <DashboardCard>
+          <CardHeader>Vendor Metrics</CardHeader>
+          <div>Products: {dashboardData.vendorMetrics.totalProducts}</div>
+          <div>Sales: ${dashboardData.vendorMetrics.totalSales}</div>
+          <div>Pending Orders: {dashboardData.vendorMetrics.pendingOrders}</div>
+        </DashboardCard>
+      );
+    }
+
+    return null;
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -314,23 +340,22 @@ function Dashboard() {
       <DashboardGrid>
         <DashboardCard>
           <CardHeader>Profile Overview</CardHeader>
-          <WelcomeText>Welcome back, {user?.username}</WelcomeText>
+          <WelcomeText>Welcome back, {dashboardData?.user?.name}</WelcomeText>
           <ButtonContainer>
             <Button onClick={() => navigate('/shop')}>Start Shopping</Button>
-            <PostLeadButton onClick={() => setShowPostForm(!showPostForm)}>
-              {showPostForm ? 'Cancel' : 'Post a Lead'}
-            </PostLeadButton>
+            {user?.role !== 'vendor' && (
+              <PostLeadButton onClick={() => setShowPostForm(!showPostForm)}>
+                {showPostForm ? 'Cancel' : 'Post a Lead'}
+              </PostLeadButton>
+            )}
           </ButtonContainer>
         </DashboardCard>
+
+        {renderMetrics()}
 
         <DashboardCard>
           <CardHeader>Recent Activity</CardHeader>
           {/* Add recent activity information */}
-        </DashboardCard>
-
-        <DashboardCard>
-          <CardHeader>Statistics</CardHeader>
-          {/* Add statistics information */}
         </DashboardCard>
       </DashboardGrid>
 
