@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
+const BusinessUser = require('../models/businessUserModel');
 
 // Main authentication middleware
 const auth = async (req, res, next) => {
@@ -12,19 +13,30 @@ const auth = async (req, res, next) => {
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
-        // Set both id and _id to ensure compatibility
+        // Check token type and get appropriate user
+        let user;
+        if (decoded.accountType === 'business') {
+            user = await BusinessUser.findOne({ _id: decoded.userId });
+        } else {
+            user = await User.findOne({ _id: decoded.userId });
+        }
+
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        // Set user info in request
         req.user = {
-            id: decoded.userId,
-            _id: decoded.userId,
-            accountType: decoded.accountType || 'personal',
-            role: decoded.role
+            id: user._id,
+            email: user.email,
+            role: decoded.accountType || user.role,
+            accountType: decoded.accountType
         };
         
-        console.log('Auth middleware - user set:', req.user); // Debug log
         next();
     } catch (error) {
-        console.error('Auth middleware error:', error);
-        res.status(401).json({ message: 'Please authenticate' });
+        console.error('Auth error:', error);
+        res.status(401).json({ message: 'Authentication failed' });
     }
 };
 

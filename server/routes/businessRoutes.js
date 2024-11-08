@@ -83,8 +83,7 @@ router.get('/profile', auth, async (req, res) => {
 
         if (!business) {
             return res.status(404).json({ 
-                message: 'Business profile not found',
-                success: false 
+                message: 'Business profile not found' 
             });
         }
 
@@ -92,8 +91,7 @@ router.get('/profile', auth, async (req, res) => {
     } catch (error) {
         console.error('Error fetching business profile:', error);
         res.status(500).json({ 
-            message: 'Error fetching business profile',
-            success: false 
+            message: 'Error fetching business profile' 
         });
     }
 });
@@ -105,8 +103,7 @@ router.put('/profile', auth, async (req, res) => {
 
         if (!business) {
             return res.status(404).json({ 
-                message: 'Business not found',
-                success: false 
+                message: 'Business not found' 
             });
         }
 
@@ -130,8 +127,7 @@ router.put('/profile', auth, async (req, res) => {
     } catch (error) {
         console.error('Error updating business profile:', error);
         res.status(500).json({ 
-            message: 'Error updating business profile',
-            success: false 
+            message: 'Error updating business profile' 
         });
     }
 });

@@ -111,31 +111,38 @@ function BusinessProfile() {
 
   const fetchBusinessProfile = async () => {
     try {
-      const response = await fetch('/api/business/profile', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        const token = localStorage.getItem('token');
+        console.log('Fetching with token:', token); // Debug log
+
+        const response = await fetch('/api/business/profile', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to fetch profile');
         }
-      });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch profile');
-      }
+        const data = await response.json();
+        console.log('Profile data:', data); // Debug log
 
-      const data = await response.json();
-      setProfile({
-        businessName: data.businessName || '',
-        email: data.email || '',
-        phone: data.phone || '',
-        description: data.description || '',
-        website: data.website || '',
-        category: data.category || '',
-        addresses: Array.isArray(data.addresses) ? data.addresses : []
-      });
+        setProfile({
+            businessName: data.businessName || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            description: data.description || '',
+            website: data.website || '',
+            category: data.category || '',
+            addresses: Array.isArray(data.addresses) ? data.addresses : []
+        });
     } catch (error) {
-      console.error('Error fetching profile:', error);
-      setError('Failed to load business profile');
+        console.error('Error fetching profile:', error);
+        setError(error.message || 'Failed to load business profile');
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
 
