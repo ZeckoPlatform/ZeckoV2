@@ -79,19 +79,23 @@ router.get('/:id', async (req, res) => {
 // Get business profile
 router.get('/profile', auth, async (req, res) => {
     try {
-        console.log('Fetching profile for business user:', req.user);
+        console.log('Profile request received');
+        console.log('User from request:', req.user);
 
-        if (!mongoose.Types.ObjectId.isValid(req.user.id)) {
-            console.log('Invalid ObjectId:', req.user.id);
+        const userId = req.user.id;
+        console.log('Looking up business with ID:', userId);
+
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            console.log('Invalid ObjectId:', userId);
             return res.status(400).json({
                 success: false,
                 message: 'Invalid user ID format'
             });
         }
 
-        const business = await BusinessUser.findById(
-            new mongoose.Types.ObjectId(req.user.id)
-        ).select('-password');
+        const business = await BusinessUser.findOne({ _id: userId })
+            .select('-password')
+            .lean();
 
         console.log('Found business:', business ? 'yes' : 'no');
 

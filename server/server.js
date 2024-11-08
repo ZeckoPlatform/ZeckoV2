@@ -61,9 +61,9 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/jobs', jobRoutes);
-app.use('/api/business', businessRoutes); // Only mount once
-app.use('/api/security', securityRoutes);
 app.use('/api/business/auth', businessAuthRoutes);
+app.use('/api/business', businessRoutes);
+app.use('/api/security', securityRoutes);
 app.use('/api/vendor/auth', vendorAuthRoutes);
 app.use('/api/addresses', addressRoutes);
 
