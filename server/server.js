@@ -31,6 +31,7 @@ const businessRoutes = require('./routes/businessRoutes');
 const securityRoutes = require('./routes/securityRoutes');
 const businessAuthRoutes = require('./routes/businessAuth');
 const vendorAuthRoutes = require('./routes/vendorAuth');
+const addressRoutes = require('./routes/addressRoutes');
 
 // Initialize Express and Socket.io
 const app = express();
@@ -173,6 +174,7 @@ mountRoute('/api/security-settings', securityRoutes);
 mountRoute('/api', productRoutes);
 mountRoute('/api/business', businessAuthRoutes);
 mountRoute('/api/vendor', vendorAuthRoutes);
+mountRoute('/api/users/addresses', addressRoutes);
 
 // API Endpoints
 app.get('/api/subscription-plans', (req, res) => {
