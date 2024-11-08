@@ -8,12 +8,14 @@ const auth = async (req, res, next) => {
         const token = req.header('Authorization')?.replace('Bearer ', '');
         
         if (!token) {
+            console.log('No token provided');
             return res.status(401).json({ message: 'No auth token' });
         }
 
+        console.log('Verifying token...');
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log('Decoded token:', { userId: decoded.userId, accountType: decoded.accountType });
         
-        // Check token type and get appropriate user
         let user;
         if (decoded.accountType === 'business') {
             user = await BusinessUser.findOne({ _id: decoded.userId });
@@ -22,10 +24,12 @@ const auth = async (req, res, next) => {
         }
 
         if (!user) {
+            console.log('No user found for token');
             throw new Error('User not found');
         }
 
-        // Set user info in request
+        console.log('User found:', { id: user._id, role: user.role });
+        
         req.user = {
             id: user._id,
             email: user.email,
@@ -35,8 +39,11 @@ const auth = async (req, res, next) => {
         
         next();
     } catch (error) {
-        console.error('Auth error:', error);
-        res.status(401).json({ message: 'Authentication failed' });
+        console.error('Auth middleware error:', error);
+        res.status(401).json({ 
+            message: 'Authentication failed',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 };
 

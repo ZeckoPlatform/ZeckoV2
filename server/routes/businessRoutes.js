@@ -78,20 +78,45 @@ router.get('/:id', async (req, res) => {
 // Get business profile
 router.get('/profile', auth, async (req, res) => {
     try {
-        const business = await BusinessUser.findById(req.user.id)
-            .select('-password');
-
-        if (!business) {
-            return res.status(404).json({ 
-                message: 'Business profile not found' 
+        console.log('Fetching business profile for user:', req.user.id);
+        
+        if (!req.user || !req.user.id) {
+            console.error('No user ID in request');
+            return res.status(401).json({ 
+                message: 'Authentication required' 
             });
         }
 
-        res.json(business);
+        const business = await BusinessUser.findById(req.user.id)
+            .select('-password')
+            .lean();
+
+        console.log('Found business:', business ? 'yes' : 'no');
+
+        if (!business) {
+            return res.status(404).json({ 
+                message: 'Business profile not found',
+                userId: req.user.id 
+            });
+        }
+
+        res.json({
+            success: true,
+            business: {
+                businessName: business.businessName,
+                email: business.email,
+                phone: business.phone || '',
+                description: business.description || '',
+                website: business.website || '',
+                category: business.category || '',
+                addresses: business.addresses || []
+            }
+        });
     } catch (error) {
-        console.error('Error fetching business profile:', error);
+        console.error('Error in /profile route:', error);
         res.status(500).json({ 
-            message: 'Error fetching business profile' 
+            message: 'Error fetching business profile',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 });

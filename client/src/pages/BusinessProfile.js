@@ -111,32 +111,43 @@ function BusinessProfile() {
 
   const fetchBusinessProfile = async () => {
     try {
+        setLoading(true);
+        setError(null);
+        
         const token = localStorage.getItem('token');
-        console.log('Fetching with token:', token); // Debug log
+        if (!token) {
+            throw new Error('No authentication token found');
+        }
 
+        console.log('Fetching business profile...');
+        
         const response = await fetch('/api/business/profile', {
+            method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             }
         });
 
+        const data = await response.json();
+        console.log('Profile response:', data);
+
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to fetch profile');
+            throw new Error(data.message || 'Error fetching business profile');
         }
 
-        const data = await response.json();
-        console.log('Profile data:', data); // Debug log
+        if (!data.success || !data.business) {
+            throw new Error('Invalid response format');
+        }
 
         setProfile({
-            businessName: data.businessName || '',
-            email: data.email || '',
-            phone: data.phone || '',
-            description: data.description || '',
-            website: data.website || '',
-            category: data.category || '',
-            addresses: Array.isArray(data.addresses) ? data.addresses : []
+            businessName: data.business.businessName || '',
+            email: data.business.email || '',
+            phone: data.business.phone || '',
+            description: data.business.description || '',
+            website: data.business.website || '',
+            category: data.business.category || '',
+            addresses: Array.isArray(data.business.addresses) ? data.business.addresses : []
         });
     } catch (error) {
         console.error('Error fetching profile:', error);
