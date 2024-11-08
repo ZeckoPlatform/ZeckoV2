@@ -114,6 +114,15 @@ mountRoute('/api/users/addresses', addressRoutes);
 mountRoute('/api/business/addresses', addressRoutes);
 mountRoute('/api/vendor/addresses', addressRoutes);
 
+// Add this before your routes
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'UP',
+        timestamp: new Date(),
+        uptime: process.uptime()
+    });
+});
+
 // Add this with your other route imports
 const businessRoutes = require('./routes/businessRoutes');
 
@@ -145,8 +154,11 @@ if (process.env.NODE_ENV === 'production') {
 
 // Error Handling
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ message: 'Something broke!' });
+    console.error('Error:', err.stack);
+    res.status(err.status || 500).json({
+        message: err.message || 'Something went wrong!',
+        error: process.env.NODE_ENV === 'development' ? err : {}
+    });
 });
 
 // 404 handling
@@ -205,9 +217,25 @@ const socketHelpers = {
 
 // Start Server
 const port = process.env.PORT || 5000;
-server.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-});
+const startServer = async () => {
+    try {
+        await mongoose.connect(process.env.MONGODB_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
+        console.log('MongoDB Connected');
+
+        server.listen(port, () => {
+            console.log(`Server running on port ${port}`);
+            console.log('Environment:', process.env.NODE_ENV);
+        });
+    } catch (error) {
+        console.error('Server startup error:', error);
+        process.exit(1);
+    }
+};
+
+startServer();
 
 // Exports
 module.exports = {

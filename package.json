@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node server/server.js",
-    "heroku-postbuild": "cd client && npm install --legacy-peer-deps && npm run build"
+    "heroku-postbuild": "cd server && npm install && cd ../client && npm install --legacy-peer-deps && npm run build"
   },
   "dependencies": {
     "bcryptjs": "2.4.3",
