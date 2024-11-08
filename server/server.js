@@ -114,6 +114,12 @@ mountRoute('/api/users/addresses', addressRoutes);
 mountRoute('/api/business/addresses', addressRoutes);
 mountRoute('/api/vendor/addresses', addressRoutes);
 
+// Add this with your other route imports
+const businessRoutes = require('./routes/businessRoutes');
+
+// Add this with your other route middleware
+app.use('/api/business', businessRoutes);
+
 // API Endpoints (keep your existing endpoints)
 app.get('/api/subscription-plans', (req, res) => {
     const subscriptionPlans = [

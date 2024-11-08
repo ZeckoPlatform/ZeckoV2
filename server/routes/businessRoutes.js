@@ -78,23 +78,40 @@ router.get('/:id', async (req, res) => {
 // Get business profile
 router.get('/profile', auth, async (req, res) => {
     try {
+        console.log('Fetching business profile for user:', req.user.id);
+        
         const business = await BusinessUser.findById(req.user.id)
-            .select('-password -__v');
+            .select('-password');
 
         if (!business) {
+            console.log('Business not found');
             return res.status(404).json({ 
                 message: 'Business profile not found',
-                profile: null
+                success: false 
             });
         }
 
-        const sanitizedBusiness = sanitizeBusinessData(business.toObject());
-        res.json(sanitizedBusiness);
+        // Ensure all required fields exist
+        const profile = {
+            _id: business._id,
+            businessName: business.businessName || '',
+            email: business.email || '',
+            phone: business.phone || '',
+            description: business.description || '',
+            website: business.website || '',
+            category: business.category || '',
+            addresses: business.addresses || [],
+            createdAt: business.createdAt,
+            updatedAt: business.updatedAt
+        };
+
+        console.log('Returning business profile:', profile);
+        res.json(profile);
     } catch (error) {
         console.error('Error fetching business profile:', error);
         res.status(500).json({ 
             message: 'Error fetching business profile',
-            profile: null
+            success: false 
         });
     }
 });
@@ -102,45 +119,93 @@ router.get('/profile', auth, async (req, res) => {
 // Update business profile
 router.put('/profile', auth, async (req, res) => {
     try {
-        const updates = req.body;
+        console.log('Updating business profile for user:', req.user.id);
+        console.log('Update data:', req.body);
+
         const business = await BusinessUser.findById(req.user.id);
 
         if (!business) {
             return res.status(404).json({ 
                 message: 'Business not found',
-                profile: null
+                success: false 
             });
         }
 
-        // List of allowed fields to update
-        const allowedFields = [
+        // Update allowed fields
+        const allowedUpdates = [
             'businessName',
             'email',
             'phone',
             'description',
             'website',
-            'category',
-            'subcategory',
-            'location',
-            'addresses'
+            'category'
         ];
 
-        // Update only allowed fields
-        allowedFields.forEach(field => {
-            if (updates[field] !== undefined) {
-                business[field] = updates[field];
+        allowedUpdates.forEach(field => {
+            if (req.body[field] !== undefined) {
+                business[field] = req.body[field];
             }
         });
 
         await business.save();
 
-        const sanitizedBusiness = sanitizeBusinessData(business.toObject());
-        res.json(sanitizedBusiness);
+        res.json({
+            message: 'Profile updated successfully',
+            success: true,
+            profile: business
+        });
     } catch (error) {
         console.error('Error updating business profile:', error);
         res.status(500).json({ 
             message: 'Error updating business profile',
-            profile: null
+            success: false 
+        });
+    }
+});
+
+// Add business address
+router.post('/addresses', auth, async (req, res) => {
+    try {
+        const business = await BusinessUser.findById(req.user.id);
+        if (!business) {
+            return res.status(404).json({ 
+                message: 'Business not found',
+                success: false 
+            });
+        }
+
+        const { street, city, state, zipCode, country, isDefault } = req.body;
+
+        if (!business.addresses) {
+            business.addresses = [];
+        }
+
+        const newAddress = {
+            street: street || '',
+            city: city || '',
+            state: state || '',
+            zipCode: zipCode || '',
+            country: country || '',
+            isDefault: isDefault || business.addresses.length === 0
+        };
+
+        if (newAddress.isDefault) {
+            business.addresses.forEach(addr => addr.isDefault = false);
+        }
+
+        business.addresses.push(newAddress);
+        await business.save();
+
+        res.status(201).json({
+            message: 'Address added successfully',
+            success: true,
+            address: newAddress
+        });
+    } catch (error) {
+        console.error('Error adding business address:', error);
+        res.status(500).json({ 
+            message: 'Error adding business address',
+            success: false 
         });
     }
 });
