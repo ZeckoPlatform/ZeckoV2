@@ -5,33 +5,35 @@ const User = require('../models/userModel');
 const BusinessUser = require('../models/businessUserModel');
 const VendorUser = require('../models/vendorUserModel');
 
-// Get user addresses
+// Helper function to get user model based on path
+const getUserModel = (path) => {
+    if (path.includes('/business/')) return BusinessUser;
+    if (path.includes('/vendor/')) return VendorUser;
+    return User;
+};
+
+// Get addresses
 router.get('/', auth, async (req, res) => {
     try {
-        let user;
-        const accountType = req.user.accountType || 'personal';
+        console.log('Fetching addresses for path:', req.path);
+        console.log('User ID:', req.user.id);
+        console.log('Account Type:', req.user.accountType);
 
-        switch(accountType) {
-            case 'business':
-                user = await BusinessUser.findById(req.user.id);
-                break;
-            case 'vendor':
-                user = await VendorUser.findById(req.user.id);
-                break;
-            default:
-                user = await User.findById(req.user.id);
-        }
+        const UserModel = getUserModel(req.path);
+        const user = await UserModel.findById(req.user.id);
 
         if (!user) {
+            console.log('User not found');
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Initialize addresses array if it doesn't exist
+        // Initialize addresses if they don't exist
         if (!user.addresses) {
             user.addresses = [];
             await user.save();
         }
 
+        console.log('Returning addresses:', user.addresses);
         res.json(user.addresses);
     } catch (error) {
         console.error('Error fetching addresses:', error);
@@ -42,41 +44,31 @@ router.get('/', auth, async (req, res) => {
 // Add address
 router.post('/', auth, async (req, res) => {
     try {
-        let user;
-        const accountType = req.user.accountType || 'personal';
-
-        switch(accountType) {
-            case 'business':
-                user = await BusinessUser.findById(req.user.id);
-                break;
-            case 'vendor':
-                user = await VendorUser.findById(req.user.id);
-                break;
-            default:
-                user = await User.findById(req.user.id);
-        }
+        const UserModel = getUserModel(req.path);
+        const user = await UserModel.findById(req.user.id);
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
         const { street, city, state, zipCode, country, isDefault } = req.body;
-        
+
+        // Initialize addresses array if it doesn't exist
         if (!user.addresses) {
             user.addresses = [];
         }
 
         const newAddress = {
-            street,
-            city,
-            state,
-            zipCode,
-            country,
-            isDefault: isDefault || user.addresses.length === 0 // Make first address default
+            street: street || '',
+            city: city || '',
+            state: state || '',
+            zipCode: zipCode || '',
+            country: country || '',
+            isDefault: isDefault || user.addresses.length === 0
         };
 
+        // If this is default, update other addresses
         if (newAddress.isDefault) {
-            // Set all other addresses to non-default
             user.addresses.forEach(addr => addr.isDefault = false);
         }
 
@@ -90,22 +82,11 @@ router.post('/', auth, async (req, res) => {
     }
 });
 
-// Update an address
+// Update address
 router.put('/:addressId', auth, async (req, res) => {
     try {
-        const { street, city, state, zipCode, country, isDefault } = req.body;
-        
-        let user;
-        switch(req.user.accountType) {
-            case 'business':
-                user = await BusinessUser.findById(req.user.id);
-                break;
-            case 'vendor':
-                user = await VendorUser.findById(req.user.id);
-                break;
-            default:
-                user = await User.findById(req.user.id);
-        }
+        const UserModel = getUserModel(req.path);
+        const user = await UserModel.findById(req.user.id);
 
         if (!user || !user.addresses) {
             return res.status(404).json({ message: 'User or addresses not found' });
@@ -118,6 +99,8 @@ router.put('/:addressId', auth, async (req, res) => {
         if (addressIndex === -1) {
             return res.status(404).json({ message: 'Address not found' });
         }
+
+        const { street, city, state, zipCode, country, isDefault } = req.body;
 
         // Update the address
         user.addresses[addressIndex] = {
@@ -147,20 +130,11 @@ router.put('/:addressId', auth, async (req, res) => {
     }
 });
 
-// Delete an address
+// Delete address
 router.delete('/:addressId', auth, async (req, res) => {
     try {
-        let user;
-        switch(req.user.accountType) {
-            case 'business':
-                user = await BusinessUser.findById(req.user.id);
-                break;
-            case 'vendor':
-                user = await VendorUser.findById(req.user.id);
-                break;
-            default:
-                user = await User.findById(req.user.id);
-        }
+        const UserModel = getUserModel(req.path);
+        const user = await UserModel.findById(req.user.id);
 
         if (!user || !user.addresses) {
             return res.status(404).json({ message: 'User or addresses not found' });
@@ -191,4 +165,4 @@ router.delete('/:addressId', auth, async (req, res) => {
     }
 });
 
-module.exports = router; 
+module.exports = router;

@@ -111,6 +111,8 @@ mountRoute('/api', productRoutes);
 mountRoute('/api/business', businessAuthRoutes);
 mountRoute('/api/vendor', vendorAuthRoutes);
 mountRoute('/api/users/addresses', addressRoutes);
+mountRoute('/api/business/addresses', addressRoutes);
+mountRoute('/api/vendor/addresses', addressRoutes);
 
 // API Endpoints (keep your existing endpoints)
 app.get('/api/subscription-plans', (req, res) => {
