@@ -188,6 +188,39 @@ function Navigation() {
   const { user, logout } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const accountType = localStorage.getItem('accountType') || 'personal';
+
+  const getNavLinks = () => {
+    const commonLinks = [
+      { to: '/shop', label: 'Shop' },
+      { to: '/cart', label: 'Cart', icon: <FaShoppingCart style={{ marginRight: '5px' }} /> }
+    ];
+
+    switch(accountType) {
+      case 'business':
+        return [
+          { to: '/dashboard', label: 'Dashboard' },
+          { to: '/business/profile', label: 'Business Profile' },
+          { to: '/business/orders', label: 'Orders' },
+          ...commonLinks
+        ];
+      case 'vendor':
+        return [
+          { to: '/dashboard', label: 'Dashboard' },
+          { to: '/vendor/products', label: 'Products' },
+          { to: '/vendor/orders', label: 'Orders' },
+          { to: '/vendor/analytics', label: 'Analytics' },
+          ...commonLinks
+        ];
+      default:
+        return [
+          { to: '/jobs', label: 'Leads Board' },
+          { to: '/directory', label: 'Business Directory' },
+          { to: '/profile', label: 'Profile' },
+          ...commonLinks
+        ];
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -222,14 +255,11 @@ function Navigation() {
         <NavLinks>
           {user ? (
             <>
-              <NavLink to="/jobs">Leads Board</NavLink>
-              <NavLink to="/directory">Business Directory</NavLink>
-              <NavLink to="/shop">Shop</NavLink>
-              <NavLink to="/profile">Profile</NavLink>
-              <NavLink to="/cart">
-                <FaShoppingCart style={{ marginRight: '5px' }} />
-                Cart
-              </NavLink>
+              {getNavLinks().map((link, index) => (
+                <NavLink key={index} to={link.to}>
+                  {link.icon}{link.label}
+                </NavLink>
+              ))}
               <NotificationButton 
                 onClick={() => setShowNotifications(!showNotifications)}
               >
