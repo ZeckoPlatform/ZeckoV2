@@ -5,29 +5,54 @@ const User = require('../models/userModel');
 const BusinessUser = require('../models/businessUserModel');
 const VendorUser = require('../models/vendorUserModel');
 
-// Helper function to get user model based on path
-const getUserModel = (path) => {
-    if (path.includes('/business/')) return BusinessUser;
-    if (path.includes('/vendor/')) return VendorUser;
-    return User;
+// Get user by type and ID
+const getUserByType = async (userId, accountType) => {
+    console.log('Getting user by type:', { userId, accountType });
+    
+    try {
+        let user;
+        switch(accountType) {
+            case 'business':
+                user = await BusinessUser.findById(userId);
+                break;
+            case 'vendor':
+                user = await VendorUser.findById(userId);
+                break;
+            default:
+                user = await User.findById(userId);
+        }
+        
+        if (!user) {
+            console.log('User not found:', { userId, accountType });
+            return null;
+        }
+        
+        return user;
+    } catch (error) {
+        console.error('Error getting user:', error);
+        return null;
+    }
 };
 
 // Get addresses
 router.get('/', auth, async (req, res) => {
     try {
-        console.log('Fetching addresses for path:', req.path);
-        console.log('User ID:', req.user.id);
-        console.log('Account Type:', req.user.accountType);
+        console.log('Get addresses request:', {
+            userId: req.user.id,
+            accountType: req.user.accountType,
+            path: req.originalUrl
+        });
 
-        const UserModel = getUserModel(req.path);
-        const user = await UserModel.findById(req.user.id);
-
+        const user = await getUserByType(req.user.id, req.user.accountType);
+        
         if (!user) {
-            console.log('User not found');
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(404).json({ 
+                message: 'User not found',
+                addresses: []
+            });
         }
 
-        // Initialize addresses if they don't exist
+        // Initialize addresses if undefined
         if (!user.addresses) {
             user.addresses = [];
             await user.save();
@@ -37,26 +62,28 @@ router.get('/', auth, async (req, res) => {
         res.json(user.addresses);
     } catch (error) {
         console.error('Error fetching addresses:', error);
-        res.status(500).json({ message: 'Error fetching addresses' });
+        res.status(500).json({ 
+            message: 'Error fetching addresses',
+            addresses: []
+        });
     }
 });
 
 // Add address
 router.post('/', auth, async (req, res) => {
     try {
-        const UserModel = getUserModel(req.path);
-        const user = await UserModel.findById(req.user.id);
-
+        const user = await getUserByType(req.user.id, req.user.accountType);
+        
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        const { street, city, state, zipCode, country, isDefault } = req.body;
-
-        // Initialize addresses array if it doesn't exist
+        // Initialize addresses if undefined
         if (!user.addresses) {
             user.addresses = [];
         }
+
+        const { street, city, state, zipCode, country, isDefault } = req.body;
 
         const newAddress = {
             street: street || '',
@@ -67,7 +94,6 @@ router.post('/', auth, async (req, res) => {
             isDefault: isDefault || user.addresses.length === 0
         };
 
-        // If this is default, update other addresses
         if (newAddress.isDefault) {
             user.addresses.forEach(addr => addr.isDefault = false);
         }
@@ -85,9 +111,8 @@ router.post('/', auth, async (req, res) => {
 // Update address
 router.put('/:addressId', auth, async (req, res) => {
     try {
-        const UserModel = getUserModel(req.path);
-        const user = await UserModel.findById(req.user.id);
-
+        const user = await getUserByType(req.user.id, req.user.accountType);
+        
         if (!user || !user.addresses) {
             return res.status(404).json({ message: 'User or addresses not found' });
         }
@@ -102,23 +127,19 @@ router.put('/:addressId', auth, async (req, res) => {
 
         const { street, city, state, zipCode, country, isDefault } = req.body;
 
-        // Update the address
         user.addresses[addressIndex] = {
             ...user.addresses[addressIndex].toObject(),
-            street: street || user.addresses[addressIndex].street,
-            city: city || user.addresses[addressIndex].city,
-            state: state || user.addresses[addressIndex].state,
-            zipCode: zipCode || user.addresses[addressIndex].zipCode,
-            country: country || user.addresses[addressIndex].country,
+            street: street || user.addresses[addressIndex].street || '',
+            city: city || user.addresses[addressIndex].city || '',
+            state: state || user.addresses[addressIndex].state || '',
+            zipCode: zipCode || user.addresses[addressIndex].zipCode || '',
+            country: country || user.addresses[addressIndex].country || '',
             isDefault: isDefault !== undefined ? isDefault : user.addresses[addressIndex].isDefault
         };
 
-        // If setting as default, update other addresses
         if (isDefault) {
             user.addresses.forEach((addr, index) => {
-                if (index !== addressIndex) {
-                    addr.isDefault = false;
-                }
+                if (index !== addressIndex) addr.isDefault = false;
             });
         }
 
@@ -133,9 +154,8 @@ router.put('/:addressId', auth, async (req, res) => {
 // Delete address
 router.delete('/:addressId', auth, async (req, res) => {
     try {
-        const UserModel = getUserModel(req.path);
-        const user = await UserModel.findById(req.user.id);
-
+        const user = await getUserByType(req.user.id, req.user.accountType);
+        
         if (!user || !user.addresses) {
             return res.status(404).json({ message: 'User or addresses not found' });
         }
@@ -148,11 +168,8 @@ router.delete('/:addressId', auth, async (req, res) => {
             return res.status(404).json({ message: 'Address not found' });
         }
 
-        // Remove the address
         user.addresses.splice(addressIndex, 1);
 
-        // If we removed the default address and there are other addresses,
-        // make the first one the default
         if (user.addresses.length > 0 && !user.addresses.some(addr => addr.isDefault)) {
             user.addresses[0].isDefault = true;
         }
