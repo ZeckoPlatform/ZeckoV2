@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const speakeasy = require('speakeasy');
 
 const userSchema = new mongoose.Schema({
-  name: {
+  username: {
     type: String,
     required: true
   },
@@ -14,6 +14,10 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true
+  },
+  name: {
+    type: String,
+    required: false
   },
   role: {
     type: String,

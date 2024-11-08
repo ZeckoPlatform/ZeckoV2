@@ -94,6 +94,7 @@ function Register() {
     username: '',
     email: '',
     password: '',
+    name: '',
     accountType: '',
     businessName: '',
     businessType: '',
@@ -212,7 +213,12 @@ function Register() {
     e.preventDefault();
     setError('');
 
-    if (!formData.accountType) {
+    const submitData = {
+      ...formData,
+      name: formData.name || formData.username
+    };
+
+    if (!submitData.accountType) {
         setError('Please select an account type');
         return;
     }
@@ -228,7 +234,7 @@ function Register() {
             : 'http://localhost:5000';
 
         let endpoint = '';
-        switch(formData.accountType) {
+        switch(submitData.accountType) {
             case 'business':
                 endpoint = `${API_URL}/api/business/register`;
                 break;
@@ -239,10 +245,7 @@ function Register() {
                 endpoint = `${API_URL}/api/users/register`;
         }
 
-        const response = await axios.post(endpoint, {
-            ...formData,
-            accountType: formData.accountType
-        });
+        const response = await axios.post(endpoint, submitData);
 
         if (response.data) {
             console.log('Registration successful:', response.data);

@@ -23,6 +23,7 @@ router.post('/register', async (req, res) => {
             email, 
             password, 
             accountType,
+            name,
             businessName,
             businessType,
             vendorCategory,
@@ -69,6 +70,7 @@ router.post('/register', async (req, res) => {
                     username,
                     email,
                     password,
+                    name: username,
                     role: 'user'
                 });
         }
