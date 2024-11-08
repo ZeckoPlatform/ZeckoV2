@@ -30,6 +30,7 @@ import ResetPassword from './pages/ResetPassword';
 import OrderConfirmation from './pages/OrderConfirmation';
 import Profile from './pages/Profile';
 import AddressManagement from './pages/AddressManagement';
+import BusinessProfile from './pages/BusinessProfile';
 
 // Lazy loaded components
 const Shop = React.lazy(() => import('./pages/Shop'));
@@ -155,6 +156,9 @@ function App() {
 
                   {/* Address Management Route */}
                   <Route path="/addresses" element={<AddressManagement />} />
+
+                  {/* Business Profile Route */}
+                  <Route path="/business/profile" element={<BusinessProfile />} />
                 </Routes>
               </Suspense>
             </MainContent>
