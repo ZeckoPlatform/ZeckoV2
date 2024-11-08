@@ -9,7 +9,24 @@ router.get('/', async (req, res) => {
         const businesses = await BusinessUser.find()
             .select('-password -__v')
             .sort({ createdAt: -1 });
-        res.json(businesses);
+
+        // Ensure all required fields are present
+        const sanitizedBusinesses = businesses.map(business => ({
+            _id: business._id,
+            businessName: business.businessName || '',
+            email: business.email || '',
+            phone: business.phone || '',
+            description: business.description || '',
+            website: business.website || '',
+            category: business.category || '',
+            addresses: business.addresses || [],
+            createdAt: business.createdAt,
+            updatedAt: business.updatedAt,
+            status: business.status || 'active',
+            type: 'business' // Add explicit type
+        }));
+
+        res.json(sanitizedBusinesses);
     } catch (error) {
         console.error('Error fetching businesses:', error);
         res.status(500).json({ message: 'Error fetching businesses' });
@@ -21,30 +38,61 @@ router.get('/:id', async (req, res) => {
     try {
         const business = await BusinessUser.findById(req.params.id)
             .select('-password -__v');
+        
         if (!business) {
             return res.status(404).json({ message: 'Business not found' });
         }
-        res.json(business);
+
+        // Ensure all required fields are present
+        const sanitizedBusiness = {
+            _id: business._id,
+            businessName: business.businessName || '',
+            email: business.email || '',
+            phone: business.phone || '',
+            description: business.description || '',
+            website: business.website || '',
+            category: business.category || '',
+            addresses: business.addresses || [],
+            createdAt: business.createdAt,
+            updatedAt: business.updatedAt,
+            status: business.status || 'active',
+            type: 'business' // Add explicit type
+        };
+
+        res.json(sanitizedBusiness);
     } catch (error) {
         console.error('Error fetching business:', error);
         res.status(500).json({ message: 'Error fetching business' });
     }
 });
 
-// Get business profile with addresses
+// Get business profile
 router.get('/profile', auth, async (req, res) => {
     try {
         const business = await BusinessUser.findById(req.user.id)
-            .select('-password');
+            .select('-password -__v');
 
         if (!business) {
             return res.status(404).json({ message: 'Business profile not found' });
         }
 
-        res.json({
-            profile: business,
-            addresses: business.addresses || []
-        });
+        // Return sanitized response
+        const sanitizedBusiness = {
+            _id: business._id,
+            businessName: business.businessName || '',
+            email: business.email || '',
+            phone: business.phone || '',
+            description: business.description || '',
+            website: business.website || '',
+            category: business.category || '',
+            addresses: business.addresses || [],
+            createdAt: business.createdAt,
+            updatedAt: business.updatedAt,
+            status: business.status || 'active',
+            type: 'business'
+        };
+
+        res.json(sanitizedBusiness);
     } catch (error) {
         console.error('Error fetching business profile:', error);
         res.status(500).json({ message: 'Error fetching business profile' });
@@ -61,24 +109,35 @@ router.put('/profile', auth, async (req, res) => {
             return res.status(404).json({ message: 'Business not found' });
         }
 
-        // Update allowed fields
-        const allowedUpdates = [
-            'businessName',
-            'email',
-            'phone',
-            'description',
-            'website',
-            'addresses'
-        ];
+        // Update allowed fields with default values if undefined
+        const allowedUpdates = {
+            businessName: updates.businessName || business.businessName || '',
+            email: updates.email || business.email || '',
+            phone: updates.phone || business.phone || '',
+            description: updates.description || business.description || '',
+            website: updates.website || business.website || '',
+            category: updates.category || business.category || '',
+            addresses: updates.addresses || business.addresses || []
+        };
 
-        allowedUpdates.forEach(field => {
-            if (updates[field] !== undefined) {
-                business[field] = updates[field];
-            }
+        // Apply updates
+        Object.keys(allowedUpdates).forEach(key => {
+            business[key] = allowedUpdates[key];
         });
 
         await business.save();
-        res.json(business);
+
+        // Return sanitized response
+        const sanitizedBusiness = {
+            _id: business._id,
+            ...allowedUpdates,
+            createdAt: business.createdAt,
+            updatedAt: business.updatedAt,
+            status: business.status || 'active',
+            type: 'business'
+        };
+
+        res.json(sanitizedBusiness);
     } catch (error) {
         console.error('Error updating business profile:', error);
         res.status(500).json({ message: 'Error updating business profile' });
