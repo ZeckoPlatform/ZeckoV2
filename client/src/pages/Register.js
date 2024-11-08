@@ -213,40 +213,46 @@ function Register() {
     setError('');
 
     if (!formData.accountType) {
-      setError('Please select an account type');
-      return;
+        setError('Please select an account type');
+        return;
     }
 
     if (passwordScore < 3) {
-      setError('Please choose a stronger password');
-      return;
+        setError('Please choose a stronger password');
+        return;
     }
 
     try {
-      const API_URL = process.env.NODE_ENV === 'production'
-        ? 'https://zeckov2-deceb43992ac.herokuapp.com'
-        : 'http://localhost:5000';
+        const API_URL = process.env.NODE_ENV === 'production'
+            ? 'https://zeckov2-deceb43992ac.herokuapp.com'
+            : 'http://localhost:5000';
 
-      let endpoint = '';
-      switch(formData.accountType) {
-        case 'business':
-          endpoint = `${API_URL}/api/business/register`;
-          break;
-        case 'vendor':
-          endpoint = `${API_URL}/api/vendor/register`;
-          break;
-        default:
-          endpoint = `${API_URL}/api/users/register`;
-      }
+        let endpoint = '';
+        switch(formData.accountType) {
+            case 'business':
+                endpoint = `${API_URL}/api/business/register`;
+                break;
+            case 'vendor':
+                endpoint = `${API_URL}/api/vendor/register`;
+                break;
+            default:
+                endpoint = `${API_URL}/api/users/register`;
+        }
 
-      const response = await axios.post(endpoint, formData);
+        const response = await axios.post(endpoint, {
+            ...formData,
+            accountType: formData.accountType
+        });
 
-      if (response.data) {
-        navigate('/login');
-      }
+        if (response.data) {
+            console.log('Registration successful:', response.data);
+            navigate('/login');
+        }
     } catch (error) {
-      console.error('Registration error:', error.response?.data || error);
-      setError(error.response?.data?.error || error.message || 'Registration failed');
+        console.error('Registration error:', error.response?.data || error);
+        setError(error.response?.data?.error || 
+                error.response?.data?.message || 
+                'Registration failed');
     }
   };
 

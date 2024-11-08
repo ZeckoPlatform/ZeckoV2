@@ -7,6 +7,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const speakeasy = require('speakeasy');
 const mongoose = require('mongoose');
+const BusinessUser = require('../models/businessUserModel');
+const VendorUser = require('../models/vendorUserModel');
 
 console.log('Loading userRoutes.js - START');
 
@@ -14,7 +16,79 @@ console.log('Loading userRoutes.js - START');
 const userController = require('../controllers/userController');
 
 // Auth routes
-router.post('/register', userController.register);
+router.post('/register', async (req, res) => {
+    try {
+        const { 
+            username, 
+            email, 
+            password, 
+            accountType,
+            businessName,
+            businessType,
+            vendorCategory,
+            location,
+            description
+        } = req.body;
+
+        // Check if email already exists in any user collection
+        const existingUser = await User.findOne({ email }) || 
+                            await BusinessUser.findOne({ email }) || 
+                            await VendorUser.findOne({ email });
+
+        if (existingUser) {
+            return res.status(400).json({ error: 'Email already registered' });
+        }
+
+        // Create user based on account type
+        let newUser;
+
+        switch(accountType) {
+            case 'business':
+                newUser = new BusinessUser({
+                    username,
+                    email,
+                    password,
+                    businessName,
+                    businessType,
+                    location,
+                    description
+                });
+                break;
+            case 'vendor':
+                newUser = new VendorUser({
+                    username,
+                    email,
+                    password,
+                    businessName,
+                    businessType,
+                    vendorCategory
+                });
+                break;
+            default:
+                newUser = new User({
+                    username,
+                    email,
+                    password,
+                    role: 'user'
+                });
+        }
+
+        await newUser.save();
+
+        res.status(201).json({ 
+            message: 'Registration successful',
+            accountType
+        });
+
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({ 
+            error: 'Registration failed', 
+            details: error.message 
+        });
+    }
+});
+
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
