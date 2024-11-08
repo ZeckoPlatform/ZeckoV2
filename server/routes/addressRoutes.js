@@ -61,17 +61,16 @@ router.post('/', auth, async (req, res) => {
             isDefault: isDefault || false
         };
 
-        // If this is the first address or marked as default, update other addresses
-        if (isDefault || !user.addresses || user.addresses.length === 0) {
-            if (user.addresses) {
-                user.addresses.forEach(addr => addr.isDefault = false);
-            }
-            newAddress.isDefault = true;
-        }
-
         if (!user.addresses) {
             user.addresses = [];
         }
+
+        // If this is the first address or marked as default, update other addresses
+        if (isDefault || user.addresses.length === 0) {
+            user.addresses.forEach(addr => addr.isDefault = false);
+            newAddress.isDefault = true;
+        }
+
         user.addresses.push(newAddress);
         await user.save();
 
@@ -113,13 +112,13 @@ router.put('/:addressId', auth, async (req, res) => {
 
         // Update the address
         user.addresses[addressIndex] = {
-            ...user.addresses[addressIndex],
+            ...user.addresses[addressIndex].toObject(),
             street: street || user.addresses[addressIndex].street,
             city: city || user.addresses[addressIndex].city,
             state: state || user.addresses[addressIndex].state,
             zipCode: zipCode || user.addresses[addressIndex].zipCode,
             country: country || user.addresses[addressIndex].country,
-            isDefault: isDefault || user.addresses[addressIndex].isDefault
+            isDefault: isDefault !== undefined ? isDefault : user.addresses[addressIndex].isDefault
         };
 
         // If setting as default, update other addresses
