@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const { auth } = require('../middleware/auth');
 const BusinessUser = require('../models/businessUserModel');
 
@@ -78,38 +79,29 @@ router.get('/:id', async (req, res) => {
 // Get business profile
 router.get('/profile', auth, async (req, res) => {
     try {
-        console.log('1. Profile request received');
-        console.log('2. User from auth:', req.user);
-        console.log('3. User ID:', req.user.id);
+        console.log('Fetching profile for business user:', req.user);
 
-        if (!req.user || !req.user.id) {
-            console.log('4a. No user ID found');
-            return res.status(401).json({
+        if (!mongoose.Types.ObjectId.isValid(req.user.id)) {
+            console.log('Invalid ObjectId:', req.user.id);
+            return res.status(400).json({
                 success: false,
-                message: 'Authentication required'
+                message: 'Invalid user ID format'
             });
         }
 
-        const business = await BusinessUser.findById(req.user.id)
-            .select('-password')
-            .lean();
+        const business = await BusinessUser.findById(
+            new mongoose.Types.ObjectId(req.user.id)
+        ).select('-password');
 
-        console.log('4b. Business query result:', business ? 'Found' : 'Not found');
+        console.log('Found business:', business ? 'yes' : 'no');
 
         if (!business) {
-            console.log('5a. Business not found');
             return res.status(404).json({
                 success: false,
-                message: 'Business profile not found',
-                debug: {
-                    userId: req.user.id,
-                    accountType: req.user.accountType
-                }
+                message: 'Business profile not found'
             });
         }
 
-        console.log('5b. Sending business data');
-        
         res.json({
             success: true,
             business: {
@@ -119,21 +111,19 @@ router.get('/profile', auth, async (req, res) => {
                 phone: business.phone || '',
                 description: business.description || '',
                 website: business.website || '',
-                category: business.businessType || '',
+                businessType: business.businessType || '',
                 addresses: business.addresses || []
             }
         });
 
     } catch (error) {
         console.error('Profile route error:', error);
-        console.error('Error stack:', error.stack);
         res.status(500).json({
             success: false,
             message: 'Error fetching business',
             debug: process.env.NODE_ENV === 'development' ? {
                 error: error.message,
-                stack: error.stack,
-                userId: req?.user?.id
+                stack: error.stack
             } : undefined
         });
     }
