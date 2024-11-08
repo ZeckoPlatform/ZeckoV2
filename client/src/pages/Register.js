@@ -178,24 +178,30 @@ function Register() {
       return;
     }
 
-    if (formData.accountType === 'vendor') {
-      if (!formData.businessName || !formData.businessType || !formData.vendorCategory) {
-        setError('Please fill in all vendor information');
-        return;
-      }
-    }
-
     try {
       const API_URL = process.env.NODE_ENV === 'production'
         ? 'https://zeckov2-deceb43992ac.herokuapp.com'
         : 'http://localhost:5000';
 
-      const response = await axios.post(`${API_URL}/api/users/register`, formData);
+      let endpoint = '';
+      switch(formData.accountType) {
+        case 'business':
+          endpoint = `${API_URL}/api/business/register`;
+          break;
+        case 'vendor':
+          endpoint = `${API_URL}/api/vendor/register`;
+          break;
+        default:
+          endpoint = `${API_URL}/api/users/register`;
+      }
+
+      const response = await axios.post(endpoint, formData);
 
       if (response.data) {
         navigate('/login');
       }
     } catch (error) {
+      console.error('Registration error:', error.response?.data || error);
       setError(error.response?.data?.error || error.message || 'Registration failed');
     }
   };

@@ -29,6 +29,8 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const jobRoutes = require('./routes/jobRoutes');
 const businessRoutes = require('./routes/businessRoutes');
 const securityRoutes = require('./routes/securityRoutes');
+const businessAuthRoutes = require('./routes/businessAuth');
+const vendorAuthRoutes = require('./routes/vendorAuth');
 
 // Initialize Express and Socket.io
 const app = express();
@@ -169,6 +171,8 @@ mountRoute('/api/jobs', jobRoutes);
 mountRoute('/api/businesses', businessRoutes);
 mountRoute('/api/security-settings', securityRoutes);
 mountRoute('/api', productRoutes);
+mountRoute('/api/business', businessAuthRoutes);
+mountRoute('/api/vendor', vendorAuthRoutes);
 
 // API Endpoints
 app.get('/api/subscription-plans', (req, res) => {
