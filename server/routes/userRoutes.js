@@ -104,35 +104,43 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        const isMatch = await user.comparePassword(password);
-        
-        if (!isMatch) {
-            console.log('Password mismatch for user:', email);
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-
-        const token = jwt.sign(
-            { 
-                userId: user._id,
-                role: user.role,
-                accountType: 'personal'
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' }
-        );
-
-        console.log('Login successful for:', email);
-
-        res.json({
-            token,
-            user: {
-                id: user._id,
-                email: user.email,
-                username: user.username,
-                role: user.role,
-                accountType: 'personal'
+        try {
+            const isMatch = await user.comparePassword(password);
+            
+            if (!isMatch) {
+                console.log('Password mismatch for user:', email);
+                return res.status(401).json({ error: 'Invalid credentials' });
             }
-        });
+
+            const token = jwt.sign(
+                { 
+                    userId: user._id,
+                    role: user.role,
+                    accountType: 'personal'
+                },
+                process.env.JWT_SECRET,
+                { expiresIn: '24h' }
+            );
+
+            console.log('Login successful for:', email);
+
+            res.json({
+                token,
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    username: user.username,
+                    role: user.role,
+                    accountType: 'personal'
+                }
+            });
+        } catch (passwordError) {
+            console.error('Password comparison error:', passwordError);
+            res.status(500).json({ 
+                error: 'Login failed', 
+                details: 'Error verifying credentials' 
+            });
+        }
     } catch (error) {
         console.error('Server error during login:', error);
         res.status(500).json({ 
