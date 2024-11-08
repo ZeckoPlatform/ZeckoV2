@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
 import { activityLogService } from '../services/activityLogService';
+import axios from 'axios';
 
 const LoginContainer = styled.div`
   max-width: 400px;
@@ -62,11 +63,34 @@ const CodeInput = styled(Input)`
   font-size: 20px;
 `;
 
+const AccountTypeSelector = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  justify-content: center;
+`;
+
+const AccountTypeButton = styled.button`
+  padding: 8px 16px;
+  border: 1px solid #007bff;
+  background-color: ${props => props.selected ? '#007bff' : 'white'};
+  color: ${props => props.selected ? 'white' : '#007bff'};
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: #007bff;
+    color: white;
+  }
+`;
+
 function Login() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    twoFactorCode: ''
+    twoFactorCode: '',
+    accountType: 'personal'
   });
   const [error, setError] = useState('');
   const [showTwoFactor, setShowTwoFactor] = useState(false);
@@ -91,43 +115,36 @@ function Login() {
             ? 'https://zeckov2-deceb43992ac.herokuapp.com'
             : 'http://localhost:5000';
 
-        // Choose endpoint based on account type
-        let endpoint = '';
-        switch(formData.accountType) {
-            case 'business':
-                endpoint = `${API_URL}/api/business/login`;
-                break;
-            case 'vendor':
-                endpoint = `${API_URL}/api/vendor/login`;
-                break;
-            default:
-                endpoint = `${API_URL}/api/users/login`;
-        }
+        // Log the current account type
+        console.log('Current account type:', formData.accountType);
 
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                email: formData.email,
-                password: formData.password
-            })
+        // Determine endpoint
+        const endpoint = `${API_URL}/api/${formData.accountType === 'vendor' 
+            ? 'vendor' 
+            : formData.accountType === 'business' 
+                ? 'business' 
+                : 'users'}/login`;
+
+        console.log('Using endpoint:', endpoint);
+
+        const response = await axios.post(endpoint, {
+            email: formData.email,
+            password: formData.password,
+            accountType: formData.accountType
         });
 
-        const data = await response.json();
-
-        if (response.ok) {
-            localStorage.setItem('token', data.token);
-            login(data.token, data.user);
-            activityLogService.initializeSocket();
+        if (response.data && response.data.token) {
+            localStorage.setItem('token', response.data.token);
+            localStorage.setItem('accountType', formData.accountType);
+            login(response.data.token, {
+                ...response.data.user,
+                accountType: formData.accountType
+            });
             navigate('/dashboard');
-        } else {
-            setError(data.error || 'Login failed. Please try again.');
         }
-    } catch (err) {
-        console.error('Login error:', err);
-        setError('Login failed. Please try again.');
+    } catch (error) {
+        console.error('Login error:', error.response?.data || error);
+        setError(error.response?.data?.error || 'Invalid credentials');
     }
   };
 
@@ -164,6 +181,15 @@ function Login() {
     }
   };
 
+  // Make sure the account type is set when selecting account type
+  const handleAccountTypeSelect = (type) => {
+    console.log('Selecting account type:', type);
+    setFormData(prev => ({
+        ...prev,
+        accountType: type
+    }));
+  };
+
   if (showTwoFactor) {
     return (
       <LoginContainer>
@@ -195,6 +221,31 @@ function Login() {
   return (
     <LoginContainer>
       <h2>Login to Zecko</h2>
+      
+      <AccountTypeSelector>
+        <AccountTypeButton
+          type="button"
+          selected={formData.accountType === 'personal'}
+          onClick={() => handleAccountTypeSelect('personal')}
+        >
+          Personal Account
+        </AccountTypeButton>
+        <AccountTypeButton
+          type="button"
+          selected={formData.accountType === 'business'}
+          onClick={() => handleAccountTypeSelect('business')}
+        >
+          Business Account
+        </AccountTypeButton>
+        <AccountTypeButton
+          type="button"
+          selected={formData.accountType === 'vendor'}
+          onClick={() => handleAccountTypeSelect('vendor')}
+        >
+          Vendor Account
+        </AccountTypeButton>
+      </AccountTypeSelector>
+
       <Form onSubmit={handleSubmit}>
         <Input
           type="email"

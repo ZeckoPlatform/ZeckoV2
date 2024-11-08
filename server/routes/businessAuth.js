@@ -66,24 +66,31 @@ router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         
+        console.log('Business login attempt for:', email);
+
         const businessUser = await BusinessUser.findOne({ email });
         if (!businessUser) {
+            console.log('No business user found with email:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         const isMatch = await businessUser.comparePassword(password);
         if (!isMatch) {
+            console.log('Password mismatch for business user:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         const token = jwt.sign(
             { 
                 userId: businessUser._id,
-                accountType: 'business'
+                accountType: 'business',
+                role: 'business'
             },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
+
+        console.log('Business login successful for:', email);
 
         res.json({
             token,
@@ -91,11 +98,12 @@ router.post('/login', async (req, res) => {
                 id: businessUser._id,
                 email: businessUser.email,
                 businessName: businessUser.businessName,
-                role: 'business'
+                role: 'business',
+                accountType: 'business'
             }
         });
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('Business login error:', error);
         res.status(500).json({ error: 'Login failed' });
     }
 });

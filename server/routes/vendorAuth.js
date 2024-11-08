@@ -44,9 +44,8 @@ router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         
-        // Debug log
-        console.log('Attempting vendor login for:', email);
-        
+        console.log('Vendor login attempt:', email);
+
         const vendorUser = await VendorUser.findOne({ email });
         if (!vendorUser) {
             console.log('No vendor found with email:', email);
@@ -69,8 +68,7 @@ router.post('/login', async (req, res) => {
             { expiresIn: '24h' }
         );
 
-        // Debug log
-        console.log('Vendor login successful:', vendorUser._id);
+        console.log('Vendor login successful:', email);
 
         res.json({
             token,
@@ -78,7 +76,8 @@ router.post('/login', async (req, res) => {
                 id: vendorUser._id,
                 email: vendorUser.email,
                 businessName: vendorUser.businessName,
-                role: 'vendor'
+                role: 'vendor',
+                accountType: 'vendor'
             }
         });
     } catch (error) {

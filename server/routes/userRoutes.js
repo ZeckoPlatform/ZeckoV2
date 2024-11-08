@@ -92,55 +92,62 @@ router.post('/register', async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    const user = await User.findOne({ email }).select('+password +twoFactorSecret');
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    try {
+        const { email, password, accountType } = req.body;
+
+        // Debug log
+        console.log('Login attempt:', { email, accountType });
+
+        let user;
+        // Find user based on account type
+        switch(accountType) {
+            case 'business':
+                user = await BusinessUser.findOne({ email });
+                break;
+            case 'vendor':
+                user = await VendorUser.findOne({ email });
+                break;
+            default:
+                user = await User.findOne({ email });
+        }
+
+        if (!user) {
+            console.log('No user found with email:', email);
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+            console.log('Password mismatch for user:', email);
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const token = jwt.sign(
+            { 
+                userId: user._id,
+                accountType: accountType || 'personal',
+                role: user.role
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        console.log('Login successful for:', email);
+
+        res.json({
+            token,
+            user: {
+                id: user._id,
+                email: user.email,
+                username: user.username,
+                role: user.role,
+                accountType: accountType || 'personal'
+            }
+        });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ error: 'Login failed' });
     }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    // Check if 2FA is enabled
-    if (user.securitySettings?.twoFactorEnabled) {
-      // Return temp token for 2FA verification
-      const tempToken = jwt.sign(
-        { tempUserId: user._id },
-        process.env.JWT_SECRET,
-        { expiresIn: '5m' }
-      );
-
-      return res.json({
-        need2FA: true,
-        tempToken
-      });
-    }
-
-    // If 2FA is not enabled, proceed with normal login
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    res.json({
-      token,
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        role: user.role
-      }
-    });
-
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
 });
 
 // Add a new route for 2FA verification during login
