@@ -228,6 +228,7 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState('jobs');
   const [showPostForm, setShowPostForm] = useState(false);
   const [editingLead, setEditingLead] = useState(null);
+  const accountType = localStorage.getItem('accountType');
   const [newLead, setNewLead] = useState({
     title: '',
     description: '',
@@ -331,6 +332,36 @@ function Dashboard() {
     return null;
   };
 
+  const renderActionButtons = () => {
+    switch(accountType) {
+      case 'business':
+        return (
+          <ButtonContainer>
+            <Button onClick={() => navigate('/shop')}>View Products</Button>
+            <Button onClick={() => navigate('/business/profile')}>Business Profile</Button>
+            <Button onClick={() => navigate('/business/orders')}>Manage Orders</Button>
+          </ButtonContainer>
+        );
+      case 'vendor':
+        return (
+          <ButtonContainer>
+            <Button onClick={() => navigate('/vendor/products')}>Manage Products</Button>
+            <Button onClick={() => navigate('/vendor/orders')}>View Orders</Button>
+            <Button onClick={() => navigate('/vendor/analytics')}>Analytics</Button>
+          </ButtonContainer>
+        );
+      default:
+        return (
+          <ButtonContainer>
+            <Button onClick={() => navigate('/shop')}>Start Shopping</Button>
+            <PostLeadButton onClick={() => setShowPostForm(!showPostForm)}>
+              {showPostForm ? 'Cancel' : 'Post a Lead'}
+            </PostLeadButton>
+          </ButtonContainer>
+        );
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -341,14 +372,7 @@ function Dashboard() {
         <DashboardCard>
           <CardHeader>Profile Overview</CardHeader>
           <WelcomeText>Welcome back, {dashboardData?.user?.name}</WelcomeText>
-          <ButtonContainer>
-            <Button onClick={() => navigate('/shop')}>Start Shopping</Button>
-            {user?.role !== 'vendor' && (
-              <PostLeadButton onClick={() => setShowPostForm(!showPostForm)}>
-                {showPostForm ? 'Cancel' : 'Post a Lead'}
-              </PostLeadButton>
-            )}
-          </ButtonContainer>
+          {renderActionButtons()}
         </DashboardCard>
 
         {renderMetrics()}
@@ -359,112 +383,115 @@ function Dashboard() {
         </DashboardCard>
       </DashboardGrid>
 
-      {showPostForm && (
-        <LeadForm onSubmit={handleSubmitLead}>
-          <FormGroup>
-            <Label htmlFor="title">Lead Title</Label>
-            <Input
-              type="text"
-              id="title"
-              name="title"
-              value={newLead.title}
-              onChange={handleLeadInputChange}
-              required
-            />
-          </FormGroup>
+      {accountType === 'personal' && (
+        <>
+          {showPostForm && (
+            <LeadForm onSubmit={handleSubmitLead}>
+              <FormGroup>
+                <Label htmlFor="title">Lead Title</Label>
+                <Input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={newLead.title}
+                  onChange={handleLeadInputChange}
+                  required
+                />
+              </FormGroup>
 
-          <FormGroup>
-            <Label htmlFor="description">Description</Label>
-            <TextArea
-              id="description"
-              name="description"
-              value={newLead.description}
-              onChange={handleLeadInputChange}
-              required
-            />
-          </FormGroup>
+              <FormGroup>
+                <Label htmlFor="description">Description</Label>
+                <TextArea
+                  id="description"
+                  name="description"
+                  value={newLead.description}
+                  onChange={handleLeadInputChange}
+                  required
+                />
+              </FormGroup>
 
-          <FormGroup>
-            <Label htmlFor="company">Company</Label>
-            <Input
-              type="text"
-              id="company"
-              name="company"
-              value={newLead.company}
-              onChange={handleLeadInputChange}
-              required
-            />
-          </FormGroup>
+              <FormGroup>
+                <Label htmlFor="company">Company</Label>
+                <Input
+                  type="text"
+                  id="company"
+                  name="company"
+                  value={newLead.company}
+                  onChange={handleLeadInputChange}
+                  required
+                />
+              </FormGroup>
 
-          <FormGroup>
-            <Label htmlFor="location">Location</Label>
-            <Input
-              type="text"
-              id="location"
-              name="location"
-              value={newLead.location}
-              onChange={handleLeadInputChange}
-              required
-            />
-          </FormGroup>
+              <FormGroup>
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  type="text"
+                  id="location"
+                  name="location"
+                  value={newLead.location}
+                  onChange={handleLeadInputChange}
+                  required
+                />
+              </FormGroup>
 
-          <FormGroup>
-            <Label htmlFor="salary">Budget</Label>
-            <Input
-              type="number"
-              id="salary"
-              name="salary"
-              value={newLead.salary}
-              onChange={handleLeadInputChange}
-              required
-            />
-          </FormGroup>
+              <FormGroup>
+                <Label htmlFor="salary">Budget</Label>
+                <Input
+                  type="number"
+                  id="salary"
+                  name="salary"
+                  value={newLead.salary}
+                  onChange={handleLeadInputChange}
+                  required
+                />
+              </FormGroup>
 
-          <FormGroup>
-            <Label htmlFor="type">Lead Type</Label>
-            <Select
-              id="type"
-              name="type"
-              value={newLead.type}
-              onChange={handleLeadInputChange}
-              required
-            >
-              <option value="fulltime">Full-time</option>
-              <option value="contract">Contract</option>
-              <option value="temporary">Temporary</option>
-            </Select>
-          </FormGroup>
+              <FormGroup>
+                <Label htmlFor="type">Lead Type</Label>
+                <Select
+                  id="type"
+                  name="type"
+                  value={newLead.type}
+                  onChange={handleLeadInputChange}
+                  required
+                >
+                  <option value="fulltime">Full-time</option>
+                  <option value="contract">Contract</option>
+                  <option value="temporary">Temporary</option>
+                </Select>
+              </FormGroup>
 
-          <SubmitButton type="submit">Post Lead</SubmitButton>
-        </LeadForm>
-      )}
-
-      <TabContainer>
-        <TabButtons>
-          <TabButton 
-            active={activeTab === 'jobs'} 
-            onClick={() => setActiveTab('jobs')}
-          >
-            Lead Listings
-          </TabButton>
-          <TabButton 
-            active={activeTab === 'search'} 
-            onClick={() => setActiveTab('search')}
-          >
-            Search Leads
-          </TabButton>
-        </TabButtons>
-
-        <ContentSection>
-          <JobCarousel />
-
-          {activeTab === 'jobs' ? (
-            <JobListing />
-          ) : (
-            <JobSearch />
+              <SubmitButton type="submit">Post Lead</SubmitButton>
+            </LeadForm>
           )}
-        </ContentSection>
-      </TabContainer>
+
+          <TabContainer>
+            <TabButtons>
+              <TabButton 
+                active={activeTab === 'jobs'} 
+                onClick={() => setActiveTab('jobs')}
+              >
+                Lead Listings
+              </TabButton>
+              <TabButton 
+                active={activeTab === 'search'} 
+                onClick={() => setActiveTab('search')}
+              >
+                Search Leads
+              </TabButton>
+            </TabButtons>
+
+            <ContentSection>
+              <JobCarousel />
+              {activeTab === 'jobs' ? (
+                <JobListing />
+              ) : (
+                <JobSearch />
+              )}
+            </ContentSection>
+          </TabContainer>
+        </>
+      )}
     </DashboardContainer>
   );
 }
