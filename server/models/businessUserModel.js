@@ -23,6 +23,29 @@ const businessUserSchema = new mongoose.Schema({
         type: String, 
         required: true 
     },
+    description: {
+        type: String,
+        default: ''
+    },
+    phone: {
+        type: String,
+        default: ''
+    },
+    website: {
+        type: String,
+        default: ''
+    },
+    addresses: [{
+        street: String,
+        city: String,
+        state: String,
+        zipCode: String,
+        country: String,
+        isDefault: {
+            type: Boolean,
+            default: false
+        }
+    }],
     role: { 
         type: String, 
         default: 'business' 
@@ -30,10 +53,6 @@ const businessUserSchema = new mongoose.Schema({
     isVerified: { 
         type: Boolean, 
         default: false 
-    },
-    business: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Business' 
     },
     createdAt: { 
         type: Date, 

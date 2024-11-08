@@ -14,7 +14,9 @@ router.post('/register', async (req, res) => {
             businessName,
             businessType,
             location,
-            description
+            description,
+            phone,
+            website
         } = req.body;
 
         // Check if email already exists
@@ -23,35 +25,47 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'Email already registered' });
         }
 
-        // Create new business user
+        // Create new business user with all fields
         const businessUser = new BusinessUser({
             username,
             email,
             password,
             businessName,
             businessType,
-            role: 'business'
+            phone: phone || '',
+            website: website || '',
+            description: description || '',
+            role: 'business',
+            addresses: [],
+            isVerified: false
         });
 
         await businessUser.save();
 
-        // Create associated business profile
-        const business = new Business({
-            name: businessName,
-            description: description || businessType,
-            category: businessType,
-            location: location || '',
-            contactEmail: email,
-            owner: businessUser._id
+        // Create JWT token
+        const token = jwt.sign(
+            { 
+                userId: businessUser._id,
+                accountType: 'business',
+                role: 'business'
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        // Send success response with token
+        res.status(201).json({
+            success: true,
+            message: 'Business registration successful',
+            token,
+            user: {
+                id: businessUser._id,
+                email: businessUser.email,
+                businessName: businessUser.businessName,
+                role: 'business',
+                accountType: 'business'
+            }
         });
-
-        await business.save();
-
-        // Update the business user with the business reference
-        businessUser.business = business._id;
-        await businessUser.save();
-
-        res.status(201).json({ message: 'Business registration successful' });
     } catch (error) {
         console.error('Business registration error:', error);
         res.status(500).json({ 
@@ -70,13 +84,11 @@ router.post('/login', async (req, res) => {
 
         const businessUser = await BusinessUser.findOne({ email });
         if (!businessUser) {
-            console.log('No business user found with email:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         const isMatch = await businessUser.comparePassword(password);
         if (!isMatch) {
-            console.log('Password mismatch for business user:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
@@ -90,9 +102,8 @@ router.post('/login', async (req, res) => {
             { expiresIn: '24h' }
         );
 
-        console.log('Business login successful for:', email);
-
         res.json({
+            success: true,
             token,
             user: {
                 id: businessUser._id,
