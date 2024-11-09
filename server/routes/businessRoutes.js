@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const { auth } = require('../middleware/auth');
-const BusinessUser = require('../models/businessModel');
+const BusinessUser = require('../models/businessUserModel');
+const Business = require('../models/businessModel');
 
 // Helper function to sanitize business data
 const sanitizeBusinessData = (business) => {
@@ -277,26 +278,45 @@ router.post('/register', async (req, res) => {
             password
         } = req.body;
 
-        // Check if business already exists
-        const existingBusiness = await BusinessUser.findOne({ email });
-        if (existingBusiness) {
-            return res.status(400).json({ message: 'Business already exists' });
-        }
-
-        const business = new BusinessUser({
-            businessName,
-            businessType,
-            location,
-            description,
+        // First, create the BusinessUser account
+        const businessUser = new BusinessUser({
             email,
-            password
+            password,
+            businessName,
+            businessType
+        });
+        await businessUser.save();
+
+        // Then create the Business profile
+        const business = new Business({
+            name: businessName,
+            description,
+            category: businessType,  // mapping businessType to category
+            location,
+            contactEmail: email,
+            owner: businessUser._id,  // Link to the BusinessUser
+            createdAt: new Date(),
+            updatedAt: new Date()
         });
 
         await business.save();
-        res.status(201).json({ message: 'Business registered successfully', business });
+        
+        res.status(201).json({ 
+            message: 'Business registered successfully',
+            success: true,
+            business: {
+                name: business.name,
+                email: business.contactEmail,
+                category: business.category
+            }
+        });
     } catch (error) {
-        console.error('Business registration error:', error);
-        res.status(500).json({ message: 'Server error during business registration' });
+        console.error('Business registration error details:', error);
+        res.status(500).json({ 
+            message: 'Server error during business registration',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+            success: false
+        });
     }
 });
 
