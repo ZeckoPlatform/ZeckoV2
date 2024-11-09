@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const { auth } = require('../middleware/auth');
-const BusinessUser = require('../models/businessUserModel');
+const BusinessUser = require('../models/businessModel');
 
 // Helper function to sanitize business data
 const sanitizeBusinessData = (business) => {
