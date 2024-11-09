@@ -3,7 +3,6 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const { auth } = require('../middleware/auth');
 const BusinessUser = require('../models/businessUserModel');
-const Business = require('../models/Business');
 
 // Helper function to sanitize business data
 const sanitizeBusinessData = (business) => {
@@ -279,12 +278,12 @@ router.post('/register', async (req, res) => {
         } = req.body;
 
         // Check if business already exists
-        const existingBusiness = await Business.findOne({ email });
+        const existingBusiness = await BusinessUser.findOne({ email });
         if (existingBusiness) {
             return res.status(400).json({ message: 'Business already exists' });
         }
 
-        const business = new Business({
+        const business = new BusinessUser({
             businessName,
             businessType,
             location,
