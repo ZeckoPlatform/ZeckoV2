@@ -3,6 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const { auth } = require('../middleware/auth');
 const BusinessUser = require('../models/businessUserModel');
+const Business = require('../models/Business');
 
 // Helper function to sanitize business data
 const sanitizeBusinessData = (business) => {
@@ -262,6 +263,41 @@ router.get('/search/:query', async (req, res) => {
             message: 'Error searching businesses',
             businesses: []
         });
+    }
+});
+
+// Add the register route if it's not already there
+router.post('/register', async (req, res) => {
+    try {
+        const {
+            businessName,
+            businessType,
+            location,
+            description,
+            email,
+            password
+        } = req.body;
+
+        // Check if business already exists
+        const existingBusiness = await Business.findOne({ email });
+        if (existingBusiness) {
+            return res.status(400).json({ message: 'Business already exists' });
+        }
+
+        const business = new Business({
+            businessName,
+            businessType,
+            location,
+            description,
+            email,
+            password
+        });
+
+        await business.save();
+        res.status(201).json({ message: 'Business registered successfully', business });
+    } catch (error) {
+        console.error('Business registration error:', error);
+        res.status(500).json({ message: 'Server error during business registration' });
     }
 });
 
