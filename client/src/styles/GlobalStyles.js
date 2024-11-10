@@ -8,9 +8,9 @@ const GlobalStyles = createGlobalStyle`
   }
 
   body {
-    font-family: ${({ theme }) => theme.typography?.fontFamily?.primary || "'Inter', sans-serif"};
-    background-color: ${({ theme }) => theme.colors?.background?.main || '#f5f5f5'};
-    color: ${({ theme }) => theme.colors?.text?.primary || '#333333'};
+    font-family: ${({ theme }) => theme?.typography?.fontFamily?.primary || "'Inter', sans-serif"};
+    background-color: ${({ theme }) => theme?.colors?.background?.main || '#f5f5f5'};
+    color: ${({ theme }) => theme?.colors?.text?.primary || '#333333'};
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

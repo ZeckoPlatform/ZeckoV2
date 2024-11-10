@@ -62,7 +62,8 @@ const baseTheme = {
   }
 };
 
-export const lightTheme = {
+// Create complete themes with all necessary properties
+const lightThemeComplete = {
   ...baseTheme,
   colors: {
     primary: {
@@ -104,7 +105,7 @@ export const lightTheme = {
   }
 };
 
-export const darkTheme = {
+const darkThemeComplete = {
   ...baseTheme,
   colors: {
     primary: {
@@ -146,78 +147,11 @@ export const darkTheme = {
   }
 };
 
-export const mediaQueries = {
-  xs: `@media (min-width: ${baseTheme.breakpoints.xs})`,
-  sm: `@media (min-width: ${baseTheme.breakpoints.sm})`,
-  md: `@media (min-width: ${baseTheme.breakpoints.md})`,
-  lg: `@media (min-width: ${baseTheme.breakpoints.lg})`,
-  xl: `@media (min-width: ${baseTheme.breakpoints.xl})`
-};
-
-export const globalStyles = css`
-  html {
-    box-sizing: border-box;
-    font-size: 16px;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  *,
-  *::before,
-  *::after {
-    box-sizing: inherit;
-    margin: 0;
-    padding: 0;
-  }
-
-  body {
-    font-family: ${baseTheme.typography.fontFamily.primary};
-    line-height: ${baseTheme.typography.lineHeight.normal};
-    color: ${({ theme }) => theme.colors.text.primary};
-    background: ${({ theme }) => theme.colors.background.main};
-    transition: background-color ${baseTheme.transitions.medium},
-                color ${baseTheme.transitions.medium};
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-weight: ${baseTheme.typography.weight.bold};
-    line-height: ${baseTheme.typography.lineHeight.tight};
-    margin-bottom: ${baseTheme.spacing.md};
-  }
-
-  a {
-    color: ${({ theme }) => theme.colors.primary.main};
-    text-decoration: none;
-    transition: color ${baseTheme.transitions.short};
-
-    &:hover {
-      color: ${({ theme }) => theme.colors.primary.dark};
-    }
-  }
-
-  img {
-    max-width: 100%;
-    height: auto;
-  }
-
-  ::selection {
-    background: ${({ theme }) => theme.colors.primary.main}40;
-    color: ${({ theme }) => theme.colors.text.primary};
-  }
-`; 
-
+// Export the theme object with complete themes
 export const theme = {
-  light: {
-    ...baseTheme,
-    colors: lightTheme.colors,
-    typography: baseTheme.typography
-  },
-  dark: {
-    ...baseTheme,
-    colors: darkTheme.colors,
-    typography: baseTheme.typography
-  }
+  light: lightThemeComplete,
+  dark: darkThemeComplete
 };
 
-// Export a default theme to avoid undefined theme issues
-export default theme.light; 
+// Export a complete default theme
+export default lightThemeComplete; 
