@@ -102,6 +102,7 @@ const SectionTitle = styled.h2`
   color: var(--primary-color);
   margin-bottom: 20px;
   font-size: 1.8rem;
+  font-weight: 600;
 
   @media (max-width: 768px) {
     font-size: 1.5rem;
@@ -113,6 +114,7 @@ const JobTitle = styled.h3`
   color: var(--primary-color);
   margin-bottom: 10px;
   font-size: 1.2rem;
+  font-weight: 500;
 `;
 
 const JobInfo = styled.div`
@@ -127,17 +129,25 @@ const JobInfo = styled.div`
 const ProgressIndicator = styled.div`
   display: flex;
   justify-content: center;
-  margin-top: 20px;
+  gap: 8px;
+  margin-top: 15px;
+
+  @media (max-width: 768px) {
+    gap: 6px;
+  }
 `;
 
-const ProgressDot = styled.button`
-  width: 10px;
-  height: 10px;
+const ProgressDot = styled.div`
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background-color: ${props => props.active ? 'var(--primary-color)' : '#ccc'};
-  border: none;
-  margin: 0 5px;
-  cursor: pointer;
+  background-color: ${props => props.active ? 'var(--primary-color)' : '#ddd'};
+  transition: background-color 0.3s ease;
+
+  @media (max-width: 768px) {
+    width: 6px;
+    height: 6px;
+  }
 `;
 
 export function JobCarousel() {

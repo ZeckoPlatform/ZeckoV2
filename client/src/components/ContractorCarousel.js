@@ -98,6 +98,34 @@ const ScrollButton = styled.button`
   }
 `;
 
+const SectionTitle = styled.h2`
+  color: var(--primary-color);
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  font-weight: 600;
+
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+  }
+`;
+
+const ContractorName = styled.h3`
+  color: var(--primary-color);
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+  font-weight: 500;
+`;
+
+const ContractorInfo = styled.div`
+  color: #666;
+  font-size: 0.9em;
+
+  p {
+    margin: 5px 0;
+  }
+`;
+
 const ProgressIndicator = styled.div`
   display: flex;
   justify-content: center;
