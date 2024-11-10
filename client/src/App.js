@@ -1,31 +1,25 @@
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { ThemeProvider } from './context/ThemeContext';
-import { AuthProvider } from './context/AuthContext';
-import { NotificationProvider } from './context/NotificationContext';
-import { OfflineProvider } from './context/OfflineContext';
-import { PerformanceProvider } from './context/PerformanceContext';
-import GlobalStyles from './styles/GlobalStyles';
-import ErrorBoundary from './components/error/ErrorBoundary';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from './providers/ThemeProvider';
+import { AuthProvider } from './providers/AuthProvider';
+import { ErrorBoundary } from './components/error/ErrorBoundary';
 import AppRoutes from './routes';
+
+const queryClient = new QueryClient();
 
 function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <AuthProvider>
-            <NotificationProvider>
-              <OfflineProvider>
-                <PerformanceProvider>
-                  <GlobalStyles />
-                  <AppRoutes />
-                </PerformanceProvider>
-              </OfflineProvider>
-            </NotificationProvider>
-          </AuthProvider>
+          <BrowserRouter>
+            <AuthProvider>
+              <AppRoutes />
+            </AuthProvider>
+          </BrowserRouter>
         </ThemeProvider>
-      </BrowserRouter>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 }

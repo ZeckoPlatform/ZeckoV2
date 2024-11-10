@@ -1,74 +1,56 @@
 export const theme = {
   colors: {
-    // Modern gradient combinations
     primary: {
-      main: '#00B4DB',
-      gradient: 'linear-gradient(135deg, #00B4DB 0%, #0083B0 100%)',
-      light: '#33C3E2',
-      dark: '#006D93',
+      main: '#007AFF',
+      light: '#4DA2FF',
+      dark: '#0055B3',
+      gradient: 'linear-gradient(45deg, #007AFF, #4DA2FF)',
       text: '#FFFFFF'
     },
     secondary: {
-      main: '#FF6B6B',
-      gradient: 'linear-gradient(135deg, #FF6B6B 0%, #FF4B4B 100%)',
-      light: '#FF8E8E',
-      dark: '#E54848',
+      main: '#5856D6',
+      light: '#7A79E0',
+      dark: '#3E3C96',
       text: '#FFFFFF'
     },
     background: {
-      main: '#F8FAFC',
-      paper: '#FFFFFF',
-      gradient: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
-      glass: 'rgba(255, 255, 255, 0.8)'
+      main: '#FFFFFF',
+      alt: '#F5F5F5',
+      dark: '#1C1C1E'
     },
     text: {
-      primary: '#2D3748',
-      secondary: '#4A5568',
-      disabled: '#A0AEC0',
-      hint: '#718096'
+      primary: '#000000',
+      secondary: '#666666',
+      disabled: '#999999'
     },
     status: {
-      success: '#4CAF50',
-      warning: '#FF9800',
-      error: '#F44336',
-      info: '#2196F3'
+      success: '#34C759',
+      error: '#FF3B30',
+      warning: '#FF9500',
+      info: '#5856D6'
     },
-    // Glass effect colors
-    glass: {
-      background: 'rgba(255, 255, 255, 0.15)',
-      border: 'rgba(255, 255, 255, 0.18)',
-      shadow: 'rgba(31, 38, 135, 0.07)'
+    border: {
+      light: '#E5E5EA',
+      main: '#C7C7CC',
+      dark: '#8E8E93'
     }
   },
-  
-  spacing: {
-    xs: '4px',
-    sm: '8px',
-    md: '16px',
-    lg: '24px',
-    xl: '32px',
-    xxl: '48px'
-  },
-
-  borderRadius: {
-    sm: '4px',
-    md: '8px',
-    lg: '16px',
-    xl: '24px',
-    round: '50%'
-  },
-
-  shadows: {
-    glass: '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
-    card: '0 4px 20px rgba(0, 0, 0, 0.05)',
-    hover: '0 8px 26px rgba(0, 0, 0, 0.09)',
-    button: '0 4px 14px 0 rgba(0, 180, 219, 0.39)'
-  },
-
   typography: {
     fontFamily: {
       main: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-      heading: "'Poppins', sans-serif"
+      heading: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      mono: "'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace"
+    },
+    size: {
+      xs: '0.75rem',    // 12px
+      sm: '0.875rem',   // 14px
+      md: '1rem',       // 16px
+      lg: '1.125rem',   // 18px
+      xl: '1.25rem',    // 20px
+      '2xl': '1.5rem',  // 24px
+      '3xl': '1.875rem',// 30px
+      '4xl': '2.25rem', // 36px
+      '5xl': '3rem'     // 48px
     },
     weight: {
       light: 300,
@@ -77,32 +59,58 @@ export const theme = {
       semibold: 600,
       bold: 700
     },
-    size: {
-      xs: '0.75rem',
-      sm: '0.875rem',
-      md: '1rem',
-      lg: '1.125rem',
-      xl: '1.25rem',
-      xxl: '1.5rem',
-      h1: '2.5rem',
-      h2: '2rem',
-      h3: '1.75rem',
-      h4: '1.5rem',
-      h5: '1.25rem',
-      h6: '1rem'
+    lineHeight: {
+      tight: 1.25,
+      normal: 1.5,
+      relaxed: 1.75
     }
   },
-
-  transitions: {
-    short: '0.15s ease-in-out',
-    medium: '0.25s ease-in-out',
-    long: '0.35s ease-in-out'
+  spacing: {
+    xs: '0.25rem',
+    sm: '0.5rem',
+    md: '1rem',
+    lg: '1.5rem',
+    xl: '2rem',
+    '2xl': '2.5rem',
+    '3xl': '3rem'
   },
-
+  borderRadius: {
+    sm: '0.25rem',
+    md: '0.5rem',
+    lg: '1rem',
+    full: '9999px'
+  },
+  shadows: {
+    sm: '0 1px 2px rgba(0, 0, 0, 0.05)',
+    md: '0 4px 6px rgba(0, 0, 0, 0.05)',
+    lg: '0 10px 15px rgba(0, 0, 0, 0.05)',
+    xl: '0 20px 25px rgba(0, 0, 0, 0.05)'
+  },
+  transitions: {
+    fast: '150ms ease-in-out',
+    normal: '250ms ease-in-out',
+    slow: '350ms ease-in-out'
+  },
+  breakpoints: {
+    xs: '320px',
+    sm: '640px',
+    md: '768px',
+    lg: '1024px',
+    xl: '1280px',
+    '2xl': '1536px'
+  },
   zIndex: {
-    drawer: 1200,
-    modal: 1300,
-    snackbar: 1400,
-    tooltip: 1500
+    hide: -1,
+    auto: 'auto',
+    base: 0,
+    docked: 10,
+    dropdown: 1000,
+    sticky: 1100,
+    banner: 1200,
+    overlay: 1300,
+    modal: 1400,
+    popover: 1500,
+    toast: 1600,
+    tooltip: 1700
   }
 }; 
