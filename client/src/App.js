@@ -10,8 +10,8 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
 import { ThemeProvider } from 'styled-components';
-import { theme } from './styles/theme';
-import GlobalStyle from './styles/GlobalStyles';
+import { theme as baseTheme } from './styles/theme';
+import GlobalStyle from './globalStyles';
 
 // Import all pages
 import Home from './pages/Home';
@@ -59,31 +59,37 @@ const MainContent = styled.main`
 `;
 
 function App() {
-  const [theme, setTheme] = useState('light');
+  const [themeMode, setThemeMode] = useState('light');
 
   useEffect(() => {
     // Check system preference
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setTheme(prefersDark ? 'dark' : 'light');
+    setThemeMode(prefersDark ? 'dark' : 'light');
 
     // Listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e) => setTheme(e.matches ? 'dark' : 'light');
+    const handleChange = (e) => setThemeMode(e.matches ? 'dark' : 'light');
     mediaQuery.addListener(handleChange);
 
     return () => mediaQuery.removeListener(handleChange);
   }, []);
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
+    document.documentElement.setAttribute('data-theme', themeMode);
+  }, [themeMode]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    setThemeMode(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
+  const currentTheme = {
+    ...baseTheme,
+    mode: themeMode,
+    // You can add mode-specific overrides here
   };
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={currentTheme}>
       <GlobalStyle />
       <AuthProvider>
         <AppContainer>
@@ -194,9 +200,10 @@ function App() {
           </BrowserRouter>
         </AppContainer>
         <button onClick={toggleTheme}>
-          Toggle {theme === 'light' ? 'Dark' : 'Light'} Mode
+          Toggle {themeMode === 'light' ? 'Dark' : 'Light'} Mode
         </button>
       </AuthProvider>
+      <ToastContainer />
     </ThemeProvider>
   );
 }
