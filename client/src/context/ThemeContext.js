@@ -10,6 +10,8 @@ export const ThemeProvider = ({ children }) => {
     return savedTheme || 'light';
   });
 
+  const currentTheme = theme[themeMode] || theme.light;
+
   useEffect(() => {
     localStorage.setItem('theme', themeMode);
     document.documentElement.setAttribute('data-theme', themeMode);
@@ -18,8 +20,6 @@ export const ThemeProvider = ({ children }) => {
   const toggleTheme = () => {
     setThemeMode(prev => prev === 'light' ? 'dark' : 'light');
   };
-
-  const currentTheme = theme[themeMode];
 
   return (
     <ThemeContext.Provider value={{ theme: themeMode, toggleTheme }}>

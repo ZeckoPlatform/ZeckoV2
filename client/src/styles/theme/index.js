@@ -19,7 +19,7 @@ const baseTheme = {
   typography: {
     fontFamily: {
       primary: "'Inter', sans-serif",
-      mono: "'Roboto Mono', monospace"
+      secondary: "'Poppins', sans-serif"
     },
     weight: {
       regular: 400,
