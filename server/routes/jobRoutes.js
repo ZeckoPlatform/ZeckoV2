@@ -138,4 +138,22 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+router.get('/featured', async (req, res) => {
+  try {
+    const featuredJobs = await Job.find({ isFeatured: true })
+      .sort({ createdAt: -1 })
+      .limit(5);
+    
+    res.json({
+      success: true,
+      jobs: featuredJobs
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching featured jobs'
+    });
+  }
+});
+
 module.exports = router;
