@@ -1,6 +1,7 @@
 import { css } from 'styled-components';
 
-const baseTheme = {
+// Base theme with all shared properties
+export const baseTheme = {
   borderRadius: {
     sm: '4px',
     md: '8px',
@@ -62,10 +63,9 @@ const baseTheme = {
   }
 };
 
-// Create complete themes with all necessary properties
-const lightThemeComplete = {
-  ...baseTheme,
-  colors: {
+// Color themes
+const colors = {
+  light: {
     primary: {
       main: '#4CAF50',
       light: '#81C784',
@@ -102,12 +102,8 @@ const lightThemeComplete = {
       background: 'rgba(255, 255, 255, 0.8)',
       border: 'rgba(255, 255, 255, 0.5)'
     }
-  }
-};
-
-const darkThemeComplete = {
-  ...baseTheme,
-  colors: {
+  },
+  dark: {
     primary: {
       main: '#81C784',
       light: '#A5D6A7',
@@ -147,11 +143,20 @@ const darkThemeComplete = {
   }
 };
 
-// Export the theme object with complete themes
+// Final theme object
 export const theme = {
-  light: lightThemeComplete,
-  dark: darkThemeComplete
+  light: {
+    ...baseTheme,
+    colors: colors.light,
+  },
+  dark: {
+    ...baseTheme,
+    colors: colors.dark,
+  }
 };
 
-// Export a complete default theme
-export default lightThemeComplete; 
+// Default theme
+export default {
+  ...baseTheme,
+  colors: colors.light,
+}; 

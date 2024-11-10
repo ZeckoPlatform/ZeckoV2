@@ -1,41 +1,33 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
-import { theme } from '../styles/theme';
-import GlobalStyles from '../styles/GlobalStyles';
+import { theme, baseTheme } from '../styles/theme';
 
-const ThemeContext = createContext();
+const ThemeContext = createContext(null);
 
 export const ThemeProvider = ({ children }) => {
-  const [themeMode, setThemeMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') || 'light';
-    }
-    return 'light';
-  });
-
-  const currentTheme = theme[themeMode] || theme.light;
+  const [themeMode, setThemeMode] = useState('light');
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('theme', themeMode);
-      document.documentElement.setAttribute('data-theme', themeMode);
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      setThemeMode(savedTheme);
     }
-  }, [themeMode]);
+  }, []);
+
+  const currentTheme = useMemo(() => ({
+    ...baseTheme,
+    colors: theme[themeMode]?.colors || theme.light.colors,
+  }), [themeMode]);
 
   const toggleTheme = () => {
-    setThemeMode(prev => prev === 'light' ? 'dark' : 'light');
-  };
-
-  const value = {
-    theme: themeMode,
-    toggleTheme,
-    currentTheme
+    const newTheme = themeMode === 'light' ? 'dark' : 'light';
+    setThemeMode(newTheme);
+    localStorage.setItem('theme', newTheme);
   };
 
   return (
-    <ThemeContext.Provider value={value}>
+    <ThemeContext.Provider value={{ themeMode, toggleTheme }}>
       <StyledThemeProvider theme={currentTheme}>
-        <GlobalStyles />
         {children}
       </StyledThemeProvider>
     </ThemeContext.Provider>
