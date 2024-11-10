@@ -1,25 +1,34 @@
 import styled from 'styled-components';
+import Header from './Header';
+import Sidebar from './Sidebar';
+import Footer from './Footer';
 
-const LayoutContainer = styled.div`
+const LayoutWrapper = styled.div`
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-areas:
+    "header header"
+    "sidebar main"
+    "footer footer";
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto 1fr auto;
 `;
 
-const MainContent = styled.main`
-  flex: 1;
-  margin-left: ${props => props.hasSidebar ? '280px' : '0'};
+const Main = styled.main`
+  grid-area: main;
   padding: ${({ theme }) => theme.spacing.lg};
   background: ${({ theme }) => theme.colors.background.main};
-  transition: margin-left ${({ theme }) => theme.transitions.medium};
-
-  @media (max-width: 768px) {
-    margin-left: 0;
-  }
 `;
 
-const PageContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  animation: fadeIn ${({ theme }) => theme.transitions.medium} ease-in;
-`; 
+const Layout = ({ children }) => {
+  return (
+    <LayoutWrapper>
+      <Header />
+      <Sidebar />
+      <Main>{children}</Main>
+      <Footer />
+    </LayoutWrapper>
+  );
+};
+
+export default Layout; 

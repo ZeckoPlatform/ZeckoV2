@@ -1,46 +1,72 @@
+import React from 'react';
 import styled from 'styled-components';
-import { flexBetween } from '../../styles/mixins';
+import { Link } from 'react-router-dom';
 
-const FooterContainer = styled.footer`
+const FooterWrapper = styled.footer`
   background: ${({ theme }) => theme.colors.background.paper};
-  padding: ${({ theme }) => `${theme.spacing.xl} ${theme.spacing.lg}`};
+  padding: ${({ theme }) => theme.spacing.xl} 0;
   margin-top: auto;
 `;
 
 const FooterContent = styled.div`
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
+  padding: 0 ${({ theme }) => theme.spacing.lg};
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: ${({ theme }) => theme.spacing.xl};
 `;
 
 const FooterSection = styled.div`
-  h4 {
+  h3 {
     color: ${({ theme }) => theme.colors.text.primary};
     margin-bottom: ${({ theme }) => theme.spacing.md};
   }
 `;
 
-const FooterLinks = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const FooterLink = styled.a`
+const FooterLink = styled(Link)`
+  display: block;
   color: ${({ theme }) => theme.colors.text.secondary};
-  transition: color ${({ theme }) => theme.transitions.short};
+  text-decoration: none;
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
+  transition: color 0.2s ease;
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary.main};
   }
 `;
 
-const FooterBottom = styled.div`
-  ${flexBetween};
-  padding-top: ${({ theme }) => theme.spacing.lg};
-  margin-top: ${({ theme }) => theme.spacing.lg};
-  border-top: 1px solid ${({ theme }) => theme.colors.text.disabled};
-  color: ${({ theme }) => theme.colors.text.secondary};
-`; 
+const Footer = () => {
+  return (
+    <FooterWrapper>
+      <FooterContent>
+        <FooterSection>
+          <h3>About Us</h3>
+          <FooterLink to="/about">About</FooterLink>
+          <FooterLink to="/contact">Contact</FooterLink>
+          <FooterLink to="/careers">Careers</FooterLink>
+        </FooterSection>
+
+        <FooterSection>
+          <h3>Customer Service</h3>
+          <FooterLink to="/help">Help Center</FooterLink>
+          <FooterLink to="/shipping">Shipping Info</FooterLink>
+          <FooterLink to="/returns">Returns</FooterLink>
+        </FooterSection>
+
+        <FooterSection>
+          <h3>Legal</h3>
+          <FooterLink to="/privacy">Privacy Policy</FooterLink>
+          <FooterLink to="/terms">Terms of Service</FooterLink>
+        </FooterSection>
+
+        <FooterSection>
+          <h3>Connect With Us</h3>
+          {/* Add social media links */}
+        </FooterSection>
+      </FooterContent>
+    </FooterWrapper>
+  );
+};
+
+export default Footer; 

@@ -1,328 +1,269 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { zxcvbn } from '@zxcvbn-ts/core';
-import { dictionary } from '@zxcvbn-ts/language-common';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
 
 const RegisterContainer = styled.div`
-  max-width: 400px;
-  margin: 0 auto;
-  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: ${({ theme }) => theme.spacing.lg};
+  background: ${({ theme }) => theme.colors.background.gradient};
+`;
+
+const RegisterCard = styled(motion.div)`
+  background: ${({ theme }) => theme.colors.background.paper};
+  padding: ${({ theme }) => theme.spacing.xl};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  box-shadow: ${({ theme }) => theme.shadows.card};
+  width: 100%;
+  max-width: 500px;
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md};
+`;
+
+const FormRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const Label = styled.label`
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: 0.9rem;
 `;
 
 const Input = styled.input`
-  margin-bottom: 10px;
-  padding: 8px;
-  font-size: 16px;
+  padding: ${({ theme }) => theme.spacing.md};
+  border: 1px solid ${({ theme }) => theme.colors.text.disabled};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: 1rem;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.primary.main};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary.light}40;
+  }
 `;
 
-const Button = styled.button`
-  background-color: var(--primary-color);
-  color: white;
+const Button = styled(motion.button)`
+  padding: ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.colors.primary.gradient};
+  color: ${({ theme }) => theme.colors.primary.text};
   border: none;
-  padding: 10px;
-  font-size: 16px;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: 1rem;
   cursor: pointer;
+  transition: all 0.2s ease;
 
-  &:hover {
-    background-color: var(--primary-color-dark);
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
   }
 `;
 
-const ErrorMessage = styled.p`
-  color: red;
-  margin-top: 10px;
+const ErrorMessage = styled(motion.div)`
+  color: ${({ theme }) => theme.colors.status.error};
+  font-size: 0.9rem;
+  margin-top: ${({ theme }) => theme.spacing.sm};
 `;
 
-const PasswordStrength = styled.div`
-  margin-top: 5px;
-  height: 5px;
-  background-color: ${props => {
-    if (props.score === 0) return 'red';
-    if (props.score === 1) return 'orange';
-    if (props.score === 2) return 'yellow';
-    if (props.score === 3) return 'lightgreen';
-    if (props.score === 4) return 'green';
-  }};
-  width: ${props => (props.score + 1) * 20}%;
+const PasswordRequirements = styled.ul`
+  font-size: 0.8rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin-top: ${({ theme }) => theme.spacing.sm};
+  padding-left: ${({ theme }) => theme.spacing.md};
 `;
 
-const PasswordFeedback = styled.p`
-  font-size: 14px;
-  margin-top: 5px;
-  color: ${props => props.score <= 2 ? 'red' : 'green'};
-`;
-
-const AccountTypeSelector = styled.div`
-  margin-bottom: 20px;
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
-`;
-
-const AccountTypeButton = styled.button`
-  padding: 10px 20px;
-  border: 2px solid var(--primary-color);
-  background-color: ${props => props.selected ? 'var(--primary-color)' : 'white'};
-  color: ${props => props.selected ? 'white' : 'var(--primary-color)'};
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  flex: 1;
+const LinkText = styled(Link)`
+  color: ${({ theme }) => theme.colors.primary.main};
+  text-decoration: none;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-top: ${({ theme }) => theme.spacing.md};
+  display: block;
 
   &:hover {
-    background-color: ${props => props.selected ? 'var(--primary-color)' : '#f0f0f0'};
+    text-decoration: underline;
   }
 `;
 
-const Select = styled.select`
-  margin-bottom: 10px;
-  padding: 8px;
-  font-size: 16px;
-`;
-
-function Register() {
+const Register = () => {
   const [formData, setFormData] = useState({
-    username: '',
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
-    name: '',
-    accountType: '',
-    businessName: '',
-    businessType: '',
-    vendorCategory: '',
-    location: '',
-    description: ''
+    confirmPassword: '',
+    phoneNumber: ''
   });
-  const [error, setError] = useState('');
-  const [passwordScore, setPasswordScore] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const { register, error, setError } = useAuth();
   const navigate = useNavigate();
-  const { register } = useAuth();
 
-  const handlePasswordChange = (e) => {
-    const newPassword = e.target.value;
-    setFormData(prev => ({ ...prev, password: newPassword }));
-    const result = zxcvbn(newPassword);
-    setPasswordScore(result.score);
+  const validatePassword = (password) => {
+    const requirements = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      special: /[!@#$%^&*]/.test(password)
+    };
+    return requirements;
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleAccountTypeSelect = (type) => {
-    setFormData(prev => ({
-      ...prev,
-      accountType: type
-    }));
-  };
-
-  const renderVendorFields = () => {
-    if (formData.accountType === 'vendor') {
-      return (
-        <>
-          <Input
-            type="text"
-            placeholder="Business Name"
-            name="businessName"
-            value={formData.businessName}
-            onChange={handleChange}
-            required
-          />
-          <Input
-            type="text"
-            placeholder="Business Type"
-            name="businessType"
-            value={formData.businessType}
-            onChange={handleChange}
-            required
-          />
-          <Select
-            name="vendorCategory"
-            value={formData.vendorCategory}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Select Vendor Category</option>
-            <option value="retail">Retail</option>
-            <option value="wholesale">Wholesale</option>
-            <option value="manufacturer">Manufacturer</option>
-            <option value="service">Service Provider</option>
-          </Select>
-        </>
-      );
-    }
-    return null;
-  };
-
-  const renderBusinessFields = () => {
-    if (formData.accountType === 'business') {
-      return (
-        <>
-          <Input
-            type="text"
-            placeholder="Business Name"
-            name="businessName"
-            value={formData.businessName}
-            onChange={handleChange}
-            required
-          />
-          <Input
-            type="text"
-            placeholder="Business Type"
-            name="businessType"
-            value={formData.businessType}
-            onChange={handleChange}
-            required
-          />
-          <Input
-            type="text"
-            placeholder="Business Location"
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-            required
-          />
-          <Input
-            type="text"
-            placeholder="Business Description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            required
-          />
-        </>
-      );
-    }
-    return null;
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (error) setError(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
 
-    const businessData = {
-        username: formData.username,
-        businessName: formData.businessName,
-        email: formData.email,
-        password: formData.password,
-        businessType: formData.businessType,
-        location: formData.location,
-        description: formData.description
-    };
+    const passwordReqs = validatePassword(formData.password);
+    if (!Object.values(passwordReqs).every(Boolean)) {
+      setError('Password does not meet requirements');
+      return;
+    }
 
+    setIsLoading(true);
     try {
-        const API_URL = process.env.NODE_ENV === 'production'
-            ? 'https://zeckov2-deceb43992ac.herokuapp.com'
-            : 'http://localhost:5000';
-
-        let endpoint = '';
-        let submitData = {};
-        
-        switch(formData.accountType) {
-            case 'business':
-                endpoint = `${API_URL}/api/business/register`;
-                submitData = businessData;
-                break;
-            case 'vendor':
-                endpoint = `${API_URL}/api/vendor/register`;
-                submitData = formData;
-                break;
-            default:
-                endpoint = `${API_URL}/api/users/register`;
-                submitData = formData;
-        }
-
-        const response = await axios.post(endpoint, submitData);
-
-        if (response.data) {
-            console.log('Registration successful:', response.data);
-            navigate('/login');
-        }
+      await register(formData);
+      navigate('/dashboard');
     } catch (error) {
-        console.error('Registration error:', error.response?.data || error);
-        setError(error.response?.data?.error || 
-                error.response?.data?.message || 
-                'Registration failed');
+      console.error('Registration error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <RegisterContainer>
-      <h2>Register for Zecko</h2>
-      
-      <AccountTypeSelector>
-        <AccountTypeButton
-          type="button"
-          selected={formData.accountType === 'personal'}
-          onClick={() => handleAccountTypeSelect('personal')}
-        >
-          Personal Account
-        </AccountTypeButton>
-        <AccountTypeButton
-          type="button"
-          selected={formData.accountType === 'business'}
-          onClick={() => handleAccountTypeSelect('business')}
-        >
-          Business Account
-        </AccountTypeButton>
-        <AccountTypeButton
-          type="button"
-          selected={formData.accountType === 'vendor'}
-          onClick={() => handleAccountTypeSelect('vendor')}
-        >
-          Vendor Account
-        </AccountTypeButton>
-      </AccountTypeSelector>
-
-      <Form onSubmit={handleSubmit}>
-        <Input
-          type="text"
-          placeholder="Username"
-          name="username"
-          value={formData.username}
-          onChange={handleChange}
-          required
-        />
-        <Input
-          type="email"
-          placeholder="Email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-        {formData.accountType === 'business' && renderBusinessFields()}
-        {formData.accountType === 'vendor' && renderVendorFields()}
-        <Input
-          type="password"
-          placeholder="Password"
-          name="password"
-          value={formData.password}
-          onChange={handlePasswordChange}
-          required
-        />
-        <PasswordStrength score={passwordScore} />
-        <PasswordFeedback score={passwordScore}>
-          {passwordScore < 3 ? 'Password is too weak' : 'Password is strong'}
-        </PasswordFeedback>
-        <Button type="submit">Register</Button>
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-      </Form>
+      <RegisterCard
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <h2>Create Account</h2>
+        <Form onSubmit={handleSubmit}>
+          <FormRow>
+            <FormGroup>
+              <Label htmlFor="firstName">First Name</Label>
+              <Input
+                type="text"
+                id="firstName"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+                required
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label htmlFor="lastName">Last Name</Label>
+              <Input
+                type="text"
+                id="lastName"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                required
+              />
+            </FormGroup>
+          </FormRow>
+          <FormGroup>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </FormGroup>
+          <FormGroup>
+            <Label htmlFor="phoneNumber">Phone Number</Label>
+            <Input
+              type="tel"
+              id="phoneNumber"
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              required
+            />
+          </FormGroup>
+          <FormRow>
+            <FormGroup>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+              />
+            </FormGroup>
+          </FormRow>
+          <PasswordRequirements>
+            <li>At least 8 characters long</li>
+            <li>Contains uppercase and lowercase letters</li>
+            <li>Contains numbers</li>
+            <li>Contains special characters (!@#$%^&*)</li>
+          </PasswordRequirements>
+          {error && (
+            <ErrorMessage
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              {error}
+            </ErrorMessage>
+          )}
+          <Button
+            type="submit"
+            disabled={isLoading}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {isLoading ? 'Creating Account...' : 'Register'}
+          </Button>
+        </Form>
+        <LinkText to="/login">Already have an account? Sign in</LinkText>
+      </RegisterCard>
     </RegisterContainer>
   );
-}
+};
 
 export default Register;

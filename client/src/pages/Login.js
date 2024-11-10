@@ -1,271 +1,173 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { activityLogService } from '../services/activityLogService';
-import axios from 'axios';
 
 const LoginContainer = styled.div`
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: ${({ theme }) => theme.spacing.lg};
+  background: ${({ theme }) => theme.colors.background.gradient};
+`;
+
+const LoginCard = styled(motion.div)`
+  background: ${({ theme }) => theme.colors.background.paper};
+  padding: ${({ theme }) => theme.spacing.xl};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  box-shadow: ${({ theme }) => theme.shadows.card};
+  width: 100%;
   max-width: 400px;
-  margin: 0 auto;
-  padding: 20px;
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md};
+`;
+
+const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const Label = styled.label`
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: 0.9rem;
 `;
 
 const Input = styled.input`
-  margin-bottom: 10px;
-  padding: 8px;
-  font-size: 16px;
-`;
+  padding: ${({ theme }) => theme.spacing.md};
+  border: 1px solid ${({ theme }) => theme.colors.text.disabled};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: 1rem;
+  transition: all 0.2s ease;
 
-const Button = styled.button`
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 10px;
-  font-size: 16px;
-  cursor: pointer;
-
-  &:hover {
-    background-color: var(--primary-color-dark);
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.primary.main};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary.light}40;
   }
 `;
 
-const ErrorMessage = styled.p`
-  color: red;
-  margin-top: 10px;
+const Button = styled(motion.button)`
+  padding: ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.colors.primary.gradient};
+  color: ${({ theme }) => theme.colors.primary.text};
+  border: none;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
 `;
 
-const ForgotPasswordLink = styled.a`
-  text-align: right;
-  margin-bottom: 10px;
-  color: var(--primary-color);
-  cursor: pointer;
+const ErrorMessage = styled(motion.div)`
+  color: ${({ theme }) => theme.colors.status.error};
+  font-size: 0.9rem;
+  margin-top: ${({ theme }) => theme.spacing.sm};
+`;
+
+const LinkText = styled(Link)`
+  color: ${({ theme }) => theme.colors.primary.main};
   text-decoration: none;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-top: ${({ theme }) => theme.spacing.md};
+  display: block;
 
   &:hover {
     text-decoration: underline;
   }
 `;
 
-const TwoFactorContainer = styled.div`
-  text-align: center;
-  margin-top: 20px;
-`;
-
-const CodeInput = styled(Input)`
-  text-align: center;
-  letter-spacing: 4px;
-  font-size: 20px;
-`;
-
-const AccountTypeSelector = styled.div`
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-  justify-content: center;
-`;
-
-const AccountTypeButton = styled.button`
-  padding: 8px 16px;
-  border: 1px solid #007bff;
-  background-color: ${props => props.selected ? '#007bff' : 'white'};
-  color: ${props => props.selected ? 'white' : '#007bff'};
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background-color: #007bff;
-    color: white;
-  }
-`;
-
-function Login() {
+const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
-    accountType: 'personal'
+    password: ''
   });
-  const [error, setError] = useState('');
-  const [showTwoFactor, setShowTwoFactor] = useState(false);
-  const [tempToken, setTempToken] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { login, error, setError } = useAuth();
   const navigate = useNavigate();
-  const { login } = useAuth();
-  const [selectedType, setSelectedType] = useState('personal');
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (error) setError(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-
+    setIsLoading(true);
     try {
-        const API_URL = process.env.NODE_ENV === 'production'
-            ? 'https://zeckov2-deceb43992ac.herokuapp.com'
-            : 'http://localhost:5000';
-
-        console.log('Submitting with account type:', selectedType);
-
-        const endpoint = `${API_URL}/api/${selectedType === 'vendor' 
-            ? 'vendor' 
-            : selectedType === 'business' 
-                ? 'business' 
-                : 'users'}/login`;
-
-        console.log('Using endpoint:', endpoint);
-
-        const response = await axios.post(endpoint, {
-            email: formData.email,
-            password: formData.password,
-            accountType: selectedType
-        });
-
-        if (response.data && response.data.token) {
-            localStorage.setItem('token', response.data.token);
-            localStorage.setItem('accountType', selectedType);
-            login(response.data.token, {
-                ...response.data.user,
-                accountType: selectedType
-            });
-            navigate('/dashboard');
-        }
-    } catch (error) {
-        console.error('Login error:', error.response?.data || error);
-        setError(error.response?.data?.error || 'Invalid credentials');
-    }
-  };
-
-  const handleVerify2FA = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    try {
-      const response = await fetch('/api/users/verify-2fa', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tempToken}`
-        },
-        body: JSON.stringify({
-          code: formData.twoFactorCode
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Verification failed');
-      }
-
-      login(data.token, data.user);
-      
-      activityLogService.initializeSocket();
-      
+      await login(formData);
       navigate('/dashboard');
-    } catch (err) {
-      console.error('2FA Verification error:', err);
-      setError(err.message || 'Verification failed. Please try again.');
+    } catch (error) {
+      console.error('Login error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  const handleAccountTypeSelect = (type) => {
-    console.log('Selecting account type:', type);
-    setSelectedType(type);
-    setFormData(prev => ({
-        ...prev,
-        accountType: type
-    }));
-  };
-
-  if (showTwoFactor) {
-    return (
-      <LoginContainer>
-        <h2>Two-Factor Authentication</h2>
-        <TwoFactorContainer>
-          <p>Please enter the verification code from your authenticator app</p>
-          <Form onSubmit={handleVerify2FA}>
-            <CodeInput
-              type="text"
-              name="twoFactorCode"
-              placeholder="Enter code"
-              value={formData.twoFactorCode}
-              onChange={(e) => setFormData({
-                ...formData,
-                twoFactorCode: e.target.value.replace(/\D/g, '').slice(0, 6)
-              })}
-              maxLength="6"
-              pattern="\d{6}"
-              required
-            />
-            {error && <ErrorMessage>{error}</ErrorMessage>}
-            <Button type="submit">Verify</Button>
-          </Form>
-        </TwoFactorContainer>
-      </LoginContainer>
-    );
-  }
 
   return (
     <LoginContainer>
-      <h2>Login to Zecko</h2>
-      
-      <AccountTypeSelector>
-        <AccountTypeButton
-          type="button"
-          selected={selectedType === 'personal'}
-          onClick={() => handleAccountTypeSelect('personal')}
-        >
-          Personal Account
-        </AccountTypeButton>
-        <AccountTypeButton
-          type="button"
-          selected={selectedType === 'business'}
-          onClick={() => handleAccountTypeSelect('business')}
-        >
-          Business Account
-        </AccountTypeButton>
-        <AccountTypeButton
-          type="button"
-          selected={selectedType === 'vendor'}
-          onClick={() => handleAccountTypeSelect('vendor')}
-        >
-          Vendor Account
-        </AccountTypeButton>
-      </AccountTypeSelector>
-
-      <Form onSubmit={handleSubmit}>
-        <Input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-        <Input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
-        <Button type="submit">Login as {selectedType}</Button>
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-      </Form>
+      <LoginCard
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <h2>Welcome Back</h2>
+        <Form onSubmit={handleSubmit}>
+          <FormGroup>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </FormGroup>
+          <FormGroup>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </FormGroup>
+          {error && (
+            <ErrorMessage
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              {error}
+            </ErrorMessage>
+          )}
+          <Button
+            type="submit"
+            disabled={isLoading}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {isLoading ? 'Logging in...' : 'Login'}
+          </Button>
+        </Form>
+        <LinkText to="/forgot-password">Forgot your password?</LinkText>
+        <LinkText to="/register">Don't have an account? Sign up</LinkText>
+      </LoginCard>
     </LoginContainer>
   );
-}
+};
 
 export default Login;
