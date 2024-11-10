@@ -37,7 +37,7 @@ class Logger {
     }
   }
 
-  private logMessage(level, message, error = null, context = {}) {
+  logMessage(level, message, error = null, context = {}) {
     const timestamp = new Date().toISOString();
     const logEntry = {
       timestamp,
@@ -73,11 +73,11 @@ class Logger {
     }
   }
 
-  private shouldLog(level) {
+  shouldLog(level) {
     return level <= Logger.LOG_LEVELS[this.logLevel];
   }
 
-  private logToConsole(logEntry) {
+  logToConsole(logEntry) {
     const formattedMessage = `[${logEntry.timestamp}] ${logEntry.level}: ${logEntry.message}`;
     
     switch (logEntry.level) {
@@ -96,7 +96,7 @@ class Logger {
     }
   }
 
-  private async sendToServer(logEntry) {
+  async sendToServer(logEntry) {
     try {
       await fetch('/api/logs', {
         method: 'POST',

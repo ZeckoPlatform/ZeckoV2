@@ -1,7 +1,9 @@
 import React from 'react';
+import { ThemeProvider } from 'styled-components';
+import { theme } from './styles/theme';
+import GlobalStyles from './styles/GlobalStyles';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider } from './providers/ThemeProvider';
 import { AuthProvider } from './providers/AuthProvider';
 import { ErrorBoundary } from './components/error/ErrorBoundary';
 import AppRoutes from './routes';
@@ -12,7 +14,8 @@ function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
+        <ThemeProvider theme={theme}>
+          <GlobalStyles />
           <BrowserRouter>
             <AuthProvider>
               <AppRoutes />

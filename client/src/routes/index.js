@@ -2,8 +2,14 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import AdminRoute from '../components/auth/AdminRoute';
-import Layout from '../components/layout/Layout';
+import Layout from '../components/Layout/Layout';
 import * as Pages from './RouteConfig';
+import Dashboard from '../pages/Dashboard';
+import Overview from '../components/Dashboard/Overview';
+import Orders from '../components/Dashboard/Orders';
+import Products from '../components/Dashboard/Products';
+import Profile from '../components/Dashboard/Profile';
+import Settings from '../components/Dashboard/Settings';
 
 const AppRoutes = () => {
   return (
@@ -28,13 +34,13 @@ const AppRoutes = () => {
           <Route path="order-confirmation" element={<Pages.OrderConfirmation />} />
           
           {/* User Dashboard */}
-          <Route path="dashboard">
-            <Route index element={<Pages.Dashboard />} />
-            <Route path="profile" element={<Pages.Profile />} />
-            <Route path="orders" element={<Pages.Orders />} />
-            <Route path="wishlist" element={<Pages.Wishlist />} />
-            <Route path="addresses" element={<Pages.AddressBook />} />
-            <Route path="payment-methods" element={<Pages.PaymentMethods />} />
+          <Route path="dashboard" element={<Dashboard />}>
+            <Route index element={<Overview />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="products" element={<Products />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Route>
         </Route>
 

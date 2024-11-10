@@ -27,9 +27,9 @@ export const Checkout = lazyLoad(() => import('../pages/Checkout'));
 export const OrderConfirmation = lazyLoad(() => import('../pages/OrderConfirmation'));
 
 // User Dashboard
-export const Dashboard = lazyLoad(() => import('../pages/dashboard/Dashboard'));
-export const Profile = lazyLoad(() => import('../pages/dashboard/Profile'));
-export const Orders = lazyLoad(() => import('../pages/dashboard/Orders'));
+export const Dashboard = lazyLoad(() => import('../pages/Dashboard/Dashboard'));
+export const Profile = lazyLoad(() => import('../pages/Dashboard/Profile'));
+export const Orders = lazyLoad(() => import('../pages/Dashboard/Orders'));
 export const Wishlist = lazyLoad(() => import('../pages/dashboard/Wishlist'));
 export const AddressBook = lazyLoad(() => import('../pages/dashboard/AddressBook'));
 export const PaymentMethods = lazyLoad(() => import('../pages/dashboard/PaymentMethods'));
