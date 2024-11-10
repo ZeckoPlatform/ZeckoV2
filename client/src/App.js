@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
@@ -9,6 +9,9 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
+import { ThemeProvider } from 'styled-components';
+import { theme } from './styles/theme';
+import GlobalStyle from './styles/GlobalStyles';
 
 // Import all pages
 import Home from './pages/Home';
@@ -56,116 +59,145 @@ const MainContent = styled.main`
 `;
 
 function App() {
+  const [theme, setTheme] = useState('light');
+
+  useEffect(() => {
+    // Check system preference
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(prefersDark ? 'dark' : 'light');
+
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e) => setTheme(e.matches ? 'dark' : 'light');
+    mediaQuery.addListener(handleChange);
+
+    return () => mediaQuery.removeListener(handleChange);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
   return (
-    <AuthProvider>
-      <AppContainer>
-        <BrowserRouter>
-          <Layout>
-            <MainContent>
-              <Suspense fallback={<div>Loading...</div>}>
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/" element={<Home />} />
-                  <Route path="/products" element={<ProductList />} />
-                  <Route path="/products/:id" element={<ProductDetails />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/directory" element={<BusinessDirectory />} />
-                  <Route path="/jobs" element={<JobBoard />} />
-                  <Route path="/shop" element={<Shop />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/reset-password/:token" element={<ResetPassword />} />
-                  <Route path="/verify-email/:token" element={<EmailVerification />} />
+    <ThemeProvider theme={theme}>
+      <GlobalStyle />
+      <AuthProvider>
+        <AppContainer>
+          <BrowserRouter>
+            <Layout>
+              <MainContent>
+                <Suspense fallback={<div>Loading...</div>}>
+                  <Routes>
+                    {/* Public Routes */}
+                    <Route path="/" element={<Home />} />
+                    <Route path="/products" element={<ProductList />} />
+                    <Route path="/products/:id" element={<ProductDetails />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/directory" element={<BusinessDirectory />} />
+                    <Route path="/jobs" element={<JobBoard />} />
+                    <Route path="/shop" element={<Shop />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password/:token" element={<ResetPassword />} />
+                    <Route path="/verify-email/:token" element={<EmailVerification />} />
 
-                  {/* Protected Routes */}
-                  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                  <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
-                  <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                  <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-                  <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
-                  <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
-                  <Route 
-                    path="/security-settings" 
-                    element={
-                      <ProtectedRoute>
-                        <Suspense fallback={<div>Loading...</div>}>
-                          <SecuritySettings />
-                        </Suspense>
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route path="/order-confirmation/:orderId" element={<ProtectedRoute><OrderConfirmation /></ProtectedRoute>} />
-                  <Route 
-                    path="/activity-log" 
-                    element={
-                      <ProtectedRoute>
-                        <Suspense fallback={<div>Loading...</div>}>
-                          <UserActivityLog />
-                        </Suspense>
-                      </ProtectedRoute>
-                    } 
-                  />
-
-                  {/* Admin Routes */}
-                  <Route 
-                    path="/admin" 
-                    element={
-                      <AdminRoute>
-                        <AdminDashboard />
-                      </AdminRoute>
-                    } 
-                  >
-                    <Route index element={<Navigate to="products" replace />} />
+                    {/* Protected Routes */}
+                    <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                    <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+                    <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                    <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+                    <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+                    <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
                     <Route 
-                      path="products" 
+                      path="/security-settings" 
                       element={
-                        <Suspense fallback={<div>Loading...</div>}>
-                          <ProductManagement />
-                        </Suspense>
+                        <ProtectedRoute>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <SecuritySettings />
+                          </Suspense>
+                        </ProtectedRoute>
                       } 
                     />
+                    <Route path="/order-confirmation/:orderId" element={<ProtectedRoute><OrderConfirmation /></ProtectedRoute>} />
                     <Route 
-                      path="products/add" 
+                      path="/activity-log" 
                       element={
-                        <Suspense fallback={<div>Loading...</div>}>
-                          <AddProduct />
-                        </Suspense>
+                        <ProtectedRoute>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <UserActivityLog />
+                          </Suspense>
+                        </ProtectedRoute>
                       } 
                     />
+
+                    {/* Admin Routes */}
                     <Route 
-                      path="products/edit/:id" 
+                      path="/admin" 
                       element={
-                        <Suspense fallback={<div>Loading...</div>}>
-                          <EditProduct />
-                        </Suspense>
+                        <AdminRoute>
+                          <AdminDashboard />
+                        </AdminRoute>
+                      } 
+                    >
+                      <Route index element={<Navigate to="products" replace />} />
+                      <Route 
+                        path="products" 
+                        element={
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <ProductManagement />
+                          </Suspense>
+                        } 
+                      />
+                      <Route 
+                        path="products/add" 
+                        element={
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <AddProduct />
+                          </Suspense>
+                        } 
+                      />
+                      <Route 
+                        path="products/edit/:id" 
+                        element={
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <EditProduct />
+                          </Suspense>
+                        } 
+                      />
+                    </Route>
+                    
+                    {/* Standalone Product Management Route */}
+                    <Route 
+                      path="/manage-products" 
+                      element={
+                        <AdminRoute>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <ProductManagement />
+                          </Suspense>
+                        </AdminRoute>
                       } 
                     />
-                  </Route>
-                  
-                  {/* Standalone Product Management Route */}
-                  <Route 
-                    path="/manage-products" 
-                    element={
-                      <AdminRoute>
-                        <Suspense fallback={<div>Loading...</div>}>
-                          <ProductManagement />
-                        </Suspense>
-                      </AdminRoute>
-                    } 
-                  />
 
-                  {/* Address Management Route */}
-                  <Route path="/addresses" element={<AddressManagement />} />
+                    {/* Address Management Route */}
+                    <Route path="/addresses" element={<AddressManagement />} />
 
-                  {/* Business Profile Route */}
-                  <Route path="/business/profile" element={<BusinessProfile />} />
-                </Routes>
-              </Suspense>
-            </MainContent>
-          </Layout>
-        </BrowserRouter>
-      </AppContainer>
-    </AuthProvider>
+                    {/* Business Profile Route */}
+                    <Route path="/business/profile" element={<BusinessProfile />} />
+                  </Routes>
+                </Suspense>
+              </MainContent>
+            </Layout>
+          </BrowserRouter>
+        </AppContainer>
+        <button onClick={toggleTheme}>
+          Toggle {theme === 'light' ? 'Dark' : 'Light'} Mode
+        </button>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
