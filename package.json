@@ -15,7 +15,6 @@
     "client/node_modules"
   ],
   "dependencies": {
-    "@mui/material": "^6.1.6",
-    "@mui/system": "^6.1.6"
+    "node-modules": "^1.0.0"
   }
 }
