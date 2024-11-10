@@ -1,5 +1,4 @@
 import { createGlobalStyle } from 'styled-components';
-import { baseTheme } from './theme';
 
 const GlobalStyles = createGlobalStyle`
   * {
@@ -9,12 +8,10 @@ const GlobalStyles = createGlobalStyle`
   }
 
   body {
-    font-family: ${baseTheme.typography.fontFamily.primary};
-    background-color: ${({ theme }) => theme.colors?.background?.main || '#f5f5f5'};
-    color: ${({ theme }) => theme.colors?.text?.primary || '#333333'};
-    line-height: ${baseTheme.typography.lineHeight.normal};
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    font-family: ${props => props.theme.typography.fontFamily.primary};
+    background-color: ${props => props.theme.colors.background};
+    color: ${props => props.theme.colors.text};
+    line-height: ${props => props.theme.typography.lineHeight.normal};
   }
 
   button {
