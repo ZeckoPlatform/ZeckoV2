@@ -214,6 +214,7 @@ function Register() {
     setError('');
 
     const businessData = {
+        username: formData.username,
         businessName: formData.businessName,
         email: formData.email,
         password: formData.password,
