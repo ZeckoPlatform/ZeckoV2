@@ -213,20 +213,14 @@ function Register() {
     e.preventDefault();
     setError('');
 
-    const submitData = {
-      ...formData,
-      name: formData.name || formData.username
+    const businessData = {
+        businessName: formData.businessName,
+        email: formData.email,
+        password: formData.password,
+        businessType: formData.businessType,
+        location: formData.location,
+        description: formData.description
     };
-
-    if (!submitData.accountType) {
-        setError('Please select an account type');
-        return;
-    }
-
-    if (passwordScore < 3) {
-        setError('Please choose a stronger password');
-        return;
-    }
 
     try {
         const API_URL = process.env.NODE_ENV === 'production'
@@ -234,15 +228,20 @@ function Register() {
             : 'http://localhost:5000';
 
         let endpoint = '';
-        switch(submitData.accountType) {
+        let submitData = {};
+        
+        switch(formData.accountType) {
             case 'business':
                 endpoint = `${API_URL}/api/business/register`;
+                submitData = businessData;
                 break;
             case 'vendor':
                 endpoint = `${API_URL}/api/vendor/register`;
+                submitData = formData;
                 break;
             default:
                 endpoint = `${API_URL}/api/users/register`;
+                submitData = formData;
         }
 
         const response = await axios.post(endpoint, submitData);

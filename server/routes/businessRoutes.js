@@ -35,20 +35,21 @@ const sanitizeBusinessData = (business) => {
 // Get all businesses
 router.get('/', async (req, res) => {
     try {
-        const businesses = await BusinessUser.find()
-            .select('-password -__v')
+        const businesses = await Business.find()
+            .populate('owner', '-password -__v')  // Include owner details if needed
+            .select('-__v')
             .sort({ createdAt: -1 });
 
-        const sanitizedBusinesses = businesses.map(business => 
-            sanitizeBusinessData(business.toObject())
-        );
-
-        res.json(sanitizedBusinesses);
+        res.json({
+            success: true,
+            businesses: businesses
+        });
     } catch (error) {
         console.error('Error fetching businesses:', error);
         res.status(500).json({ 
+            success: false,
             message: 'Error fetching businesses',
-            businesses: [] // Return empty array as fallback
+            businesses: []
         });
     }
 });
@@ -269,41 +270,50 @@ router.get('/search/:query', async (req, res) => {
 // Add the register route if it's not already there
 router.post('/register', async (req, res) => {
     try {
+        console.log('Registration request received:', req.body);
+        
         const {
             businessName,
+            email,
+            password,
             businessType,
             location,
-            description,
-            email,
-            password
+            description
         } = req.body;
 
-        // First, create the BusinessUser account
+        // Validate required fields
+        if (!businessName || !email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields'
+            });
+        }
+
+        // First create the BusinessUser
         const businessUser = new BusinessUser({
             email,
             password,
             businessName,
-            businessType
+            businessType: businessType || 'general'
         });
+
         await businessUser.save();
 
         // Then create the Business profile
         const business = new Business({
             name: businessName,
-            description,
-            category: businessType,  // mapping businessType to category
-            location,
+            description: description || '',
+            category: businessType || 'general',
+            location: location || '',
             contactEmail: email,
-            owner: businessUser._id,  // Link to the BusinessUser
-            createdAt: new Date(),
-            updatedAt: new Date()
+            owner: businessUser._id
         });
 
         await business.save();
-        
-        res.status(201).json({ 
-            message: 'Business registered successfully',
+
+        res.status(201).json({
             success: true,
+            message: 'Business registered successfully',
             business: {
                 name: business.name,
                 email: business.contactEmail,
@@ -312,10 +322,10 @@ router.post('/register', async (req, res) => {
         });
     } catch (error) {
         console.error('Business registration error details:', error);
-        res.status(500).json({ 
+        res.status(500).json({
+            success: false,
             message: 'Server error during business registration',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined,
-            success: false
+            debug: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 });
