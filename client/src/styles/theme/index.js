@@ -205,3 +205,17 @@ export const globalStyles = css`
     color: ${({ theme }) => theme.colors.text.primary};
   }
 `; 
+
+export const theme = {
+  light: {
+    ...baseTheme,
+    colors: lightTheme.colors
+  },
+  dark: {
+    ...baseTheme,
+    colors: darkTheme.colors
+  }
+};
+
+// Export a default theme to avoid undefined theme issues
+export default theme.light; 
