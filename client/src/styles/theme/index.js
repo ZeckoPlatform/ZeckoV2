@@ -209,11 +209,13 @@ export const globalStyles = css`
 export const theme = {
   light: {
     ...baseTheme,
-    colors: lightTheme.colors
+    colors: lightTheme.colors,
+    typography: baseTheme.typography
   },
   dark: {
     ...baseTheme,
-    colors: darkTheme.colors
+    colors: darkTheme.colors,
+    typography: baseTheme.typography
   }
 };
 

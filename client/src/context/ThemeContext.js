@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
-import { theme } from '../styles/theme';
+import { theme, lightTheme, darkTheme } from '../styles/theme';
+import GlobalStyles from '../styles/GlobalStyles';
 
 const ThemeContext = createContext(null);
 
@@ -10,7 +11,9 @@ export const ThemeProvider = ({ children }) => {
     return savedTheme || 'light';
   });
 
-  const currentTheme = theme[themeMode] || theme.light;
+  const currentTheme = themeMode === 'dark' ? 
+    { ...theme.dark } : 
+    { ...theme.light };
 
   useEffect(() => {
     localStorage.setItem('theme', themeMode);
@@ -24,6 +27,7 @@ export const ThemeProvider = ({ children }) => {
   return (
     <ThemeContext.Provider value={{ theme: themeMode, toggleTheme }}>
       <StyledThemeProvider theme={currentTheme}>
+        <GlobalStyles />
         {children}
       </StyledThemeProvider>
     </ThemeContext.Provider>
