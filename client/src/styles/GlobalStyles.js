@@ -8,10 +8,11 @@ const GlobalStyles = createGlobalStyle`
   }
 
   body {
-    font-family: ${props => props.theme.typography.fontFamily.primary};
-    background-color: ${props => props.theme.colors.background};
-    color: ${props => props.theme.colors.text};
-    line-height: ${props => props.theme.typography.lineHeight.normal};
+    font-family: ${({ theme }) => theme.typography.fontFamily.primary};
+    background-color: ${({ theme }) => theme.colors.background.main};
+    color: ${({ theme }) => theme.colors.text.primary};
+    line-height: ${({ theme }) => theme.typography.lineHeight.normal};
+    transition: all 0.2s ease-in-out;
   }
 
   button {
