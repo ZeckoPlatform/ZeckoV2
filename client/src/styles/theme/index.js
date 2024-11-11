@@ -1,42 +1,44 @@
+import { createTheme } from '@mui/material/styles';
 import { lightTheme } from './lightTheme';
 import { darkTheme } from './darkTheme';
 
-const baseTheme = {
-  typography: {
-    fontFamily: {
-      primary: "'Roboto', sans-serif",
-      secondary: "'Open Sans', sans-serif",
+// MUI theme configuration
+export const createMuiTheme = (mode) => {
+  const currentTheme = mode === 'dark' ? darkTheme : lightTheme;
+  
+  return createTheme({
+    palette: {
+      mode,
+      primary: {
+        main: currentTheme.colors.primary.main,
+        dark: currentTheme.colors.primary.dark,
+        light: currentTheme.colors.primary.light,
+      },
+      background: {
+        default: currentTheme.colors.background.main,
+        paper: currentTheme.colors.background.paper,
+      },
+      text: {
+        primary: currentTheme.colors.text.primary,
+        secondary: currentTheme.colors.text.secondary,
+      },
     },
-    lineHeight: {
-      normal: 1.5,
-      heading: 1.2,
+    typography: {
+      fontFamily: "'Roboto', sans-serif",
+      h1: {
+        fontSize: '2.5rem',
+        fontWeight: 500,
+      },
+      h2: {
+        fontSize: '2rem',
+        fontWeight: 500,
+      },
+      // Add other typography variants as needed
     },
-    fontSize: {
-      xs: '0.75rem',
-      sm: '0.875rem',
-      md: '1rem',
-      lg: '1.125rem',
-      xl: '1.25rem',
-    },
-  },
-  spacing: {
-    xs: '0.25rem',
-    sm: '0.5rem',
-    md: '1rem',
-    lg: '1.5rem',
-    xl: '2rem',
-  },
-  borderRadius: {
-    sm: '0.25rem',
-    md: '0.5rem',
-    lg: '1rem',
-    full: '9999px',
-  },
+  });
 };
 
 export const themes = {
-  light: { ...baseTheme, ...lightTheme },
-  dark: { ...baseTheme, ...darkTheme },
-};
-
-export default themes; 
+  light: lightTheme,
+  dark: darkTheme,
+}; 

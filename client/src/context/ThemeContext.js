@@ -1,13 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { ThemeProvider as MUIThemeProvider } from '@mui/material/styles';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
-import { themes } from '../styles/theme';
+import { themes, createMuiTheme } from '../styles/theme';
+import CssBaseline from '@mui/material/CssBaseline';
 
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
   const [themeMode, setThemeMode] = useState('light');
   
-  // Load saved theme preference from localStorage
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
@@ -21,16 +22,21 @@ export const ThemeProvider = ({ children }) => {
     localStorage.setItem('theme', newTheme);
   };
 
+  const muiTheme = createMuiTheme(themeMode);
+  const styledTheme = themes[themeMode];
+
   return (
     <ThemeContext.Provider value={{ themeMode, toggleTheme }}>
-      <StyledThemeProvider theme={themes[themeMode]}>
-        {children}
-      </StyledThemeProvider>
+      <MUIThemeProvider theme={muiTheme}>
+        <StyledThemeProvider theme={styledTheme}>
+          <CssBaseline />
+          {children}
+        </StyledThemeProvider>
+      </MUIThemeProvider>
     </ThemeContext.Provider>
   );
 };
 
-// Custom hook to use the theme context
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (context === undefined) {
