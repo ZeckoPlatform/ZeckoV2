@@ -1,12 +1,15 @@
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { ThemeProvider } from './context/ThemeContext';
+import { ThemeProvider } from 'styled-components';
+import theme from './styles/theme';
+import GlobalStyles from './styles/GlobalStyles';
 import AppRoutes from './routes';
 
 function App() {
   return (
     <BrowserRouter>
-      <ThemeProvider>
+      <ThemeProvider theme={theme}>
+        <GlobalStyles />
         <AppRoutes />
       </ThemeProvider>
     </BrowserRouter>
