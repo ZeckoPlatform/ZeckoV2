@@ -29,14 +29,13 @@ export const muiTheme = createTheme({
     },
     body1: {
       fontSize: '1rem',
-      fontWeight: 400,
     },
     body2: {
       fontSize: '0.875rem',
-      fontWeight: 400,
     },
   },
   palette: {
+    mode: 'dark',
     primary: {
       main: '#81C784',
       dark: '#4CAF50',
@@ -49,6 +48,27 @@ export const muiTheme = createTheme({
     text: {
       primary: '#E0E0E0',
       secondary: '#BDBDBD',
+    },
+  },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          scrollbarColor: "#6b6b6b #2b2b2b",
+          "&::-webkit-scrollbar, & *::-webkit-scrollbar": {
+            backgroundColor: "#2b2b2b",
+          },
+          "&::-webkit-scrollbar-thumb, & *::-webkit-scrollbar-thumb": {
+            borderRadius: 8,
+            backgroundColor: "#6b6b6b",
+            minHeight: 24,
+            border: "3px solid #2b2b2b",
+          },
+          "&::-webkit-scrollbar-thumb:focus, & *::-webkit-scrollbar-thumb:focus": {
+            backgroundColor: "#959595",
+          },
+        },
+      },
     },
   },
 }); 
