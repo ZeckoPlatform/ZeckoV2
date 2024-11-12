@@ -3,6 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const { auth } = require('../middleware/auth');
 const BusinessUser = require('../models/businessUserModel');
+const Business = require('../models/businessModel');
 
 // Helper function to sanitize business data
 const sanitizeBusinessData = (business) => {
@@ -34,20 +35,21 @@ const sanitizeBusinessData = (business) => {
 // Get all businesses
 router.get('/', async (req, res) => {
     try {
-        const businesses = await BusinessUser.find()
-            .select('-password -__v')
+        const businesses = await Business.find()
+            .populate('owner', '-password -__v')  // Include owner details if needed
+            .select('-__v')
             .sort({ createdAt: -1 });
 
-        const sanitizedBusinesses = businesses.map(business => 
-            sanitizeBusinessData(business.toObject())
-        );
-
-        res.json(sanitizedBusinesses);
+        res.json({
+            success: true,
+            businesses: businesses
+        });
     } catch (error) {
         console.error('Error fetching businesses:', error);
         res.status(500).json({ 
+            success: false,
             message: 'Error fetching businesses',
-            businesses: [] // Return empty array as fallback
+            businesses: []
         });
     }
 });
@@ -261,6 +263,69 @@ router.get('/search/:query', async (req, res) => {
         res.status(500).json({ 
             message: 'Error searching businesses',
             businesses: []
+        });
+    }
+});
+
+// Add the register route if it's not already there
+router.post('/register', async (req, res) => {
+    try {
+        console.log('Registration request received:', req.body);
+        
+        const {
+            businessName,
+            email,
+            password,
+            businessType,
+            location,
+            description
+        } = req.body;
+
+        // Validate required fields
+        if (!businessName || !email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields'
+            });
+        }
+
+        // First create the BusinessUser
+        const businessUser = new BusinessUser({
+            email,
+            password,
+            businessName,
+            businessType: businessType || 'general'
+        });
+
+        await businessUser.save();
+
+        // Then create the Business profile
+        const business = new Business({
+            name: businessName,
+            description: description || '',
+            category: businessType || 'general',
+            location: location || '',
+            contactEmail: email,
+            owner: businessUser._id
+        });
+
+        await business.save();
+
+        res.status(201).json({
+            success: true,
+            message: 'Business registered successfully',
+            business: {
+                name: business.name,
+                email: business.contactEmail,
+                category: business.category
+            }
+        });
+    } catch (error) {
+        console.error('Business registration error details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error during business registration',
+            debug: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 });

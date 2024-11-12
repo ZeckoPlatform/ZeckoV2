@@ -1,8 +1,13 @@
 # Dependencies
 node_modules/
-client/node_modules/
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
 
 # Production
+/build
 /client/build
 
 # Misc
@@ -20,3 +25,28 @@ yarn-error.log*
 # IDE
 .idea/
 .vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Build artifacts
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# Cache directories
+.npm
+.eslintcache
+.stylelintcache

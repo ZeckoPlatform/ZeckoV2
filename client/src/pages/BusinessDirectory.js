@@ -56,13 +56,19 @@ const BusinessDirectory = () => {
 
   const fetchBusinesses = async () => {
     try {
-      const response = await fetch('/api/businesses');
+      const response = await fetch('/api/business', {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
       if (!response.ok) {
         throw new Error('Failed to fetch businesses');
       }
       const data = await response.json();
-      setBusinesses(data);
+      setBusinesses(data.businesses || []);
     } catch (err) {
+      console.error('Error fetching businesses:', err);
       setError(err.message);
     } finally {
       setLoading(false);

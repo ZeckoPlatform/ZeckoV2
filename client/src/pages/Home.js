@@ -1,30 +1,39 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
+import { JobCarousel } from '../components/JobCarousel';
+import { ContractorCarousel } from '../components/ContractorCarousel';
+import { FeaturedJobs } from '../components/FeaturedJobs';
+import { fadeIn, slideUp } from '../styles/animations';
 
 const HomeContainer = styled.div`
   text-align: center;
   padding: 2rem;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 `;
 
-const Hero = styled.div`
-  background-color: white;
-  padding: 3rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  margin-bottom: 2rem;
+const Hero = styled.section`
+  background: ${({ theme }) => theme.colors.primary.gradient};
+  padding: ${({ theme }) => `${theme.spacing.xxl} ${theme.spacing.lg}`};
+  text-align: center;
+  color: ${({ theme }) => theme.colors.primary.text};
+  animation: ${fadeIn} ${({ theme }) => theme.transitions.long} ease-in;
 `;
 
-const Title = styled.h1`
-  color: var(--primary-color);
-  margin-bottom: 1rem;
-  font-size: 2.5rem;
+const HeroTitle = styled.h1`
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  animation: ${slideUp} ${({ theme }) => theme.transitions.long} ease-out;
 `;
 
-const Subtitle = styled.p`
-  color: var(--text-color);
-  font-size: 1.2rem;
-  margin-bottom: 2rem;
+const HeroSubtitle = styled.p`
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  max-width: 600px;
+  margin: 0 auto;
+  opacity: 0.9;
 `;
 
 const CTAButton = styled(Link)`
@@ -42,15 +51,58 @@ const CTAButton = styled(Link)`
   }
 `;
 
+const FeaturedSection = styled.section`
+  padding: ${({ theme }) => `${theme.spacing.xxl} ${theme.spacing.lg}`};
+  background: ${({ theme }) => theme.colors.background.main};
+`;
+
+const SectionTitle = styled.h2`
+  text-align: center;
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: ${({ theme }) => theme.typography.size.h2};
+`;
+
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: ${({ theme }) => theme.spacing.lg};
+  max-width: 1200px;
+  margin: 0 auto;
+`;
+
 function Home() {
   return (
-    <HomeContainer>
-      <Hero>
-        <Title>Welcome to Our Platform</Title>
-        <Subtitle>Find the perfect contractor for your project</Subtitle>
-        <CTAButton to="/register">Get Started</CTAButton>
-      </Hero>
-    </HomeContainer>
+    <>
+      <HomeContainer>
+        <Hero>
+          <HeroTitle>Welcome to Our Platform</HeroTitle>
+          <HeroSubtitle>Find the perfect contractor for your project</HeroSubtitle>
+          <CTAButton to="/register">Get Started</CTAButton>
+        </Hero>
+
+        <FeaturedSection>
+          <SectionTitle>Featured Jobs</SectionTitle>
+          <Grid>
+            <JobCarousel />
+          </Grid>
+        </FeaturedSection>
+
+        <FeaturedSection>
+          <SectionTitle>Featured Contractors</SectionTitle>
+          <Grid>
+            <ContractorCarousel />
+          </Grid>
+        </FeaturedSection>
+
+        <FeaturedSection>
+          <SectionTitle>Featured Jobs</SectionTitle>
+          <Grid>
+            <FeaturedJobs />
+          </Grid>
+        </FeaturedSection>
+      </HomeContainer>
+    </>
   );
 }
 

@@ -46,7 +46,16 @@ app.set('io', io);
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Mount Routes
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, '../client/build')));
+
+// The "catchall" handler: for any request that doesn't
+// match one above, send back React's index.html file.
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/build/index.html'));
+});
+
+// API Routes
 app.use('/api/auth', userRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
@@ -67,36 +76,25 @@ app.use('/api/security', securityRoutes);
 app.use('/api/vendor/auth', vendorAuthRoutes);
 app.use('/api/addresses', addressRoutes);
 
-// Serve static files in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
-  app.get('*', (req, res) => {
-    if (req.url.startsWith('/api/')) {
-      return next();
-    }
-    res.sendFile(path.join(__dirname, '../client/build/index.html'));
-  });
-}
-
-// Error Handling
+// Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Error:', err.stack);
-  res.status(500).json({
-    message: 'Internal Server Error',
-    error: process.env.NODE_ENV === 'development' ? err : {}
-  });
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
 });
 
-// Start Server
-const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   try {
+    // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
-      useUnifiedTopology: true
+      useUnifiedTopology: true,
     });
-    console.log('MongoDB Connected');
+    console.log('Connected to MongoDB');
 
+    // Get port from environment and store in Express
+    const PORT = process.env.PORT || 5000;
+
+    // Start server
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log('Environment:', process.env.NODE_ENV);
@@ -109,6 +107,7 @@ const startServer = async () => {
 
 startServer();
 
+// Socket notification helper
 module.exports = {
   io: () => io,
   notifyAdmins: (type, notification) => {

@@ -19,13 +19,24 @@ router.post('/register', async (req, res) => {
             website
         } = req.body;
 
+        // Validate required fields
+        if (!username || !email || !password || !businessName) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Missing required fields' 
+            });
+        }
+
         // Check if email already exists
         const existingUser = await BusinessUser.findOne({ email });
         if (existingUser) {
-            return res.status(400).json({ error: 'Email already registered' });
+            return res.status(400).json({ 
+                success: false,
+                error: 'Email already registered' 
+            });
         }
 
-        // Create new business user with all fields
+        // Create new business user
         const businessUser = new BusinessUser({
             username,
             email,
@@ -53,13 +64,13 @@ router.post('/register', async (req, res) => {
             { expiresIn: '24h' }
         );
 
-        // Send success response with token
         res.status(201).json({
             success: true,
             message: 'Business registration successful',
             token,
             user: {
                 id: businessUser._id,
+                username: businessUser.username,
                 email: businessUser.email,
                 businessName: businessUser.businessName,
                 role: 'business',
@@ -69,8 +80,9 @@ router.post('/register', async (req, res) => {
     } catch (error) {
         console.error('Business registration error:', error);
         res.status(500).json({ 
-            error: 'Registration failed', 
-            details: error.message 
+            success: false,
+            message: 'Server error during business registration',
+            debug: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 });
