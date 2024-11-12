@@ -93,7 +93,7 @@ router.get('/profile', auth, async (req, res) => {
             });
         }
 
-        const business = await BusinessUser.findOne({ _id: userId })
+        const business = await BusinessUser.findById(userId)
             .select('-password')
             .lean();
 
