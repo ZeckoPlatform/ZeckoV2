@@ -46,10 +46,14 @@ app.set('io', io);
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Serve static files from the React app for production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
-}
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, '../client/build')));
+
+// The "catchall" handler: for any request that doesn't
+// match one above, send back React's index.html file.
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/build/index.html'));
+});
 
 // API Routes
 app.use('/api/auth', userRoutes);
@@ -71,14 +75,6 @@ app.use('/api/business', businessRoutes);
 app.use('/api/security', securityRoutes);
 app.use('/api/vendor/auth', vendorAuthRoutes);
 app.use('/api/addresses', addressRoutes);
-
-// Catch-all route handler for client-side routing
-app.get('*', (req, res, next) => {
-  if (req.url.startsWith('/api/')) {
-    return next();
-  }
-  res.sendFile(path.join(__dirname, '../client/build/index.html'));
-});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
