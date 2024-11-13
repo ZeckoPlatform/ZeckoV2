@@ -1,17 +1,21 @@
-import React from 'react';
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import styled from 'styled-components';
+import { Routes, Route } from 'react-router-dom';
 import DashboardLayout from '../components/Dashboard/DashboardLayout';
-import Overview from '../components/Dashboard/Overview';
-import Orders from '../components/Dashboard/Orders';
+import DashboardHome from './Dashboard/Dashboard';
 import Products from '../components/Dashboard/Products';
+import Profile from '../components/dashboard/Profile';
+import Settings from '../components/dashboard/Settings';
 
-const Dashboard = () => {
+function Dashboard() {
   return (
     <DashboardLayout>
-      <Outlet />
+      <Routes>
+        <Route path="/" element={<DashboardHome />} />
+        <Route path="products" element={<Products />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="settings" element={<Settings />} />
+      </Routes>
     </DashboardLayout>
   );
-};
+}
 
 export default Dashboard;

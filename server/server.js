@@ -65,6 +65,9 @@ app.use((err, req, res, next) => {
 
 const startServer = async () => {
   try {
+    // Add this before connecting to MongoDB
+    mongoose.set('strictQuery', false);
+
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
