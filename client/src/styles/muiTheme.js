@@ -1,6 +1,7 @@
-import { createTheme, responsiveFontSizes } from '@mui/material/styles';
+import { createTheme } from '@mui/material/styles';
 
-const baseTheme = {
+// Define the base theme configuration
+const baseTheme = createTheme({
   typography: {
     fontFamily: "'Roboto', 'Arial', sans-serif",
     h1: {
@@ -33,7 +34,9 @@ const baseTheme = {
     body2: {
       fontSize: '0.875rem',
     },
-    button: { textTransform: 'none' }
+    button: { 
+      textTransform: 'none' 
+    }
   },
   palette: {
     mode: 'dark',
@@ -51,6 +54,10 @@ const baseTheme = {
       secondary: '#BDBDBD',
     },
   },
+});
+
+// Create the final theme with components
+const muiTheme = createTheme(baseTheme, {
   components: {
     MuiCssBaseline: {
       styleOverrides: {
@@ -68,25 +75,6 @@ const baseTheme = {
       },
     },
   },
-};
-
-let muiTheme;
-try {
-  muiTheme = responsiveFontSizes(createTheme(baseTheme));
-} catch (error) {
-  console.error('Error creating theme:', error);
-  // Fallback theme
-  muiTheme = createTheme({
-    typography: {
-      fontFamily: "'Roboto', 'Arial', sans-serif",
-    },
-    palette: {
-      mode: 'dark',
-      primary: {
-        main: '#81C784',
-      },
-    },
-  });
-}
+});
 
 export default muiTheme;
