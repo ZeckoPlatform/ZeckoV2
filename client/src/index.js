@@ -1,16 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import { muiTheme } from './styles/muiTheme';
+import { StyledEngineProvider } from '@mui/material/styles';
 import App from './App';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <ThemeProvider theme={muiTheme}>
-      <CssBaseline />
+    <StyledEngineProvider injectFirst>
       <App />
-    </ThemeProvider>
+    </StyledEngineProvider>
   </React.StrictMode>
 );
