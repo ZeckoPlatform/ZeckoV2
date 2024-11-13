@@ -1,6 +1,6 @@
 import { createTheme, responsiveFontSizes } from '@mui/material/styles';
 
-let muiTheme = createTheme({
+const baseTheme = {
   typography: {
     fontFamily: "'Roboto', 'Arial', sans-serif",
     h1: {
@@ -68,9 +68,25 @@ let muiTheme = createTheme({
       },
     },
   },
-});
+};
 
-// Make typography responsive
-muiTheme = responsiveFontSizes(muiTheme);
+let muiTheme;
+try {
+  muiTheme = responsiveFontSizes(createTheme(baseTheme));
+} catch (error) {
+  console.error('Error creating theme:', error);
+  // Fallback theme
+  muiTheme = createTheme({
+    typography: {
+      fontFamily: "'Roboto', 'Arial', sans-serif",
+    },
+    palette: {
+      mode: 'dark',
+      primary: {
+        main: '#81C784',
+      },
+    },
+  });
+}
 
 export default muiTheme;
