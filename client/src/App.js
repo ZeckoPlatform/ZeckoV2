@@ -66,6 +66,7 @@ function App() {
       <StyledThemeProvider theme={theme}>
         <CssBaseline />
         <GlobalStyles />
+        <ToastContainer />
         <AuthProvider>
           <AppContainer>
             <BrowserRouter>
