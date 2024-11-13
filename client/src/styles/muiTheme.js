@@ -1,6 +1,6 @@
 import { createTheme } from '@mui/material/styles';
 
-export const muiTheme = createTheme({
+const muiTheme = createTheme({
   typography: {
     fontFamily: "'Roboto', 'Arial', sans-serif",
     h1: {
@@ -70,4 +70,4 @@ export const muiTheme = createTheme({
   },
 });
 
-export default muiTheme; 
+export default muiTheme;
