@@ -2,8 +2,8 @@
   "name": "zecko-platform",
   "version": "1.0.0",
   "engines": {
-    "node": "20.x",
-    "npm": "10.x"
+    "node": "18.x",
+    "npm": "9.x"
   },
   "scripts": {
     "start": "node server/server.js",
@@ -19,7 +19,11 @@
     "socket.io": "^4.7.2",
     "cloudinary": "^1.41.0",
     "stripe": "^14.5.0",
-    "nodemailer": "^6.9.7"
+    "nodemailer": "^6.9.7",
+    "path": "^0.12.7",
+    "compression": "^1.7.4",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.4"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
