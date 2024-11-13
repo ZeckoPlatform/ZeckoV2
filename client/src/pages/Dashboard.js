@@ -5,8 +5,6 @@ import DashboardLayout from '../components/Dashboard/DashboardLayout';
 import Overview from '../components/Dashboard/Overview';
 import Orders from '../components/Dashboard/Orders';
 import Products from '../components/Dashboard/Products';
-import Profile from '../components/dashboard/Profile';
-import Settings from '../components/dashboard/Settings';
 
 const Dashboard = () => {
   return (

@@ -8,8 +8,6 @@ import Dashboard from '../pages/Dashboard';
 import Overview from '../components/Dashboard/Overview';
 import Orders from '../components/Dashboard/Orders';
 import Products from '../components/Dashboard/Products';
-import Profile from '../components/Dashboard/Profile';
-import Settings from '../components/Dashboard/Settings';
 
 const AppRoutes = () => {
   return (
