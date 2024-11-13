@@ -1,8 +1,15 @@
 import styled, { css } from 'styled-components';
-import { buttonBase } from '../mixins';
 
 export const Button = styled.button`
-  ${buttonBase};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-weight: ${({ theme }) => theme.typography.weight.medium};
+  cursor: pointer;
+  transition: all ${({ theme }) => theme.transitions.short};
   
   ${props => props.variant === 'primary' && css`
     background: ${({ theme }) => theme.colors.primary.gradient};
@@ -32,8 +39,11 @@ export const Button = styled.button`
   `}
 
   ${props => props.variant === 'glass' && css`
-    ${glassEffect};
+    background: ${({ theme }) => theme.colors.glass.background};
+    backdrop-filter: blur(8px);
+    border: 1px solid ${({ theme }) => theme.colors.glass.border};
     color: ${({ theme }) => theme.colors.text.primary};
+    box-shadow: ${({ theme }) => theme.shadows.glass};
   `}
 
   ${props => props.size === 'small' && css`
@@ -49,4 +59,9 @@ export const Button = styled.button`
   ${props => props.fullWidth && css`
     width: 100%;
   `}
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `; 

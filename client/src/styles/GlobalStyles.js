@@ -8,11 +8,10 @@ const GlobalStyles = createGlobalStyle`
   }
 
   body {
-    font-family: ${({ theme }) => theme.typography.fontFamily.primary};
-    background-color: ${({ theme }) => theme.colors.background.main};
+    background-color: ${({ theme }) => theme.colors.background.default};
     color: ${({ theme }) => theme.colors.text.primary};
     line-height: ${({ theme }) => theme.typography.lineHeight.normal};
-    transition: all 0.2s ease-in-out;
+    transition: all ${({ theme }) => theme.transitions.short};
   }
 
   button {
@@ -23,6 +22,10 @@ const GlobalStyles = createGlobalStyle`
   a {
     text-decoration: none;
     color: inherit;
+  }
+
+  input, button, textarea, select {
+    font: inherit;
   }
 `;
 

@@ -3,9 +3,11 @@ import styled, { css } from 'styled-components';
 export const Input = styled.input`
   width: 100%;
   padding: 0.75rem 1rem;
+  background: ${({ theme }) => theme.colors.background.paper};
   border: 2px solid ${({ theme }) => theme.colors.text.disabled};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: ${({ theme }) => theme.typography.size.md};
+  color: ${({ theme }) => theme.colors.text.primary};
   transition: all ${({ theme }) => theme.transitions.short};
 
   &:focus {
@@ -36,6 +38,7 @@ export const Label = styled.label`
   margin-bottom: ${({ theme }) => theme.spacing.xs};
   color: ${({ theme }) => theme.colors.text.secondary};
   font-size: ${({ theme }) => theme.typography.size.sm};
+  font-weight: ${({ theme }) => theme.typography.weight.medium};
 `;
 
 export const ErrorMessage = styled.span`

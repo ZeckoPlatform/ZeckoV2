@@ -1,12 +1,23 @@
 import styled, { css } from 'styled-components';
-import { cardStyle } from '../mixins';
 
 export const Card = styled.div`
-  ${cardStyle};
+  background: ${({ theme }) => theme.colors.background.paper};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  box-shadow: ${({ theme }) => theme.shadows.card};
   padding: ${({ theme }) => theme.spacing.lg};
+  transition: transform ${({ theme }) => theme.transitions.medium},
+              box-shadow ${({ theme }) => theme.transitions.medium};
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: ${({ theme }) => theme.shadows.hover};
+  }
   
   ${props => props.variant === 'glass' && css`
-    ${glassEffect};
+    background: ${({ theme }) => theme.colors.glass.background};
+    backdrop-filter: blur(8px);
+    border: 1px solid ${({ theme }) => theme.colors.glass.border};
+    box-shadow: ${({ theme }) => theme.shadows.glass};
   `}
 `;
 
@@ -17,6 +28,7 @@ export const CardHeader = styled.div`
 export const CardTitle = styled.h3`
   color: ${({ theme }) => theme.colors.text.primary};
   font-size: ${({ theme }) => theme.typography.size.xl};
+  font-weight: ${({ theme }) => theme.typography.weight.medium};
   margin-bottom: ${({ theme }) => theme.spacing.xs};
 `;
 
@@ -26,7 +38,7 @@ export const CardSubtitle = styled.p`
 `;
 
 export const CardBody = styled.div`
-  // Add any specific body styles
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 export const CardFooter = styled.div`
