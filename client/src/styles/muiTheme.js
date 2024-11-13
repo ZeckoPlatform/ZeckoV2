@@ -1,6 +1,6 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, responsiveFontSizes } from '@mui/material/styles';
 
-const muiTheme = createTheme({
+let muiTheme = createTheme({
   typography: {
     fontFamily: "'Roboto', 'Arial', sans-serif",
     h1: {
@@ -69,5 +69,8 @@ const muiTheme = createTheme({
     },
   },
 });
+
+// Make typography responsive
+muiTheme = responsiveFontSizes(muiTheme);
 
 export default muiTheme;
