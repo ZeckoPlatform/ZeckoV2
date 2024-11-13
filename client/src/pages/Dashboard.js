@@ -2,8 +2,8 @@ import { Routes, Route } from 'react-router-dom';
 import DashboardLayout from '../components/Dashboard/DashboardLayout';
 import DashboardHome from './Dashboard/Dashboard';
 import Products from '../components/Dashboard/Products';
-import Profile from '../components/dashboard/Profile';
-import Settings from '../components/dashboard/Settings';
+import Profile from '../components/Dashboard/Profile';
+import Settings from '../components/Dashboard/Settings';
 
 function Dashboard() {
   return (
