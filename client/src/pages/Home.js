@@ -38,16 +38,16 @@ const HeroSubtitle = styled.p`
 
 const CTAButton = styled(Link)`
   display: inline-block;
-  background-color: var(--primary-color);
-  color: white;
+  background-color: ${({ theme }) => theme.colors.primary.main};
+  color: ${({ theme }) => theme.colors.primary.text};
   padding: 1rem 2rem;
-  border-radius: 4px;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
   text-decoration: none;
   font-weight: bold;
-  transition: background-color 0.3s;
+  transition: background-color ${({ theme }) => theme.transitions.short};
 
   &:hover {
-    background-color: var(--primary-color-dark);
+    background-color: ${({ theme }) => theme.colors.primary.dark};
   }
 `;
 

@@ -45,14 +45,16 @@ const tokens = {
     md: '1rem',
     lg: '1.5rem',
     xl: '2rem',
+    xxl: '3rem',
   },
   typography: {
     size: {
-      xs: '0.75rem',
-      sm: '0.875rem',
-      md: '1rem',
-      lg: '1.25rem',
-      xl: '1.5rem',
+      h1: '2.5rem',
+      h2: '2rem',
+      h3: '1.75rem',
+      h4: '1.5rem',
+      h5: '1.25rem',
+      h6: '1rem',
     },
     weight: {
       light: 300,

@@ -6,7 +6,7 @@ const LayoutContainer = styled.div`
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: var(--background-color);
+  background-color: ${({ theme }) => theme.colors.background.default};
 `;
 
 const MainWrapper = styled.div`
