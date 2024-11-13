@@ -1,20 +1,19 @@
 import React from 'react';
-import { ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import CssBaseline from '@mui/material/CssBaseline';
-import theme from './styles/theme';
-import { darkTheme } from './styles/theme/darkTheme';
+import { muiTheme, theme } from './styles/theme';
 import GlobalStyles from './styles/GlobalStyles';
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <StyledThemeProvider theme={darkTheme}>
+    <MuiThemeProvider theme={muiTheme}>
+      <StyledThemeProvider theme={theme}>
         <CssBaseline />
         <GlobalStyles />
         {/* Your other components */}
       </StyledThemeProvider>
-    </ThemeProvider>
+    </MuiThemeProvider>
   );
 }
 
