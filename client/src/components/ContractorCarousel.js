@@ -43,9 +43,9 @@ const ContractorsWrapper = styled.div`
 `;
 
 const ContractorCard = styled(Link)`
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
+  background: ${({ theme }) => theme.colors.background.paper};
+  padding: ${({ theme }) => theme.spacing.lg};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   min-width: 300px;
   text-decoration: none;
@@ -111,8 +111,8 @@ const SectionTitle = styled.h2`
 `;
 
 const ContractorName = styled.h3`
-  color: var(--primary-color);
-  margin-bottom: 10px;
+  color: var(--primary-color, ${({ theme }) => theme.colors.primary.main});
+  margin-bottom: ${({ theme }) => theme.spacing.md};
   font-size: 1.2rem;
   font-weight: 500;
 `;

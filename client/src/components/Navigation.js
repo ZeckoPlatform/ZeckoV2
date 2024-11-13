@@ -6,7 +6,10 @@ import { Bell } from 'react-feather';
 import { FaShoppingCart } from 'react-icons/fa';
 
 const Nav = styled.nav`
-  background-color: white;
+  background: ${({ theme }) => theme.colors.background.paper};
+  color: ${({ theme }) => theme.colors.text.primary};
+  --text-color: ${({ theme }) => theme.colors.text.primary};
+  --primary-color: ${({ theme }) => theme.colors.primary.main};
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 `;
 
@@ -107,10 +110,10 @@ const NotificationButton = styled.div`
   gap: 5px;
   cursor: pointer;
   padding: 8px;
-  color: var(--text-color);
+  color: var(--text-color, ${({ theme }) => theme.colors.text.primary});
   
   &:hover {
-    color: var(--primary-color);
+    color: var(--primary-color, ${({ theme }) => theme.colors.primary.main});
   }
 `;
 

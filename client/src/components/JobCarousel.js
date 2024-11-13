@@ -84,8 +84,8 @@ const ScrollButton = styled.button`
   transition: all 0.3s ease;
 
   &:hover {
-    background-color: var(--primary-color);
-    color: white;
+    background-color: var(--primary-color, ${({ theme }) => theme.colors.primary.main});
+    color: ${({ theme }) => theme.colors.primary.text};
   }
 
   @media (max-width: 768px) {
@@ -111,8 +111,8 @@ const SectionTitle = styled.h2`
 `;
 
 const JobTitle = styled.h3`
-  color: var(--primary-color);
-  margin-bottom: 10px;
+  color: var(--primary-color, ${({ theme }) => theme.colors.primary.main});
+  margin-bottom: ${({ theme }) => theme.spacing.md};
   font-size: 1.2rem;
   font-weight: 500;
 `;
