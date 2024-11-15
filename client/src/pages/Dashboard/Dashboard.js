@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import { fadeIn, slideUp } from '../../styles/animations';
+import { cardStyle, glassEffect } from '../../styles/common';
 
 const DashboardContainer = styled.div`
   display: grid;
