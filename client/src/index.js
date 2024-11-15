@@ -1,29 +1,32 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
 import ErrorBoundary from './components/error/ErrorBoundary';
+import Home from './pages/Home';
+import ProductList from './pages/ProductList';
+// ... import all your pages
 
-// Initialize future flags
-if (typeof window !== 'undefined') {
-  window.__reactRouterFutureFlags = {
-    v7_startTransition: true,
-    v7_normalizeFormMethod: true,
-    v7_relativeSplatPath: true,
-    v7_fetcherPersist: true,
-    v7_partialHydration: true,
-    v7_skipActionErrorRevalidation: true
-  };
-}
+// Define routes
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <App />,
+    errorElement: <ErrorBoundary />,
+    children: [
+      { index: true, element: <Home /> },
+      { path: 'products', element: <ProductList /> },
+      // ... define all your routes here
+    ]
+  }
+], {
+  basename: process.env.PUBLIC_URL || ''
+});
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 root.render(
   <React.StrictMode>
-    <ErrorBoundary>
-      <BrowserRouter basename={process.env.PUBLIC_URL}>
-        <App />
-      </BrowserRouter>
-    </ErrorBoundary>
+    <RouterProvider router={router} />
   </React.StrictMode>
 );
