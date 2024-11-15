@@ -2,7 +2,8 @@ import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { logger } from '../../services/logger/Logger';
-import { FiAlertTriangle, FiRefreshCw } from 'react-icons/fi';
+import { FiAlertTriangle, FiRefreshCw, FiHome } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 
 const ErrorContainer = styled(motion.div)`
   display: flex;
@@ -64,6 +65,12 @@ const Button = styled(motion.button)`
   }
 `;
 
+// Wrap the class component to use hooks
+const ErrorBoundaryWithRouter = (props) => {
+  const navigate = useNavigate();
+  return <ErrorBoundary {...props} navigate={navigate} />;
+};
+
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -85,7 +92,8 @@ class ErrorBoundary extends React.Component {
     });
 
     logger.error('React Error Boundary Caught Error:', error, {
-      componentStack: errorInfo.componentStack
+      componentStack: errorInfo.componentStack,
+      url: window.location.href
     });
   }
 
@@ -99,6 +107,11 @@ class ErrorBoundary extends React.Component {
       error: null,
       errorInfo: null
     });
+  };
+
+  handleGoHome = () => {
+    this.props.navigate('/');
+    this.handleReset();
   };
 
   render() {
@@ -137,8 +150,16 @@ class ErrorBoundary extends React.Component {
             >
               Try Again
             </Button>
+            <Button
+              variant="outlined"
+              onClick={this.handleGoHome}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <FiHome /> Go Home
+            </Button>
           </ErrorActions>
-          {process.env.NODE_ENV === 'development' && (
+          {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
             <details style={{ marginTop: '20px', textAlign: 'left' }}>
               <summary>Error Details</summary>
               <pre style={{ margin: '10px', whiteSpace: 'pre-wrap' }}>
@@ -156,4 +177,4 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-export default ErrorBoundary; 
+export default ErrorBoundaryWithRouter; 
