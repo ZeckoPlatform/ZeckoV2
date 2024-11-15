@@ -22,7 +22,7 @@
     "mongoose": "^6.12.3",
     "nodemailer": "^6.9.7",
     "path": "^0.12.7",
-    "socket.io": "^4.7.2",
+    "socket.io": "^4.8.1",
     "speakeasy": "^2.0.0",
     "stripe": "^14.5.0"
   },
