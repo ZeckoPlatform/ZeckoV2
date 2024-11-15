@@ -2,20 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
-import ErrorBoundary from './components/ErrorBoundary';
+import ErrorBoundary from './components/error/ErrorBoundary';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
-
-// Create ErrorBoundary component
-const ErrorBoundary = ({ children }) => {
-  return (
-    <div className="error-boundary">
-      <h1>Oops! Something went wrong.</h1>
-      <p>Please try refreshing the page or contact support if the problem persists.</p>
-    </div>
-  );
-};
 
 // Define routes with error boundaries
 const routes = [
