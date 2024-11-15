@@ -61,4 +61,14 @@ const ActivityItem = styled.div`
   &:hover {
     background: ${({ theme }) => `${theme.colors.primary.main}05`};
   }
-`; 
+`;
+
+const Dashboard = () => {
+  return (
+    <DashboardContainer>
+      {/* Your dashboard content */}
+    </DashboardContainer>
+  );
+};
+
+export default Dashboard; 
