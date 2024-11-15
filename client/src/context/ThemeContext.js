@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ThemeProvider as MUIThemeProvider } from '@mui/material/styles';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
-import { themes, createMuiTheme } from '../styles/theme';
+import { muiTheme, theme } from '../styles/theme';  // Update this import
 import CssBaseline from '@mui/material/CssBaseline';
 
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  const [themeMode, setThemeMode] = useState('light');
+  const [themeMode, setThemeMode] = useState('dark'); // Since your theme is dark by default
   
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -22,13 +22,10 @@ export const ThemeProvider = ({ children }) => {
     localStorage.setItem('theme', newTheme);
   };
 
-  const muiTheme = createMuiTheme(themeMode);
-  const styledTheme = themes[themeMode];
-
   return (
     <ThemeContext.Provider value={{ themeMode, toggleTheme }}>
       <MUIThemeProvider theme={muiTheme}>
-        <StyledThemeProvider theme={styledTheme}>
+        <StyledThemeProvider theme={theme}>
           <CssBaseline />
           {children}
         </StyledThemeProvider>
@@ -43,4 +40,4 @@ export const useTheme = () => {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
-}; 
+};
