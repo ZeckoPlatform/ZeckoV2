@@ -4,29 +4,33 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
 import ErrorBoundary from './components/error/ErrorBoundary';
 
-// Set future flags
-window.__reactRouterFutureFlags = {
-  v7_startTransition: true,
-  v7_relativeSplatPath: true,
-  v7_normalizeFormMethod: true,
-  v7_partialHydration: true,
-  v7_skipActionErrorRevalidation: true,
-  v7_fetcherPersist: true
-};
-
-// Create router configuration
-const router = createBrowserRouter([
+// Configure all future flags before anything else
+const router = createBrowserRouter(
+  [
+    {
+      path: '/*',
+      element: <App />,
+      errorElement: <ErrorBoundary />
+    }
+  ],
   {
-    path: '/*',
-    element: <App />,
-    errorElement: <ErrorBoundary />
+    future: {
+      v7_startTransition: true,
+      v7_normalizeFormMethod: true,
+      v7_relativeSplatPath: true,
+      v7_fetcherPersist: true,
+      v7_partialHydration: true,
+      v7_skipActionErrorRevalidation: true
+    },
+    basename: process.env.PUBLIC_URL || ''
   }
-]);
+);
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-
 root.render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <ErrorBoundary>
+      <RouterProvider router={router} />
+    </ErrorBoundary>
   </React.StrictMode>
 );
