@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigationType } from 'react-router-dom';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -74,6 +74,19 @@ const LoadingFallback = () => (
 
 function App() {
   const location = useLocation();
+  const navigationType = useNavigationType();
+
+  // Add future flags effect
+  useEffect(() => {
+    window.__reactRouterFutureFlags = {
+      v7_startTransition: true,
+      v7_relativeSplatPath: true,
+      v7_normalizeFormMethod: true,
+      v7_partialHydration: true,
+      v7_skipActionErrorRevalidation: true,
+      v7_fetcherPersist: true,
+    };
+  }, []);
 
   return (
     <ErrorBoundary>
