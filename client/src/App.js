@@ -92,10 +92,10 @@ function App() {
           pauseOnHover
         />
         <AuthProvider>
-          <ErrorBoundary>
-            <AppContainer>
-              <Layout>
-                <MainContent>
+          <AppContainer>
+            <Layout>
+              <MainContent>
+                <ErrorBoundary key={location.pathname}>
                   <Suspense fallback={<LoadingFallback />}>
                     <Routes>
                       {/* Public Routes */}
@@ -195,10 +195,10 @@ function App() {
                       <Route path="/business/profile" element={<BusinessProfile />} />
                     </Routes>
                   </Suspense>
-                </MainContent>
-              </Layout>
-            </AppContainer>
-          </ErrorBoundary>
+                </ErrorBoundary>
+              </MainContent>
+            </Layout>
+          </AppContainer>
         </AuthProvider>
       </StyledThemeProvider>
     </MuiThemeProvider>
