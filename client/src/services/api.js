@@ -1,18 +1,15 @@
 import axios from 'axios';
-import { API_URL } from '../config/apiConfig';
 
-// Create axios instance with default config
 const api = axios.create({
-  baseURL: API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: process.env.REACT_APP_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json'
   },
-  // Add timeout and error handling
   timeout: 10000,
   validateStatus: (status) => status >= 200 && status < 500
 });
 
-// Request interceptor for adding token
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -22,33 +19,65 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
 
-// Response interceptor for handling common errors
+// Response interceptor
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Check if response is HTML (usually means server error or redirect)
+    const contentType = response.headers['content-type'];
+    if (contentType && contentType.includes('text/html')) {
+      return Promise.reject(new Error('Invalid server response'));
+    }
+    return response;
+  },
   (error) => {
     if (error.response) {
-      // Server responded with error status
-      if (error.response.status === 401) {
-        // Handle unauthorized access
-        localStorage.removeItem('token');
-        window.location.href = '/login';
+      // Handle specific status codes
+      switch (error.response.status) {
+        case 401:
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+          break;
+        case 404:
+          console.error('Resource not found:', error.config.url);
+          break;
+        case 500:
+          console.error('Server error:', error.response.data);
+          break;
+        default:
+          console.error('API error:', error.response.data);
       }
-      return Promise.reject(error.response.data);
     } else if (error.request) {
-      // Request made but no response received
       console.error('No response received:', error.request);
-      return Promise.reject({ message: 'No response from server' });
     } else {
-      // Error in request configuration
       console.error('Request error:', error.message);
-      return Promise.reject({ message: 'Request configuration error' });
     }
+    return Promise.reject(error);
   }
 );
+
+// API endpoints
+export const fetchJobs = async () => {
+  try {
+    const response = await api.get('/jobs');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching jobs:', error);
+    throw error;
+  }
+};
+
+export const fetchContractors = async () => {
+  try {
+    const response = await api.get('/contractors');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching contractors:', error);
+    throw error;
+  }
+};
 
 export default api; 
