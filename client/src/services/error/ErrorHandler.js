@@ -1,17 +1,23 @@
 import { toast } from 'react-toastify';
 
 export class ApiError extends Error {
-  constructor(message, status, code) {
+  constructor(message, status, code, details = {}) {
     super(message);
     this.status = status;
     this.code = code;
+    this.details = details;
     this.name = 'ApiError';
+    this.timestamp = new Date().toISOString();
   }
 }
 
 export const errorHandler = {
   handle: (error, notificationSystem = toast) => {
-    console.error('Error caught:', error);
+    console.error('Error caught:', {
+      timestamp: new Date().toISOString(),
+      error: error,
+      stack: error.stack
+    });
 
     if (error instanceof ApiError) {
       return handleApiError(error, notificationSystem);
@@ -21,13 +27,26 @@ export const errorHandler = {
       return handleAxiosError(error, notificationSystem);
     }
 
-    // Network errors, timeouts, etc.
     return handleGenericError(error, notificationSystem);
+  },
+  
+  handleNetworkError: (error, notificationSystem = toast) => {
+    const message = 'Network error. Please check your connection.';
+    notificationSystem.error(message);
+    return { success: false, message, status: 0 };
   }
 };
 
 const handleApiError = (error, notificationSystem) => {
   const message = getErrorMessage(error);
+  const errorResponse = {
+    success: false,
+    message,
+    status: error.status,
+    code: error.code,
+    timestamp: error.timestamp,
+    details: error.details
+  };
   
   switch (error.status) {
     case 401:
@@ -43,16 +62,17 @@ const handleApiError = (error, notificationSystem) => {
     case 422:
       notificationSystem.error('Invalid data provided. Please check your input.');
       break;
+    case 408:
+      notificationSystem.error('Request timeout. Please try again.');
+      break;
+    case 413:
+      notificationSystem.error('Upload too large. Please reduce file size.');
+      break;
     default:
       notificationSystem.error(message);
   }
 
-  return {
-    success: false,
-    message,
-    status: error.status,
-    code: error.code
-  };
+  return errorResponse;
 };
 
 const handleAxiosError = (error, notificationSystem) => {
@@ -113,5 +133,6 @@ const handleGenericError = (error, notificationSystem) => {
 
 const getErrorMessage = (error) => {
   if (typeof error === 'string') return error;
+  if (error.response?.data?.message) return error.response.data.message;
   return error.message || 'An unexpected error occurred';
 }; 

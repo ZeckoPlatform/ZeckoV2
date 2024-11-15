@@ -1,9 +1,13 @@
 import axios from 'axios';
 
+// Get the base URL from environment variables with a fallback
+const BASE_URL = process.env.REACT_APP_API_URL || 'https://zeckov2-deceb43992ac.herokuapp.com/api';
+
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || '/api',
+  baseURL: BASE_URL,
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
   },
   timeout: 10000,
   validateStatus: (status) => status >= 200 && status < 500
@@ -12,6 +16,12 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
+    // Add timestamp to prevent caching
+    config.params = {
+      ...config.params,
+      _t: Date.now()
+    };
+    
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -19,6 +29,7 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('Request error:', error);
     return Promise.reject(error);
   }
 );
@@ -26,56 +37,83 @@ api.interceptors.request.use(
 // Response interceptor
 api.interceptors.response.use(
   (response) => {
-    // Check if response is HTML (usually means server error or redirect)
     const contentType = response.headers['content-type'];
     if (contentType && contentType.includes('text/html')) {
-      return Promise.reject(new Error('Invalid server response'));
+      console.error('Received HTML instead of JSON');
+      return Promise.reject(new Error('Invalid response type: expected JSON, got HTML'));
     }
     return response;
   },
   (error) => {
     if (error.response) {
-      // Handle specific status codes
-      switch (error.response.status) {
-        case 401:
-          localStorage.removeItem('token');
-          window.location.href = '/login';
-          break;
-        case 404:
-          console.error('Resource not found:', error.config.url);
-          break;
-        case 500:
-          console.error('Server error:', error.response.data);
-          break;
-        default:
-          console.error('API error:', error.response.data);
+      // Log the full error for debugging
+      console.error('Full error response:', {
+        status: error.response.status,
+        headers: error.response.headers,
+        data: error.response.data,
+        url: error.config.url
+      });
+
+      if (error.response.status === 401) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
       }
     } else if (error.request) {
-      console.error('No response received:', error.request);
-    } else {
-      console.error('Request error:', error.message);
+      console.error('No response received:', {
+        url: error.config.url,
+        method: error.config.method
+      });
     }
     return Promise.reject(error);
   }
 );
 
-// API endpoints
+// API endpoints with better error handling
 export const fetchJobs = async () => {
   try {
-    const response = await api.get('/jobs');
+    const response = await api.get('/jobs', {
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
     return response.data;
   } catch (error) {
-    console.error('Error fetching jobs:', error);
-    throw error;
+    console.error('Error fetching jobs:', {
+      message: error.message,
+      url: error.config?.url,
+      response: error.response?.data
+    });
+    throw new Error('Failed to fetch jobs. Please try again later.');
   }
 };
 
 export const fetchContractors = async () => {
   try {
-    const response = await api.get('/contractors');
+    const response = await api.get('/contractors', {
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
     return response.data;
   } catch (error) {
-    console.error('Error fetching contractors:', error);
+    console.error('Error fetching contractors:', {
+      message: error.message,
+      url: error.config?.url,
+      response: error.response?.data
+    });
+    throw new Error('Failed to fetch contractors. Please try again later.');
+  }
+};
+
+// Test endpoint to verify API connection
+export const testApiConnection = async () => {
+  try {
+    const response = await api.get('/health');
+    return response.data;
+  } catch (error) {
+    console.error('API connection test failed:', error);
     throw error;
   }
 };
