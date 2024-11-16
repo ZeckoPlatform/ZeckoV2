@@ -9,15 +9,20 @@ const router = express.Router();
 
 router.get('/verify', authenticateToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select('-password');
-    if (!user) {
-      const businessUser = await BusinessUser.findById(req.user.userId).select('-password');
-      if (!businessUser) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-      return res.json(businessUser);
-    }
-    res.json(user);
+    console.log('Verify endpoint called with user:', req.user);
+    
+    // Since we already have user data from authenticateToken
+    res.json({ 
+      user: {
+        id: req.user.id,
+        email: req.user.email,
+        username: req.user.username,
+        accountType: req.user.accountType,
+        role: req.user.role,
+        businessName: req.user.businessName
+      },
+      verified: true 
+    });
   } catch (error) {
     console.error('Verification error:', error);
     res.status(500).json({ message: 'Server error during verification' });

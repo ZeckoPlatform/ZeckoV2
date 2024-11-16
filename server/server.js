@@ -63,9 +63,12 @@ try {
     console.error('Error during route import:', error.message);
 }
 
-// Register available routes
+// Move auth routes registration before other routes
+app.use('/api/auth', routes.auth);
+
+// Then register other routes
 Object.entries(routes).forEach(([name, router]) => {
-    if (router) {
+    if (router && name !== 'auth') {
         app.use(`/api/${name}`, router);
         console.log(`Registered route: /api/${name}`);
     }
