@@ -75,6 +75,11 @@ const LoadingFallback = () => (
 function App() {
   const location = useLocation();
 
+  // Add error boundary handler
+  const handleError = (error, errorInfo) => {
+    console.error('App Error:', error, errorInfo);
+  };
+
   return (
     <MuiThemeProvider theme={muiTheme}>
       <StyledThemeProvider theme={theme}>
@@ -95,7 +100,11 @@ function App() {
           <AppContainer>
             <Layout>
               <MainContent>
-                <ErrorBoundary key={location.pathname}>
+                <ErrorBoundary 
+                  key={location.pathname}
+                  onError={handleError}
+                  fallback={<div>Something went wrong. Please try again.</div>}
+                >
                   <Suspense fallback={<LoadingFallback />}>
                     <Routes>
                       {/* Public Routes */}
@@ -193,6 +202,18 @@ function App() {
 
                       {/* Business Profile Route */}
                       <Route path="/business/profile" element={<BusinessProfile />} />
+
+                      {/* Catch-all Route */}
+                      <Route 
+                        path="*" 
+                        element={
+                          <Navigate 
+                            to="/" 
+                            replace 
+                            state={{ from: location }}
+                          />
+                        } 
+                      />
                     </Routes>
                   </Suspense>
                 </ErrorBoundary>

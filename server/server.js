@@ -9,12 +9,42 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 
-// Configure CORS
+// Configure CORS with expanded headers
 app.use(cors({
-  origin: process.env.CLIENT_URL || "https://zeckov2-deceb43992ac.herokuapp.com",
+  origin: process.env.NODE_ENV === 'production' 
+    ? 'https://zeckov2-deceb43992ac.herokuapp.com' 
+    : 'http://localhost:3000',
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'Cache-Control', 
+    'Pragma', 
+    'Expires'
+  ]
 }));
+
+// Add cache control middleware
+app.use((req, res, next) => {
+  // Add cache headers for API routes
+  if (req.path.startsWith('/api/')) {
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+  }
+  next();
+});
+
+// Add content type middleware
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    res.type('application/json');
+  }
+  next();
+});
 
 // Middleware Setup
 app.use(express.json({ limit: '50mb' }));
@@ -56,11 +86,24 @@ app.get('*', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Error:', err.stack);
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+  console.error('Error:', {
+    message: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method
   });
+
+  // Ensure JSON response for API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(err.status || 500).json({
+      error: true,
+      message: process.env.NODE_ENV === 'production' 
+        ? 'An error occurred' 
+        : err.message
+    });
+  }
+
+  next(err);
 });
 
 const startServer = async () => {

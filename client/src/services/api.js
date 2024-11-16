@@ -21,18 +21,31 @@ api.interceptors.request.use(config => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  // Add timestamp to prevent caching
+  
+  // Add cache control headers
+  config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+  config.headers['Pragma'] = 'no-cache';
+  config.headers['Expires'] = '0';
+  
+  // Add timestamp and environment
   config.params = { 
     ...config.params, 
     _t: Date.now(),
     env: process.env.NODE_ENV 
   };
+  
   return config;
 }, error => Promise.reject(error));
 
-// Response interceptor
+// Response interceptor with 304 handling
 api.interceptors.response.use(
   response => {
+    // Handle 304 Not Modified
+    if (response.status === 304) {
+      console.log('Using cached response for:', response.config.url);
+      return response;
+    }
+
     const contentType = response.headers['content-type'];
     if (contentType?.includes('text/html')) {
       console.error('Received HTML response:', {
@@ -53,6 +66,11 @@ api.interceptors.response.use(
     };
 
     console.error('API Error:', errorDetails);
+
+    // Don't show error toast for 304 responses
+    if (error.response?.status === 304) {
+      return Promise.resolve(error.response);
+    }
 
     if (error.response) {
       switch (error.response.status) {
@@ -78,14 +96,10 @@ api.interceptors.response.use(
 );
 
 // API endpoints
-export const fetchJobs = async () => {
+export const fetchJobs = async (featured = false) => {
   try {
-    const response = await api.get('/jobs', {
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-      }
-    });
+    const endpoint = featured ? '/jobs/featured' : '/jobs';
+    const response = await api.get(endpoint);
     return response.data;
   } catch (error) {
     console.error('Error fetching jobs:', {
@@ -97,14 +111,10 @@ export const fetchJobs = async () => {
   }
 };
 
-export const fetchContractors = async () => {
+export const fetchContractors = async (featured = false) => {
   try {
-    const response = await api.get('/contractors', {
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-      }
-    });
+    const endpoint = featured ? '/contractors/featured' : '/contractors';
+    const response = await api.get(endpoint);
     return response.data;
   } catch (error) {
     console.error('Error fetching contractors:', {
