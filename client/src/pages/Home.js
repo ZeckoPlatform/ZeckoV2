@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { JobCarousel } from '../components/JobCarousel';
 import { ContractorCarousel } from '../components/ContractorCarousel';
 import { FeaturedJobs } from '../components/FeaturedJobs';
 import { fadeIn, slideUp } from '../styles/animations';
+import { getFeaturedItems } from '../services/api';
+import { CircularProgress } from '@mui/material';
 
 const HomeContainer = styled.div`
   text-align: center;
@@ -72,6 +74,36 @@ const Grid = styled.div`
 `;
 
 function Home() {
+  const [featuredItems, setFeaturedItems] = useState({
+    jobs: [],
+    contractors: []
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadFeaturedItems = async () => {
+      try {
+        setLoading(true);
+        const items = await getFeaturedItems();
+        setFeaturedItems(items);
+      } catch (error) {
+        console.error('Error loading featured items:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFeaturedItems();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+        <CircularProgress />
+      </div>
+    );
+  }
+
   return (
     <>
       <HomeContainer>

@@ -7,61 +7,67 @@ const BASE_URL = process.env.NODE_ENV === 'production'
 
 const api = axios.create({
   baseURL: BASE_URL,
-  headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json'
-  },
   timeout: 15000,
-  validateStatus: status => status >= 200 && status < 500
+  headers: {
+    'Content-Type': 'application/json'
+  }
 });
 
-// Request interceptor with optimized caching
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  // Add cache busting only for GET requests
-  if (config.method === 'get') {
-    config.params = { 
-      ...config.params,
-      _t: Date.now()
-    };
-  }
-
-  return config;
-});
-
-// Response interceptor with improved error handling
-api.interceptors.response.use(
-  response => {
-    // Handle 304 Not Modified
-    if (response.status === 304) {
-      return response;
+// Add request interceptor
+api.interceptors.request.use(
+  config => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
-    return response;
+    return config;
   },
-  error => {
-    console.error('API Error:', {
-      url: error.config?.url,
-      method: error.config?.method,
-      status: error.response?.status,
-      message: error.message
-    });
+  error => Promise.reject(error)
+);
 
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
-    } else {
-      toast.error(
-        error.response?.data?.message || 
-        'An unexpected error occurred'
-      );
+// Add response interceptor
+api.interceptors.response.use(
+  response => response,
+  async error => {
+    if (error.code === 'ECONNABORTED' || error.response?.status === 503) {
+      const retries = error.config._retry || 0;
+      if (retries < 2) {
+        error.config._retry = retries + 1;
+        return api(error.config);
+      }
     }
-
-    return Promise.reject(error);
+    throw error;
   }
 );
+
+// Jobs API
+export const jobsApi = {
+  getFeatured: () => api.get('/jobs/featured'),
+  getUserJobs: (userId) => api.get(`/jobs/user/${userId}`),
+  create: (jobData) => api.post('/jobs', jobData),
+  update: (jobId, jobData) => api.put(`/jobs/${jobId}`, jobData),
+  delete: (jobId) => api.delete(`/jobs/${jobId}`)
+};
+
+// Featured items service
+export const getFeaturedItems = async () => {
+  try {
+    const [jobsResponse] = await Promise.all([
+      jobsApi.getFeatured()
+    ]);
+
+    return {
+      jobs: jobsResponse.data,
+      contractors: [] // Placeholder until contractors are implemented
+    };
+  } catch (error) {
+    console.error('Error fetching featured items:', error);
+    toast.error('Failed to load featured items');
+    return {
+      jobs: [],
+      contractors: []
+    };
+  }
+};
 
 export default api; 

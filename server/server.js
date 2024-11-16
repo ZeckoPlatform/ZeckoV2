@@ -90,12 +90,14 @@ try {
 try {
   const userRoutes = require('./routes/userRoutes');
   const productRoutes = require('./routes/productRoutes');
+  const jobRoutes = require('./routes/api/jobRoutes');
   // ... other route imports
 
   // API Routes
   app.use('/api/auth', userRoutes);
   app.use('/api/users', userRoutes);
   app.use('/api/products', productRoutes);
+  app.use('/api/jobs', jobRoutes);
   // ... other route uses
 } catch (error) {
   console.error('Route loading error:', error);
