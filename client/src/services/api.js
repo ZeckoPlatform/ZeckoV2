@@ -38,9 +38,15 @@ export const authApi = {
   login: async (credentials) => {
     try {
       const response = await api.post('/auth/login', credentials);
-      return response.data;
+      const { token, user } = response.data;
+      
+      // Store token
+      localStorage.setItem('token', token);
+      
+      return { token, user };
     } catch (error) {
-      throw error;
+      console.error('Login error:', error);
+      throw new Error(error.response?.data?.message || 'Login failed');
     }
   },
   register: async (userData) => {

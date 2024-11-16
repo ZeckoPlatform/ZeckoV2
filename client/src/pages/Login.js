@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { authApi } from '../services/api';
 
 const LoginContainer = styled.div`
   min-height: 100vh;
@@ -106,10 +107,13 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await login(formData);
+      const { token, user } = await authApi.login({
+        email: formData.email,
+        password: formData.password
+      });
       navigate('/dashboard');
     } catch (error) {
-      console.error('Login error:', error);
+      setError(error.message);
     } finally {
       setIsLoading(false);
     }

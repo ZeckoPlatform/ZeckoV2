@@ -106,22 +106,24 @@ try {
     console.error('Socket initialization error:', error);
 }
 
-// Import and use routes with error handling
-try {
-    const userRoutes = require('./routes/userRoutes');
-    const productRoutes = require('./routes/productRoutes');
-    const jobRoutes = require('./routes/api/jobRoutes');
-    // ... other route imports
+// Import routes
+const authRoutes = require('./routes/authRoutes'); // Make sure this path is correct
+const userRoutes = require('./routes/userRoutes');
+const productRoutes = require('./routes/productRoutes');
+const jobRoutes = require('./routes/api/jobRoutes');
 
-    // API Routes
-    app.use('/api/auth', userRoutes);
-    app.use('/api/users', userRoutes);
-    app.use('/api/products', productRoutes);
-    app.use('/api/jobs', jobRoutes);
-    // ... other route uses
-} catch (error) {
-    console.error('Route loading error:', error);
-}
+// API Routes
+app.use('/api/auth', authRoutes);  // This should handle /api/auth/login
+app.use('/api/users', userRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/jobs', jobRoutes);
+
+// Add this after your routes are registered
+console.log('Registered routes:', 
+  app._router.stack
+    .filter(r => r.route)
+    .map(r => `${Object.keys(r.route.methods)} ${r.route.path}`)
+);
 
 // Serve index.html for all non-API routes
 app.get('*', (req, res) => {
