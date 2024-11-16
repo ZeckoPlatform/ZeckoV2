@@ -31,16 +31,19 @@ api.interceptors.response.use(
     }
 );
 
-// Featured items API with timeout and caching
-export const getFeaturedItems = async () => {
-    try {
-        const response = await api.get('/products/featured');
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching featured items:', error);
-        throw error;
+// API methods
+const apiMethods = {
+    getFeaturedItems: async () => {
+        try {
+            const response = await api.get('/products/featured');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching featured items:', error);
+            throw error;
+        }
     }
 };
 
-// Export both the api instance and named exports
-export { api as default, getFeaturedItems }; 
+// Export the api instance and methods
+export default api;
+export const { getFeaturedItems } = apiMethods; 
