@@ -1,5 +1,5 @@
 const express = require('express');
-const User = require('../models/User');
+const User = require('../models/userModel');
 const BusinessUser = require('../models/businessUserModel');
 const { authenticateToken } = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
@@ -11,7 +11,11 @@ router.get('/verify', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select('-password');
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      const businessUser = await BusinessUser.findById(req.user.userId).select('-password');
+      if (!businessUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      return res.json(businessUser);
     }
     res.json(user);
   } catch (error) {
@@ -26,13 +30,19 @@ router.post('/login', async (req, res) => {
     
     console.log('Login attempt for:', email);
 
-    let user = await User.findOne({ email }) || await BusinessUser.findOne({ email });
+    let user = await User.findOne({ email });
+    let isBusinessUser = false;
+
+    if (!user) {
+      user = await BusinessUser.findOne({ email });
+      isBusinessUser = true;
+    }
     
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -40,8 +50,8 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
       { 
         userId: user._id,
-        accountType: user.accountType || 'user',
-        role: user.role || 'user'
+        accountType: isBusinessUser ? 'business' : 'user',
+        role: user.role
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
@@ -54,9 +64,10 @@ router.post('/login', async (req, res) => {
       user: {
         id: user._id,
         email: user.email,
-        accountType: user.accountType || 'user',
-        role: user.role || 'user',
-        businessName: user.businessName
+        username: user.username,
+        accountType: isBusinessUser ? 'business' : 'user',
+        role: user.role,
+        businessName: isBusinessUser ? user.businessName : undefined
       }
     });
   } catch (error) {
@@ -67,26 +78,56 @@ router.post('/login', async (req, res) => {
 
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, accountType, businessName } = req.body;
+    const { email, password, username, accountType, businessName, businessType } = req.body;
 
     const existingUser = await User.findOne({ email }) || await BusinessUser.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    let user;
+    if (accountType === 'business') {
+      user = new BusinessUser({
+        email,
+        password,
+        username,
+        businessName,
+        businessType,
+        role: 'vendor'
+      });
+    } else {
+      user = new User({
+        email,
+        password,
+        username,
+        role: 'user'
+      });
+    }
 
-    const newUser = new User({
-      email,
-      password: hashedPassword,
-      accountType,
-      businessName
+    await user.save();
+
+    const token = jwt.sign(
+      { 
+        userId: user._id,
+        accountType,
+        role: user.role
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.status(201).json({
+      message: 'Registration successful',
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+        accountType,
+        role: user.role,
+        businessName: accountType === 'business' ? user.businessName : undefined
+      }
     });
-
-    await newUser.save();
-
-    res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ message: 'Server error during registration' });
