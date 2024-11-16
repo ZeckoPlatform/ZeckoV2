@@ -187,11 +187,30 @@ const SoundToggle = styled.button`
 `;
 
 function Navigation() {
+  const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  
   const accountType = user?.accountType || localStorage.getItem('accountType') || 'personal';
+
+  useEffect(() => {
+    // Debug logging
+    console.log('Navigation Auth State:', {
+      user,
+      isAuthenticated,
+      accountType
+    });
+  }, [user, isAuthenticated, accountType]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login', { replace: true });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   const getNavLinks = () => {
     const commonLinks = [
@@ -234,30 +253,11 @@ function Navigation() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      localStorage.removeItem('accountType');
-      localStorage.removeItem('token');
-      navigate('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
-
-  useEffect(() => {
-    console.log('Auth state:', {
-      user,
-      accountType,
-      isAuthenticated: !!user
-    });
-  }, [user, accountType]);
-
   return (
     <Nav>
       <TopBar>
         <TopBarContent>
-          {user ? (
+          {isAuthenticated && user ? (
             <>
               <TopBarButton to="/help">Help</TopBarButton>
               <TopBarButton to="/contact">Contact</TopBarButton>
@@ -279,7 +279,7 @@ function Navigation() {
       <NavContainer>
         <Logo to="/">Zecko</Logo>
         <NavLinks>
-          {user ? (
+          {isAuthenticated && user ? (
             <>
               {getNavLinks().map((link, index) => (
                 <NavLink key={index} to={link.to}>

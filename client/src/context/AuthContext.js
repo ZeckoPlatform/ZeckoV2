@@ -14,10 +14,22 @@ const api = axios.create({
 });
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    // Initialize from localStorage
+    const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+    if (token && savedUser) {
+      return JSON.parse(savedUser);
+    }
+    return null;
+  });
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Initialize from localStorage
+    return !!localStorage.getItem('token');
+  });
 
   // Add request interceptor to include token
   api.interceptors.request.use((config) => {
@@ -33,15 +45,24 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (!token) {
         setLoading(false);
+        setIsAuthenticated(false);
+        setUser(null);
         return;
       }
 
       const response = await api.get('/auth/verify');
-      setUser(response.data.user);
+      const userData = response.data.user;
+      
+      // Store user data
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
       setIsAuthenticated(true);
+      
     } catch (error) {
       console.error('Auth check failed:', error);
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('accountType');
       setUser(null);
       setIsAuthenticated(false);
     } finally {
@@ -59,7 +80,9 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post('/auth/login', credentials);
       const { token, user } = response.data;
       
+      // Store everything in localStorage
       localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('accountType', user.accountType || 'personal');
       
       setUser(user);
@@ -99,7 +122,9 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      // Clear all stored data
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
       localStorage.removeItem('accountType');
       setUser(null);
       setIsAuthenticated(false);
