@@ -118,93 +118,77 @@ try {
     console.error('Socket initialization error:', error);
 }
 
-// Import routes
-const authRoutes = require('./routes/auth');  // Changed from authRoutes to auth
-const userRoutes = require('./routes/userRoutes');
-const productRoutes = require('./routes/productRoutes');
-const jobRoutes = require('./routes/jobRoutes');
-
-// API Routes
-try {
-    // Import and use routes with error handling
-    app.use('/api/auth', authRoutes);
-    app.use('/api/users', userRoutes);
-    app.use('/api/products', productRoutes);
-    app.use('/api/jobs', jobRoutes);
-} catch (error) {
-    console.error('Route loading error:', error);
-}
-
-// Add this after your routes are registered
-console.log('Registered routes:', 
-  app._router.stack
-    .filter(r => r.route)
-    .map(r => `${Object.keys(r.route.methods)} ${r.route.path}`)
-);
-
-// Serve index.html for all non-API routes
-app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api')) {
-        res.sendFile(path.join(__dirname, '../client/build/index.html'));
-    }
-});
-
-// Enhanced error handling
-app.use((err, req, res, next) => {
-    console.error('Error:', {
-        message: err.message,
-        path: req.path,
-        method: req.method,
-        timestamp: new Date().toISOString(),
-        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-    });
-
-    if (req.path.startsWith('/api/')) {
-        return res.status(err.status || 500).json({
-            error: true,
-            message: process.env.NODE_ENV === 'production' 
-                ? 'An error occurred' 
-                : err.message,
-            code: err.code || 'INTERNAL_ERROR',
-            timestamp: new Date().toISOString()
-        });
-    }
-
-    res.sendFile(path.join(__dirname, '../client/build/index.html'));
-});
-
-// Handle 404s
-app.use((req, res) => {
-    if (req.path.startsWith('/api/')) {
-        res.status(404).json({
-            error: true,
-            message: 'API endpoint not found'
-        });
-    } else {
-        res.sendFile(path.join(__dirname, '../client/build/index.html'));
-    }
-});
-
-// Check directory structure
+// Update the directory structure check
 const checkDirectoryStructure = () => {
     const requiredDirs = [
         './routes',
-        './routes/api',
         './models',
         './middleware'
     ];
 
+    const missingDirs = [];
     requiredDirs.forEach(dir => {
-        if (!fs.existsSync(path.join(__dirname, dir))) {
-            console.error(`Required directory ${dir} not found`);
-            process.exit(1);
+        const fullPath = path.join(__dirname, dir);
+        if (!fs.existsSync(fullPath)) {
+            missingDirs.push(dir);
+            console.error(`Required directory ${dir} not found at ${fullPath}`);
+        } else {
+            console.log(`Found directory ${dir} at ${fullPath}`);
         }
     });
+
+    if (missingDirs.length > 0) {
+        console.error('Missing required directories:', missingDirs);
+        // Create missing directories instead of exiting
+        missingDirs.forEach(dir => {
+            const fullPath = path.join(__dirname, dir);
+            fs.mkdirSync(fullPath, { recursive: true });
+            console.log(`Created directory ${dir} at ${fullPath}`);
+        });
+    }
 };
 
+// Update route registration
+const registerRoutes = () => {
+    try {
+        // Import routes
+        const routes = {
+            auth: require('./routes/auth'),
+            user: require('./routes/userRoutes'),
+            product: require('./routes/productRoutes'),
+            job: require('./routes/jobRoutes')
+        };
+
+        // Register routes
+        Object.entries(routes).forEach(([name, router]) => {
+            if (router) {
+                const routePath = `/api/${name}`;
+                app.use(routePath, router);
+                console.log(`Registered route: ${routePath}`);
+            }
+        });
+
+        // Log all registered routes
+        console.log('All registered routes:', 
+            app._router.stack
+                .filter(r => r.route)
+                .map(r => `${Object.keys(r.route.methods)} ${r.route.path}`)
+        );
+    } catch (error) {
+        console.error('Route registration error:', error);
+        // Don't exit, just log the error
+    }
+};
+
+// Update startServer function
 const startServer = async () => {
     try {
+        // Check and create directories if needed
         checkDirectoryStructure();
+
+        // Register routes
+        registerRoutes();
+
         // Add this before connecting to MongoDB
         mongoose.set('strictQuery', false);
 
@@ -225,20 +209,40 @@ const startServer = async () => {
         });
     } catch (error) {
         console.error('Server startup error:', error);
-        process.exit(1);
+        // Don't exit immediately, give time for logs
+        setTimeout(() => process.exit(1), 1000);
     }
 };
 
-// Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
-    console.error('Uncaught Exception:', error);
-});
+// Update route validation
+const validateRoutes = () => {
+    const requiredRoutes = [
+        '/api/auth/login',
+        '/api/auth/register',
+        '/api/auth/verify'
+    ];
 
-process.on('unhandledRejection', (error) => {
-    console.error('Unhandled Rejection:', error);
-});
+    const registeredPaths = app._router.stack
+        .filter(r => r.route)
+        .map(r => r.route.path);
 
-startServer();
+    const missingRoutes = requiredRoutes.filter(route => 
+        !registeredPaths.some(path => path.includes(route))
+    );
+
+    if (missingRoutes.length > 0) {
+        console.warn('Warning: Missing required routes:', missingRoutes);
+    } else {
+        console.log('All required routes are registered');
+    }
+};
+
+// Call after registering routes
+startServer().then(() => {
+    validateRoutes();
+}).catch(error => {
+    console.error('Server initialization error:', error);
+});
 
 module.exports = {
     io: () => io,
