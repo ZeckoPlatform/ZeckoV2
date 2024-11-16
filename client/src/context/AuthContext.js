@@ -77,22 +77,36 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       setError(null);
+      setLoading(true);
+      console.log('Attempting login...', credentials.email);
+      
       const response = await api.post('/auth/login', credentials);
+      console.log('Login response:', response.data);
+      
       const { token, user } = response.data;
       
+      if (!token || !user) {
+        throw new Error('Invalid response from server');
+      }
+
       // Store everything in localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('accountType', user.accountType || 'personal');
       
+      // Update state
       setUser(user);
       setIsAuthenticated(true);
       
-      return response.data;
+      console.log('Login successful, user:', user);
+      return { success: true, user };
     } catch (error) {
+      console.error('Login error:', error);
       const message = error.response?.data?.message || 'Login failed';
       setError(message);
-      throw new Error(message);
+      return { success: false, error: message };
+    } finally {
+      setLoading(false);
     }
   };
 

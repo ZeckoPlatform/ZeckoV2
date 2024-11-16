@@ -1,11 +1,11 @@
 import React, { Suspense } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import CssBaseline from '@mui/material/CssBaseline';
 import { muiTheme, theme } from './styles/theme';
 import GlobalStyles from './styles/GlobalStyles';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import styled from 'styled-components';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -72,6 +72,16 @@ const MainContent = styled.main`
 
 function App() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
+  // Add navigation guard
+  React.useEffect(() => {
+    if (isAuthenticated && location.pathname === '/login') {
+      console.log('Already authenticated, redirecting to dashboard');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, location]);
 
   return (
     <MuiThemeProvider theme={muiTheme}>
@@ -97,7 +107,9 @@ function App() {
                   <Routes>
                     {/* Public Routes */}
                     <Route path="/" element={<Home />} />
-                    <Route path="/login" element={<Login />} />
+                    <Route path="/login" element={
+                      isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
+                    } />
                     <Route path="/register" element={<Register />} />
                     <Route path="/products" element={<ProductList />} />
                     <Route path="/products/:id" element={<ProductDetails />} />
@@ -113,7 +125,13 @@ function App() {
                     <Route path="/verify-email/:token" element={<EmailVerification />} />
 
                     {/* Protected Routes */}
-                    <Route path="/dashboard/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                    <Route path="/dashboard" element={
+                      <ProtectedRoute>
+                        <Suspense fallback={<LoadingFallback />}>
+                          <Dashboard />
+                        </Suspense>
+                      </ProtectedRoute>
+                    } />
                     <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
                     <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                     <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />

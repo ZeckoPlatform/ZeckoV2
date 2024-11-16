@@ -5,16 +5,26 @@ import { useAuth } from '../context/AuthContext';
 export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login, error } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
-      await login({ email, password });
-      navigate('/dashboard');
+      console.log('Submitting login form...');
+      const result = await login({ email, password });
+      console.log('Login result:', result);
+
+      if (result.success) {
+        console.log('Navigating to dashboard...');
+        navigate('/dashboard', { replace: true });
+      }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login submission error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -22,6 +32,7 @@ export function Login() {
     <form onSubmit={handleSubmit}>
       <h2>Login</h2>
       {error && <div className="error">{error}</div>}
+      {isLoading && <div>Loading...</div>}
       <div>
         <label htmlFor="email">Email:</label>
         <input
