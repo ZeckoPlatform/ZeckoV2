@@ -1,42 +1,70 @@
 const express = require('express');
 const router = express.Router();
-const Job = require('../../models/jobModel');
-const { auth } = require('../../middleware/auth');
+const Job = require('../models/jobModel');
+const { auth } = require('../middleware/auth');
 const cache = require('memory-cache');
 
-// Timeout middleware
+// Add error handling for model import
+if (!Job) {
+    console.error('Job model not found');
+    throw new Error('Job model not found');
+}
+
+// Add validation middleware
+const validateJob = (req, res, next) => {
+    const { title, description, company, location } = req.body;
+    if (!title || !description || !company || !location) {
+        return res.status(400).json({ 
+            message: 'Missing required fields',
+            required: ['title', 'description', 'company', 'location']
+        });
+    }
+    next();
+};
+
+// Timeout middleware with error handling
 const timeoutMiddleware = (req, res, next) => {
-  req.setTimeout(5000, () => {
-    res.status(503).send('Request timeout');
-  });
-  next();
+    const timeout = setTimeout(() => {
+        clearTimeout(timeout);
+        res.status(503).json({ 
+            message: 'Request timeout',
+            code: 'TIMEOUT_ERROR'
+        });
+    }, 5000);
+
+    req.on('end', () => clearTimeout(timeout));
+    next();
 };
 
 // Get featured jobs with caching
 router.get('/featured', timeoutMiddleware, async (req, res) => {
-  try {
-    // Check cache first
-    const cachedJobs = cache.get('featured_jobs');
-    if (cachedJobs) {
-      return res.json(cachedJobs);
+    try {
+        const cachedJobs = cache.get('featured_jobs');
+        if (cachedJobs) {
+            return res.json(cachedJobs);
+        }
+
+        const jobs = await Job.find({ featured: true })
+            .select('title description company location salary type createdAt postedBy')
+            .sort({ createdAt: -1 })
+            .limit(6)
+            .populate('postedBy', 'username')
+            .lean()
+            .exec();
+
+        if (!jobs) {
+            return res.status(404).json({ message: 'No featured jobs found' });
+        }
+
+        cache.put('featured_jobs', jobs, 5 * 60 * 1000);
+        res.json(jobs);
+    } catch (error) {
+        console.error('Featured jobs error:', error);
+        res.status(500).json({ 
+            message: 'Error fetching featured jobs',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
-
-    const jobs = await Job.find({ featured: true })
-      .select('title description company location salary type createdAt postedBy')
-      .sort({ createdAt: -1 })
-      .limit(6)
-      .populate('postedBy', 'username')
-      .lean()
-      .exec();
-
-    // Cache for 5 minutes
-    cache.put('featured_jobs', jobs, 5 * 60 * 1000);
-    
-    res.json(jobs);
-  } catch (error) {
-    console.error('Featured jobs error:', error);
-    res.status(500).json({ message: 'Error fetching featured jobs' });
-  }
 });
 
 // Get user's jobs with caching
@@ -65,7 +93,7 @@ router.get('/user/:userId', auth, timeoutMiddleware, async (req, res) => {
 });
 
 // Create new job
-router.post('/', auth, timeoutMiddleware, async (req, res) => {
+router.post('/', auth, timeoutMiddleware, validateJob, async (req, res) => {
   try {
     const job = new Job({
       ...req.body,
@@ -129,6 +157,15 @@ router.delete('/:id', auth, timeoutMiddleware, async (req, res) => {
     console.error('Delete job error:', error);
     res.status(500).json({ message: 'Error deleting job' });
   }
+});
+
+// Add global error handler for this router
+router.use((error, req, res, next) => {
+    console.error('Job routes error:', error);
+    res.status(500).json({
+        message: 'An error occurred in job routes',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
 });
 
 module.exports = router;

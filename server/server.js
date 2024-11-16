@@ -122,7 +122,7 @@ try {
 const authRoutes = require('./routes/auth');  // Changed from authRoutes to auth
 const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
-const jobRoutes = require('./routes/api/jobRoutes');
+const jobRoutes = require('./routes/jobRoutes');
 
 // API Routes
 try {
