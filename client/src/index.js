@@ -6,7 +6,6 @@ import ErrorBoundary from './components/error/ErrorBoundary';
 import Home from './pages/Home';
 import ProductList from './pages/ProductList';
 import Dashboard from './pages/Dashboard';
-// ... import all your pages
 
 // Define routes with proper nesting
 const router = createBrowserRouter([
@@ -15,20 +14,15 @@ const router = createBrowserRouter([
     element: <App />,
     errorElement: <ErrorBoundary />,
     children: [
-      {
-        index: true,
-        element: <Home />
-      },
-      {
-        path: 'products',
-        element: <ProductList />
-      },
-      // Convert any splat routes to proper nesting
-      {
-        path: 'dashboard',
-        element: <Dashboard />
+      { index: true, element: <Home /> },
+      { path: 'products', element: <ProductList /> },
+      { 
+        path: 'dashboard/*',  // Changed to handle nested routes
+        element: <Dashboard />,
+        children: [
+          { index: true, element: <Dashboard /> }
+        ]
       }
-      // ... define all your routes here
     ]
   }
 ], {
@@ -43,8 +37,12 @@ const router = createBrowserRouter([
   basename: process.env.PUBLIC_URL || ''
 });
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+// Initialize future flags globally
+if (typeof window !== 'undefined') {
+  window.__reactRouterFutureFlags = router.future;
+}
 
+const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <RouterProvider router={router} />

@@ -1,7 +1,9 @@
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-const BASE_URL = process.env.REACT_APP_API_URL || '/api';
+const BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://zeckov2-deceb43992ac.herokuapp.com/api'
+  : 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -9,7 +11,8 @@ const api = axios.create({
     'Accept': 'application/json',
     'Content-Type': 'application/json'
   },
-  validateStatus: status => status >= 200 && status < 500
+  validateStatus: status => status >= 200 && status < 500,
+  timeout: 15000
 });
 
 // Request interceptor
@@ -19,20 +22,38 @@ api.interceptors.request.use(config => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   // Add timestamp to prevent caching
-  config.params = { ...config.params, _t: Date.now() };
+  config.params = { 
+    ...config.params, 
+    _t: Date.now(),
+    env: process.env.NODE_ENV 
+  };
   return config;
-});
+}, error => Promise.reject(error));
 
 // Response interceptor
 api.interceptors.response.use(
   response => {
     const contentType = response.headers['content-type'];
-    if (contentType && contentType.includes('text/html')) {
+    if (contentType?.includes('text/html')) {
+      console.error('Received HTML response:', {
+        url: response.config.url,
+        status: response.status,
+        contentType
+      });
       throw new Error('Invalid response type: expected JSON, got HTML');
     }
     return response;
   },
   error => {
+    const errorDetails = {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      data: error.response?.data
+    };
+
+    console.error('API Error:', errorDetails);
+
     if (error.response) {
       switch (error.response.status) {
         case 401:
@@ -47,20 +68,16 @@ api.interceptors.response.use(
           toast.error('Server error. Please try again later.');
           break;
         default:
-          toast.error(error.response.data);
-          break;
+          toast.error(error.response.data?.message || 'An unexpected error occurred');
       }
     } else if (error.request) {
-      console.error('No response received:', {
-        url: error.config.url,
-        method: error.config.method
-      });
+      toast.error('Network error. Please check your connection.');
     }
     return Promise.reject(error);
   }
 );
 
-// API endpoints with better error handling
+// API endpoints
 export const fetchJobs = async () => {
   try {
     const response = await api.get('/jobs', {
@@ -76,7 +93,7 @@ export const fetchJobs = async () => {
       url: error.config?.url,
       response: error.response?.data
     });
-    throw new Error('Failed to fetch jobs. Please try again later.');
+    throw error;
   }
 };
 
@@ -95,11 +112,10 @@ export const fetchContractors = async () => {
       url: error.config?.url,
       response: error.response?.data
     });
-    throw new Error('Failed to fetch contractors. Please try again later.');
+    throw error;
   }
 };
 
-// Test endpoint to verify API connection
 export const testApiConnection = async () => {
   try {
     const response = await api.get('/health');
