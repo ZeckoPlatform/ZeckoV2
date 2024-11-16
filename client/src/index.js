@@ -5,6 +5,7 @@ import App from './App';
 import ErrorBoundary from './components/error/ErrorBoundary';
 import Home from './pages/Home';
 import ProductList from './pages/ProductList';
+import Dashboard from './pages/Dashboard';
 // ... import all your pages
 
 // Define routes with proper nesting
@@ -25,12 +26,7 @@ const router = createBrowserRouter([
       // Convert any splat routes to proper nesting
       {
         path: 'dashboard',
-        children: [
-          {
-            path: '*',
-            element: <Dashboard />
-          }
-        ]
+        element: <Dashboard />
       }
       // ... define all your routes here
     ]
