@@ -8,16 +8,26 @@ const ProtectedRoute = ({ children }) => {
 
   console.log('ProtectedRoute:', { isAuthenticated, loading, user });
 
-  if (loading) {
+  // Show loading state for a maximum of 2 seconds
+  const [showLoading, setShowLoading] = React.useState(loading);
+
+  React.useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => setShowLoading(false), 2000);
+      return () => clearTimeout(timer);
+    }
+    setShowLoading(false);
+  }, [loading]);
+
+  if (showLoading) {
     return <div>Loading...</div>;
   }
 
-  if (!isAuthenticated || !user) {
+  if (!isAuthenticated) {
     console.log('Not authenticated, redirecting to login');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  console.log('Authenticated, rendering protected content');
   return children;
 };
 

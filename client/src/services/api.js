@@ -22,12 +22,22 @@ api.interceptors.request.use(config => {
   return config;
 });
 
-// Featured items API
+// Featured items API with timeout
 export const getFeaturedItems = async () => {
   try {
-    const response = await api.get('/products/featured');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+    const response = await api.get('/products/featured', {
+      signal: controller.signal
+    });
+
+    clearTimeout(timeout);
     return response.data;
   } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('Request timeout');
+    }
     console.error('Error fetching featured items:', error);
     throw error;
   }

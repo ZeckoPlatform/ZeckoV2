@@ -50,14 +50,34 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      const response = await api.get('/auth/verify');
-      const userData = response.data.user;
-      
-      // Store user data
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-      setIsAuthenticated(true);
-      
+      try {
+        const response = await api.get('/auth/verify');
+        const userData = response.data.user;
+        
+        // Store user data
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        setIsAuthenticated(true);
+      } catch (error) {
+        if (error.response?.status === 404) {
+          // If verify endpoint doesn't exist, try to decode token locally
+          const token = localStorage.getItem('token');
+          if (token) {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+              setUser(JSON.parse(savedUser));
+              setIsAuthenticated(true);
+            }
+          }
+        } else {
+          // Other errors - clear auth state
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('accountType');
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      }
     } catch (error) {
       console.error('Auth check failed:', error);
       localStorage.removeItem('token');

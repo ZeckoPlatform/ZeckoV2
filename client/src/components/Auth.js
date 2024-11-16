@@ -18,8 +18,10 @@ export function Login() {
       console.log('Login result:', result);
 
       if (result.success) {
-        console.log('Navigating to dashboard...');
-        navigate('/dashboard', { replace: true });
+        console.log('Login successful, navigating...');
+        setTimeout(() => {
+          navigate('/dashboard', { replace: true });
+        }, 100);
       }
     } catch (error) {
       console.error('Login submission error:', error);
