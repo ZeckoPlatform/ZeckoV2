@@ -7,62 +7,99 @@ const BASE_URL = process.env.NODE_ENV === 'production'
 
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 15000,
+  timeout: 8000,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// Add request interceptor
+// Add request interceptor with timeout handling
 api.interceptors.request.use(
   config => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Add cache control headers
+    config.headers['Cache-Control'] = 'no-cache';
+    config.headers['Pragma'] = 'no-cache';
     return config;
   },
   error => Promise.reject(error)
 );
 
-// Add response interceptor
+// Add response interceptor with retry logic
 api.interceptors.response.use(
   response => response,
   async error => {
-    if (error.code === 'ECONNABORTED' || error.response?.status === 503) {
-      const retries = error.config._retry || 0;
-      if (retries < 2) {
-        error.config._retry = retries + 1;
-        return api(error.config);
-      }
+    const originalRequest = error.config;
+    
+    // Handle timeout specifically
+    if (error.code === 'ECONNABORTED' && originalRequest._retry !== true) {
+      originalRequest._retry = true;
+      return api(originalRequest);
     }
-    throw error;
+
+    // Handle 503 errors
+    if (error.response?.status === 503 && originalRequest._retry !== true) {
+      originalRequest._retry = true;
+      return new Promise(resolve => setTimeout(() => resolve(api(originalRequest)), 2000));
+    }
+
+    return Promise.reject(error);
   }
 );
 
-// Jobs API
+// Jobs API with optimized endpoints
 export const jobsApi = {
-  getFeatured: () => api.get('/jobs/featured'),
+  getFeatured: async () => {
+    try {
+      const response = await api.get('/jobs/featured', { 
+        timeout: 5000,
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching featured jobs:', error);
+      return [];
+    }
+  },
   getUserJobs: (userId) => api.get(`/jobs/user/${userId}`),
   create: (jobData) => api.post('/jobs', jobData),
   update: (jobId, jobData) => api.put(`/jobs/${jobId}`, jobData),
   delete: (jobId) => api.delete(`/jobs/${jobId}`)
 };
 
-// Featured items service
+// Featured items service with optimized fetching
 export const getFeaturedItems = async () => {
   try {
-    const [jobsResponse] = await Promise.all([
-      jobsApi.getFeatured()
+    // Use Promise.race to implement a timeout
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Request timeout')), 10000)
+    );
+
+    const fetchPromise = Promise.all([
+      api.get('/jobs/featured', { timeout: 5000 })
+        .catch(() => ({ data: [] })), // Fallback for jobs
+      api.get('/contractors/featured', { timeout: 5000 })
+        .catch(() => ({ data: [] })) // Fallback for contractors
+    ]);
+
+    const [jobsResponse, contractorsResponse] = await Promise.race([
+      fetchPromise,
+      timeoutPromise
     ]);
 
     return {
-      jobs: jobsResponse.data,
-      contractors: [] // Placeholder until contractors are implemented
+      jobs: jobsResponse.data || [],
+      contractors: contractorsResponse.data || []
     };
   } catch (error) {
     console.error('Error fetching featured items:', error);
-    toast.error('Failed to load featured items');
+    toast.error('Some content failed to load. Please refresh the page.');
     return {
       jobs: [],
       contractors: []

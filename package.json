@@ -19,6 +19,7 @@
     "express-rate-limit": "^7.1.4",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "memory-cache": "^0.2.0",
     "mongoose": "^6.12.3",
     "nodemailer": "^6.9.7",
     "path": "^0.12.7",
