@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/productModel');
-const { auth } = require('../middleware/auth');
+const cache = require('memory-cache');
 
 // List a new product
 router.post('/', auth, async (req, res) => {
@@ -112,6 +112,47 @@ router.get('/shop/search', async (req, res) => {
     console.error('Error searching products:', error);
     res.status(500).json({ message: 'Error searching products' });
   }
+});
+
+// Get featured products
+router.get('/featured', async (req, res) => {
+    try {
+        // Check cache first
+        const cachedProducts = cache.get('featured_products');
+        if (cachedProducts) {
+            return res.json(cachedProducts);
+        }
+
+        // Set timeout for query
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Database timeout')), 5000);
+        });
+
+        // Database query
+        const queryPromise = Product.find({ featured: true })
+            .select('title description price images featured')
+            .limit(6)
+            .lean()
+            .exec();
+
+        // Race between timeout and query
+        const products = await Promise.race([queryPromise, timeoutPromise]);
+
+        // Cache results for 5 minutes
+        cache.put('featured_products', products, 5 * 60 * 1000);
+
+        res.json(products);
+    } catch (error) {
+        console.error('Featured products error:', error);
+        if (error.message === 'Database timeout') {
+            return res.status(503).json({ 
+                message: 'Service temporarily unavailable' 
+            });
+        }
+        res.status(500).json({ 
+            message: 'Error fetching featured products' 
+        });
+    }
 });
 
 module.exports = router;

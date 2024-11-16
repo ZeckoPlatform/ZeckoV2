@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { logger } from '../../services/logger/Logger';
 import { FiAlertTriangle, FiRefreshCw, FiHome } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { useEffect } from 'react';
 
 const ErrorContainer = styled(motion.div)`
   display: flex;
@@ -68,7 +70,8 @@ const Button = styled(motion.button)`
 // Wrap the class component to use hooks
 const ErrorBoundaryWithRouter = (props) => {
   const navigate = useNavigate();
-  return <ErrorBoundary {...props} navigate={navigate} />;
+  const { logout } = useAuth();
+  return <ErrorBoundary {...props} navigate={navigate} logout={logout} />;
 };
 
 class ErrorBoundary extends React.Component {
@@ -77,12 +80,18 @@ class ErrorBoundary extends React.Component {
     this.state = { 
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
+      isAuthError: false,
+      isTimeout: false
     };
   }
 
   static getDerivedStateFromError(error) {
-    return { hasError: true };
+    return { 
+      hasError: true,
+      isAuthError: error.message?.includes('Authentication failed'),
+      isTimeout: error.message?.includes('timeout') || error.code === 'ECONNABORTED'
+    };
   }
 
   componentDidCatch(error, errorInfo) {
@@ -93,9 +102,21 @@ class ErrorBoundary extends React.Component {
 
     logger.error('React Error Boundary Caught Error:', error, {
       componentStack: errorInfo.componentStack,
-      url: window.location.href
+      url: window.location.href,
+      isAuthError: error.message?.includes('Authentication failed'),
+      isTimeout: error.message?.includes('timeout') || error.code === 'ECONNABORTED'
     });
+
+    // Handle auth errors
+    if (error.message?.includes('Authentication failed')) {
+      this.handleAuthError();
+    }
   }
+
+  handleAuthError = async () => {
+    await this.props.logout();
+    this.props.navigate('/login');
+  };
 
   handleReload = () => {
     window.location.reload();
@@ -105,13 +126,26 @@ class ErrorBoundary extends React.Component {
     this.setState({
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
+      isAuthError: false,
+      isTimeout: false
     });
   };
 
   handleGoHome = () => {
     this.props.navigate('/');
     this.handleReset();
+  };
+
+  getErrorMessage = () => {
+    if (this.state.isAuthError) {
+      return "Your session has expired. Please log in again.";
+    }
+    if (this.state.isTimeout) {
+      return "The request took too long to complete. Please try again.";
+    }
+    return this.props.fallbackMessage || 
+      "We're sorry, but something went wrong. Please try again or contact support if the problem persists.";
   };
 
   render() {
@@ -129,27 +163,40 @@ class ErrorBoundary extends React.Component {
           >
             <FiAlertTriangle />
           </ErrorIcon>
-          <ErrorTitle>Oops! Something went wrong</ErrorTitle>
+          <ErrorTitle>
+            {this.state.isAuthError ? 'Session Expired' : 'Oops! Something went wrong'}
+          </ErrorTitle>
           <ErrorMessage>
-            {this.props.fallbackMessage || 
-              "We're sorry, but something went wrong. Please try again or contact support if the problem persists."}
+            {this.getErrorMessage()}
           </ErrorMessage>
           <ErrorActions>
-            <Button
-              onClick={this.handleReload}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FiRefreshCw /> Reload Page
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={this.handleReset}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Try Again
-            </Button>
+            {!this.state.isAuthError && (
+              <Button
+                onClick={this.handleReload}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <FiRefreshCw /> Reload Page
+              </Button>
+            )}
+            {this.state.isAuthError ? (
+              <Button
+                onClick={() => this.props.navigate('/login')}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Log In Again
+              </Button>
+            ) : (
+              <Button
+                variant="outlined"
+                onClick={this.handleReset}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Try Again
+              </Button>
+            )}
             <Button
               variant="outlined"
               onClick={this.handleGoHome}

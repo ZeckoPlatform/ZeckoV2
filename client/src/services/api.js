@@ -1,84 +1,34 @@
 import axios from 'axios';
-import { toast } from 'react-toastify';
-
-const BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://zeckov2-deceb43992ac.herokuapp.com/api'
-  : 'http://localhost:5000/api';
 
 const api = axios.create({
-  baseURL: BASE_URL,
-  timeout: 15000,
-  headers: {
-    'Content-Type': 'application/json'
-  }
+    baseURL: process.env.NODE_ENV === 'production' 
+        ? 'https://zeckov2-deceb43992ac.herokuapp.com/api'
+        : 'http://localhost:5000/api',
+    timeout: 10000, // 10 second timeout
+    headers: {
+        'Content-Type': 'application/json'
+    }
 });
 
-// Add request interceptor
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// Add retry logic
+api.interceptors.response.use(
+    response => response,
+    async error => {
+        const originalRequest = error.config;
+        
+        if (error.code === 'ECONNABORTED' && !originalRequest._retry) {
+            originalRequest._retry = true;
+            return api(originalRequest);
+        }
 
-// Featured items API with timeout
-export const getFeaturedItems = async () => {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        if (error.response?.status === 503 && !originalRequest._retry) {
+            originalRequest._retry = true;
+            return new Promise(resolve => setTimeout(resolve, 1000))
+                .then(() => api(originalRequest));
+        }
 
-    const response = await api.get('/products/featured', {
-      signal: controller.signal
-    });
-
-    clearTimeout(timeout);
-    return response.data;
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      throw new Error('Request timeout');
+        return Promise.reject(error);
     }
-    console.error('Error fetching featured items:', error);
-    throw error;
-  }
-};
-
-// Other API exports
-export const authApi = {
-  login: async (credentials) => {
-    try {
-      const response = await api.post('/auth/login', credentials);
-      const { token, user } = response.data;
-      
-      // Store token
-      localStorage.setItem('token', token);
-      
-      return { token, user };
-    } catch (error) {
-      console.error('Login error:', error);
-      throw new Error(error.response?.data?.message || 'Login failed');
-    }
-  },
-  register: async (userData) => {
-    try {
-      const response = await api.post('/auth/register', userData);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  }
-};
-
-export const productApi = {
-  getFeatured: getFeaturedItems,
-  getAll: async () => {
-    try {
-      const response = await api.get('/products');
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  }
-};
+);
 
 export default api; 

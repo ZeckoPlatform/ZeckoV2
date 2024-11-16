@@ -19,13 +19,24 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false
 }));
 
-// Rate limiting
+// Rate limiting configuration
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
-    message: { error: 'Too many requests, please try again later.' }
+    message: { error: 'Too many requests, please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    trustProxy: true,
+    keyGenerator: (req) => {
+        return req.headers['x-forwarded-for']?.split(',')[0].trim() || 
+               req.socket.remoteAddress;
+    }
 });
 
+// Trust proxy for Heroku
+app.set('trust proxy', 1);
+
+// Apply rate limiting to API routes
 app.use('/api/', limiter);
 
 // Middleware Setup
@@ -100,6 +111,10 @@ const startServer = async () => {
         await mongoose.connect(process.env.MONGODB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+            connectTimeoutMS: 10000,
+            heartbeatFrequencyMS: 30000
         });
         console.log('Connected to MongoDB');
 
