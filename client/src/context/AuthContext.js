@@ -134,11 +134,13 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await api.post('/auth/logout');
-    } catch (error) {
-      console.error('Logout error:', error);
+      // Try to call logout endpoint
+      await api.post('/auth/logout').catch(error => {
+        console.warn('Logout endpoint error:', error);
+        // Continue with local logout even if server request fails
+      });
     } finally {
-      // Clear all stored data
+      // Always clear local state
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('accountType');

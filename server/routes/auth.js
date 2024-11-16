@@ -11,15 +11,28 @@ router.get('/verify', authenticateToken, async (req, res) => {
   try {
     console.log('Verify endpoint called with user:', req.user);
     
-    // Since we already have user data from authenticateToken
+    // Find the full user data
+    let user;
+    if (req.user.accountType === 'business') {
+      user = await BusinessUser.findById(req.user.id).select('-password').lean();
+    } else {
+      user = await User.findById(req.user.id).select('-password').lean();
+    }
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     res.json({ 
       user: {
-        id: req.user.id,
-        email: req.user.email,
-        username: req.user.username,
+        id: user._id,
+        email: user.email,
+        username: user.username,
         accountType: req.user.accountType,
-        role: req.user.role,
-        businessName: req.user.businessName
+        role: user.role,
+        businessName: user.businessName,
+        // Add any other needed user fields
+        createdAt: user.createdAt
       },
       verified: true 
     });
@@ -136,6 +149,26 @@ router.post('/register', async (req, res) => {
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ message: 'Server error during registration' });
+  }
+});
+
+router.post('/logout', authenticateToken, async (req, res) => {
+  try {
+    // Since we're using JWT, we don't need to do server-side logout
+    // The client will remove the token
+    // But we can blacklist the token if needed
+    
+    // Optional: Add token to blacklist
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (token) {
+      // You could add the token to a blacklist in Redis or your database
+      // await blacklistToken(token);
+    }
+
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ message: 'Server error during logout' });
   }
 });
 
