@@ -191,13 +191,22 @@ function Navigation() {
   const { user, logout } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  const accountType = localStorage.getItem('accountType') || 'personal';
+  const accountType = user?.accountType || localStorage.getItem('accountType') || 'personal';
 
   const getNavLinks = () => {
     const commonLinks = [
       { to: '/shop', label: 'Shop' },
       { to: '/cart', label: 'Cart', icon: <FaShoppingCart style={{ marginRight: '5px' }} /> }
     ];
+
+    if (user?.role === 'admin') {
+      return [
+        { to: '/admin', label: 'Admin Dashboard' },
+        { to: '/admin/products', label: 'Products' },
+        { to: '/admin/users', label: 'Users' },
+        ...commonLinks
+      ];
+    }
 
     switch(accountType) {
       case 'business':
@@ -228,11 +237,21 @@ function Navigation() {
   const handleLogout = async () => {
     try {
       await logout();
-      // Navigation is handled in the AuthContext logout function
+      localStorage.removeItem('accountType');
+      localStorage.removeItem('token');
+      navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
     }
   };
+
+  useEffect(() => {
+    console.log('Auth state:', {
+      user,
+      accountType,
+      isAuthenticated: !!user
+    });
+  }, [user, accountType]);
 
   return (
     <Nav>
@@ -242,7 +261,11 @@ function Navigation() {
             <>
               <TopBarButton to="/help">Help</TopBarButton>
               <TopBarButton to="/contact">Contact</TopBarButton>
-              <TopBarButton to="/dashboard">My Dashboard</TopBarButton>
+              {user.role === 'admin' ? (
+                <TopBarButton to="/admin">Admin Dashboard</TopBarButton>
+              ) : (
+                <TopBarButton to="/dashboard">My Dashboard</TopBarButton>
+              )}
               <TopBarButton to="/security-settings">Security</TopBarButton>
             </>
           ) : (
@@ -277,12 +300,17 @@ function Navigation() {
             </>
           ) : (
             <>
-              <Button as={Link} to="/login">Login</Button>
-              <Button as={Link} to="/register">Register</Button>
+              <NavLink to="/login">Login</NavLink>
+              <NavLink to="/register">Register</NavLink>
             </>
           )}
         </NavLinks>
       </NavContainer>
+      {showNotifications && (
+        <NotificationDropdown isOpen={showNotifications}>
+          {/* Add your notification content here */}
+        </NotificationDropdown>
+      )}
     </Nav>
   );
 }
