@@ -96,8 +96,11 @@ const checkRole = (roles) => {
 const isAdmin = checkRole(['admin']);
 const isVendor = checkRole(['vendor', 'admin']);
 
+// Change authenticateToken to auth for consistency
+const authenticateToken = auth;  // Add this line to maintain backward compatibility
 module.exports = {
     auth,
+    authenticateToken, // For backward compatibility
     isAdmin,
     isVendor
 };

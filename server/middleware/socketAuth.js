@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const BusinessUser = require('../models/businessUserModel');
-const VendorUser = require('../models/vendorUserModel');
 
 const socketAuth = async (socket, next) => {
     try {
@@ -14,15 +13,10 @@ const socketAuth = async (socket, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
         let user;
-        switch(decoded.accountType) {
-            case 'business':
-                user = await BusinessUser.findById(decoded.userId);
-                break;
-            case 'vendor':
-                user = await VendorUser.findById(decoded.userId);
-                break;
-            default:
-                user = await User.findById(decoded.userId);
+        if (decoded.accountType === 'business') {
+            user = await BusinessUser.findById(decoded.userId);
+        } else {
+            user = await User.findById(decoded.userId);
         }
 
         if (!user) {
@@ -32,7 +26,7 @@ const socketAuth = async (socket, next) => {
         socket.user = {
             id: user._id,
             accountType: decoded.accountType,
-            role: decoded.role
+            role: user.role
         };
         
         next();
