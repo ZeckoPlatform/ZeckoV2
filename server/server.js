@@ -4,16 +4,29 @@ const mongoose = require('mongoose');
 const http = require('http');
 const cors = require('cors');
 const path = require('path');
+const compression = require('compression');
 
 // Initialize Express and create server
 const app = express();
 const server = http.createServer(app);
 
+// Optimize compression
+app.use(compression({
+  level: 6,
+  threshold: 0,
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  }
+}));
+
 // Configure CORS with expanded headers
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? 'https://zeckov2-deceb43992ac.herokuapp.com' 
-    : 'http://localhost:3000',
+    ? ['https://zeckov2-deceb43992ac.herokuapp.com']
+    : ['http://localhost:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
@@ -25,24 +38,36 @@ app.use(cors({
   ]
 }));
 
-// Add cache control middleware
-app.use((req, res, next) => {
-  // Add cache headers for API routes
-  if (req.path.startsWith('/api/')) {
-    res.set({
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    });
+// Static files with optimized caching
+const staticOptions = {
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, path) => {
+    // Long cache for static assets with hash in filename
+    if (path.includes('.chunk.') || path.includes('main.') || path.includes('runtime.')) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year
+    } else if (path.endsWith('.html')) {
+      // No cache for HTML files
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    } else {
+      // Moderate cache for other static files
+      res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day
+    }
   }
-  next();
-});
+};
 
-// Add content type middleware
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api/')) {
-    res.type('application/json');
-  }
+app.use(express.static(path.join(__dirname, '../client/build'), staticOptions));
+
+// API middleware with optimized headers
+app.use('/api', (req, res, next) => {
+  res.set({
+    'Cache-Control': 'private, no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '-1',
+    'Content-Type': 'application/json',
+    'X-Content-Type-Options': 'nosniff',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'
+  });
   next();
 });
 
@@ -61,9 +86,6 @@ try {
   console.error('Socket initialization error:', error);
 }
 
-// Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../client/build')));
-
 // Import and use routes with error handling
 try {
   const userRoutes = require('./routes/userRoutes');
@@ -79,31 +101,46 @@ try {
   console.error('Route loading error:', error);
 }
 
-// The "catchall" handler for React routing
+// Serve index.html for all non-API routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/build/index.html'));
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, '../client/build/index.html'));
+  }
 });
 
-// Error handling middleware
+// Optimize error handling
 app.use((err, req, res, next) => {
   console.error('Error:', {
     message: err.message,
-    stack: err.stack,
     path: req.path,
-    method: req.method
+    method: req.method,
+    timestamp: new Date().toISOString()
   });
 
-  // Ensure JSON response for API routes
   if (req.path.startsWith('/api/')) {
     return res.status(err.status || 500).json({
       error: true,
       message: process.env.NODE_ENV === 'production' 
         ? 'An error occurred' 
-        : err.message
+        : err.message,
+      code: err.code || 'INTERNAL_ERROR'
     });
   }
 
-  next(err);
+  // For client routes, return index.html
+  res.sendFile(path.join(__dirname, '../client/build/index.html'));
+});
+
+// Handle 404s
+app.use((req, res) => {
+  if (req.path.startsWith('/api/')) {
+    res.status(404).json({
+      error: true,
+      message: 'API endpoint not found'
+    });
+  } else {
+    res.sendFile(path.join(__dirname, '../client/build/index.html'));
+  }
 });
 
 const startServer = async () => {
@@ -118,10 +155,13 @@ const startServer = async () => {
     });
     console.log('Connected to MongoDB');
 
+    // Use the PORT environment variable provided by Heroku
     const PORT = process.env.PORT || 5000;
-    server.listen(PORT, () => {
+    
+    server.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on port ${PORT}`);
       console.log('Environment:', process.env.NODE_ENV);
+      console.log('MongoDB URI:', process.env.MONGODB_URI.split('@')[1]); // Log only the host part
     });
   } catch (error) {
     console.error('Server startup error:', error);
