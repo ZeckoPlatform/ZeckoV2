@@ -4,7 +4,7 @@ const api = axios.create({
     baseURL: process.env.NODE_ENV === 'production' 
         ? 'https://zeckov2-deceb43992ac.herokuapp.com/api'
         : 'http://localhost:5000/api',
-    timeout: 10000, // 10 second timeout
+    timeout: 10000,
     headers: {
         'Content-Type': 'application/json'
     }
@@ -31,4 +31,16 @@ api.interceptors.response.use(
     }
 );
 
-export default api; 
+// Featured items API with timeout and caching
+export const getFeaturedItems = async () => {
+    try {
+        const response = await api.get('/products/featured');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching featured items:', error);
+        throw error;
+    }
+};
+
+// Export both the api instance and named exports
+export { api as default, getFeaturedItems }; 
