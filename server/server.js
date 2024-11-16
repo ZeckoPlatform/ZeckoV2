@@ -7,6 +7,7 @@ const path = require('path');
 const compression = require('compression');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const fs = require('fs');
 
 // Initialize Express and create server
 const app = express();
@@ -76,7 +77,18 @@ const staticOptions = {
     }
 };
 
-app.use(express.static(path.join(__dirname, '../client/build'), staticOptions));
+if (process.env.NODE_ENV === 'production') {
+    try {
+        app.use(express.static(path.join(__dirname, '../client/build'), staticOptions));
+        app.get('*', (req, res) => {
+            if (!req.path.startsWith('/api')) {
+                res.sendFile(path.join(__dirname, '../client/build/index.html'));
+            }
+        });
+    } catch (error) {
+        console.error('Static file serving error:', error);
+    }
+}
 
 // API middleware with optimized headers
 app.use('/api', (req, res, next) => {
@@ -107,16 +119,21 @@ try {
 }
 
 // Import routes
-const authRoutes = require('./routes/authRoutes'); // Make sure this path is correct
+const authRoutes = require('./routes/auth');  // Changed from authRoutes to auth
 const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
 const jobRoutes = require('./routes/api/jobRoutes');
 
 // API Routes
-app.use('/api/auth', authRoutes);  // This should handle /api/auth/login
-app.use('/api/users', userRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/jobs', jobRoutes);
+try {
+    // Import and use routes with error handling
+    app.use('/api/auth', authRoutes);
+    app.use('/api/users', userRoutes);
+    app.use('/api/products', productRoutes);
+    app.use('/api/jobs', jobRoutes);
+} catch (error) {
+    console.error('Route loading error:', error);
+}
 
 // Add this after your routes are registered
 console.log('Registered routes:', 
@@ -168,8 +185,26 @@ app.use((req, res) => {
     }
 });
 
+// Check directory structure
+const checkDirectoryStructure = () => {
+    const requiredDirs = [
+        './routes',
+        './routes/api',
+        './models',
+        './middleware'
+    ];
+
+    requiredDirs.forEach(dir => {
+        if (!fs.existsSync(path.join(__dirname, dir))) {
+            console.error(`Required directory ${dir} not found`);
+            process.exit(1);
+        }
+    });
+};
+
 const startServer = async () => {
     try {
+        checkDirectoryStructure();
         // Add this before connecting to MongoDB
         mongoose.set('strictQuery', false);
 
@@ -228,4 +263,26 @@ module.exports = {
         }
     }
 };
+
+// Add after route registration
+const validateRoutes = () => {
+    const requiredRoutes = [
+        '/api/auth/login',
+        '/api/auth/register',
+        '/api/auth/verify'
+    ];
+
+    const registeredPaths = app._router.stack
+        .filter(r => r.route)
+        .map(r => r.route.path);
+
+    requiredRoutes.forEach(route => {
+        if (!registeredPaths.includes(route)) {
+            console.warn(`Warning: Required route ${route} is not registered`);
+        }
+    });
+};
+
+// Call after registering routes
+validateRoutes();
 
