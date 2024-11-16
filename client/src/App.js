@@ -33,7 +33,7 @@ import OrderConfirmation from './pages/OrderConfirmation';
 import Profile from './pages/Profile';
 import AddressManagement from './pages/AddressManagement';
 import BusinessProfile from './pages/BusinessProfile';
-import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminDashboard from './components/admin/AdminDashboard';
 
 // Lazy loaded components
 const Shop = React.lazy(() => import('./pages/Shop'));
