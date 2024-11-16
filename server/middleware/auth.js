@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const User = require('../models/userModel');
 const BusinessUser = require('../models/businessUserModel');
+const cache = require('memory-cache');
 
 // Main authentication middleware
 const auth = async (req, res, next) => {
@@ -13,6 +14,13 @@ const auth = async (req, res, next) => {
             return res.status(401).json({ message: 'No auth token' });
         }
 
+        // Check token cache first
+        const cachedUser = cache.get(`auth_${token}`);
+        if (cachedUser) {
+            req.user = cachedUser;
+            return next();
+        }
+
         console.log('Token received:', token.substring(0, 20) + '...');
         
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -22,40 +30,44 @@ const auth = async (req, res, next) => {
             role: decoded.role
         });
 
-        // Ensure userId is a valid ObjectId
         if (!mongoose.Types.ObjectId.isValid(decoded.userId)) {
             throw new Error('Invalid user ID format');
         }
 
         let user;
-        if (decoded.accountType === 'business') {
-            user = await BusinessUser.findById(decoded.userId)
-                .select('-password')
-                .lean();
-            console.log('Business user found:', !!user);
-        } else {
-            user = await User.findById(decoded.userId)
-                .select('-password')
-                .lean();
-            console.log('Regular user found:', !!user);
-        }
+        const userQuery = decoded.accountType === 'business' ? 
+            BusinessUser.findById(decoded.userId) :
+            User.findById(decoded.userId);
+
+        user = await userQuery
+            .select('-password -__v')
+            .lean()
+            .exec();
 
         if (!user) {
             console.log('No user found for ID:', decoded.userId);
             throw new Error('User not found');
         }
 
-        req.user = {
+        const userData = {
             id: user._id,
             email: user.email,
             role: decoded.accountType || user.role,
             accountType: decoded.accountType,
-            businessName: user.businessName // Include for business users
+            businessName: user.businessName
         };
+
+        // Cache user data for 5 minutes
+        cache.put(`auth_${token}`, userData, 5 * 60 * 1000);
         
+        req.user = userData;
         next();
     } catch (error) {
-        console.error('Auth middleware error:', error);
+        console.error('Auth middleware error:', {
+            message: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+        
         res.status(401).json({ 
             message: 'Authentication failed',
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -63,26 +75,30 @@ const auth = async (req, res, next) => {
     }
 };
 
-// Admin check middleware
-const isAdmin = (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
-        next();
-    } else {
-        res.status(403).json({ error: 'Access denied. Admin privileges required.' });
-    }
+// Role-based middleware with caching
+const checkRole = (roles) => {
+    return (req, res, next) => {
+        if (!req.user) {
+            return res.status(401).json({ message: 'Authentication required' });
+        }
+
+        if (roles.includes(req.user.role)) {
+            next();
+        } else {
+            res.status(403).json({ 
+                message: `Access denied. Required role: ${roles.join(' or ')}`
+            });
+        }
+    };
 };
 
-// Vendor check middleware
-const isVendor = (req, res, next) => {
-    if (req.user && (req.user.role === 'vendor' || req.user.role === 'admin')) {
-        next();
-    } else {
-        res.status(403).json({ error: 'Access denied. Vendor privileges required.' });
-    }
-};
+// Simplified role checks using checkRole
+const isAdmin = checkRole(['admin']);
+const isVendor = checkRole(['vendor', 'admin']);
 
 module.exports = {
     auth,
     isAdmin,
     isVendor
 };
+
