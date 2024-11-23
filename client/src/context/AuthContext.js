@@ -10,34 +10,44 @@ const api = axios.create({
     : 'http://localhost:5000/api',
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  timeout: 30000 // 30 second timeout
 });
+
+// Add request interceptor to include token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  response => response,
+  async error => {
+    const originalRequest = error.config;
+    
+    // If error is timeout or server error and we haven't retried yet
+    if ((error.code === 'ECONNABORTED' || error.response?.status === 503) && !originalRequest._retry) {
+      originalRequest._retry = true;
+      return api(originalRequest);
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    // Initialize from localStorage
-    const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
-    if (token && savedUser) {
-      return JSON.parse(savedUser);
-    }
-    return null;
+    return savedUser ? JSON.parse(savedUser) : null;
   });
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    // Initialize from localStorage
     return !!localStorage.getItem('token');
-  });
-
-  // Add request interceptor to include token
-  api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
   });
 
   const checkAuthStatus = async () => {
@@ -51,7 +61,6 @@ export const AuthProvider = ({ children }) => {
       }
 
       const response = await api.get('/auth/verify');
-      console.log('Verify response:', response.data);
       
       if (response.data.user) {
         setUser(response.data.user);
@@ -62,7 +71,6 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Auth check failed:', error);
-      // Clear auth state on error
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       setUser(null);
@@ -80,27 +88,21 @@ export const AuthProvider = ({ children }) => {
     try {
       setError(null);
       setLoading(true);
-      console.log('Attempting login...', credentials.email);
       
       const response = await api.post('/auth/login', credentials);
-      console.log('Login response:', response.data);
-      
       const { token, user } = response.data;
       
       if (!token || !user) {
         throw new Error('Invalid response from server');
       }
 
-      // Store everything in localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('accountType', user.accountType || 'personal');
       
-      // Update state
       setUser(user);
       setIsAuthenticated(true);
       
-      console.log('Login successful, user:', user);
       return { success: true, user };
     } catch (error) {
       console.error('Login error:', error);
@@ -119,28 +121,26 @@ export const AuthProvider = ({ children }) => {
       const { token, user } = response.data;
       
       localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('accountType', user.accountType || 'personal');
       
       setUser(user);
       setIsAuthenticated(true);
       
-      return response.data;
+      return { success: true, user };
     } catch (error) {
       const message = error.response?.data?.message || 'Registration failed';
       setError(message);
-      throw new Error(message);
+      return { success: false, error: message };
     }
   };
 
   const logout = async () => {
     try {
-      // Try to call logout endpoint
       await api.post('/auth/logout').catch(error => {
         console.warn('Logout endpoint error:', error);
-        // Continue with local logout even if server request fails
       });
     } finally {
-      // Always clear local state
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('accountType');
@@ -154,42 +154,45 @@ export const AuthProvider = ({ children }) => {
     try {
       setError(null);
       const response = await api.put('/auth/profile', userData);
-      setUser(response.data.user);
-      return response.data;
+      const updatedUser = response.data.user;
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      return { success: true, user: updatedUser };
     } catch (error) {
       const message = error.response?.data?.message || 'Profile update failed';
       setError(message);
-      throw new Error(message);
+      return { success: false, error: message };
     }
   };
 
-  // Add refresh token functionality
   const refreshToken = async () => {
     try {
       const response = await api.post('/auth/refresh-token');
       const { token } = response.data;
       localStorage.setItem('token', token);
-      return token;
+      return { success: true, token };
     } catch (error) {
-      logout();
-      throw new Error('Session expired');
+      await logout();
+      return { success: false, error: 'Session expired' };
     }
   };
 
+  const value = {
+    user,
+    loading,
+    error,
+    isAuthenticated,
+    login,
+    register,
+    logout,
+    updateProfile,
+    setError,
+    refreshToken,
+    checkAuthStatus
+  };
+
   return (
-    <AuthContext.Provider value={{
-      user,
-      loading,
-      error,
-      isAuthenticated,
-      login,
-      register,
-      logout,
-      updateProfile,
-      setError,
-      refreshToken,
-      checkAuthStatus
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
@@ -202,3 +205,5 @@ export const useAuth = () => {
   }
   return context;
 };
+
+export default AuthContext;

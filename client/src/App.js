@@ -5,7 +5,7 @@ import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import CssBaseline from '@mui/material/CssBaseline';
 import { muiTheme, theme } from './styles/theme';
 import GlobalStyles from './styles/GlobalStyles';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import styled from 'styled-components';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -84,22 +84,22 @@ function App() {
   }, [isAuthenticated, location]);
 
   return (
-    <MuiThemeProvider theme={muiTheme}>
-      <StyledThemeProvider theme={theme}>
-        <CssBaseline />
-        <GlobalStyles />
-        <ToastContainer 
-          position="top-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-        />
-        <AuthProvider>
+    <AuthProvider>
+      <MuiThemeProvider theme={muiTheme}>
+        <StyledThemeProvider theme={theme}>
+          <CssBaseline />
+          <GlobalStyles />
+          <ToastContainer 
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
           <AppContainer>
             <Layout>
               <MainContent>
@@ -176,9 +176,9 @@ function App() {
               </MainContent>
             </Layout>
           </AppContainer>
-        </AuthProvider>
-      </StyledThemeProvider>
-    </MuiThemeProvider>
+        </StyledThemeProvider>
+      </MuiThemeProvider>
+    </AuthProvider>
   );
 }
 
