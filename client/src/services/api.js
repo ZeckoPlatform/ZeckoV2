@@ -83,5 +83,5 @@ const authApi = {
 
 // Export the api instance and methods
 export default api;
-export { getFeaturedItems };
+export const { getFeaturedItems } = apiMethods;
 export { authApi }; 
