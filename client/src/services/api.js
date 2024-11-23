@@ -41,15 +41,16 @@ const apiMethods = {
             console.error('Error fetching featured items:', error);
             throw error;
         }
-    },
+    }
+};
 
+// Group auth-related methods
+const authApi = {
     login: async (email, password) => {
         try {
             const response = await api.post('/auth/login', { email, password });
-            // Store the token in localStorage
             if (response.data.token) {
                 localStorage.setItem('token', response.data.token);
-                // Add token to default headers for subsequent requests
                 api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
             }
             return response.data;
@@ -64,7 +65,6 @@ const apiMethods = {
         delete api.defaults.headers.common['Authorization'];
     },
 
-    // Add this to verify token on app load
     checkAuth: async () => {
         try {
             const token = localStorage.getItem('token');
@@ -83,4 +83,5 @@ const apiMethods = {
 
 // Export the api instance and methods
 export default api;
-export const { getFeaturedItems, login, logout, checkAuth } = apiMethods; 
+export { getFeaturedItems };
+export { authApi }; 
