@@ -5,7 +5,7 @@ import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import CssBaseline from '@mui/material/CssBaseline';
 import { muiTheme, theme } from './styles/theme';
 import GlobalStyles from './styles/GlobalStyles';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import styled from 'styled-components';
 import ProtectedRoute from './components/ProtectedRoute';
