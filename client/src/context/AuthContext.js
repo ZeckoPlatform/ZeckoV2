@@ -39,38 +39,34 @@ api.interceptors.response.use(
 );
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
-  
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return !!localStorage.getItem('token');
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const checkAuthStatus = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setLoading(false);
-        setIsAuthenticated(false);
-        setUser(null);
-        return;
-      }
+    const token = localStorage.getItem('token');
+    
+    // If no token exists, don't try to verify
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
+    try {
       const response = await api.get('/auth/verify');
-      
-      if (response.data.user) {
+      if (response.data && response.data.user) {
         setUser(response.data.user);
         setIsAuthenticated(true);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
       } else {
-        throw new Error('Invalid user data');
+        // Clear invalid auth data
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+        setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      console.error('Auth verification failed:', error);
+      // Clear invalid auth data
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       setUser(null);
@@ -80,43 +76,47 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Only check auth status once on mount
   useEffect(() => {
     checkAuthStatus();
-  }, []);
+  }, []); // Empty dependency array
 
   const login = async (credentials) => {
     try {
-      setError(null);
-      setLoading(true);
-      
       const response = await api.post('/auth/login', credentials);
       const { token, user } = response.data;
       
-      if (!token || !user) {
-        throw new Error('Invalid response from server');
+      if (token && user) {
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        setUser(user);
+        setIsAuthenticated(true);
+        return { success: true };
       }
-
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('accountType', user.accountType || 'personal');
-      
-      setUser(user);
-      setIsAuthenticated(true);
-      
-      return { success: true, user };
     } catch (error) {
-      console.error('Login error:', error);
-      const message = error.response?.data?.message || 'Login failed';
-      setError(message);
-      return { success: false, error: message };
+      console.error('Login failed:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || 'Login failed' 
+      };
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
     } finally {
-      setLoading(false);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setUser(null);
+      setIsAuthenticated(false);
     }
   };
 
   const register = async (userData) => {
     try {
-      setError(null);
       const response = await api.post('/auth/register', userData);
       const { token, user } = response.data;
       
@@ -130,29 +130,12 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user };
     } catch (error) {
       const message = error.response?.data?.message || 'Registration failed';
-      setError(message);
       return { success: false, error: message };
-    }
-  };
-
-  const logout = async () => {
-    try {
-      await api.post('/auth/logout').catch(error => {
-        console.warn('Logout endpoint error:', error);
-      });
-    } finally {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('accountType');
-      setUser(null);
-      setIsAuthenticated(false);
-      setError(null);
     }
   };
 
   const updateProfile = async (userData) => {
     try {
-      setError(null);
       const response = await api.put('/auth/profile', userData);
       const updatedUser = response.data.user;
       setUser(updatedUser);
@@ -160,7 +143,6 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: updatedUser };
     } catch (error) {
       const message = error.response?.data?.message || 'Profile update failed';
-      setError(message);
       return { success: false, error: message };
     }
   };
@@ -180,13 +162,11 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     loading,
-    error,
     isAuthenticated,
     login,
     register,
     logout,
     updateProfile,
-    setError,
     refreshToken,
     checkAuthStatus
   };
