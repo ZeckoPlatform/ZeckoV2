@@ -1,13 +1,34 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
+import { DataGrid } from '@mui/x-data-grid';
+import { Button, IconButton, Tooltip } from '@mui/material';
+import { Edit, Delete, Add, Visibility } from '@mui/icons-material';
+import { toast } from 'react-toastify';
 import DeleteProduct from './products/DeleteProduct';
+
+// Styled components from your existing code
+const Container = styled.div`
+  padding: 20px;
+`;
+
+const Header = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+`;
+
+const ActionButton = styled(Button)`
+  margin: 0 5px;
+`;
 
 function ProductManagement() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newProduct, setNewProduct] = useState({ name: '', description: '', price: '' });
-  const [editingProduct, setEditingProduct] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchProducts();
@@ -23,82 +44,20 @@ function ProductManagement() {
       });
 
       if (response.ok) {
-        const productsData = await response.json();
-        setProducts(productsData);
+        const data = await response.json();
+        setProducts(data);
       } else {
         throw new Error('Failed to fetch products');
       }
     } catch (error) {
-      console.error('Error fetching products:', error);
+      toast.error('Error loading products');
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (e, isNewProduct = true) => {
-    const { name, value } = e.target;
-    if (isNewProduct) {
-      setNewProduct(prev => ({ ...prev, [name]: value }));
-    } else {
-      setEditingProduct(prev => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const handleAddProduct = async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem('token');
-    try {
-      const response = await fetch('/api/dashboard/products', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(newProduct)
-      });
-
-      if (response.ok) {
-        const addedProduct = await response.json();
-        setProducts(prev => [...prev, addedProduct]);
-        setNewProduct({ name: '', description: '', price: '' });
-        alert('Product added successfully!');
-      } else {
-        throw new Error('Failed to add product');
-      }
-    } catch (error) {
-      console.error('Error adding product:', error);
-      alert('Failed to add product. Please try again.');
-    }
-  };
-
-  const handleEditProduct = async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem('token');
-    try {
-      const response = await fetch(`/api/dashboard/products/${editingProduct._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(editingProduct)
-      });
-
-      if (response.ok) {
-        const updatedProduct = await response.json();
-        setProducts(prev => prev.map(p => p._id === updatedProduct._id ? updatedProduct : p));
-        setEditingProduct(null);
-        alert('Product updated successfully!');
-      } else {
-        throw new Error('Failed to update product');
-      }
-    } catch (error) {
-      console.error('Error updating product:', error);
-      alert('Failed to update product. Please try again.');
-    }
-  };
-
-  const handleDeleteProduct = (product) => {
+  const handleDelete = async (product) => {
     setProductToDelete(product);
     setShowDeleteModal(true);
   };
@@ -115,108 +74,76 @@ function ProductManagement() {
 
       if (response.ok) {
         setProducts(prev => prev.filter(p => p._id !== productToDelete._id));
-        alert('Product deleted successfully!');
+        toast.success('Product deleted successfully');
       } else {
         throw new Error('Failed to delete product');
       }
     } catch (error) {
-      console.error('Error deleting product:', error);
-      alert('Failed to delete product. Please try again.');
+      toast.error('Error deleting product');
+      console.error('Error:', error);
     } finally {
       setShowDeleteModal(false);
       setProductToDelete(null);
     }
   };
 
-  if (loading) {
-    return <div>Loading products...</div>;
-  }
+  const columns = [
+    { field: '_id', headerName: 'ID', width: 90 },
+    { field: 'name', headerName: 'Product Name', width: 200 },
+    { field: 'price', headerName: 'Price', width: 130 },
+    { field: 'description', headerName: 'Description', width: 200 },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 200,
+      renderCell: (params) => (
+        <>
+          <Tooltip title="View Details">
+            <IconButton onClick={() => navigate(`/admin/products/${params.row._id}`)}>
+              <Visibility />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Edit">
+            <IconButton onClick={() => navigate(`/admin/products/edit/${params.row._id}`)}>
+              <Edit />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete">
+            <IconButton onClick={() => handleDelete(params.row)} color="error">
+              <Delete />
+            </IconButton>
+          </Tooltip>
+        </>
+      ),
+    },
+  ];
 
   return (
-    <div>
-      <h3>Your Products</h3>
-      <form onSubmit={handleAddProduct}>
-        <h4>Add New Product</h4>
-        <div>
-          <label htmlFor="name">Name:</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={newProduct.name}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="description">Description:</label>
-          <textarea
-            id="description"
-            name="description"
-            value={newProduct.description}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="price">Price:</label>
-          <input
-            type="number"
-            id="price"
-            name="price"
-            value={newProduct.price}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-        <button type="submit">Add Product</button>
-      </form>
+    <Container>
+      <Header>
+        <h2>Product Management</h2>
+        <ActionButton
+          variant="contained"
+          color="primary"
+          startIcon={<Add />}
+          onClick={() => navigate('/admin/products/add')}
+        >
+          Add New Product
+        </ActionButton>
+      </Header>
+      
+      <DataGrid
+        rows={products}
+        columns={columns}
+        pageSize={10}
+        rowsPerPageOptions={[10, 25, 50]}
+        checkboxSelection
+        disableSelectionOnClick
+        loading={loading}
+        autoHeight
+        getRowId={(row) => row._id}
+      />
 
-      <h4>Your Product List</h4>
-      {products.length === 0 ? (
-        <p>You haven't added any products yet.</p>
-      ) : (
-        <ul>
-          {products.map((product) => (
-            <li key={product._id}>
-              {editingProduct && editingProduct._id === product._id ? (
-                <form onSubmit={handleEditProduct}>
-                  <input
-                    type="text"
-                    name="name"
-                    value={editingProduct.name}
-                    onChange={(e) => handleInputChange(e, false)}
-                    required
-                  />
-                  <textarea
-                    name="description"
-                    value={editingProduct.description}
-                    onChange={(e) => handleInputChange(e, false)}
-                    required
-                  />
-                  <input
-                    type="number"
-                    name="price"
-                    value={editingProduct.price}
-                    onChange={(e) => handleInputChange(e, false)}
-                    required
-                  />
-                  <button type="submit">Save</button>
-                  <button type="button" onClick={() => setEditingProduct(null)}>Cancel</button>
-                </form>
-              ) : (
-                <>
-                  <h5>{product.name}</h5>
-                  <p>{product.description}</p>
-                  <p>Price: ${product.price}</p>
-                  <button onClick={() => setEditingProduct(product)}>Edit</button>
-                  <button onClick={() => handleDeleteProduct(product)}>Delete</button>
-                </>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
       {showDeleteModal && productToDelete && (
         <DeleteProduct
           product={productToDelete}
@@ -227,7 +154,7 @@ function ProductManagement() {
           }}
         />
       )}
-    </div>
+    </Container>
   );
 }
 

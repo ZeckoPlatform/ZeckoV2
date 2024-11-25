@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -8,36 +8,9 @@ import {
   BarChart2, 
   Settings 
 } from 'react-feather';
-import UserManagement from './UserManagement';
-import ProductManagement from './ProductManagement';
-import OrderManagement from './OrderManagement';
-import DashboardStats from './DashboardStats';
-import { useNavigate } from 'react-router-dom';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-} from 'chart.js';
-import { Line } from 'react-chartjs-2';
-import { format, parseISO } from 'date-fns';
+import { useNavigate, Link, Outlet, useLocation } from 'react-router-dom';
 import { getSocket, subscribeToActivityUpdates, unsubscribeFromActivityUpdates } from '../../utils/socket.io';
 import { activityLogService } from '../../services/activityLogService';
-
-// Register ChartJS components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -58,7 +31,7 @@ const MainContent = styled.div`
   overflow-y: auto;
 `;
 
-const MenuItem = styled.div`
+const MenuItem = styled(Link)`
   display: flex;
   align-items: center;
   gap: 10px;
@@ -66,8 +39,10 @@ const MenuItem = styled.div`
   cursor: pointer;
   border-radius: 6px;
   margin-bottom: 5px;
+  text-decoration: none;
+  color: inherit;
   
-  ${props => props.active ? `
+  ${props => props.$active ? `
     background: var(--primary-color);
     color: white;
   ` : `
@@ -86,10 +61,18 @@ const AdminHeader = styled.div`
   border-bottom: 1px solid #ddd;
 `;
 
+const menuItems = [
+  { path: '', icon: <BarChart2 size={20} />, label: 'Dashboard' },
+  { path: 'users', icon: <Users size={20} />, label: 'User Management' },
+  { path: 'products', icon: <Package size={20} />, label: 'Product Management' },
+  { path: 'orders', icon: <ShoppingBag size={20} />, label: 'Order Management' },
+  { path: 'settings', icon: <Settings size={20} />, label: 'Settings' }
+];
+
 function AdminDashboard() {
-  const [activeSection, setActiveSection] = useState('dashboard');
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const socket = getSocket();
 
   useEffect(() => {
@@ -104,10 +87,7 @@ function AdminDashboard() {
     };
 
     subscribeToActivityUpdates(handleActivity);
-
-    return () => {
-      unsubscribeFromActivityUpdates();
-    };
+    return () => unsubscribeFromActivityUpdates();
   }, []);
 
   useEffect(() => {
@@ -123,19 +103,9 @@ function AdminDashboard() {
     fetchActivities();
   }, []);
 
-  const renderContent = () => {
-    switch (activeSection) {
-      case 'users':
-        return <UserManagement />;
-      case 'products':
-        return <ProductManagement />;
-      case 'orders':
-        return <OrderManagement />;
-      case 'dashboard':
-        return <DashboardStats />;
-      default:
-        return <DashboardStats />;
-    }
+  const getCurrentSection = () => {
+    const path = location.pathname.split('/').pop();
+    return path || 'dashboard';
   };
 
   return (
@@ -143,52 +113,23 @@ function AdminDashboard() {
       <Sidebar>
         <h2 style={{ marginBottom: '30px' }}>Admin Panel</h2>
         
-        <MenuItem 
-          active={activeSection === 'dashboard'}
-          onClick={() => setActiveSection('dashboard')}
-        >
-          <BarChart2 size={20} />
-          Dashboard
-        </MenuItem>
-
-        <MenuItem 
-          active={activeSection === 'users'}
-          onClick={() => setActiveSection('users')}
-        >
-          <Users size={20} />
-          User Management
-        </MenuItem>
-
-        <MenuItem 
-          active={activeSection === 'products'}
-          onClick={() => setActiveSection('products')}
-        >
-          <Package size={20} />
-          Product Management
-        </MenuItem>
-
-        <MenuItem 
-          active={activeSection === 'orders'}
-          onClick={() => setActiveSection('orders')}
-        >
-          <ShoppingBag size={20} />
-          Order Management
-        </MenuItem>
-
-        <MenuItem 
-          active={activeSection === 'settings'}
-          onClick={() => setActiveSection('settings')}
-        >
-          <Settings size={20} />
-          Settings
-        </MenuItem>
+        {menuItems.map(({ path, icon, label }) => (
+          <MenuItem 
+            key={path}
+            to={`/admin/${path}`}
+            $active={getCurrentSection() === (path || 'dashboard')}
+          >
+            {icon}
+            {label}
+          </MenuItem>
+        ))}
       </Sidebar>
 
       <MainContent>
         <AdminHeader>
-          <h1>{activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}</h1>
+          <h1>{getCurrentSection().charAt(0).toUpperCase() + getCurrentSection().slice(1)}</h1>
         </AdminHeader>
-        {renderContent()}
+        <Outlet />
       </MainContent>
     </DashboardContainer>
   );

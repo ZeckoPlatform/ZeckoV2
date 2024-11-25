@@ -21,12 +21,13 @@ const LoadingMessage = styled.div`
 `;
 
 const AddToCartButton = styled.button`
-  background-color: #4CAF50;
-  color: white;
+  background-color: ${({ theme }) => theme.colors.primary.main};
+  color: ${({ theme }) => theme.colors.primary.text};
   border: none;
-  padding: 10px 20px;
-  font-size: 16px;
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  font-size: ${({ theme }) => theme.typography.size.md};
   cursor: pointer;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
 `;
 
 const PaginationContainer = styled.div`
@@ -36,12 +37,15 @@ const PaginationContainer = styled.div`
 `;
 
 const PageButton = styled.button`
-  margin: 0 5px;
-  padding: 5px 10px;
-  background-color: ${props => props.active ? '#4CAF50' : '#f1f1f1'};
-  color: ${props => props.active ? 'white' : 'black'};
+  margin: 0 ${({ theme }) => theme.spacing.xs};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  background-color: ${({ active, theme }) => 
+    active ? theme.colors.primary.main : theme.colors.background.paper};
+  color: ${({ active, theme }) => 
+    active ? theme.colors.primary.text : theme.colors.text.primary};
   border: none;
   cursor: pointer;
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
 `;
 
 const ProductImage = styled.img`

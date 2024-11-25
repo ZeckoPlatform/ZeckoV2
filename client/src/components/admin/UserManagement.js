@@ -89,15 +89,15 @@ const Table = styled.table`
 `;
 
 const ActionButton = styled.button`
-  padding: 5px;
-  margin: 0 5px;
+  padding: ${({ theme }) => theme.spacing.sm};
+  margin: 0 ${({ theme }) => theme.spacing.sm};
   background: none;
   border: none;
   cursor: pointer;
-  color: ${props => props.color || '#666'};
+  color: ${({ color, theme }) => color || theme.colors.text.secondary};
 
   &:hover {
-    color: ${props => props.hoverColor || '#333'};
+    color: ${({ hoverColor, theme }) => hoverColor || theme.colors.text.primary};
   }
 `;
 
@@ -106,10 +106,10 @@ const Modal = styled.div`
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  background: ${({ theme }) => theme.colors.background.paper};
+  padding: ${({ theme }) => theme.spacing.xl};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  box-shadow: ${({ theme }) => theme.shadows.modal};
   max-width: 500px;
   width: 90%;
   z-index: 1000;
@@ -126,41 +126,44 @@ const Overlay = styled.div`
 `;
 
 const FormGroup = styled.div`
-  margin-bottom: 15px;
+  margin-bottom: ${({ theme }) => theme.spacing.md};
 
   label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: ${({ theme }) => theme.spacing.sm};
     font-weight: 500;
+    color: ${({ theme }) => theme.colors.text.secondary};
   }
 
   input, select {
     width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    padding: ${({ theme }) => theme.spacing.md};
+    border: 1px solid ${({ theme }) => theme.colors.text.disabled}40;
+    border-radius: ${({ theme }) => theme.borderRadius.md};
+    background: ${({ theme }) => theme.colors.background.main};
+    color: ${({ theme }) => theme.colors.text.primary};
     
     &:focus {
       outline: none;
-      border-color: var(--primary-color);
+      border-color: ${({ theme }) => theme.colors.primary.main};
     }
   }
 `;
 
 const Badge = styled.span`
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.85em;
-  background-color: ${props => {
-    switch (props.type) {
-      case 'admin': return '#dc3545';
-      case 'vendor': return '#28a745';
-      case 'customer': return '#007bff';
-      case 'suspended': return '#6c757d';
-      default: return '#6c757d';
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  border-radius: ${({ theme }) => theme.borderRadius.pill};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  background-color: ${({ type, theme }) => {
+    switch (type) {
+      case 'admin': return theme.colors.status.error;
+      case 'vendor': return theme.colors.status.success;
+      case 'customer': return theme.colors.status.info;
+      case 'suspended': return theme.colors.text.disabled;
+      default: return theme.colors.text.disabled;
     }
   }};
-  color: white;
+  color: ${({ theme }) => theme.colors.primary.text};
 `;
 
 function UserManagement() {

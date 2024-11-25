@@ -61,11 +61,11 @@ const Button = styled.button`
 const CartButton = styled(Button)`
   display: flex;
   align-items: center;
-  gap: 8px;
-  background-color: #4CAF50;
+  gap: ${({ theme }) => theme.spacing.sm};
+  background-color: ${({ theme }) => theme.colors.status.success};
   
   svg {
-    font-size: 18px;
+    font-size: ${({ theme }) => theme.typography.size.md};
   }
 `;
 
@@ -76,7 +76,7 @@ const ItemDetails = styled.div`
 const ItemActions = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: ${({ theme }) => theme.spacing.sm};
 `;
 
 function Cart() {

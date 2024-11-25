@@ -14,63 +14,68 @@ import {
 import { format } from 'date-fns';
 
 const Container = styled.div`
-  padding: 20px;
+  padding: ${({ theme }) => theme.spacing.lg};
 `;
 
 const TopBar = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  gap: 15px;
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  gap: ${({ theme }) => theme.spacing.md};
   flex-wrap: wrap;
 `;
 
 const SearchBar = styled.div`
   display: flex;
   align-items: center;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 5px 10px;
+  background: ${({ theme }) => theme.colors.background.paper};
+  border: 1px solid ${({ theme }) => theme.colors.text.disabled}40;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
   flex: 1;
   max-width: 400px;
 
   input {
     border: none;
     outline: none;
-    padding: 5px;
+    padding: ${({ theme }) => theme.spacing.sm};
     width: 100%;
+    background: transparent;
+    color: ${({ theme }) => theme.colors.text.primary};
   }
 `;
 
 const FilterGroup = styled.div`
   display: flex;
-  gap: 10px;
+  gap: ${({ theme }) => theme.spacing.sm};
   align-items: center;
   flex-wrap: wrap;
 `;
 
 const Select = styled.select`
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: ${({ theme }) => theme.spacing.md};
+  border: 1px solid ${({ theme }) => theme.colors.text.disabled}40;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
   outline: none;
 
   &:focus {
-    border-color: var(--primary-color);
+    border-color: ${({ theme }) => theme.colors.primary.main};
   }
 `;
 
 const Button = styled.button`
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 8px 15px;
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.md};
   border: none;
-  border-radius: 4px;
-  background: ${props => props.variant === 'secondary' ? '#6c757d' : 'var(--primary-color)'};
-  color: white;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  background: ${({ variant, theme }) => 
+    variant === 'secondary' 
+      ? theme.colors.secondary.main 
+      : theme.colors.primary.main};
+  color: ${({ theme }) => theme.colors.primary.text};
   cursor: pointer;
 
   &:hover {
@@ -81,42 +86,42 @@ const Button = styled.button`
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  background: white;
-  border-radius: 8px;
+  background: ${({ theme }) => theme.colors.background.paper};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: ${({ theme }) => theme.shadows.card};
 
   th, td {
-    padding: 12px 15px;
+    padding: ${({ theme }) => theme.spacing.md};
     text-align: left;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.text.disabled}20;
   }
 
   th {
-    background: #f8f9fa;
+    background: ${({ theme }) => theme.colors.background.main};
     font-weight: 600;
   }
 
   tr:hover {
-    background: #f8f9fa;
+    background: ${({ theme }) => theme.colors.background.main};
   }
 `;
 
 const StatusBadge = styled.span`
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.85em;
-  background-color: ${props => {
-    switch (props.status) {
-      case 'pending': return '#ffc107';
-      case 'processing': return '#17a2b8';
-      case 'shipped': return '#007bff';
-      case 'delivered': return '#28a745';
-      case 'cancelled': return '#dc3545';
-      default: return '#6c757d';
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
+  border-radius: ${({ theme }) => theme.borderRadius.pill};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  background-color: ${({ status, theme }) => {
+    switch (status) {
+      case 'pending': return theme.colors.status.warning;
+      case 'processing': return theme.colors.status.info;
+      case 'shipped': return theme.colors.status.primary;
+      case 'delivered': return theme.colors.status.success;
+      case 'cancelled': return theme.colors.status.error;
+      default: return theme.colors.text.disabled;
     }
   }};
-  color: white;
+  color: ${({ theme }) => theme.colors.primary.text};
 `;
 
 const Modal = styled.div`
@@ -124,10 +129,10 @@ const Modal = styled.div`
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  background: ${({ theme }) => theme.colors.background.paper};
+  padding: ${({ theme }) => theme.spacing.xl};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  box-shadow: ${({ theme }) => theme.shadows.modal};
   max-width: 800px;
   width: 90%;
   max-height: 90vh;
@@ -148,8 +153,8 @@ const Overlay = styled.div`
 const OrderDetails = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 20px;
+  gap: ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
 `;
 
 const DetailCard = styled.div`

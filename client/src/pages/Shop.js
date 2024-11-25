@@ -15,9 +15,9 @@ const FiltersContainer = styled.div`
 `;
 
 const Select = styled.select`
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #ddd;
+  padding: ${({ theme }) => theme.spacing.md};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  border: 1px solid ${({ theme }) => theme.colors.text.disabled}40;
 `;
 
 const ProductGrid = styled.div`
@@ -27,15 +27,15 @@ const ProductGrid = styled.div`
 `;
 
 const ProductCard = styled.div`
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 15px;
-  background: white;
-  transition: transform 0.2s;
+  border: 1px solid ${({ theme }) => theme.colors.text.disabled}40;
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  padding: ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.colors.background.paper};
+  transition: transform ${({ theme }) => theme.transitions.short};
 
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    box-shadow: ${({ theme }) => theme.shadows.card};
   }
 `;
 
@@ -52,12 +52,12 @@ const ProductInfo = styled.div`
 
 const ProductTitle = styled.h3`
   margin: 0;
-  color: var(--primary-color);
+  color: ${({ theme }) => theme.colors.primary.main};
 `;
 
 const ProductPrice = styled.p`
   font-weight: bold;
-  color: #333;
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 function Shop() {
