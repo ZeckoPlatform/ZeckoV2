@@ -1,281 +1,72 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import DashboardCard from './common/DashboardCard';
-import { 
-  FiBell, 
-  FiShield, 
-  FiGlobe, 
-  FiMoon, 
-  FiToggleLeft, 
-  FiToggleRight,
-  FiTrash2
-} from 'react-icons/fi';
-import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
 
-const SettingsContainer = styled.div`
+const Modal = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xl};
-  max-width: 800px;
-  margin: 0 auto;
-`;
-
-const Section = styled(DashboardCard)`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.lg};
-`;
-
-const SectionTitle = styled.h3`
-  display: flex;
+  justify-content: center;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin-bottom: ${({ theme }) => theme.spacing.md};
+  z-index: 1000;
 `;
 
-const SettingRow = styled.div`
+const ModalContent = styled(motion.div)`
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 90%;
+`;
+
+const ButtonGroup = styled.div`
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: ${({ theme }) => theme.spacing.md} 0;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.text.disabled}20;
-
-  &:last-child {
-    border-bottom: none;
-  }
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
 `;
 
-const SettingInfo = styled.div`
-  flex: 1;
-`;
-
-const SettingTitle = styled.h4`
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin-bottom: ${({ theme }) => theme.spacing.xs};
-`;
-
-const SettingDescription = styled.p`
-  color: ${({ theme }) => theme.colors.text.secondary};
-  font-size: 0.9rem;
-`;
-
-const Toggle = styled(motion.button)`
-  background: none;
+const Button = styled.button`
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
   border: none;
   cursor: pointer;
-  color: ${({ active, theme }) => 
-    active ? theme.colors.primary.main : theme.colors.text.disabled};
-  font-size: 1.5rem;
-  display: flex;
-  align-items: center;
-`;
-
-const Select = styled.select`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${({ theme }) => theme.colors.text.disabled}40;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  background: ${({ theme }) => theme.colors.background.main};
-  color: ${({ theme }) => theme.colors.text.primary};
-  cursor: pointer;
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary.main};
+  
+  &.cancel {
+    background: #e0e0e0;
+  }
+  
+  &.delete {
+    background: #f44336;
+    color: white;
   }
 `;
 
-const DeleteButton = styled(motion.button)`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-  background: ${({ theme }) => theme.colors.status.error}20;
-  color: ${({ theme }) => theme.colors.status.error};
-  border: 1px solid ${({ theme }) => theme.colors.status.error};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  cursor: pointer;
-  font-weight: 500;
-`;
-
-const Settings = () => {
-  const { user, deleteAccount } = useAuth();
-  const { theme, toggleTheme } = useTheme();
-  const [settings, setSettings] = useState({
-    emailNotifications: true,
-    pushNotifications: false,
-    marketingEmails: true,
-    twoFactorAuth: false,
-    language: 'en',
-    darkMode: theme === 'dark'
-  });
-
-  const handleToggle = (setting) => {
-    setSettings(prev => ({
-      ...prev,
-      [setting]: !prev[setting]
-    }));
-  };
-
-  const handleLanguageChange = (e) => {
-    setSettings(prev => ({
-      ...prev,
-      language: e.target.value
-    }));
-  };
-
-  const handleDeleteAccount = async () => {
-    if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-      try {
-        await deleteAccount();
-        // Redirect to home page or login
-      } catch (error) {
-        console.error('Error deleting account:', error);
-      }
-    }
-  };
-
+const DeleteProduct = ({ product, onConfirm, onCancel }) => {
   return (
-    <SettingsContainer>
-      <Section>
-        <SectionTitle>
-          <FiBell /> Notifications
-        </SectionTitle>
-        <SettingRow>
-          <SettingInfo>
-            <SettingTitle>Email Notifications</SettingTitle>
-            <SettingDescription>
-              Receive email notifications about your account activity
-            </SettingDescription>
-          </SettingInfo>
-          <Toggle
-            onClick={() => handleToggle('emailNotifications')}
-            active={settings.emailNotifications}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            {settings.emailNotifications ? <FiToggleRight /> : <FiToggleLeft />}
-          </Toggle>
-        </SettingRow>
-        <SettingRow>
-          <SettingInfo>
-            <SettingTitle>Push Notifications</SettingTitle>
-            <SettingDescription>
-              Receive push notifications on your device
-            </SettingDescription>
-          </SettingInfo>
-          <Toggle
-            onClick={() => handleToggle('pushNotifications')}
-            active={settings.pushNotifications}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            {settings.pushNotifications ? <FiToggleRight /> : <FiToggleLeft />}
-          </Toggle>
-        </SettingRow>
-        <SettingRow>
-          <SettingInfo>
-            <SettingTitle>Marketing Emails</SettingTitle>
-            <SettingDescription>
-              Receive updates about new features and promotions
-            </SettingDescription>
-          </SettingInfo>
-          <Toggle
-            onClick={() => handleToggle('marketingEmails')}
-            active={settings.marketingEmails}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            {settings.marketingEmails ? <FiToggleRight /> : <FiToggleLeft />}
-          </Toggle>
-        </SettingRow>
-      </Section>
-
-      <Section>
-        <SectionTitle>
-          <FiShield /> Security
-        </SectionTitle>
-        <SettingRow>
-          <SettingInfo>
-            <SettingTitle>Two-Factor Authentication</SettingTitle>
-            <SettingDescription>
-              Add an extra layer of security to your account
-            </SettingDescription>
-          </SettingInfo>
-          <Toggle
-            onClick={() => handleToggle('twoFactorAuth')}
-            active={settings.twoFactorAuth}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            {settings.twoFactorAuth ? <FiToggleRight /> : <FiToggleLeft />}
-          </Toggle>
-        </SettingRow>
-      </Section>
-
-      <Section>
-        <SectionTitle>
-          <FiGlobe /> Preferences
-        </SectionTitle>
-        <SettingRow>
-          <SettingInfo>
-            <SettingTitle>Language</SettingTitle>
-            <SettingDescription>
-              Choose your preferred language
-            </SettingDescription>
-          </SettingInfo>
-          <Select value={settings.language} onChange={handleLanguageChange}>
-            <option value="en">English</option>
-            <option value="es">Español</option>
-            <option value="fr">Français</option>
-            <option value="de">Deutsch</option>
-          </Select>
-        </SettingRow>
-        <SettingRow>
-          <SettingInfo>
-            <SettingTitle>Dark Mode</SettingTitle>
-            <SettingDescription>
-              Toggle dark mode theme
-            </SettingDescription>
-          </SettingInfo>
-          <Toggle
-            onClick={() => {
-              toggleTheme();
-              handleToggle('darkMode');
-            }}
-            active={settings.darkMode}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            {settings.darkMode ? <FiToggleRight /> : <FiToggleLeft />}
-          </Toggle>
-        </SettingRow>
-      </Section>
-
-      <Section>
-        <SectionTitle>
-          <FiTrash2 /> Danger Zone
-        </SectionTitle>
-        <SettingRow>
-          <SettingInfo>
-            <SettingTitle>Delete Account</SettingTitle>
-            <SettingDescription>
-              Permanently delete your account and all associated data
-            </SettingDescription>
-          </SettingInfo>
-          <DeleteButton
-            onClick={handleDeleteAccount}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <FiTrash2 /> Delete Account
-          </DeleteButton>
-        </SettingRow>
-      </Section>
-    </SettingsContainer>
+    <Modal
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <ModalContent
+        initial={{ scale: 0.9 }}
+        animate={{ scale: 1 }}
+        exit={{ scale: 0.9 }}
+      >
+        <h2>Delete Product</h2>
+        <p>Are you sure you want to delete {product?.name}? This action cannot be undone.</p>
+        <ButtonGroup>
+          <Button className="cancel" onClick={onCancel}>Cancel</Button>
+          <Button className="delete" onClick={onConfirm}>Delete</Button>
+        </ButtonGroup>
+      </ModalContent>
+    </Modal>
   );
 };
 
-export default Settings; 
+export default DeleteProduct; 
