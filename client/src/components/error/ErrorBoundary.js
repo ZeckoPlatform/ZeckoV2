@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { logger } from '../../services/logger/Logger';
 import { FiAlertTriangle, FiRefreshCw, FiHome } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useEffect } from 'react';
 
 const ErrorContainer = styled(motion.div)`

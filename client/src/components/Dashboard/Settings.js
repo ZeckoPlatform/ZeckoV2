@@ -11,7 +11,7 @@ import {
   FiToggleRight,
   FiTrash2
 } from 'react-icons/fi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 
 const SettingsContainer = styled.div`
