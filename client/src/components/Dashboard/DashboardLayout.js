@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Outlet } from 'react-router-dom';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const DashboardContainer = styled.div`
   display: flex;

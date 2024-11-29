@@ -12,7 +12,7 @@ import {
   FiTrash2
 } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const SettingsContainer = styled.div`
   display: flex;
