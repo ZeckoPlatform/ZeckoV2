@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ThemeProvider as MUIThemeProvider } from '@mui/material/styles';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
-import { muiTheme, theme } from '../styles/theme';  // Update this import
+import { muiTheme, theme } from '../styles/theme/index';
 import CssBaseline from '@mui/material/CssBaseline';
 
 const ThemeContext = createContext();
