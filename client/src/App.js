@@ -1,6 +1,6 @@
 import React from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -18,7 +18,7 @@ import Products from './components/Dashboard/Products';
 import ProductDetails from './pages/ProductDetails';
 import ProductList from './pages/ProductList';
 
-// Define the theme object inline to ensure all required properties are available
+// Styled Components theme
 const theme = {
   colors: {
     primary: {
@@ -72,16 +72,45 @@ const theme = {
 };
 
 // Material-UI theme
-const muiTheme = {
+const muiTheme = createTheme({
   palette: {
     primary: {
       main: theme.colors.primary.main,
+      light: theme.colors.primary.light,
+      dark: theme.colors.primary.dark,
+      contrastText: theme.colors.primary.text,
+    },
+    error: {
+      main: theme.colors.error.main,
+      light: theme.colors.error.light,
+      dark: theme.colors.error.dark,
     },
     background: {
       default: theme.colors.background.main,
+      paper: theme.colors.background.paper,
+    },
+    text: {
+      primary: theme.colors.text.primary,
+      secondary: theme.colors.text.secondary,
+      disabled: theme.colors.text.disabled,
     },
   },
-};
+  spacing: (factor) => `${8 * factor}px`,
+  shape: {
+    borderRadius: parseInt(theme.borderRadius.md),
+  },
+  typography: {
+    fontFamily: [
+      '-apple-system',
+      'BlinkMacSystemFont',
+      '"Segoe UI"',
+      'Roboto',
+      '"Helvetica Neue"',
+      'Arial',
+      'sans-serif',
+    ].join(','),
+  },
+});
 
 const router = createBrowserRouter([
   {
