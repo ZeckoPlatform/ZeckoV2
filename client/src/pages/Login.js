@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 const LoginContainer = styled.div`
   min-height: 100vh;
@@ -94,24 +95,35 @@ const Login = () => {
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
-  const { login, error, setError } = useAuth();
+  const [error, setError] = useState('');
+  const { login } = useAuth();
+  const notify = useNotification();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (error) setError(null);
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
+
     try {
       const result = await login(formData);
       if (result.success) {
+        notify.success('Login successful!');
         navigate('/dashboard');
       }
     } catch (err) {
       console.error('Login error:', err);
+      const errorMessage = err.response?.data?.message || 'An error occurred during login';
+      setError(errorMessage);
+      notify.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -149,12 +161,7 @@ const Login = () => {
             />
           </FormGroup>
           {error && (
-            <ErrorMessage
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              {error}
-            </ErrorMessage>
+            <ErrorMessage>{error}</ErrorMessage>
           )}
           <Button
             type="submit"

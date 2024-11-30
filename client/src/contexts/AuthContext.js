@@ -13,30 +13,10 @@ const api = axios.create({
   timeout: 30000
 });
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-api.interceptors.response.use(
-  response => response,
-  async error => {
-    const originalRequest = error.config;
-    if ((error.code === 'ECONNABORTED' || error.response?.status === 503) && !originalRequest._retry) {
-      originalRequest._retry = true;
-      return api(originalRequest);
-    }
-    return Promise.reject(error);
-  }
-);
-
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -45,51 +25,45 @@ export const AuthProvider = ({ children }) => {
       setUser(JSON.parse(storedUser));
       setIsAuthenticated(true);
     }
+    setLoading(false);
   }, []);
 
   const login = async (credentials) => {
     try {
-      const response = await api.post('/auth/login', credentials);
+      const response = await api.post('/login', credentials);
       const { token, user } = response.data;
       
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('accountType', user.accountType);
-      
-      setUser(user);
-      setIsAuthenticated(true);
-      setError(null);
-      
-      return { success: true, user };
+      if (token && user) {
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        setUser(user);
+        setIsAuthenticated(true);
+        return { success: true, user };
+      }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Login failed';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
+      console.error('Login error:', error);
+      throw error;
     }
   };
 
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    localStorage.removeItem('accountType');
     setUser(null);
     setIsAuthenticated(false);
-    setError(null);
   };
 
   const value = {
     user,
     isAuthenticated,
-    error,
-    setError,
+    loading,
     login,
-    logout,
-    api
+    logout
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
