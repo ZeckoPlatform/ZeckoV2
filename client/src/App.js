@@ -11,12 +11,13 @@ import Layout from './components/Layout';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Import your pages
+// Import existing pages
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
-import Products from './pages/Products';
-// Import other pages as needed
+import Products from './components/Dashboard/Products';
+import ProductDetails from './components/Dashboard/ProductDetails';
+import ProductList from './components/Dashboard/ProductList';
 
 const router = createBrowserRouter([
   {
@@ -38,8 +39,15 @@ const router = createBrowserRouter([
       {
         path: '/products',
         element: <Products />
+      },
+      {
+        path: '/products/:id',
+        element: <ProductDetails />
+      },
+      {
+        path: '/product-list',
+        element: <ProductList />
       }
-      // Add other routes as needed
     ]
   }
 ]);
