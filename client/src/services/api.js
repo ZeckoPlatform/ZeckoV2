@@ -1,7 +1,7 @@
 import axios from 'axios';
-import { useNotification } from '../contexts/NotificationContext';
 
-const api = axios.create({
+// Create the API instance
+export const api = axios.create({
   baseURL: process.env.NODE_ENV === 'production' 
     ? 'https://zeckov2-deceb43992ac.herokuapp.com/api'
     : 'http://localhost:5000/api',
@@ -11,7 +11,16 @@ const api = axios.create({
   timeout: 60000
 });
 
-// API endpoints
+// Add token to requests
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// API endpoints configuration
 export const endpoints = {
   products: {
     list: (params) => `/products?${new URLSearchParams(params)}`,
@@ -19,6 +28,10 @@ export const endpoints = {
   },
   jobs: {
     user: (userId) => `/jobs/user/${userId}`,
+    featured: '/jobs/featured'
+  },
+  contractors: {
+    featured: '/contractors/featured'
   },
   business: '/business',
   orders: {
@@ -30,39 +43,29 @@ export const endpoints = {
   cart: '/cart',
 };
 
-// API service functions
-export const apiService = {
-  async get(endpoint, params = {}) {
-    try {
-      const token = localStorage.getItem('token');
-      const config = {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      };
-      const response = await api.get(endpoint, { ...config, params });
-      return { data: response.data, error: null };
-    } catch (error) {
-      console.error(`API Error (${endpoint}):`, error);
-      return {
-        data: null,
-        error: error.response?.data?.message || 'Failed to fetch data'
-      };
-    }
-  },
+// API methods
+export const fetchData = async (endpoint) => {
+  try {
+    const response = await api.get(endpoint);
+    return { data: response.data, error: null };
+  } catch (error) {
+    console.error(`API Error (${endpoint}):`, error);
+    return {
+      data: null,
+      error: error.response?.data?.message || 'Failed to fetch data'
+    };
+  }
+};
 
-  async post(endpoint, data = {}) {
-    try {
-      const token = localStorage.getItem('token');
-      const config = {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      };
-      const response = await api.post(endpoint, data, config);
-      return { data: response.data, error: null };
-    } catch (error) {
-      console.error(`API Error (${endpoint}):`, error);
-      return {
-        data: null,
-        error: error.response?.data?.message || 'Failed to submit data'
-      };
-    }
+export const postData = async (endpoint, data) => {
+  try {
+    const response = await api.post(endpoint, data);
+    return { data: response.data, error: null };
+  } catch (error) {
+    console.error(`API Error (${endpoint}):`, error);
+    return {
+      data: null,
+      error: error.response?.data?.message || 'Failed to submit data'
+    };
   }
 }; 

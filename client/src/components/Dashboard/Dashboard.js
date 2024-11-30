@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
-import { apiService, endpoints } from '../../services/api';
+import { fetchData, endpoints } from '../../services/api';
 import styled from 'styled-components';
 
 const Dashboard = () => {
@@ -24,27 +24,30 @@ const Dashboard = () => {
   const { user } = useAuth();
   const notify = useNotification();
 
-  const fetchData = async (key, endpoint) => {
+  const loadData = async (key, endpoint) => {
     setLoading(prev => ({ ...prev, [key]: true }));
-    const { data: responseData, error } = await apiService.get(endpoint);
-    
-    if (error) {
-      notify.error(`Failed to load ${key}: ${error}`);
-    } else {
-      setData(prev => ({ ...prev, [key]: responseData }));
+    try {
+      const { data: responseData, error } = await fetchData(endpoint);
+      if (error) {
+        notify.error(`Failed to load ${key}: ${error}`);
+      } else {
+        setData(prev => ({ ...prev, [key]: responseData }));
+      }
+    } catch (err) {
+      notify.error(`Error loading ${key}`);
+    } finally {
+      setLoading(prev => ({ ...prev, [key]: false }));
     }
-    setLoading(prev => ({ ...prev, [key]: false }));
   };
 
   useEffect(() => {
     if (user?._id) {
-      // Fetch all required data
-      fetchData('jobs', endpoints.jobs.user(user._id));
-      fetchData('products', endpoints.products.list({}));
-      fetchData('orders', endpoints.orders.user);
-      fetchData('business', endpoints.business);
-      fetchData('addresses', endpoints.users.addresses);
-      fetchData('cart', endpoints.cart);
+      loadData('jobs', endpoints.jobs.user(user._id));
+      loadData('products', endpoints.products.list({}));
+      loadData('orders', endpoints.orders.user);
+      loadData('business', endpoints.business);
+      loadData('addresses', endpoints.users.addresses);
+      loadData('cart', endpoints.cart);
     }
   }, [user]);
 
