@@ -5,7 +5,7 @@ import { JobCarousel } from '../components/JobCarousel';
 import { ContractorCarousel } from '../components/ContractorCarousel';
 import { FeaturedJobs } from '../components/FeaturedJobs';
 import { fadeIn, slideUp } from '../styles/animations';
-import { getFeaturedItems } from '../services/api';
+import { fetchData, endpoints } from '../services/api';
 import { CircularProgress } from '@mui/material';
 
 const HomeContainer = styled.div`
@@ -74,26 +74,35 @@ const Grid = styled.div`
 `;
 
 function Home() {
-  const [featuredItems, setFeaturedItems] = useState({
+  const [featuredData, setFeaturedData] = useState({
+    products: [],
     jobs: [],
     contractors: []
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadFeaturedItems = async () => {
+    const loadFeaturedData = async () => {
       try {
-        setLoading(true);
-        const items = await getFeaturedItems();
-        setFeaturedItems(items);
+        const [products, jobs, contractors] = await Promise.all([
+          fetchData(endpoints.products.featured),
+          fetchData(endpoints.jobs.featured),
+          fetchData(endpoints.contractors.featured)
+        ]);
+
+        setFeaturedData({
+          products: products.data || [],
+          jobs: jobs.data || [],
+          contractors: contractors.data || []
+        });
       } catch (error) {
-        console.error('Error loading featured items:', error);
+        console.error('Error loading featured data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadFeaturedItems();
+    loadFeaturedData();
   }, []);
 
   if (loading) {

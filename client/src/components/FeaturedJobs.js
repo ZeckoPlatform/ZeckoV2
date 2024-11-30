@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
-import api from '../services/api';
+import { api, fetchData, endpoints } from '../services/api';
 
 const JobsContainer = styled.div`
   display: grid;
@@ -64,7 +64,7 @@ export function FeaturedJobs() {
   useEffect(() => {
     const fetchFeaturedJobs = async () => {
       try {
-        const response = await api.get('/jobs/featured');
+        const response = await fetchData(endpoints.jobs.featured);
         setJobs(response.data);
       } catch (err) {
         console.error('Error fetching featured jobs:', err);
