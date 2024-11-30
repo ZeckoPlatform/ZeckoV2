@@ -1,11 +1,9 @@
 import React from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
-import { ThemeProvider } from 'styled-components';
-import { AuthProvider } from './contexts/AuthContext';
-import { NotificationProvider } from './contexts/NotificationContext';
-import { Outlet } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
+import { AuthProvider } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import CssBaseline from '@mui/material/CssBaseline';
 import { muiTheme, theme } from './styles/theme';
 import GlobalStyles from './styles/GlobalStyles';
@@ -13,34 +11,63 @@ import Layout from './components/Layout';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Import your pages
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Home from './pages/Home';
+import Products from './pages/Products';
+// Import other pages as needed
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Layout />,
+    children: [
+      {
+        path: '/',
+        element: <Home />
+      },
+      {
+        path: '/login',
+        element: <Login />
+      },
+      {
+        path: '/dashboard',
+        element: <Dashboard />
+      },
+      {
+        path: '/products',
+        element: <Products />
+      }
+      // Add other routes as needed
+    ]
+  }
+]);
+
 function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <NotificationProvider>
-          <MuiThemeProvider theme={muiTheme}>
-            <StyledThemeProvider theme={theme}>
-              <CssBaseline />
-              <GlobalStyles />
-              <Layout>
-                <Outlet />
-              </Layout>
-              <ToastContainer 
-                position="top-right"
-                autoClose={5000}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-              />
-            </StyledThemeProvider>
-          </MuiThemeProvider>
-        </NotificationProvider>
-      </AuthProvider>
-    </Router>
+    <AuthProvider>
+      <NotificationProvider>
+        <MuiThemeProvider theme={muiTheme}>
+          <StyledThemeProvider theme={theme}>
+            <CssBaseline />
+            <GlobalStyles />
+            <RouterProvider router={router} />
+            <ToastContainer 
+              position="top-right"
+              autoClose={5000}
+              hideProgressBar={false}
+              newestOnTop
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+            />
+          </StyledThemeProvider>
+        </MuiThemeProvider>
+      </NotificationProvider>
+    </AuthProvider>
   );
 }
 
