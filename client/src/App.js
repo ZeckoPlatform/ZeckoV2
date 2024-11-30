@@ -16,8 +16,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
 import Products from './components/Dashboard/Products';
-import ProductDetails from './components/Dashboard/ProductDetails';
-import ProductList from './components/Dashboard/ProductList';
+import ProductDetails from './pages/ProductDetails';
+import ProductList from './pages/ProductList';
 
 const router = createBrowserRouter([
   {
