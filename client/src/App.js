@@ -15,26 +15,32 @@ import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   return (
-    <MuiThemeProvider theme={muiTheme}>
-      <StyledThemeProvider theme={theme}>
-        <CssBaseline />
-        <GlobalStyles />
-        <Layout>
-          <Outlet />
-        </Layout>
-        <ToastContainer 
-          position="top-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-        />
-      </StyledThemeProvider>
-    </MuiThemeProvider>
+    <Router>
+      <AuthProvider>
+        <NotificationProvider>
+          <MuiThemeProvider theme={muiTheme}>
+            <StyledThemeProvider theme={theme}>
+              <CssBaseline />
+              <GlobalStyles />
+              <Layout>
+                <Outlet />
+              </Layout>
+              <ToastContainer 
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+              />
+            </StyledThemeProvider>
+          </MuiThemeProvider>
+        </NotificationProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 
