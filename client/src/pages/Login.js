@@ -115,9 +115,11 @@ const Login = () => {
 
     try {
       const result = await login(formData);
-      if (result.success) {
+      if (result && result.success) {
         notify.success('Login successful!');
-        navigate('/dashboard');
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 500);
       }
     } catch (err) {
       console.error('Login error:', err);
