@@ -8,10 +8,10 @@ const GlobalStyles = createGlobalStyle`
   }
 
   body {
-    background-color: ${({ theme }) => theme.colors.background.default};
+    background-color: ${({ theme }) => theme.colors.background.main};
     color: ${({ theme }) => theme.colors.text.primary};
-    line-height: ${({ theme }) => theme.typography.lineHeight.normal};
-    transition: all ${({ theme }) => theme.transitions.short};
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 
+      'Helvetica Neue', Arial, sans-serif;
   }
 
   button {
