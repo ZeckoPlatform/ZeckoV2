@@ -1,87 +1,68 @@
 import axios from 'axios';
+import { useNotification } from '../contexts/NotificationContext';
 
 const api = axios.create({
-    baseURL: process.env.NODE_ENV === 'production' 
-        ? 'https://zeckov2-deceb43992ac.herokuapp.com/api'
-        : 'http://localhost:5000/api',
-    timeout: 10000,
-    headers: {
-        'Content-Type': 'application/json'
-    }
+  baseURL: process.env.NODE_ENV === 'production' 
+    ? 'https://zeckov2-deceb43992ac.herokuapp.com/api'
+    : 'http://localhost:5000/api',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  timeout: 60000
 });
 
-// Add retry logic
-api.interceptors.response.use(
-    response => response,
-    async error => {
-        const originalRequest = error.config;
-        
-        if (error.code === 'ECONNABORTED' && !originalRequest._retry) {
-            originalRequest._retry = true;
-            return api(originalRequest);
-        }
-
-        if (error.response?.status === 503 && !originalRequest._retry) {
-            originalRequest._retry = true;
-            return new Promise(resolve => setTimeout(resolve, 1000))
-                .then(() => api(originalRequest));
-        }
-
-        return Promise.reject(error);
-    }
-);
-
-// API methods
-const apiMethods = {
-    getFeaturedItems: async () => {
-        try {
-            const response = await api.get('/products/featured');
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching featured items:', error);
-            throw error;
-        }
-    }
+// API endpoints
+export const endpoints = {
+  products: {
+    list: (params) => `/products?${new URLSearchParams(params)}`,
+    featured: '/products/featured',
+  },
+  jobs: {
+    user: (userId) => `/jobs/user/${userId}`,
+  },
+  business: '/business',
+  orders: {
+    user: '/orders/user',
+  },
+  users: {
+    addresses: '/users/addresses',
+  },
+  cart: '/cart',
 };
 
-// Group auth-related methods
-const authApi = {
-    login: async (email, password) => {
-        try {
-            const response = await api.post('/auth/login', { email, password });
-            if (response.data.token) {
-                localStorage.setItem('token', response.data.token);
-                api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-            }
-            return response.data;
-        } catch (error) {
-            console.error('Login error:', error);
-            throw error;
-        }
-    },
-
-    logout: () => {
-        localStorage.removeItem('token');
-        delete api.defaults.headers.common['Authorization'];
-    },
-
-    checkAuth: async () => {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) return null;
-            
-            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            const response = await api.get('/auth/verify');
-            return response.data;
-        } catch (error) {
-            localStorage.removeItem('token');
-            delete api.defaults.headers.common['Authorization'];
-            throw error;
-        }
+// API service functions
+export const apiService = {
+  async get(endpoint, params = {}) {
+    try {
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      };
+      const response = await api.get(endpoint, { ...config, params });
+      return { data: response.data, error: null };
+    } catch (error) {
+      console.error(`API Error (${endpoint}):`, error);
+      return {
+        data: null,
+        error: error.response?.data?.message || 'Failed to fetch data'
+      };
     }
-};
+  },
 
-// Export the api instance and methods
-export default api;
-export const { getFeaturedItems } = apiMethods;
-export { authApi }; 
+  async post(endpoint, data = {}) {
+    try {
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      };
+      const response = await api.post(endpoint, data, config);
+      return { data: response.data, error: null };
+    } catch (error) {
+      console.error(`API Error (${endpoint}):`, error);
+      return {
+        data: null,
+        error: error.response?.data?.message || 'Failed to submit data'
+      };
+    }
+  }
+}; 
