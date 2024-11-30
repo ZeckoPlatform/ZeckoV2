@@ -1,43 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { api, endpoints } from '../services/api';
 
 const AuthContext = createContext(null);
-
-const api = axios.create({
-  baseURL: process.env.NODE_ENV === 'production' 
-    ? 'https://zeckov2-deceb43992ac.herokuapp.com/api'
-    : 'http://localhost:5000/api',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  timeout: 60000
-});
-
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.code === 'ECONNABORTED' || error.response?.status === 503) {
-      return Promise.reject({
-        message: 'Request timed out. Please try again.',
-        isTimeout: true
-      });
-    }
-    return Promise.reject(error);
-  }
-);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);

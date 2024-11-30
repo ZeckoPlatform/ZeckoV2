@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Create the API instance
+// Create and export the API instance
 export const api = axios.create({
   baseURL: process.env.NODE_ENV === 'production' 
     ? 'https://zeckov2-deceb43992ac.herokuapp.com/api'
