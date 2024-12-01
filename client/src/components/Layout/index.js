@@ -1,9 +1,10 @@
 import React from 'react';
 import styled from 'styled-components';
+import { Outlet, useLocation } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import Sidebar from './Sidebar';
-import { useLocation, Outlet } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const LayoutWrapper = styled.div`
   min-height: 100vh;
@@ -14,41 +15,41 @@ const LayoutWrapper = styled.div`
 
 const MainContent = styled.main`
   flex: 1;
-  width: 100%;
-  max-width: ${({ isDashboard }) => isDashboard ? '100%' : '1400px'};
-  margin: 0 auto;
   padding: ${({ theme }) => theme.spacing.lg};
   margin-left: ${({ isDashboard }) => isDashboard ? '280px' : '0'};
-  
-  @media (max-width: 768px) {
-    padding: ${({ theme }) => theme.spacing.md};
-    margin-left: 0;
-  }
-`;
+  transition: margin-left 0.3s ease;
 
-const ContentWrapper = styled.div`
-  display: flex;
-  flex: 1;
+  @media (max-width: 768px) {
+    margin-left: 0;
+    padding: ${({ theme }) => theme.spacing.md};
+  }
 `;
 
 const Layout = () => {
   const location = useLocation();
-  const isAuthPage = ['/login', '/register', '/forgot-password'].includes(location.pathname);
+  const { loading } = useAuth();
   const isDashboard = location.pathname.startsWith('/dashboard');
 
-  if (isAuthPage) {
-    return <MainContent><Outlet /></MainContent>;
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  // For login page, render without header/footer/sidebar
+  if (location.pathname === '/login') {
+    return (
+      <MainContent>
+        <Outlet />
+      </MainContent>
+    );
   }
 
   return (
     <LayoutWrapper>
       <Header />
-      <ContentWrapper>
-        {isDashboard && <Sidebar />}
-        <MainContent isDashboard={isDashboard}>
-          <Outlet />
-        </MainContent>
-      </ContentWrapper>
+      {isDashboard && <Sidebar />}
+      <MainContent isDashboard={isDashboard}>
+        <Outlet />
+      </MainContent>
       <Footer />
     </LayoutWrapper>
   );

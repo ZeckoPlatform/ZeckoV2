@@ -104,35 +104,19 @@ const router = createBrowserRouter([
       },
       {
         path: 'dashboard',
-        element: (
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        )
+        element: <ProtectedRoute><Dashboard /></ProtectedRoute>
       },
       {
         path: 'dashboard/products',
-        element: (
-          <ProtectedRoute>
-            <Products />
-          </ProtectedRoute>
-        )
+        element: <ProtectedRoute><Products /></ProtectedRoute>
       },
       {
         path: 'dashboard/products/:id',
-        element: (
-          <ProtectedRoute>
-            <ProductDetails />
-          </ProtectedRoute>
-        )
+        element: <ProtectedRoute><ProductDetails /></ProtectedRoute>
       },
       {
         path: 'dashboard/product-list',
-        element: (
-          <ProtectedRoute>
-            <ProductList />
-          </ProtectedRoute>
-        )
+        element: <ProtectedRoute><ProductList /></ProtectedRoute>
       }
     ]
   }
@@ -155,7 +139,7 @@ function App() {
               <GlobalStyles />
               <RouterProvider 
                 router={router}
-                fallbackElement={<div>Loading...</div>}
+                fallback={<div>Loading...</div>}
               />
               <ToastContainer 
                 position="top-right"
