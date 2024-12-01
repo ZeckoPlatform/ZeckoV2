@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const app = express();
+import mongoose from 'mongoose';
 
 // Middleware
 app.use(cors());
@@ -19,6 +20,9 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
+
+// Add this before connecting to MongoDB
+mongoose.set('strictQuery', true);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

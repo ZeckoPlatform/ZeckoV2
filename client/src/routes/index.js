@@ -1,13 +1,6 @@
-import React, { Suspense } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import Layout from '../components/Layout';
-import App from '../App';
 import ErrorBoundary from '../components/error/ErrorBoundary';
-import { LoadingFallback } from '../components/common/LoadingFallback';
-import { ProtectedRoute } from '../components/auth/ProtectedRoute';
-import { AdminRoute } from '../components/auth/AdminRoute';
-
-// Import pages
 import Home from '../pages/Home';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
@@ -18,28 +11,24 @@ import ProductList from '../pages/ProductList';
 import ProductDetails from '../pages/ProductDetails';
 import BusinessDirectory from '../pages/BusinessDirectory';
 import JobBoard from '../pages/JobBoard';
+import Shop from '../pages/Shop';
+import Dashboard from '../pages/Dashboard';
 import Cart from '../pages/Cart';
 import Checkout from '../pages/Checkout';
 import Wishlist from '../pages/Wishlist';
-import OrderConfirmation from '../pages/OrderConfirmation';
 import Profile from '../pages/Profile';
-import DashboardHome from '../pages/Dashboard/DashboardHome';
-import Products from '../components/Dashboard/Products';
-import Settings from '../components/Dashboard/Settings';
-import DashboardStats from '../components/admin/DashboardStats';
-import UserManagement from '../components/admin/UserManagement';
-import OrderManagement from '../components/admin/OrderManagement';
-import AdminSettings from '../components/admin/Settings';
-import Dashboard from '../pages/Dashboard';
-
-// Lazy loaded components
-const Shop = React.lazy(() => import('../pages/Shop'));
-const SecuritySettings = React.lazy(() => import('../pages/SecuritySettings'));
-const UserActivityLog = React.lazy(() => import('../pages/UserActivityLog'));
-const AdminDashboard = React.lazy(() => import('../components/admin/AdminDashboard'));
-const ProductManagement = React.lazy(() => import('../components/admin/ProductManagement'));
-const AddProduct = React.lazy(() => import('../components/admin/products/AddProduct'));
-const EditProduct = React.lazy(() => import('../components/admin/products/EditProduct'));
+import SecuritySettings from '../pages/SecuritySettings';
+import UserActivityLog from '../pages/UserActivityLog';
+import OrderConfirmation from '../pages/OrderConfirmation';
+import AdminDashboard from '../pages/admin/AdminDashboard';
+import DashboardStats from '../pages/admin/DashboardStats';
+import UserManagement from '../pages/admin/UserManagement';
+import ProductManagement from '../pages/admin/ProductManagement';
+import OrderManagement from '../pages/admin/OrderManagement';
+import AdminSettings from '../pages/admin/AdminSettings';
+import { ProtectedRoute } from '../components/auth/ProtectedRoute';
+import { AdminRoute } from '../components/auth/AdminRoute';
+import LoadingFallback from '../components/common/LoadingFallback';
 
 export const router = createBrowserRouter([
   {
@@ -57,79 +46,40 @@ export const router = createBrowserRouter([
       { path: 'products/:id', element: <ProductDetails /> },
       { path: 'directory', element: <BusinessDirectory /> },
       { path: 'jobs', element: <JobBoard /> },
-      { 
-        path: 'shop', 
+      {
+        path: 'shop',
         element: (
-          <Suspense fallback={<LoadingFallback />}>
+          <React.Suspense fallback={<LoadingFallback />}>
             <Shop />
-          </Suspense>
-        ) 
+          </React.Suspense>
+        )
       },
-
-      // Protected Routes
       {
         element: <ProtectedRoute />,
         children: [
           {
-            path: 'dashboard',
-            element: (
-              <Suspense fallback={<LoadingFallback />}>
-                <Dashboard />
-              </Suspense>
-            ),
-            children: [
-              { index: true, element: <DashboardHome /> },
-              { path: 'products', element: <Products /> },
-              { path: 'profile', element: <Profile /> },
-              { path: 'settings', element: <Settings /> }
-            ]
+            path: 'dashboard/*',
+            element: <Dashboard />
           },
           { path: 'cart', element: <Cart /> },
           { path: 'checkout', element: <Checkout /> },
           { path: 'wishlist', element: <Wishlist /> },
           { path: 'profile', element: <Profile /> },
-          {
-            path: 'security-settings',
-            element: (
-              <Suspense fallback={<LoadingFallback />}>
-                <SecuritySettings />
-              </Suspense>
-            )
-          },
-          {
-            path: 'activity-log',
-            element: (
-              <Suspense fallback={<LoadingFallback />}>
-                <UserActivityLog />
-              </Suspense>
-            )
-          },
+          { path: 'security-settings', element: <SecuritySettings /> },
+          { path: 'activity-log', element: <UserActivityLog /> },
           { path: 'order-confirmation/:orderId', element: <OrderConfirmation /> }
         ]
       },
-
-      // Admin Routes
       {
         path: 'admin',
         element: <AdminRoute />,
         children: [
           {
-            element: (
-              <Suspense fallback={<LoadingFallback />}>
-                <AdminDashboard />
-              </Suspense>
-            ),
+            element: <AdminDashboard />,
             children: [
               { index: true, element: <DashboardStats /> },
               { path: 'users', element: <UserManagement /> },
-              {
-                path: 'products',
-                children: [
-                  { index: true, element: <ProductManagement /> },
-                  { path: 'add', element: <AddProduct /> },
-                  { path: 'edit/:id', element: <EditProduct /> }
-                ]
-              },
+              { path: 'products', element: <ProductManagement /> },
               { path: 'orders', element: <OrderManagement /> },
               { path: 'settings', element: <AdminSettings /> }
             ]
