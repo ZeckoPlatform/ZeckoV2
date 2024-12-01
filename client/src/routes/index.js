@@ -5,30 +5,17 @@ import Home from '../pages/Home';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import ForgotPassword from '../pages/ForgotPassword';
-import ResetPassword from '../pages/ResetPassword';
-import EmailVerification from '../pages/EmailVerification';
-import ProductList from '../pages/ProductList';
-import ProductDetails from '../pages/ProductDetails';
-import BusinessDirectory from '../pages/BusinessDirectory';
-import JobBoard from '../pages/JobBoard';
-import Shop from '../pages/Shop';
-import Dashboard from '../pages/Dashboard';
-import Cart from '../pages/Cart';
-import Checkout from '../pages/Checkout';
-import Wishlist from '../pages/Wishlist';
-import Profile from '../pages/Profile';
-import SecuritySettings from '../pages/SecuritySettings';
-import UserActivityLog from '../pages/UserActivityLog';
-import OrderConfirmation from '../pages/OrderConfirmation';
-import AdminDashboard from '../pages/admin/AdminDashboard';
-import DashboardStats from '../pages/admin/DashboardStats';
-import UserManagement from '../pages/admin/UserManagement';
-import ProductManagement from '../pages/admin/ProductManagement';
-import OrderManagement from '../pages/admin/OrderManagement';
-import AdminSettings from '../pages/admin/AdminSettings';
-import { ProtectedRoute } from '../components/auth/ProtectedRoute';
-import { AdminRoute } from '../components/auth/AdminRoute';
-import LoadingFallback from '../components/common/LoadingFallback';
+
+// Admin components
+import AdminDashboard from '../components/admin/AdminDashboard';
+import DashboardStats from '../components/admin/DashboardStats';
+import Analytics from '../components/admin/Analytics';
+import OrderManagement from '../components/admin/OrderManagement';
+import ProductManagement from '../components/admin/ProductManagement';
+import AddProduct from '../components/admin/products/AddProduct';
+import EditProduct from '../components/admin/products/EditProduct';
+import Settings from '../components/admin/Settings';
+import UserManagement from '../components/admin/UserManagement';
 
 export const router = createBrowserRouter([
   {
@@ -36,53 +23,57 @@ export const router = createBrowserRouter([
     element: <Layout />,
     errorElement: <ErrorBoundary />,
     children: [
-      { index: true, element: <Home /> },
-      { path: 'login', element: <Login /> },
-      { path: 'register', element: <Register /> },
-      { path: 'forgot-password', element: <ForgotPassword /> },
-      { path: 'reset-password/:token', element: <ResetPassword /> },
-      { path: 'verify-email/:token', element: <EmailVerification /> },
-      { path: 'products', element: <ProductList /> },
-      { path: 'products/:id', element: <ProductDetails /> },
-      { path: 'directory', element: <BusinessDirectory /> },
-      { path: 'jobs', element: <JobBoard /> },
       {
-        path: 'shop',
-        element: (
-          <React.Suspense fallback={<LoadingFallback />}>
-            <Shop />
-          </React.Suspense>
-        )
+        index: true,
+        element: <Home />
       },
       {
-        element: <ProtectedRoute />,
-        children: [
-          {
-            path: 'dashboard/*',
-            element: <Dashboard />
-          },
-          { path: 'cart', element: <Cart /> },
-          { path: 'checkout', element: <Checkout /> },
-          { path: 'wishlist', element: <Wishlist /> },
-          { path: 'profile', element: <Profile /> },
-          { path: 'security-settings', element: <SecuritySettings /> },
-          { path: 'activity-log', element: <UserActivityLog /> },
-          { path: 'order-confirmation/:orderId', element: <OrderConfirmation /> }
-        ]
+        path: 'login',
+        element: <Login />
+      },
+      {
+        path: 'register',
+        element: <Register />
+      },
+      {
+        path: 'forgot-password',
+        element: <ForgotPassword />
       },
       {
         path: 'admin',
-        element: <AdminRoute />,
+        element: <AdminDashboard />,
         children: [
           {
-            element: <AdminDashboard />,
-            children: [
-              { index: true, element: <DashboardStats /> },
-              { path: 'users', element: <UserManagement /> },
-              { path: 'products', element: <ProductManagement /> },
-              { path: 'orders', element: <OrderManagement /> },
-              { path: 'settings', element: <AdminSettings /> }
-            ]
+            index: true,
+            element: <DashboardStats />
+          },
+          {
+            path: 'analytics',
+            element: <Analytics />
+          },
+          {
+            path: 'orders',
+            element: <OrderManagement />
+          },
+          {
+            path: 'products',
+            element: <ProductManagement />
+          },
+          {
+            path: 'products/add',
+            element: <AddProduct />
+          },
+          {
+            path: 'products/edit/:id',
+            element: <EditProduct />
+          },
+          {
+            path: 'settings',
+            element: <Settings />
+          },
+          {
+            path: 'users',
+            element: <UserManagement />
           }
         ]
       }
