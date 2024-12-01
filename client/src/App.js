@@ -152,38 +152,36 @@ const router = createBrowserRouter([
         element: <Login />
       },
       {
-        path: 'dashboard',
-        element: <ProtectedRoute />,
-        children: [
-          {
-            path: '',
-            element: <Dashboard />
-          }
-        ]
+        path: 'dashboard/*',
+        element: (
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        )
       },
       {
         path: 'products',
-        element: <ProtectedRoute />,
-        children: [
-          {
-            path: '',
-            element: <Products />
-          },
-          {
-            path: ':id',
-            element: <ProductDetails />
-          }
-        ]
+        element: (
+          <ProtectedRoute>
+            <Products />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: 'products/:id',
+        element: (
+          <ProtectedRoute>
+            <ProductDetails />
+          </ProtectedRoute>
+        )
       },
       {
         path: 'product-list',
-        element: <ProtectedRoute />,
-        children: [
-          {
-            path: '',
-            element: <ProductList />
-          }
-        ]
+        element: (
+          <ProtectedRoute>
+            <ProductList />
+          </ProtectedRoute>
+        )
       }
     ]
   }
