@@ -25,6 +25,8 @@ import ProductManagement from './components/admin/ProductManagement';
 import AddProduct from './components/admin/products/AddProduct';
 import EditProduct from './components/admin/products/EditProduct';
 
+import { router } from './routes';
+
 const theme = {
   colors: {
     primary: {
@@ -111,56 +113,6 @@ const muiTheme = createTheme({
     },
   },
 });
-
-const AppRoutes = () => {
-  return (
-    <Layout>
-      <ErrorBoundary>
-        <RouterProvider 
-          router={createBrowserRouter([
-            {
-              path: '/',
-              element: <Home />
-            },
-            {
-              path: '/login',
-              element: <Login />
-            },
-            {
-              path: '/products',
-              element: <ProductList />
-            },
-            {
-              path: '/products/:id',
-              element: <ProductDetails />
-            },
-            {
-              path: '/dashboard',
-              element: <ProtectedRoute><Dashboard /></ProtectedRoute>
-            },
-            {
-              path: '/dashboard/products',
-              element: <ProtectedRoute><DashboardProducts /></ProtectedRoute>
-            },
-            {
-              path: '/admin/products',
-              element: <ProtectedRoute><ProductManagement /></ProtectedRoute>
-            },
-            {
-              path: '/admin/products/add',
-              element: <ProtectedRoute><AddProduct /></ProtectedRoute>
-            },
-            {
-              path: '/admin/products/edit/:id',
-              element: <ProtectedRoute><EditProduct /></ProtectedRoute>
-            }
-          ])}
-          fallback={<div>Loading...</div>}
-        />
-      </ErrorBoundary>
-    </Layout>
-  );
-};
 
 function App() {
   return (

@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
+import Layout from '../components/Layout';
 import App from '../App';
 import ErrorBoundary from '../components/error/ErrorBoundary';
 import { LoadingFallback } from '../components/common/LoadingFallback';
@@ -29,10 +30,10 @@ import DashboardStats from '../components/admin/DashboardStats';
 import UserManagement from '../components/admin/UserManagement';
 import OrderManagement from '../components/admin/OrderManagement';
 import AdminSettings from '../components/admin/Settings';
+import Dashboard from '../pages/Dashboard';
 
 // Lazy loaded components
 const Shop = React.lazy(() => import('../pages/Shop'));
-const Dashboard = React.lazy(() => import('../pages/Dashboard'));
 const SecuritySettings = React.lazy(() => import('../pages/SecuritySettings'));
 const UserActivityLog = React.lazy(() => import('../pages/UserActivityLog'));
 const AdminDashboard = React.lazy(() => import('../components/admin/AdminDashboard'));
