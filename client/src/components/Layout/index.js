@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import Header from './Header';
 import Footer from './Footer';
+import Sidebar from './Sidebar';
 import { useLocation, Outlet } from 'react-router-dom';
 
 const LayoutWrapper = styled.div`
@@ -14,18 +15,26 @@ const LayoutWrapper = styled.div`
 const MainContent = styled.main`
   flex: 1;
   width: 100%;
-  max-width: 1400px;
+  max-width: ${({ isDashboard }) => isDashboard ? '100%' : '1400px'};
   margin: 0 auto;
   padding: ${({ theme }) => theme.spacing.lg};
+  margin-left: ${({ isDashboard }) => isDashboard ? '280px' : '0'};
   
   @media (max-width: 768px) {
     padding: ${({ theme }) => theme.spacing.md};
+    margin-left: 0;
   }
+`;
+
+const ContentWrapper = styled.div`
+  display: flex;
+  flex: 1;
 `;
 
 const Layout = () => {
   const location = useLocation();
   const isAuthPage = ['/login', '/register', '/forgot-password'].includes(location.pathname);
+  const isDashboard = location.pathname.startsWith('/dashboard');
 
   if (isAuthPage) {
     return <MainContent><Outlet /></MainContent>;
@@ -34,9 +43,12 @@ const Layout = () => {
   return (
     <LayoutWrapper>
       <Header />
-      <MainContent>
-        <Outlet />
-      </MainContent>
+      <ContentWrapper>
+        {isDashboard && <Sidebar />}
+        <MainContent isDashboard={isDashboard}>
+          <Outlet />
+        </MainContent>
+      </ContentWrapper>
       <Footer />
     </LayoutWrapper>
   );
