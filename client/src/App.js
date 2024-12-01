@@ -6,20 +6,14 @@ import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import CssBaseline from '@mui/material/CssBaseline';
 import GlobalStyles from './styles/GlobalStyles';
-import Layout from './components/Layout';
+import TestLayout from './components/TestLayout';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ErrorBoundary from './components/error/ErrorBoundary';
-import { withErrorBoundary } from './components/error/withErrorBoundary';
 
 // Import pages
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
-import Products from './components/Dashboard/Products';
-import ProductDetails from './pages/ProductDetails';
-import ProductList from './pages/ProductList';
-import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 // Define the theme
 const theme = {
@@ -89,10 +83,11 @@ const muiTheme = createTheme({
   },
 });
 
+// Simplified router configuration
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Layout />,
+    element: <TestLayout />,
     children: [
       {
         index: true,
@@ -101,32 +96,10 @@ const router = createBrowserRouter([
       {
         path: 'login',
         element: <Login />
-      },
-      {
-        path: 'dashboard',
-        element: <ProtectedRoute><Dashboard /></ProtectedRoute>
-      },
-      {
-        path: 'dashboard/products',
-        element: <ProtectedRoute><Products /></ProtectedRoute>
-      },
-      {
-        path: 'dashboard/products/:id',
-        element: <ProtectedRoute><ProductDetails /></ProtectedRoute>
-      },
-      {
-        path: 'dashboard/product-list',
-        element: <ProtectedRoute><ProductList /></ProtectedRoute>
       }
     ]
   }
 ]);
-
-// Wrap the RouterProvider with error boundary
-const SafeRouter = withErrorBoundary(
-  ({ router }) => <RouterProvider router={router} />,
-  { fallbackMessage: "Navigation error occurred. Please try again." }
-);
 
 function App() {
   return (
