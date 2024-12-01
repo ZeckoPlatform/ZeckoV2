@@ -7,6 +7,17 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
 
+  const logout = async () => {
+    try {
+      localStorage.removeItem('token');
+      setIsAuthenticated(false);
+      setUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -30,7 +41,8 @@ export const AuthProvider = ({ children }) => {
     loading,
     user,
     setIsAuthenticated,
-    setUser
+    setUser,
+    logout
   };
 
   if (loading) {

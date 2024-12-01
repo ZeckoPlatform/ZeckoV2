@@ -43,7 +43,7 @@ const EditProduct = React.lazy(() => import('../components/admin/products/EditPr
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <App />,
+    element: <Layout />,
     errorElement: <ErrorBoundary />,
     children: [
       { index: true, element: <Home /> },
