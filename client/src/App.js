@@ -21,6 +21,9 @@ import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import ProductList from './pages/ProductList';
 import ProductDetails from './pages/ProductDetails';
+import ProductManagement from './components/admin/ProductManagement';
+import AddProduct from './components/admin/products/AddProduct';
+import EditProduct from './components/admin/products/EditProduct';
 
 const theme = {
   colors: {
@@ -102,6 +105,14 @@ const router = createBrowserRouter([
         element: <Login />
       },
       {
+        path: 'products',
+        element: <ProductList />
+      },
+      {
+        path: 'products/:id',
+        element: <ProductDetails />
+      },
+      {
         path: 'dashboard',
         element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
       },
@@ -110,12 +121,16 @@ const router = createBrowserRouter([
         element: <ProtectedRoute><Products /></ProtectedRoute>
       },
       {
-        path: 'dashboard/products/:id',
-        element: <ProtectedRoute><ProductDetails /></ProtectedRoute>
+        path: 'admin/products',
+        element: <ProtectedRoute><ProductManagement /></ProtectedRoute>
       },
       {
-        path: 'dashboard/product-list',
-        element: <ProtectedRoute><ProductList /></ProtectedRoute>
+        path: 'admin/products/add',
+        element: <ProtectedRoute><AddProduct /></ProtectedRoute>
+      },
+      {
+        path: 'admin/products/edit/:id',
+        element: <ProtectedRoute><EditProduct /></ProtectedRoute>
       }
     ]
   }
