@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Outlet } from 'react-router-dom';
+import Sidebar from '../Layout/Sidebar';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -11,14 +11,20 @@ const DashboardContainer = styled.div`
 const MainContent = styled.main`
   flex: 1;
   padding: ${({ theme }) => theme.spacing.lg};
+  margin-left: 280px; // Width of Sidebar
   overflow-y: auto;
+
+  @media (max-width: 768px) {
+    margin-left: 0;
+  }
 `;
 
-const DashboardLayout = () => {
+const DashboardLayout = ({ children }) => {
   return (
     <DashboardContainer>
+      <Sidebar />
       <MainContent>
-        <Outlet />
+        {children}
       </MainContent>
     </DashboardContainer>
   );

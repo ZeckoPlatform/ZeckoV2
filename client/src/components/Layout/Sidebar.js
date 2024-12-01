@@ -1,4 +1,6 @@
+import React from 'react';
 import styled from 'styled-components';
+import { Link } from 'react-router-dom';
 import { glassEffect } from '../../styles/mixins';
 
 const SidebarContainer = styled.aside`
@@ -13,6 +15,7 @@ const SidebarContainer = styled.aside`
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
   z-index: ${({ theme }) => theme.zIndex.drawer};
+  background: ${({ theme }) => theme.colors.background.paper};
 
   @media (max-width: 768px) {
     transform: translateX(-100%);
@@ -28,12 +31,13 @@ const SidebarSection = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.lg};
 `;
 
-const SidebarLink = styled.a`
+const SidebarLink = styled(Link)`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
   padding: ${({ theme }) => theme.spacing.sm};
   color: ${({ theme }) => theme.colors.text.primary};
+  text-decoration: none;
   border-radius: ${({ theme }) => theme.borderRadius.md};
   transition: all ${({ theme }) => theme.transitions.short};
 
@@ -46,4 +50,18 @@ const SidebarLink = styled.a`
     width: 20px;
     height: 20px;
   }
-`; 
+`;
+
+const Sidebar = ({ isOpen = false }) => {
+  return (
+    <SidebarContainer isOpen={isOpen}>
+      <SidebarSection>
+        <SidebarLink to="/dashboard">Dashboard</SidebarLink>
+        <SidebarLink to="/dashboard/products">Products</SidebarLink>
+        <SidebarLink to="/dashboard/product-list">Product List</SidebarLink>
+      </SidebarSection>
+    </SidebarContainer>
+  );
+};
+
+export default Sidebar; 
