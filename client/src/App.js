@@ -17,6 +17,7 @@ import Home from './pages/Home';
 import Products from './components/Dashboard/Products';
 import ProductDetails from './pages/ProductDetails';
 import ProductList from './pages/ProductList';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Define the styled-components theme
 const theme = {
@@ -46,6 +47,15 @@ const theme = {
     },
     border: {
       main: 'rgba(255, 255, 255, 0.2)'
+    },
+    white: '#FFFFFF',
+    black: 'rgba(0, 0, 0, 0.5)',
+    grey: {
+      100: '#f5f5f5',
+      200: '#eeeeee',
+      300: '#e0e0e0',
+      400: '#bdbdbd',
+      500: '#9e9e9e'
     }
   },
   spacing: {
@@ -61,14 +71,30 @@ const theme = {
     lg: '1rem'
   },
   shadows: {
-    card: '0 4px 6px rgba(0, 0, 0, 0.1)'
+    card: '0 4px 6px rgba(0, 0, 0, 0.1)',
+    modal: '0 2px 4px rgba(0,0,0,0.1)'
   },
   typography: {
     size: {
       sm: '0.875rem',
       md: '1rem',
       lg: '1.25rem'
+    },
+    weight: {
+      normal: 400,
+      medium: 500,
+      bold: 700
     }
+  },
+  transitions: {
+    short: '0.15s ease-in-out',
+    medium: '0.25s ease-in-out',
+    long: '0.35s ease-in-out'
+  },
+  zIndex: {
+    modal: 1000,
+    overlay: 900,
+    dropdown: 800
   }
 };
 
@@ -119,10 +145,21 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <Home /> },
       { path: '/login', element: <Login /> },
-      { path: '/dashboard', element: <Dashboard /> },
-      { path: '/products', element: <Products /> },
-      { path: '/products/:id', element: <ProductDetails /> },
-      { path: '/product-list', element: <ProductList /> }
+      { 
+        path: '/dashboard',
+        element: <ProtectedRoute />,
+        children: [
+          {
+            path: '',
+            element: <Dashboard />,
+            children: [
+              { path: 'products', element: <Products /> },
+              { path: 'products/:id', element: <ProductDetails /> },
+              { path: 'product-list', element: <ProductList /> }
+            ]
+          }
+        ]
+      }
     ]
   }
 ]);
