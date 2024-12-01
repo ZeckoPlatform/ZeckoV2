@@ -9,6 +9,8 @@ import GlobalStyles from './styles/GlobalStyles';
 import Layout from './components/Layout';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ErrorBoundary from './components/error/ErrorBoundary';
+import { withErrorBoundary } from './components/error/withErrorBoundary';
 
 // Import pages
 import Login from './pages/Login';
@@ -130,30 +132,38 @@ const router = createBrowserRouter([
   }
 ]);
 
+// Wrap the RouterProvider with error boundary
+const SafeRouter = withErrorBoundary(
+  ({ router }) => <RouterProvider router={router} />,
+  { fallbackMessage: "Navigation error occurred. Please try again." }
+);
+
 function App() {
   return (
-    <StyledThemeProvider theme={theme}>
-      <MuiThemeProvider theme={muiTheme}>
-        <AuthProvider>
-          <NotificationProvider>
-            <CssBaseline />
-            <GlobalStyles />
-            <RouterProvider router={router} />
-            <ToastContainer 
-              position="top-right"
-              autoClose={5000}
-              hideProgressBar={false}
-              newestOnTop
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-            />
-          </NotificationProvider>
-        </AuthProvider>
-      </MuiThemeProvider>
-    </StyledThemeProvider>
+    <ErrorBoundary>
+      <StyledThemeProvider theme={theme}>
+        <MuiThemeProvider theme={muiTheme}>
+          <AuthProvider>
+            <NotificationProvider>
+              <CssBaseline />
+              <GlobalStyles />
+              <SafeRouter router={router} />
+              <ToastContainer 
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+              />
+            </NotificationProvider>
+          </AuthProvider>
+        </MuiThemeProvider>
+      </StyledThemeProvider>
+    </ErrorBoundary>
   );
 }
 
