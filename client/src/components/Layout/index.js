@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import Header from './Header';
 import Footer from './Footer';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Outlet } from 'react-router-dom';
 
 const LayoutWrapper = styled.div`
   min-height: 100vh;
@@ -23,18 +23,20 @@ const MainContent = styled.main`
   }
 `;
 
-const Layout = ({ children }) => {
+const Layout = () => {
   const location = useLocation();
   const isAuthPage = ['/login', '/register', '/forgot-password'].includes(location.pathname);
 
   if (isAuthPage) {
-    return <MainContent>{children}</MainContent>;
+    return <MainContent><Outlet /></MainContent>;
   }
 
   return (
     <LayoutWrapper>
       <Header />
-      <MainContent>{children}</MainContent>
+      <MainContent>
+        <Outlet />
+      </MainContent>
       <Footer />
     </LayoutWrapper>
   );
