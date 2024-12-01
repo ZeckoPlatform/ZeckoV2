@@ -43,6 +43,12 @@ const theme = {
     },
     border: {
       main: 'rgba(255, 255, 255, 0.1)'
+    },
+    status: {
+      error: '#f44336',
+      warning: '#ff9800',
+      info: '#2196f3',
+      success: '#4caf50'
     }
   },
   spacing: {
