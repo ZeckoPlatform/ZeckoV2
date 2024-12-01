@@ -38,6 +38,9 @@ const theme = {
     text: {
       primary: '#E0E0E0',
       secondary: '#BDBDBD'
+    },
+    border: {
+      main: 'rgba(255, 255, 255, 0.1)'
     }
   },
   spacing: {
@@ -46,6 +49,21 @@ const theme = {
     md: '1rem',
     lg: '1.5rem',
     xl: '2rem'
+  },
+  borderRadius: {
+    sm: '4px',
+    md: '8px',
+    lg: '16px'
+  },
+  transitions: {
+    short: '0.15s ease-in-out',
+    medium: '0.25s ease-in-out',
+    long: '0.35s ease-in-out'
+  },
+  zIndex: {
+    drawer: 1200,
+    modal: 1300,
+    tooltip: 1400
   }
 };
 
