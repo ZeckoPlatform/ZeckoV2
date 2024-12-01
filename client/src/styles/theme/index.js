@@ -1,6 +1,6 @@
 import { createTheme } from '@mui/material/styles';
 
-// Define base design tokens
+// Define base design tokens with the structure your components expect
 const tokens = {
   colors: {
     primary: {
@@ -10,79 +10,48 @@ const tokens = {
       text: '#FFFFFF',
       gradient: 'linear-gradient(135deg, #81C784 0%, #4CAF50 100%)',
     },
-    secondary: {
-      main: '#64B5F6',
-      dark: '#1E88E5',
-      light: '#90CAF9',
-      text: '#FFFFFF',
-      gradient: 'linear-gradient(135deg, #64B5F6 0%, #1E88E5 100%)',
+    error: {
+      main: '#f44336',
+      light: '#e57373',
+      dark: '#d32f2f'
     },
     background: {
       default: '#121212',
       paper: '#1E1E1E',
-      gradient: 'linear-gradient(135deg, #121212 0%, #1E1E1E 100%)',
+      main: '#121212', // Added to match component expectations
+      light: '#1E1E1E'
     },
     text: {
       primary: '#E0E0E0',
       secondary: '#BDBDBD',
       disabled: 'rgba(255, 255, 255, 0.38)',
-      hint: 'rgba(255, 255, 255, 0.38)',
     },
-    status: {
-      error: '#f44336',
-      warning: '#ff9800',
-      success: '#4caf50',
-      info: '#2196f3',
-    },
-    glass: {
-      background: 'rgba(255, 255, 255, 0.1)',
-      border: 'rgba(255, 255, 255, 0.2)',
-    },
+    border: {
+      main: 'rgba(255, 255, 255, 0.2)'
+    }
   },
   spacing: {
     xs: '0.25rem',
     sm: '0.5rem',
     md: '1rem',
     lg: '1.5rem',
-    xl: '2rem',
-    xxl: '3rem',
-  },
-  typography: {
-    size: {
-      h1: '2.5rem',
-      h2: '2rem',
-      h3: '1.75rem',
-      h4: '1.5rem',
-      h5: '1.25rem',
-      h6: '1rem',
-    },
-    weight: {
-      light: 300,
-      regular: 400,
-      medium: 500,
-      bold: 700,
-    },
-    lineHeight: {
-      normal: 1.5,
-    },
+    xl: '2rem'
   },
   borderRadius: {
     sm: '0.25rem',
     md: '0.5rem',
-    lg: '1rem',
-    xl: '2rem',
+    lg: '1rem'
   },
   shadows: {
-    card: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    button: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    hover: '0 6px 12px rgba(0, 0, 0, 0.15)',
-    glass: '0 8px 32px rgba(0, 0, 0, 0.1)',
+    card: '0 4px 6px rgba(0, 0, 0, 0.1)'
   },
-  transitions: {
-    short: '0.15s ease-in-out',
-    medium: '0.25s ease-in-out',
-    long: '0.35s ease-in-out',
-  },
+  typography: {
+    size: {
+      sm: '0.875rem',
+      md: '1rem',
+      lg: '1.25rem'
+    }
+  }
 };
 
 // Create MUI theme
@@ -134,5 +103,4 @@ const muiTheme = createTheme({
   },
 });
 
-// Export both the MUI theme and styled-components theme
 export { muiTheme, tokens as theme }; 
