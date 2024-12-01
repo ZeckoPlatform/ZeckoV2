@@ -146,14 +146,17 @@ const SafeRouter = withErrorBoundary(
 
 function App() {
   return (
-    <ErrorBoundary>
-      <StyledThemeProvider theme={theme}>
-        <MuiThemeProvider theme={muiTheme}>
+    <StyledThemeProvider theme={theme}>
+      <MuiThemeProvider theme={muiTheme}>
+        <ErrorBoundary>
           <AuthProvider>
             <NotificationProvider>
               <CssBaseline />
               <GlobalStyles />
-              <SafeRouter router={router} />
+              <RouterProvider 
+                router={router}
+                fallbackElement={<div>Loading...</div>}
+              />
               <ToastContainer 
                 position="top-right"
                 autoClose={5000}
@@ -167,9 +170,9 @@ function App() {
               />
             </NotificationProvider>
           </AuthProvider>
-        </MuiThemeProvider>
-      </StyledThemeProvider>
-    </ErrorBoundary>
+        </ErrorBoundary>
+      </MuiThemeProvider>
+    </StyledThemeProvider>
   );
 }
 

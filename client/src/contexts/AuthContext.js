@@ -1,59 +1,46 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { api, endpoints } from '../services/api';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    if (token && storedUser) {
-      setUser(JSON.parse(storedUser));
-      setIsAuthenticated(true);
-    }
-    setLoading(false);
+    const checkAuth = async () => {
+      try {
+        // Check for token in localStorage
+        const token = localStorage.getItem('token');
+        if (token) {
+          setIsAuthenticated(true);
+          // Optionally fetch user data here
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
   }, []);
 
-  const login = async (credentials) => {
-    try {
-      const response = await api.post('/auth/login', credentials);
-      const { token, user } = response.data;
-      
-      if (token && user) {
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        setUser(user);
-        setIsAuthenticated(true);
-        return { success: true, user };
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
-    }
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-    setIsAuthenticated(false);
-  };
-
   const value = {
-    user,
     isAuthenticated,
     loading,
-    login,
-    logout
+    user,
+    setIsAuthenticated,
+    setUser
   };
+
+  if (loading) {
+    return <div>Loading...</div>; // Or your loading component
+  }
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
