@@ -139,7 +139,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'dashboard/products',
-        element: <ProtectedRoute><Products /></ProtectedRoute>
+        element: <ProtectedRoute><DashboardProducts /></ProtectedRoute>
       },
       {
         path: 'admin/products',
