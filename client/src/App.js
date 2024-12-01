@@ -152,7 +152,7 @@ const router = createBrowserRouter([
         element: <Login />
       },
       {
-        path: 'dashboard/*',
+        path: 'dashboard',
         element: (
           <ProtectedRoute>
             <Dashboard />
@@ -160,7 +160,7 @@ const router = createBrowserRouter([
         )
       },
       {
-        path: 'products',
+        path: 'dashboard/products',
         element: (
           <ProtectedRoute>
             <Products />
@@ -168,7 +168,7 @@ const router = createBrowserRouter([
         )
       },
       {
-        path: 'products/:id',
+        path: 'dashboard/products/:id',
         element: (
           <ProtectedRoute>
             <ProductDetails />
@@ -176,7 +176,7 @@ const router = createBrowserRouter([
         )
       },
       {
-        path: 'product-list',
+        path: 'dashboard/product-list',
         element: (
           <ProtectedRoute>
             <ProductList />
