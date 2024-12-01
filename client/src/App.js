@@ -18,9 +18,9 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import Products from './pages/Products';
 import ProductList from './pages/ProductList';
 import ProductDetails from './pages/ProductDetails';
+import DashboardProducts from './components/Dashboard/Products';
 import ProductManagement from './components/admin/ProductManagement';
 import AddProduct from './components/admin/products/AddProduct';
 import EditProduct from './components/admin/products/EditProduct';
@@ -118,7 +118,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'dashboard/products',
-        element: <ProtectedRoute><Products /></ProtectedRoute>
+        element: <ProtectedRoute><DashboardProducts /></ProtectedRoute>
       },
       {
         path: 'admin/products',

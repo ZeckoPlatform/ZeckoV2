@@ -34,7 +34,6 @@ const Layout = () => {
     return <div>Loading...</div>;
   }
 
-  // For login page, render without header/footer/sidebar
   if (location.pathname === '/login') {
     return (
       <MainContent>
