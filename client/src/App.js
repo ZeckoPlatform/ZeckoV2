@@ -42,7 +42,8 @@ const theme = {
     },
     text: {
       primary: '#E0E0E0',
-      secondary: '#BDBDBD'
+      secondary: '#BDBDBD',
+      disabled: '#757575'
     },
     border: {
       main: 'rgba(255, 255, 255, 0.1)'
@@ -52,6 +53,15 @@ const theme = {
       warning: '#ff9800',
       info: '#2196f3',
       success: '#4caf50'
+    }
+  },
+  typography: {
+    size: {
+      xs: '0.75rem',
+      sm: '0.875rem',
+      md: '1rem',
+      lg: '1.125rem',
+      xl: '1.25rem'
     }
   },
   spacing: {
@@ -71,6 +81,11 @@ const theme = {
     medium: '0.25s ease-in-out',
     long: '0.35s ease-in-out'
   },
+  shadows: {
+    card: '0 2px 4px rgba(0,0,0,0.2)',
+    dropdown: '0 4px 8px rgba(0,0,0,0.3)',
+    modal: '0 8px 16px rgba(0,0,0,0.4)'
+  },
   zIndex: {
     drawer: 1200,
     modal: 1300,
@@ -83,10 +98,16 @@ const muiTheme = createTheme({
     mode: 'dark',
     primary: {
       main: theme.colors.primary.main,
+      dark: theme.colors.primary.dark,
+      light: theme.colors.primary.light,
     },
     background: {
       default: theme.colors.background.default,
       paper: theme.colors.background.paper,
+    },
+    text: {
+      primary: theme.colors.text.primary,
+      secondary: theme.colors.text.secondary,
     },
   },
 });
@@ -118,7 +139,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'dashboard/products',
-        element: <ProtectedRoute><DashboardProducts /></ProtectedRoute>
+        element: <ProtectedRoute><Products /></ProtectedRoute>
       },
       {
         path: 'admin/products',
@@ -138,9 +159,9 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <ErrorBoundary>
-      <StyledThemeProvider theme={theme}>
-        <MuiThemeProvider theme={muiTheme}>
+    <StyledThemeProvider theme={theme}>
+      <MuiThemeProvider theme={muiTheme}>
+        <ErrorBoundary>
           <AuthProvider>
             <NotificationProvider>
               <CssBaseline />
@@ -159,12 +180,13 @@ function App() {
                 pauseOnFocusLoss
                 draggable
                 pauseOnHover
+                theme="dark"
               />
             </NotificationProvider>
           </AuthProvider>
-        </MuiThemeProvider>
-      </StyledThemeProvider>
-    </ErrorBoundary>
+        </ErrorBoundary>
+      </MuiThemeProvider>
+    </StyledThemeProvider>
   );
 }
 
