@@ -112,64 +112,66 @@ const muiTheme = createTheme({
   },
 });
 
-const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <Layout />,
-    children: [
-      {
-        index: true,
-        element: <Home />
-      },
-      {
-        path: 'login',
-        element: <Login />
-      },
-      {
-        path: 'products',
-        element: <ProductList />
-      },
-      {
-        path: 'products/:id',
-        element: <ProductDetails />
-      },
-      {
-        path: 'dashboard',
-        element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
-      },
-      {
-        path: 'dashboard/products',
-        element: <ProtectedRoute><DashboardProducts /></ProtectedRoute>
-      },
-      {
-        path: 'admin/products',
-        element: <ProtectedRoute><ProductManagement /></ProtectedRoute>
-      },
-      {
-        path: 'admin/products/add',
-        element: <ProtectedRoute><AddProduct /></ProtectedRoute>
-      },
-      {
-        path: 'admin/products/edit/:id',
-        element: <ProtectedRoute><EditProduct /></ProtectedRoute>
-      }
-    ]
-  }
-]);
+const AppRoutes = () => {
+  return (
+    <Layout>
+      <ErrorBoundary>
+        <RouterProvider 
+          router={createBrowserRouter([
+            {
+              path: '/',
+              element: <Home />
+            },
+            {
+              path: '/login',
+              element: <Login />
+            },
+            {
+              path: '/products',
+              element: <ProductList />
+            },
+            {
+              path: '/products/:id',
+              element: <ProductDetails />
+            },
+            {
+              path: '/dashboard',
+              element: <ProtectedRoute><Dashboard /></ProtectedRoute>
+            },
+            {
+              path: '/dashboard/products',
+              element: <ProtectedRoute><DashboardProducts /></ProtectedRoute>
+            },
+            {
+              path: '/admin/products',
+              element: <ProtectedRoute><ProductManagement /></ProtectedRoute>
+            },
+            {
+              path: '/admin/products/add',
+              element: <ProtectedRoute><AddProduct /></ProtectedRoute>
+            },
+            {
+              path: '/admin/products/edit/:id',
+              element: <ProtectedRoute><EditProduct /></ProtectedRoute>
+            }
+          ])}
+          fallback={<div>Loading...</div>}
+        />
+      </ErrorBoundary>
+    </Layout>
+  );
+};
 
 function App() {
   return (
-    <StyledThemeProvider theme={theme}>
-      <MuiThemeProvider theme={muiTheme}>
-        <ErrorBoundary>
+    <ErrorBoundary>
+      <StyledThemeProvider theme={theme}>
+        <MuiThemeProvider theme={muiTheme}>
           <AuthProvider>
             <NotificationProvider>
               <CssBaseline />
               <GlobalStyles />
-              <RouterProvider 
-                router={router}
-                fallback={<div>Loading...</div>}
-              />
+              <AppRoutes />
               <ToastContainer 
                 position="top-right"
                 autoClose={5000}
@@ -184,9 +186,9 @@ function App() {
               />
             </NotificationProvider>
           </AuthProvider>
-        </ErrorBoundary>
-      </MuiThemeProvider>
-    </StyledThemeProvider>
+        </MuiThemeProvider>
+      </StyledThemeProvider>
+    </ErrorBoundary>
   );
 }
 
