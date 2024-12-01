@@ -143,13 +143,13 @@ const router = createBrowserRouter([
     path: '/',
     element: <Layout />,
     children: [
-      { 
-        index: true, 
-        element: <Home /> 
+      {
+        index: true,
+        element: <Home />
       },
-      { 
-        path: 'login', 
-        element: <Login /> 
+      {
+        path: 'login',
+        element: <Login />
       },
       {
         path: 'dashboard',
@@ -158,17 +158,29 @@ const router = createBrowserRouter([
           {
             path: '',
             element: <Dashboard />
-          },
+          }
+        ]
+      },
+      {
+        path: 'products',
+        element: <ProtectedRoute />,
+        children: [
           {
-            path: 'products',
+            path: '',
             element: <Products />
           },
           {
-            path: 'products/:id',
+            path: ':id',
             element: <ProductDetails />
-          },
+          }
+        ]
+      },
+      {
+        path: 'product-list',
+        element: <ProtectedRoute />,
+        children: [
           {
-            path: 'product-list',
+            path: '',
             element: <ProductList />
           }
         ]
