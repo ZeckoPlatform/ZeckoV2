@@ -7,8 +7,10 @@
   },
   "scripts": {
     "start": "node server/server.js",
-    "heroku-postbuild": "cd client && npm install && npm run build",
-    "dev": "nodemon server/server.js"
+    "heroku-postbuild": "cd client && npm ci && npm run build",
+    "dev": "nodemon server/server.js",
+    "client": "cd client && npm start",
+    "build": "cd client && npm run build"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

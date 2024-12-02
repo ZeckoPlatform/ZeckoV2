@@ -7,12 +7,5 @@
 # Source maps
 *.map
 
-# Development dependencies
-/node_modules/
-/.git/
-/.github/
-/.vscode/
-
 # Documentation
-/docs/
-*.md 
+/docs/ 
