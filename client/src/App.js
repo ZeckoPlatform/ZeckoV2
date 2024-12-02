@@ -126,36 +126,33 @@ const router = createBrowserRouter([
         path: 'login',
         element: <Login />
       },
-      // Customer-facing product routes
-      {
-        path: 'products',
-        element: <Products />
-      },
-      {
-        path: 'products/:id',
-        element: <ProductDetails />
-      },
-      // Admin/Dashboard routes
+      // User dashboard route
       {
         path: 'dashboard',
-        element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
+        element: <ProtectedRoute><Dashboard /></ProtectedRoute>
       },
+      // Admin routes
       {
-        path: 'dashboard/products',
-        element: <ProtectedRoute><DashboardProducts /></ProtectedRoute>
-      },
-      // Admin product management routes
-      {
-        path: 'admin/products',
-        element: <ProtectedRoute><ProductManagement /></ProtectedRoute>
-      },
-      {
-        path: 'admin/products/add',
-        element: <ProtectedRoute><AddProduct /></ProtectedRoute>
-      },
-      {
-        path: 'admin/products/edit/:id',
-        element: <ProtectedRoute><EditProduct /></ProtectedRoute>
+        path: 'admin',
+        element: <ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>,
+        children: [
+          {
+            path: 'analytics',
+            element: <Analytics />
+          },
+          {
+            path: 'products',
+            element: <ProductManagement />
+          },
+          {
+            path: 'products/add',
+            element: <AddProduct />
+          },
+          {
+            path: 'products/edit/:id',
+            element: <EditProduct />
+          }
+        ]
       }
     ]
   }

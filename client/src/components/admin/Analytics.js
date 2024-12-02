@@ -10,8 +10,33 @@ import {
   ArrowUp,
   ArrowDown
 } from 'react-feather';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
-import { format, subDays } from 'date-fns';
+import { format } from 'date-fns';
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const Container = styled.div`
   padding: 20px;
@@ -68,8 +93,18 @@ const ChartGrid = styled.div`
 `;
 
 function Analytics() {
-  const [analytics, setAnalytics] = useState(null);
+  const [analytics, setAnalytics] = useState({
+    revenue: { total: 0, growth: 0 },
+    orders: { total: 0, growth: 0 },
+    users: { active: 0, growth: 0 },
+    products: { sold: 0, growth: 0 },
+    dailySales: [],
+    categoryBreakdown: [],
+    userActivity: [],
+    topProducts: []
+  });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchAnalytics();
@@ -82,18 +117,34 @@ function Analytics() {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch analytics data');
+      }
+      
       const data = await response.json();
       setAnalytics(data);
-      setLoading(false);
     } catch (error) {
       console.error('Error fetching analytics:', error);
+      setError(error.message);
+    } finally {
       setLoading(false);
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div>Loading analytics...</div>;
+  if (error) return <div>Error loading analytics: {error}</div>;
 
-  // Chart configurations
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+    },
+  };
+
   const salesData = {
     labels: analytics.dailySales.map(day => format(new Date(day.date), 'MMM d')),
     datasets: [{
@@ -183,17 +234,23 @@ function Analytics() {
       <ChartGrid>
         <ChartContainer>
           <h3>Sales Overview</h3>
-          <Line data={salesData} />
+          <div style={{ height: '300px' }}>
+            <Line data={salesData} options={chartOptions} />
+          </div>
         </ChartContainer>
 
         <ChartContainer>
           <h3>Category Breakdown</h3>
-          <Doughnut data={categoryData} />
+          <div style={{ height: '300px' }}>
+            <Doughnut data={categoryData} options={chartOptions} />
+          </div>
         </ChartContainer>
 
         <ChartContainer>
           <h3>User Activity</h3>
-          <Bar data={userActivityData} />
+          <div style={{ height: '300px' }}>
+            <Bar data={userActivityData} options={chartOptions} />
+          </div>
         </ChartContainer>
 
         <ChartContainer>
