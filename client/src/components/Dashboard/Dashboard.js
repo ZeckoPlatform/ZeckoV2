@@ -4,6 +4,55 @@ import { useNotification } from '../../contexts/NotificationContext';
 import { fetchData, endpoints } from '../../services/api';
 import styled from 'styled-components';
 
+const DashboardContainer = styled.div`
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: ${({ theme }) => theme.colors.background.paper};
+  color: ${({ theme }) => theme.colors.text.primary};
+  min-height: calc(100vh - 64px);
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  font-size: 1.2em;
+`;
+
+const Section = styled.section`
+  margin-bottom: 30px;
+  background: ${({ theme }) => theme.colors.background.paper};
+  padding: 20px;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  box-shadow: ${({ theme }) => theme.shadows.card};
+`;
+
+const JobsList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+`;
+
+const JobItem = styled.div`
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+`;
+
+const ProductGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+`;
+
+const ProductCard = styled.div`
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+`;
+
 const Dashboard = () => {
   const [data, setData] = useState({
     jobs: [],
@@ -41,6 +90,7 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
+    console.log('Dashboard mounted, user:', user);
     if (user?._id) {
       loadData('jobs', endpoints.jobs.user(user._id));
       loadData('products', endpoints.products.list({}));
@@ -50,6 +100,10 @@ const Dashboard = () => {
       loadData('cart', endpoints.cart);
     }
   }, [user]);
+
+  if (!user) {
+    return <LoadingContainer>Please log in to view your dashboard</LoadingContainer>;
+  }
 
   if (Object.values(loading).every(Boolean)) {
     return <LoadingContainer>Loading dashboard...</LoadingContainer>;
@@ -99,48 +153,5 @@ const Dashboard = () => {
     </DashboardContainer>
   );
 };
-
-// Styled components
-const DashboardContainer = styled.div`
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-`;
-
-const LoadingContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 300px;
-  font-size: 1.2em;
-`;
-
-const Section = styled.section`
-  margin-bottom: 30px;
-`;
-
-const JobsList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-`;
-
-const JobItem = styled.div`
-  padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-`;
-
-const ProductGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
-`;
-
-const ProductCard = styled.div`
-  padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-`;
 
 export default Dashboard; 

@@ -16,6 +16,7 @@ import AddProduct from '../components/admin/products/AddProduct';
 import EditProduct from '../components/admin/products/EditProduct';
 import Settings from '../components/admin/Settings';
 import UserManagement from '../components/admin/UserManagement';
+import Dashboard from '../components/Dashboard/Dashboard';
 
 export const router = createBrowserRouter([
   {
@@ -76,6 +77,10 @@ export const router = createBrowserRouter([
             element: <UserManagement />
           }
         ]
+      },
+      {
+        path: 'dashboard',
+        element: <ProtectedRoute><Dashboard /></ProtectedRoute>
       }
     ]
   }
