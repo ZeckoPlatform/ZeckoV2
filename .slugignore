@@ -9,3 +9,8 @@
 
 # Documentation
 /docs/ 
+
+# Client-side files
+/client/node_modules/
+.git/
+*.log 
