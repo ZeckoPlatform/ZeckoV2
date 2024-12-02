@@ -17,8 +17,13 @@ const auth = async (req, res, next) => {
         // Check token cache first
         const cachedUser = cache.get(`auth_${token}`);
         if (cachedUser) {
-            req.user = cachedUser;
-            return next();
+            // Add business cache check
+            const cachedBusiness = cache.get(`business_${cachedUser.id}`);
+            if (cachedBusiness) {
+                req.user = cachedUser;
+                req.business = cachedBusiness;
+                return next();
+            }
         }
 
         console.log('Token received:', token.substring(0, 20) + '...');
