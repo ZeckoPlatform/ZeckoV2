@@ -87,7 +87,12 @@ Object.entries(routes).forEach(([name, router]) => {
 });
 
 // Register routes
-app.use('/api/products', productRoutes);
+try {
+    app.use('/api/products', productRoutes);
+    console.log('Successfully loaded product routes');
+} catch (error) {
+    console.error('Error loading product routes:', error.message);
+}
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
