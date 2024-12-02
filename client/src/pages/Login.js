@@ -116,11 +116,15 @@ const Login = () => {
       const result = await login(formData);
       if (result.success) {
         notify.success('Login successful!');
-        navigate('/dashboard');
+        if (result.user.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (err) {
       console.error('Login error:', err);
-      const errorMessage = err.response?.data?.message || 'An error occurred during login';
+      const errorMessage = err.message || 'An error occurred during login';
       setError(errorMessage);
       notify.error(errorMessage);
     } finally {

@@ -4,54 +4,82 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const logout = async () => {
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const response = await fetch('/api/auth/verify', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setIsAuthenticated(true);
+          setUser(data.user);
+        } else {
+          localStorage.removeItem('token');
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        localStorage.removeItem('token');
+      }
+    }
+    setLoading(false);
+  };
+
+  const login = async (credentials) => {
     try {
-      localStorage.removeItem('token');
-      setIsAuthenticated(false);
-      setUser(null);
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      localStorage.setItem('token', data.token);
+      setIsAuthenticated(true);
+      setUser(data.user);
+
+      return { success: true, user: data.user };
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Login error:', error);
       throw error;
     }
   };
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (token) {
-          setIsAuthenticated(true);
-          // Optionally fetch user data here
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
+  const logout = () => {
+    localStorage.removeItem('token');
+    setIsAuthenticated(false);
+    setUser(null);
+  };
 
   const value = {
     isAuthenticated,
-    loading,
     user,
-    setIsAuthenticated,
-    setUser,
-    logout
+    loading,
+    login,
+    logout,
+    checkAuth
   };
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

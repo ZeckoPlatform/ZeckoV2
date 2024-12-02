@@ -17,15 +17,14 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 // Import pages
 import Home from './pages/Home';
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
+import Products from './pages/Products';
 import ProductList from './pages/ProductList';
 import ProductDetails from './pages/ProductDetails';
+import Dashboard from './pages/Dashboard';
 import DashboardProducts from './components/Dashboard/Products';
 import ProductManagement from './components/admin/ProductManagement';
 import AddProduct from './components/admin/products/AddProduct';
 import EditProduct from './components/admin/products/EditProduct';
-
-import { router } from './routes';
 
 const theme = {
   colors: {
@@ -113,6 +112,54 @@ const muiTheme = createTheme({
     },
   },
 });
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Layout />,
+    children: [
+      {
+        index: true,
+        element: <Home />
+      },
+      {
+        path: 'login',
+        element: <Login />
+      },
+      // Customer-facing product routes
+      {
+        path: 'products',
+        element: <Products />
+      },
+      {
+        path: 'products/:id',
+        element: <ProductDetails />
+      },
+      // Admin/Dashboard routes
+      {
+        path: 'dashboard',
+        element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
+      },
+      {
+        path: 'dashboard/products',
+        element: <ProtectedRoute><DashboardProducts /></ProtectedRoute>
+      },
+      // Admin product management routes
+      {
+        path: 'admin/products',
+        element: <ProtectedRoute><ProductManagement /></ProtectedRoute>
+      },
+      {
+        path: 'admin/products/add',
+        element: <ProtectedRoute><AddProduct /></ProtectedRoute>
+      },
+      {
+        path: 'admin/products/edit/:id',
+        element: <ProtectedRoute><EditProduct /></ProtectedRoute>
+      }
+    ]
+  }
+]);
 
 function App() {
   return (
