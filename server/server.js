@@ -8,6 +8,7 @@ const compression = require('compression');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const fs = require('fs');
+const productRoutes = require('./routes/productRoutes');
 
 // Initialize Express and create server
 const app = express();
@@ -84,6 +85,9 @@ Object.entries(routes).forEach(([name, router]) => {
         console.log(`Registered route: /api/${name}`);
     }
 });
+
+// Register routes
+app.use('/api/products', productRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
