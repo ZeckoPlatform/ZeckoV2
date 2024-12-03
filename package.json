@@ -7,9 +7,7 @@
   },
   "scripts": {
     "start": "node server/server.js",
-    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix client && npm run build --prefix client",
-    "dev": "nodemon server/server.js",
-    "client": "cd client && npm start",
+    "heroku-postbuild": "cd client && npm install --legacy-peer-deps && npm run build",
     "build": "cd client && npm run build"
   },
   "dependencies": {
@@ -23,7 +21,7 @@
     "helmet": "^7.2.0",
     "jsonwebtoken": "^9.0.2",
     "memory-cache": "^0.2.0",
-    "mongoose": "^6.12.3",
+    "mongoose": "^7.6.3",
     "nodemailer": "^6.9.7",
     "socket.io": "^4.8.1",
     "speakeasy": "^2.0.0",
