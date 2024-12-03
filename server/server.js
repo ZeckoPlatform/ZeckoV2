@@ -88,10 +88,11 @@ Object.entries(routes).forEach(([name, router]) => {
 
 // Register routes
 try {
+    console.log('Loading product routes from:', './routes/productRoutes');
     app.use('/api/products', productRoutes);
     console.log('Successfully loaded product routes');
 } catch (error) {
-    console.error('Error loading product routes:', error.message);
+    console.error('Error loading product routes:', error);
 }
 
 // Serve static files in production
