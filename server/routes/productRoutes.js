@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/productModel');
 const Business = require('../models/Business');
+const productController = require('../controllers/productController');
 const { auth } = require('../middleware/auth');
 const cache = require('memory-cache');
 
@@ -57,12 +58,39 @@ router.post('/', auth, async (req, res) => {
 });
 
 // Get all products
-router.get('/', productController.getAllProducts);
+router.get('/', async (req, res) => {
+  try {
+    const products = await Product.find({});
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // Search products
-router.get('/search', productController.searchProducts);
+router.get('/search', async (req, res) => {
+  try {
+    const { query } = req.query;
+    const products = await Product.find({
+      $or: [
+        { name: { $regex: query, $options: 'i' } },
+        { description: { $regex: query, $options: 'i' } }
+      ]
+    });
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // Get featured products
-router.get('/featured', productController.getFeaturedProducts);
+router.get('/featured', async (req, res) => {
+  try {
+    const products = await Product.find({ featured: true });
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 module.exports = router;
