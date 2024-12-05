@@ -74,27 +74,16 @@ const Grid = styled.div`
 `;
 
 function Home() {
-  const [featuredData, setFeaturedData] = useState({
-    products: [],
-    jobs: [],
-    contractors: []
-  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadFeaturedData = async () => {
       try {
-        const [products, jobs, contractors] = await Promise.all([
+        await Promise.all([
           fetchData(endpoints.products.featured),
           fetchData(endpoints.jobs.featured),
           fetchData(endpoints.contractors.featured)
         ]);
-
-        setFeaturedData({
-          products: products.data || [],
-          jobs: jobs.data || [],
-          contractors: contractors.data || []
-        });
       } catch (error) {
         console.error('Error loading featured data:', error);
       } finally {

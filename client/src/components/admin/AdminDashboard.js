@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
@@ -9,7 +9,11 @@ import {
   Settings 
 } from 'react-feather';
 import { useNavigate, Link, Outlet, useLocation } from 'react-router-dom';
-import { getSocket, subscribeToActivityUpdates, unsubscribeFromActivityUpdates } from '../../utils/socket.io';
+import { 
+  getSocket, 
+  subscribeToActivityUpdates, 
+  unsubscribeFromActivityUpdates 
+} from '../../utils/socket.io';
 import { activityLogService } from '../../services/activityLogService';
 
 const DashboardContainer = styled.div`
@@ -42,7 +46,7 @@ const MenuItem = styled(Link)`
   text-decoration: none;
   color: inherit;
   
-  ${props => props.$active ? `
+  ${({ $active }) => $active ? `
     background: var(--primary-color);
     color: white;
   ` : `
@@ -61,63 +65,48 @@ const AdminHeader = styled.div`
   border-bottom: 1px solid #ddd;
 `;
 
-const menuItems = [
-  { path: '', icon: <BarChart2 size={20} />, label: 'Dashboard' },
-  { path: 'users', icon: <Users size={20} />, label: 'User Management' },
-  { path: 'products', icon: <Package size={20} />, label: 'Product Management' },
-  { path: 'orders', icon: <ShoppingBag size={20} />, label: 'Order Management' },
-  { path: 'settings', icon: <Settings size={20} />, label: 'Settings' }
-];
-
 function AdminDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const socket = getSocket();
+
+  const handleActivityUpdate = useCallback((activity) => {
+    activityLogService.addActivity(activity);
+  }, []);
 
   useEffect(() => {
-    if (!user || user.role !== 'admin') {
-      navigate('/login');
+    const socket = getSocket();
+    
+    if (socket && user?.role === 'admin') {
+      subscribeToActivityUpdates(socket, handleActivityUpdate);
+      
+      return () => {
+        unsubscribeFromActivityUpdates(socket, handleActivityUpdate);
+      };
     }
-  }, [user, navigate]);
+  }, [user, handleActivityUpdate]);
 
-  useEffect(() => {
-    const handleActivity = (data) => {
-      console.log('New activity:', data);
-    };
+  const getCurrentSection = useCallback(() => {
+    const path = location.pathname.split('/');
+    return path[2] || 'dashboard';
+  }, [location.pathname]);
 
-    subscribeToActivityUpdates(handleActivity);
-    return () => unsubscribeFromActivityUpdates();
-  }, []);
-
-  useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        const activities = await activityLogService.getActivities();
-        // Handle activities data
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    };
-
-    fetchActivities();
-  }, []);
-
-  const getCurrentSection = () => {
-    const path = location.pathname.split('/').pop();
-    return path || 'dashboard';
-  };
+  const menuItems = [
+    { to: '/admin/dashboard', icon: <BarChart2 />, label: 'Dashboard' },
+    { to: '/admin/users', icon: <Users />, label: 'Users' },
+    { to: '/admin/products', icon: <Package />, label: 'Products' },
+    { to: '/admin/orders', icon: <ShoppingBag />, label: 'Orders' },
+    { to: '/admin/settings', icon: <Settings />, label: 'Settings' }
+  ];
 
   return (
     <DashboardContainer>
       <Sidebar>
-        <h2 style={{ marginBottom: '30px' }}>Admin Panel</h2>
-        
-        {menuItems.map(({ path, icon, label }) => (
+        {menuItems.map(({ to, icon, label }) => (
           <MenuItem 
-            key={path}
-            to={`/admin/${path}`}
-            $active={getCurrentSection() === (path || 'dashboard')}
+            key={to} 
+            to={to} 
+            $active={getCurrentSection() === to.split('/')[2]}
           >
             {icon}
             {label}

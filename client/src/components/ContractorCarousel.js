@@ -3,6 +3,8 @@ import styled, { keyframes } from 'styled-components';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'react-feather';
 import { SkeletonCard } from './LoadingSkeleton';
+import { fetchData, endpoints } from '../services/api';
+import { useNotification } from '../contexts/NotificationContext';
 
 const slideIn = keyframes`
   from { transform: translateX(20px); opacity: 0; }
@@ -84,8 +86,8 @@ const ScrollButton = styled.button`
   transition: all 0.3s ease;
 
   &:hover {
-    background-color: var(--primary-color);
-    color: white;
+    background-color: var(--primary-color, ${({ theme }) => theme.colors.primary.main});
+    color: ${({ theme }) => theme.colors.primary.text};
   }
 
   @media (max-width: 768px) {
@@ -141,13 +143,29 @@ const ProgressDot = styled.div`
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: ${props => props.active ? 'var(--primary-color)' : '#ddd'};
+  background-color: ${props => props.$active ? 'var(--primary-color)' : '#ddd'};
   transition: background-color 0.3s ease;
 
   @media (max-width: 768px) {
     width: 6px;
     height: 6px;
   }
+`;
+
+const ErrorMessage = styled.div`
+  color: red;
+  font-size: 1.2rem;
+  text-align: center;
+  margin-top: 20px;
+`;
+
+const Rating = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: ${({ theme }) => theme.colors.warning};
+  font-weight: 500;
+  margin-top: 8px;
 `;
 
 export function ContractorCarousel() {
@@ -158,79 +176,74 @@ export function ContractorCarousel() {
   const [touchStart, setTouchStart] = useState(null);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const wrapperRef = useRef(null);
-  const autoScrollRef = useRef(null);
+  const notify = useNotification();
 
-  // Infinite scroll setup
-  const getInfiniteContractors = useCallback(() => {
-    if (contractors.length < 3) return contractors;
-    return [...contractors.slice(-1), ...contractors, ...contractors.slice(0, 1)];
-  }, [contractors]);
+  const scroll = useCallback((direction) => {
+    if (!wrapperRef.current) return;
+    
+    const scrollAmount = 300;
+    const currentScroll = wrapperRef.current.scrollLeft;
+    const newScroll = direction === 'left' 
+      ? currentScroll - scrollAmount 
+      : currentScroll + scrollAmount;
+    
+    wrapperRef.current.scrollTo({
+      left: newScroll,
+      behavior: 'smooth'
+    });
 
-  // Accessibility announcement
-  const announceSlide = useCallback((index) => {
-    const announcement = `Showing contractor ${index + 1} of ${contractors.length}`;
-    if (window.announceToScreenReader) {
-      window.announceToScreenReader(announcement);
-    }
+    const itemWidth = 300;
+    const newIndex = Math.round(newScroll / itemWidth) % contractors.length;
+    setCurrentIndex(newIndex >= 0 ? newIndex : 0);
   }, [contractors.length]);
 
-  // Enhanced scroll function with infinite scroll support
-  const scroll = useCallback((direction) => {
-    if (wrapperRef.current) {
-      const scrollAmount = direction === 'left' ? -300 : 300;
-      const { scrollLeft, scrollWidth, clientWidth } = wrapperRef.current;
-      
-      let newIndex = direction === 'left' 
-        ? currentIndex - 1 
-        : currentIndex + 1;
+  const handleTouchStart = useCallback((e) => {
+    setTouchStart(e.touches[0].clientX);
+  }, []);
 
-      // Handle infinite scroll
-      if (newIndex < 0) {
-        newIndex = contractors.length - 1;
-        wrapperRef.current.scrollLeft = scrollWidth - clientWidth * 2;
-      } else if (newIndex >= contractors.length) {
-        newIndex = 0;
-        wrapperRef.current.scrollLeft = 0;
-      } else {
-        wrapperRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-      }
+  const handleTouchMove = useCallback((e) => {
+    if (!touchStart) return;
 
-      setCurrentIndex(newIndex);
-      announceSlide(newIndex);
+    const currentTouch = e.touches[0].clientX;
+    const diff = touchStart - currentTouch;
+
+    if (Math.abs(diff) > 50) {
+      scroll(diff > 0 ? 'right' : 'left');
+      setTouchStart(null);
     }
-  }, [currentIndex, contractors.length, announceSlide]);
+  }, [touchStart, scroll]);
 
-  // Fetch contractors
+  const handleTouchEnd = useCallback(() => {
+    setTouchStart(null);
+  }, []);
+
   useEffect(() => {
     const fetchContractors = async () => {
       try {
-        const response = await fetch('/api/contractors/featured');
-        if (!response.ok) throw new Error('Failed to fetch contractors');
-        
-        const data = await response.json();
-        setContractors(data.contractors || []);
-      } catch (error) {
-        console.error('Error fetching contractors:', error);
-        setError(error.message);
+        const response = await fetchData(endpoints.contractors.featured);
+        setContractors(response.data);
+      } catch (err) {
+        console.error('Error fetching contractors:', err);
+        notify.error('Failed to load contractors');
+        setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
     fetchContractors();
-  }, []);
+  }, [notify]);
 
-  // Auto-scroll functionality
   useEffect(() => {
-    if (autoScrollEnabled && contractors.length > 0) {
-      autoScrollRef.current = setInterval(() => {
-        scroll('right');
-      }, 5000);
-    }
-    return () => clearInterval(autoScrollRef.current);
-  }, [currentIndex, contractors.length, autoScrollEnabled]);
+    if (!autoScrollEnabled) return;
 
-  // Keyboard navigation
+    const interval = setInterval(() => {
+      scroll('right');
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [autoScrollEnabled, scroll]);
+
   useEffect(() => {
     const handleKeyPress = (e) => {
       if (e.key === 'ArrowLeft') scroll('left');
@@ -239,35 +252,11 @@ export function ContractorCarousel() {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
-
-  // Touch handlers
-  const handleTouchStart = (e) => {
-    setTouchStart(e.touches[0].clientX);
-    setAutoScrollEnabled(false);
-  };
-
-  const handleTouchMove = (e) => {
-    if (!touchStart) return;
-
-    const touchEnd = e.touches[0].clientX;
-    const diff = touchStart - touchEnd;
-
-    if (Math.abs(diff) > 50) {
-      scroll(diff > 0 ? 'right' : 'left');
-      setTouchStart(null);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    setTouchStart(null);
-    setAutoScrollEnabled(true);
-  };
+  }, [scroll]);
 
   if (loading) {
     return (
       <CarouselContainer>
-        <SectionTitle>Featured Contractors</SectionTitle>
         <ContractorsWrapper>
           {[1, 2, 3].map(i => <SkeletonCard key={i} />)}
         </ContractorsWrapper>
@@ -278,21 +267,13 @@ export function ContractorCarousel() {
   if (error) {
     return (
       <CarouselContainer>
-        <SectionTitle>Featured Contractors</SectionTitle>
-        <ContractorCard as="div">
-          <ContractorName>Unable to load contractors</ContractorName>
-          <ContractorInfo>Please try again later</ContractorInfo>
-        </ContractorCard>
+        <ErrorMessage>Unable to load contractors. Please try again later.</ErrorMessage>
       </CarouselContainer>
     );
   }
 
   return (
-    <CarouselContainer
-      role="region"
-      aria-label="Featured Contractors Carousel"
-    >
-      <SectionTitle id="carousel-title">Featured Contractors</SectionTitle>
+    <CarouselContainer>
       <ScrollButton 
         direction="left" 
         onClick={() => scroll('left')}
@@ -305,23 +286,20 @@ export function ContractorCarousel() {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        role="list"
-        aria-labelledby="carousel-title"
       >
-        {getInfiniteContractors().map((contractor, index) => (
+        {contractors.map((contractor, index) => (
           <ContractorCard 
-            key={`${contractor._id}-${index}`}
+            key={contractor._id}
             to={`/contractors/${contractor._id}`}
             onMouseEnter={() => setAutoScrollEnabled(false)}
             onMouseLeave={() => setAutoScrollEnabled(true)}
-            role="listitem"
-            aria-label={`${contractor.businessName}, ${contractor.specialty}`}
           >
-            <ContractorName>{contractor.businessName}</ContractorName>
             <ContractorInfo>
-              <p><strong>Specialty:</strong> {contractor.specialty}</p>
-              <p><strong>Location:</strong> {contractor.location}</p>
-              <p>{contractor.description?.substring(0, 100)}...</p>
+              <ContractorName>{contractor.name}</ContractorName>
+              <p>{contractor.specialty}</p>
+              <Rating>
+                {contractor.rating.toFixed(1)} <span role="img" aria-label="rating">⭐</span>
+              </Rating>
             </ContractorInfo>
           </ContractorCard>
         ))}
@@ -333,17 +311,16 @@ export function ContractorCarousel() {
       >
         <ChevronRight />
       </ScrollButton>
-      <ProgressIndicator role="tablist" aria-label="Carousel progress">
+      <ProgressIndicator>
         {contractors.map((_, index) => (
           <ProgressDot 
             key={index} 
-            active={index === currentIndex}
-            role="tab"
-            aria-selected={index === currentIndex}
-            aria-label={`Slide ${index + 1} of ${contractors.length}`}
+            $active={index === currentIndex}
           />
         ))}
       </ProgressIndicator>
     </CarouselContainer>
   );
 }
+
+export default ContractorCarousel;

@@ -3,6 +3,8 @@ import styled, { keyframes } from 'styled-components';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'react-feather';
 import { SkeletonCard } from './LoadingSkeleton';
+import { fetchData, endpoints } from '../services/api';
+import { useNotification } from '../contexts/NotificationContext';
 
 const slideIn = keyframes`
   from { transform: translateX(20px); opacity: 0; }
@@ -43,9 +45,9 @@ const JobsWrapper = styled.div`
 `;
 
 const JobCard = styled(Link)`
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
+  background: ${({ theme }) => theme.colors.background.paper};
+  padding: ${({ theme }) => theme.spacing.lg};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   min-width: 300px;
   text-decoration: none;
@@ -98,34 +100,6 @@ const ScrollButton = styled.button`
   }
 `;
 
-const SectionTitle = styled.h2`
-  color: var(--primary-color);
-  margin-bottom: 20px;
-  font-size: 1.8rem;
-  font-weight: 600;
-
-  @media (max-width: 768px) {
-    font-size: 1.5rem;
-    margin-bottom: 15px;
-  }
-`;
-
-const JobTitle = styled.h3`
-  color: var(--primary-color, ${({ theme }) => theme.colors.primary.main});
-  margin-bottom: ${({ theme }) => theme.spacing.md};
-  font-size: 1.2rem;
-  font-weight: 500;
-`;
-
-const JobInfo = styled.div`
-  color: #666;
-  font-size: 0.9em;
-
-  p {
-    margin: 5px 0;
-  }
-`;
-
 const ProgressIndicator = styled.div`
   display: flex;
   justify-content: center;
@@ -141,7 +115,7 @@ const ProgressDot = styled.div`
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: ${props => props.active ? 'var(--primary-color)' : '#ddd'};
+  background-color: ${props => props.$active ? 'var(--primary-color)' : '#ddd'};
   transition: background-color 0.3s ease;
 
   @media (max-width: 768px) {
@@ -150,7 +124,30 @@ const ProgressDot = styled.div`
   }
 `;
 
-export function JobCarousel() {
+const ErrorMessage = styled.div`
+  color: ${({ theme }) => theme.colors.error};
+  font-size: 1.2rem;
+  text-align: center;
+  margin-top: 20px;
+`;
+
+const JobDetails = styled.div`
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: 0.9em;
+
+  h3 {
+    color: ${({ theme }) => theme.colors.primary.main};
+    margin-bottom: ${({ theme }) => theme.spacing.sm};
+    font-size: 1.2rem;
+    font-weight: 500;
+  }
+
+  p {
+    margin: 5px 0;
+  }
+`;
+
+function JobCarousel() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -158,81 +155,74 @@ export function JobCarousel() {
   const [touchStart, setTouchStart] = useState(null);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const wrapperRef = useRef(null);
-  const autoScrollRef = useRef(null);
+  const notify = useNotification();
 
-  // Infinite scroll setup
-  const getInfiniteJobs = useCallback(() => {
-    if (jobs.length < 3) return jobs;
-    return [...jobs.slice(-1), ...jobs, ...jobs.slice(0, 1)];
-  }, [jobs]);
+  const scroll = useCallback((direction) => {
+    if (!wrapperRef.current) return;
+    
+    const scrollAmount = 300;
+    const currentScroll = wrapperRef.current.scrollLeft;
+    const newScroll = direction === 'left' 
+      ? currentScroll - scrollAmount 
+      : currentScroll + scrollAmount;
+    
+    wrapperRef.current.scrollTo({
+      left: newScroll,
+      behavior: 'smooth'
+    });
 
-  // Accessibility announcement
-  const announceSlide = useCallback((index) => {
-    const announcement = `Showing job ${index + 1} of ${jobs.length}`;
-    if (window.announceToScreenReader) {
-      window.announceToScreenReader(announcement);
-    }
+    const itemWidth = 300;
+    const newIndex = Math.round(newScroll / itemWidth) % jobs.length;
+    setCurrentIndex(newIndex >= 0 ? newIndex : 0);
   }, [jobs.length]);
 
-  // Enhanced scroll function with infinite scroll support
-  const scroll = useCallback((direction) => {
-    if (wrapperRef.current) {
-      const scrollAmount = direction === 'left' ? -300 : 300;
-      const { scrollLeft, scrollWidth, clientWidth } = wrapperRef.current;
-      
-      let newIndex = direction === 'left' 
-        ? currentIndex - 1 
-        : currentIndex + 1;
-
-      // Handle infinite scroll
-      if (newIndex < 0) {
-        newIndex = jobs.length - 1;
-        wrapperRef.current.scrollLeft = scrollWidth - clientWidth * 2;
-      } else if (newIndex >= jobs.length) {
-        newIndex = 0;
-        wrapperRef.current.scrollLeft = 0;
-      } else {
-        wrapperRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-      }
-
-      setCurrentIndex(newIndex);
-      announceSlide(newIndex);
-    }
-  }, [currentIndex, jobs.length, announceSlide]);
-
-  // Touch handlers
-  const handleTouchStart = (e) => {
+  const handleTouchStart = useCallback((e) => {
     setTouchStart(e.touches[0].clientX);
-    setAutoScrollEnabled(false);
-  };
+  }, []);
 
-  const handleTouchMove = (e) => {
+  const handleTouchMove = useCallback((e) => {
     if (!touchStart) return;
-    const touchEnd = e.touches[0].clientX;
-    const diff = touchStart - touchEnd;
+
+    const currentTouch = e.touches[0].clientX;
+    const diff = touchStart - currentTouch;
 
     if (Math.abs(diff) > 50) {
       scroll(diff > 0 ? 'right' : 'left');
       setTouchStart(null);
     }
-  };
+  }, [touchStart, scroll]);
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = useCallback(() => {
     setTouchStart(null);
-    setAutoScrollEnabled(true);
-  };
+  }, []);
 
-  // Auto-scroll functionality
   useEffect(() => {
-    if (autoScrollEnabled && jobs.length > 0) {
-      autoScrollRef.current = setInterval(() => {
-        scroll('right');
-      }, 5000);
-    }
-    return () => clearInterval(autoScrollRef.current);
-  }, [currentIndex, jobs.length, autoScrollEnabled, scroll]);
+    const fetchJobs = async () => {
+      try {
+        const response = await fetchData(endpoints.jobs.featured);
+        setJobs(response.data);
+      } catch (err) {
+        console.error('Error fetching jobs:', err);
+        notify.error('Failed to load jobs');
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Keyboard navigation
+    fetchJobs();
+  }, [notify]);
+
+  useEffect(() => {
+    if (!autoScrollEnabled) return;
+
+    const interval = setInterval(() => {
+      scroll('right');
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [autoScrollEnabled, scroll]);
+
   useEffect(() => {
     const handleKeyPress = (e) => {
       if (e.key === 'ArrowLeft') scroll('left');
@@ -243,30 +233,9 @@ export function JobCarousel() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [scroll]);
 
-  // Fetch jobs
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const response = await fetch('/api/jobs/featured');
-        if (!response.ok) throw new Error('Failed to fetch jobs');
-        
-        const data = await response.json();
-        setJobs(data.jobs || []);
-      } catch (error) {
-        console.error('Error fetching jobs:', error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchJobs();
-  }, []);
-
   if (loading) {
     return (
       <CarouselContainer>
-        <SectionTitle>Featured Jobs</SectionTitle>
         <JobsWrapper>
           {[1, 2, 3].map(i => <SkeletonCard key={i} />)}
         </JobsWrapper>
@@ -277,21 +246,13 @@ export function JobCarousel() {
   if (error) {
     return (
       <CarouselContainer>
-        <SectionTitle>Featured Jobs</SectionTitle>
-        <JobCard as="div">
-          <JobTitle>Unable to load jobs</JobTitle>
-          <JobInfo>Please try again later</JobInfo>
-        </JobCard>
+        <ErrorMessage>Unable to load jobs. Please try again later.</ErrorMessage>
       </CarouselContainer>
     );
   }
 
   return (
-    <CarouselContainer
-      role="region"
-      aria-label="Featured Jobs Carousel"
-    >
-      <SectionTitle id="jobs-carousel-title">Featured Jobs</SectionTitle>
+    <CarouselContainer>
       <ScrollButton 
         direction="left" 
         onClick={() => scroll('left')}
@@ -304,25 +265,19 @@ export function JobCarousel() {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        role="list"
-        aria-labelledby="jobs-carousel-title"
       >
-        {getInfiniteJobs().map((job, index) => (
+        {jobs.map((job, index) => (
           <JobCard 
-            key={`${job._id}-${index}`}
+            key={job._id}
             to={`/jobs/${job._id}`}
             onMouseEnter={() => setAutoScrollEnabled(false)}
             onMouseLeave={() => setAutoScrollEnabled(true)}
-            role="listitem"
-            aria-label={`${job.title} at ${job.company}`}
           >
-            <JobTitle>{job.title}</JobTitle>
-            <JobInfo>
-              <p><strong>Company:</strong> {job.company}</p>
-              <p><strong>Location:</strong> {job.location}</p>
-              <p><strong>Salary:</strong> ${job.salary}</p>
-              <p>{job.description?.substring(0, 100)}...</p>
-            </JobInfo>
+            <JobDetails>
+              <h3>{job.title}</h3>
+              <p>{job.company}</p>
+              <p>{job.location}</p>
+            </JobDetails>
           </JobCard>
         ))}
       </JobsWrapper>
@@ -333,17 +288,16 @@ export function JobCarousel() {
       >
         <ChevronRight />
       </ScrollButton>
-      <ProgressIndicator role="tablist" aria-label="Carousel progress">
+      <ProgressIndicator>
         {jobs.map((_, index) => (
           <ProgressDot 
             key={index} 
-            active={index === currentIndex}
-            role="tab"
-            aria-selected={index === currentIndex}
-            aria-label={`Slide ${index + 1} of ${jobs.length}`}
+            $active={index === currentIndex}
           />
         ))}
       </ProgressIndicator>
     </CarouselContainer>
   );
 }
+
+export default JobCarousel;

@@ -3,10 +3,8 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading, user } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
-
-  console.log('ProtectedRoute:', { isAuthenticated, loading, user });
 
   // Show loading state for a maximum of 2 seconds
   const [showLoading, setShowLoading] = React.useState(loading);
@@ -24,7 +22,7 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    console.log('Not authenticated, redirecting to login');
+    // Redirect to login if user is not authenticated
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

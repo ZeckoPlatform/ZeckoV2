@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { fetchData, endpoints } from '../../services/api';
@@ -73,7 +73,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const notify = useNotification();
 
-  const loadData = async (key, endpoint) => {
+  const loadData = useCallback(async (key, endpoint) => {
     setLoading(prev => ({ ...prev, [key]: true }));
     try {
       const { data: responseData, error } = await fetchData(endpoint);
@@ -87,7 +87,7 @@ const Dashboard = () => {
     } finally {
       setLoading(prev => ({ ...prev, [key]: false }));
     }
-  };
+  }, [notify]);
 
   useEffect(() => {
     console.log('Dashboard mounted, user:', user);
@@ -99,7 +99,7 @@ const Dashboard = () => {
       loadData('addresses', endpoints.users.addresses);
       loadData('cart', endpoints.cart);
     }
-  }, [user]);
+  }, [user, loadData]);
 
   if (!user) {
     return <LoadingContainer>Please log in to view your dashboard</LoadingContainer>;

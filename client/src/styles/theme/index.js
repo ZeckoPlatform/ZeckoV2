@@ -1,75 +1,62 @@
 import { createTheme } from '@mui/material/styles';
 
-// Define base design tokens with the structure your components expect
-const tokens = {
+// Define theme variables
+const themeVariables = {
   colors: {
     primary: {
-      main: '#81C784',
-      dark: '#4CAF50',
-      light: '#C8E6C9',
+      main: '#4CAF50',
+      dark: '#45a049',
+      light: '#81C784',
       text: '#FFFFFF',
       gradient: 'linear-gradient(135deg, #81C784 0%, #4CAF50 100%)',
     },
-    error: {
-      main: '#f44336',
-      light: '#e57373',
-      dark: '#d32f2f'
-    },
     background: {
-      default: '#121212',
-      paper: '#1E1E1E',
-      main: '#121212', // Added to match component expectations
-      light: '#1E1E1E'
+      default: '#FFFFFF',
+      paper: '#F5F5F5',
+      dark: '#121212',
     },
     text: {
-      primary: '#E0E0E0',
-      secondary: '#BDBDBD',
-      disabled: 'rgba(255, 255, 255, 0.38)',
-    },
-    border: {
-      main: 'rgba(255, 255, 255, 0.2)'
+      primary: '#333333',
+      secondary: '#666666',
+      disabled: '#999999',
     }
+  },
+  transitions: {
+    short: '0.15s',
+    medium: '0.3s',
+    long: '0.5s',
   },
   spacing: {
     xs: '0.25rem',
     sm: '0.5rem',
     md: '1rem',
     lg: '1.5rem',
-    xl: '2rem'
+    xl: '2rem',
+    xxl: '3rem',
   },
   borderRadius: {
-    sm: '0.25rem',
-    md: '0.5rem',
-    lg: '1rem'
-  },
-  shadows: {
-    card: '0 4px 6px rgba(0, 0, 0, 0.1)'
-  },
-  typography: {
-    size: {
-      sm: '0.875rem',
-      md: '1rem',
-      lg: '1.25rem'
-    }
+    sm: '4px',
+    md: '8px',
+    lg: '16px',
   }
 };
 
 // Create MUI theme
 const muiTheme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: 'light',
     primary: {
-      main: tokens.colors.primary.main,
-      dark: tokens.colors.primary.dark,
-      light: tokens.colors.primary.light,
+      main: themeVariables.colors.primary.main,
+      dark: themeVariables.colors.primary.dark,
+      light: themeVariables.colors.primary.light,
     },
     background: {
-      default: tokens.colors.background.default,
-      paper: tokens.colors.background.paper,
+      default: themeVariables.colors.background.default,
+      paper: themeVariables.colors.background.paper,
     },
     text: {
-      primary: tokens.colors.text.primary,
-      secondary: tokens.colors.text.secondary,
+      primary: themeVariables.colors.text.primary,
+      secondary: themeVariables.colors.text.secondary,
     },
   },
   typography: {
@@ -103,4 +90,4 @@ const muiTheme = createTheme({
   },
 });
 
-export { muiTheme, tokens as theme }; 
+export { muiTheme, themeVariables }; 

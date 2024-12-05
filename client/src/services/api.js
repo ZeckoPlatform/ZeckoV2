@@ -28,10 +28,20 @@ export const endpoints = {
   },
   jobs: {
     user: (userId) => `/jobs/user/${userId}`,
-    featured: '/jobs/featured'
+    featured: '/jobs/featured',
+    list: '/jobs',
+    details: (id) => `/jobs/${id}`,
+    create: '/jobs',
+    update: (id) => `/jobs/${id}`,
+    delete: (id) => `/jobs/${id}`,
   },
   contractors: {
-    featured: '/contractors/featured'
+    featured: '/contractors/featured',
+    list: '/contractors',
+    details: (id) => `/contractors/${id}`,
+    create: '/contractors',
+    update: (id) => `/contractors/${id}`,
+    delete: (id) => `/contractors/${id}`,
   },
   business: '/business',
   orders: {
@@ -39,6 +49,14 @@ export const endpoints = {
   },
   users: {
     addresses: '/users/addresses',
+    profile: '/users/profile',
+    update: '/users/profile',
+  },
+  auth: {
+    login: '/auth/login',
+    register: '/auth/register',
+    logout: '/auth/logout',
+    me: '/auth/me',
   },
   cart: '/cart',
 };

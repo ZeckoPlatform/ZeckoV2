@@ -1,66 +1,108 @@
-import React, { createContext, useContext, useCallback } from 'react';
-import { toast } from 'react-toastify';
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import styled, { keyframes } from 'styled-components';
 
-const NotificationContext = createContext(null);
+const NotificationContext = createContext();
 
-export const NotificationProvider = ({ children }) => {
-  const notify = useCallback(({ type = 'info', message, options = {} }) => {
-    const defaultOptions = {
-      position: 'bottom-right',
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    };
+const slideIn = keyframes`
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+`;
 
-    switch (type) {
-      case 'success':
-        toast.success(message, { ...defaultOptions, ...options });
-        break;
+const slideOut = keyframes`
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+`;
+
+const NotificationContainer = styled.div`
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const NotificationItem = styled.div`
+  min-width: 300px;
+  padding: 15px 20px;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  background: ${({ theme, $type }) => {
+    switch ($type) {
       case 'error':
-        toast.error(message, { ...defaultOptions, ...options });
-        break;
+        return theme.colors.error;
+      case 'success':
+        return theme.colors.success;
       case 'warning':
-        toast.warning(message, { ...defaultOptions, ...options });
-        break;
+        return theme.colors.warning;
       default:
-        toast.info(message, { ...defaultOptions, ...options });
+        return theme.colors.info;
     }
+  }};
+  color: white;
+  box-shadow: ${({ theme }) => theme.shadows.notification};
+  animation: ${({ $isExiting }) => ($isExiting ? slideOut : slideIn)} 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  button {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0 5px;
+    font-size: 1.2rem;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+`;
+
+export function NotificationProvider({ children }) {
+  const [notifications, setNotifications] = useState([]);
+
+  const removeNotification = useCallback((id) => {
+    setNotifications(prev => prev.filter(notification => notification.id !== id));
   }, []);
 
-  const success = useCallback((message, options) => {
-    notify({ type: 'success', message, options });
-  }, [notify]);
+  const addNotification = useCallback((message, type = 'info') => {
+    const id = Date.now();
+    setNotifications(prev => [...prev, { id, message, type }]);
 
-  const error = useCallback((message, options) => {
-    notify({ type: 'error', message, options });
-  }, [notify]);
+    // Auto-remove after 5 seconds
+    setTimeout(() => removeNotification(id), 5000);
+  }, [removeNotification]);
 
-  const warning = useCallback((message, options) => {
-    notify({ type: 'warning', message, options });
-  }, [notify]);
-
-  const info = useCallback((message, options) => {
-    notify({ type: 'info', message, options });
-  }, [notify]);
+  const notify = useCallback({
+    error: (message) => addNotification(message, 'error'),
+    success: (message) => addNotification(message, 'success'),
+    warning: (message) => addNotification(message, 'warning'),
+    info: (message) => addNotification(message, 'info'),
+  }, [addNotification]);
 
   return (
-    <NotificationContext.Provider value={{ notify, success, error, warning, info }}>
+    <NotificationContext.Provider value={notify}>
       {children}
+      <NotificationContainer>
+        {notifications.map(({ id, message, type }) => (
+          <NotificationItem key={id} $type={type}>
+            <span>{message}</span>
+            <button onClick={() => removeNotification(id)}>&times;</button>
+          </NotificationItem>
+        ))}
+      </NotificationContainer>
     </NotificationContext.Provider>
   );
-};
+}
 
-export const useNotification = () => {
+export function useNotification() {
   const context = useContext(NotificationContext);
   if (!context) {
     throw new Error('useNotification must be used within a NotificationProvider');
   }
   return context;
-};
-
-export const useNotifications = () => {
-  return useNotification();
-}; 
+} 

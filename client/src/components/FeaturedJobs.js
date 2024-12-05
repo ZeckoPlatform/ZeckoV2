@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
-import { api, fetchData, endpoints } from '../services/api';
+import { fetchData, endpoints } from '../services/api';
+import { useNotification } from '../contexts/NotificationContext';
 
 const JobsContainer = styled.div`
   display: grid;
@@ -10,103 +11,113 @@ const JobsContainer = styled.div`
   padding: ${({ theme }) => theme.spacing.lg};
 `;
 
-const JobCard = styled.div`
+const JobCard = styled(Link)`
   background: ${({ theme }) => theme.colors.background.paper};
-  padding: ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.md};
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  transition: transform 0.2s ease-in-out;
-  
+  box-shadow: ${({ theme }) => theme.shadows.card};
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   }
-  
-  h3 {
-    color: var(--primary-color, ${({ theme }) => theme.colors.primary.main});
-    margin-bottom: ${({ theme }) => theme.spacing.sm};
-  }
+`;
+
+const JobTitle = styled.h3`
+  color: ${({ theme }) => theme.colors.primary.main};
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
 `;
 
 const JobDetails = styled.div`
-  display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin-top: ${({ theme }) => theme.spacing.md};
   color: ${({ theme }) => theme.colors.text.secondary};
-  font-size: 0.9rem;
+  font-size: 0.9em;
+
+  p {
+    margin: 5px 0;
+  }
 `;
 
 const JobTag = styled.span`
-  background: ${({ theme }) => theme.colors.background.light};
-  padding: 4px 8px;
+  display: inline-block;
+  background: ${({ theme }) => theme.colors.primary.light};
+  color: ${({ theme }) => theme.colors.primary.text};
+  padding: 2px 8px;
   border-radius: ${({ theme }) => theme.borderRadius.sm};
-  font-size: 0.8rem;
+  font-size: 0.8em;
+  margin-right: 5px;
 `;
 
-const LoadingState = styled.div`
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: ${({ theme }) => theme.colors.text.secondary};
+`;
+
+const ErrorMessage = styled.div`
+  color: ${({ theme }) => theme.colors.error};
   text-align: center;
-  padding: ${({ theme }) => theme.spacing.xl};
-  grid-column: 1 / -1;
+  padding: 20px;
+  background: ${({ theme }) => theme.colors.error}10;
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  margin: 20px 0;
 `;
 
-const ErrorState = styled.div`
-  text-align: center;
-  color: ${({ theme }) => theme.colors.status.error};
-  padding: ${({ theme }) => theme.spacing.xl};
-  grid-column: 1 / -1;
-`;
-
-export function FeaturedJobs() {
+function FeaturedJobs() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const notify = useNotification();
+
+  const fetchJobs = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetchData(endpoints.jobs.featured);
+      setJobs(response.data);
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Failed to load jobs';
+      setError(errorMessage);
+      notify.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [notify]);
 
   useEffect(() => {
-    const fetchFeaturedJobs = async () => {
-      try {
-        const response = await fetchData(endpoints.jobs.featured);
-        setJobs(response.data);
-      } catch (err) {
-        console.error('Error fetching featured jobs:', err);
-        setError('Failed to load featured jobs');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFeaturedJobs();
-  }, []);
+    fetchJobs();
+  }, [fetchJobs]);
 
   if (loading) {
-    return <LoadingState>Loading featured jobs...</LoadingState>;
+    return <LoadingContainer>Loading jobs...</LoadingContainer>;
   }
 
   if (error) {
-    return <ErrorState>{error}</ErrorState>;
-  }
-
-  if (!jobs.length) {
-    return <LoadingState>No featured jobs available</LoadingState>;
+    return <ErrorMessage>{error}</ErrorMessage>;
   }
 
   return (
     <JobsContainer>
-      {jobs.map((job) => (
-        <Link to={`/jobs/${job._id}`} key={job._id} style={{ textDecoration: 'none' }}>
-          <JobCard>
-            <h3>{job.title}</h3>
-            <p>{job.description.substring(0, 100)}...</p>
-            <JobDetails>
-              <div>🏢 {job.company}</div>
-              <div>📍 {job.location}</div>
-              <div>
-                <JobTag>{job.type}</JobTag>
-                {job.salary && <JobTag>${job.salary}</JobTag>}
-              </div>
-            </JobDetails>
-          </JobCard>
-        </Link>
+      {jobs.map(job => (
+        <JobCard key={job._id} to={`/jobs/${job._id}`}>
+          <JobTitle>{job.title}</JobTitle>
+          <JobDetails>
+            <p><strong>Company:</strong> {job.company}</p>
+            <p><strong>Location:</strong> {job.location}</p>
+            <div>
+              <JobTag>{job.type}</JobTag>
+              {job.salary && <JobTag>${job.salary}</JobTag>}
+            </div>
+          </JobDetails>
+        </JobCard>
       ))}
     </JobsContainer>
   );
 }
+
+export default FeaturedJobs;
