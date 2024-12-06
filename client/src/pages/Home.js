@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
-import { JobCarousel } from '../components/JobCarousel';
-import { ContractorCarousel } from '../components/ContractorCarousel';
-import { FeaturedJobs } from '../components/FeaturedJobs';
+import JobCarousel from '../components/JobCarousel';
+import ContractorCarousel from '../components/ContractorCarousel';
+import FeaturedJobs from '../components/FeaturedJobs';
 import { fadeIn, slideUp } from '../styles/animations';
 import { fetchData, endpoints } from '../services/api';
 import { CircularProgress } from '@mui/material';

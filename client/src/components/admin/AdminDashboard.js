@@ -1,6 +1,7 @@
 import React, { useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotification } from '../../contexts/NotificationContext';
 import { 
   Users, 
   Package, 

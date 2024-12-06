@@ -90,4 +90,5 @@ const muiTheme = createTheme({
   },
 });
 
-export { muiTheme, themeVariables }; 
+// Export both muiTheme and themeVariables
+export { muiTheme, themeVariables as theme }; 

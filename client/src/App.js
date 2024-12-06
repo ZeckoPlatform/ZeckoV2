@@ -160,31 +160,33 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <ErrorBoundary>
-      <StyledThemeProvider theme={theme}>
-        <MuiThemeProvider theme={muiTheme}>
-          <AuthProvider>
-            <NotificationProvider>
-              <CssBaseline />
-              <GlobalStyles />
-              <RouterProvider router={router} />
-              <ToastContainer 
-                position="top-right"
-                autoClose={5000}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="dark"
-              />
-            </NotificationProvider>
-          </AuthProvider>
-        </MuiThemeProvider>
-      </StyledThemeProvider>
-    </ErrorBoundary>
+    <NotificationProvider>
+      <ErrorBoundary>
+        <StyledThemeProvider theme={theme}>
+          <MuiThemeProvider theme={muiTheme}>
+            <AuthProvider>
+              <NotificationProvider>
+                <CssBaseline />
+                <GlobalStyles />
+                <RouterProvider router={router} />
+                <ToastContainer 
+                  position="top-right"
+                  autoClose={5000}
+                  hideProgressBar={false}
+                  newestOnTop
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                  theme="dark"
+                />
+              </NotificationProvider>
+            </AuthProvider>
+          </MuiThemeProvider>
+        </StyledThemeProvider>
+      </ErrorBoundary>
+    </NotificationProvider>
   );
 }
 

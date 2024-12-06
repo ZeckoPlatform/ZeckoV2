@@ -108,7 +108,7 @@ function EditProduct() {
 
   useEffect(() => {
     fetchProduct();
-  }, [id]);
+  }, [fetchProduct]);
 
   const fetchProduct = async () => {
     try {
