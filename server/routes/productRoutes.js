@@ -40,17 +40,30 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get featured products with timeout
+// Get featured products with timeout and caching
 router.get('/featured', async (req, res) => {
   try {
+    // Check cache first
+    const cachedProducts = cache.get('featured_products');
+    if (cachedProducts) {
+      return res.json(cachedProducts);
+    }
+
     // Add timeout to prevent H12 errors
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('Request timeout')), 25000)
     );
     
-    const productsPromise = Product.find({ featured: true }).limit(10).lean();
+    const productsPromise = Product.find({ featured: true })
+      .select('name description price imageUrl stock') // Only select needed fields
+      .limit(10)
+      .lean();
     
     const products = await Promise.race([productsPromise, timeoutPromise]);
+
+    // Cache results for 5 minutes
+    cache.put('featured_products', products, 300000);
+
     res.json(products);
   } catch (error) {
     console.error('Featured products error:', error);
