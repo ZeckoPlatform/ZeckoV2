@@ -17,7 +17,6 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 // Import pages
 import Home from './pages/Home';
 import Login from './pages/Login';
-import Products from './pages/Products';
 import ProductList from './pages/ProductList';
 import ProductDetails from './pages/ProductDetails';
 import Dashboard from './pages/Dashboard';
@@ -131,28 +130,15 @@ const router = createBrowserRouter([
         path: 'dashboard',
         element: <ProtectedRoute><Dashboard /></ProtectedRoute>
       },
-      // Admin routes
+      // Public product listing
       {
-        path: 'admin',
-        element: <ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>,
-        children: [
-          {
-            path: 'analytics',
-            element: <Analytics />
-          },
-          {
-            path: 'products',
-            element: <ProductManagement />
-          },
-          {
-            path: 'products/add',
-            element: <AddProduct />
-          },
-          {
-            path: 'products/edit/:id',
-            element: <EditProduct />
-          }
-        ]
+        path: 'products',
+        element: <ProductList />
+      },
+      // Admin product management
+      {
+        path: 'admin/products',
+        element: <ProtectedRoute requiredRole="admin"><ProductManagement /></ProtectedRoute>
       }
     ]
   }
@@ -160,35 +146,33 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <Router>
-      <NotificationProvider>
-        <ErrorBoundary>
-          <StyledThemeProvider theme={theme}>
-            <MuiThemeProvider theme={muiTheme}>
-              <AuthProvider>
-                <NotificationProvider>
-                  <CssBaseline />
-                  <GlobalStyles />
-                  <RouterProvider router={router} />
-                  <ToastContainer 
-                    position="top-right"
-                    autoClose={5000}
-                    hideProgressBar={false}
-                    newestOnTop
-                    closeOnClick
-                    rtl={false}
-                    pauseOnFocusLoss
-                    draggable
-                    pauseOnHover
-                    theme="dark"
-                  />
-                </NotificationProvider>
-              </AuthProvider>
-            </MuiThemeProvider>
-          </StyledThemeProvider>
-        </ErrorBoundary>
-      </NotificationProvider>
-    </Router>
+    <NotificationProvider>
+      <ErrorBoundary>
+        <StyledThemeProvider theme={theme}>
+          <MuiThemeProvider theme={muiTheme}>
+            <AuthProvider>
+              <NotificationProvider>
+                <CssBaseline />
+                <GlobalStyles />
+                <RouterProvider router={router} />
+                <ToastContainer 
+                  position="top-right"
+                  autoClose={5000}
+                  hideProgressBar={false}
+                  newestOnTop
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                  theme="dark"
+                />
+              </NotificationProvider>
+            </AuthProvider>
+          </MuiThemeProvider>
+        </StyledThemeProvider>
+      </ErrorBoundary>
+    </NotificationProvider>
   );
 }
 
