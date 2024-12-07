@@ -1,6 +1,6 @@
 import React from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -9,6 +9,7 @@ import GlobalStyles from './styles/GlobalStyles';
 import ErrorBoundary from './components/error/ErrorBoundary';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { muiTheme, theme } from './styles/theme';
 
 // Import components
 import Layout from './components/Layout';
@@ -24,55 +25,6 @@ import DashboardProducts from './components/Dashboard/Products';
 import ProductManagement from './components/admin/ProductManagement';
 import AddProduct from './components/admin/products/AddProduct';
 import EditProduct from './components/admin/products/EditProduct';
-
-const theme = {
-  background: {
-    default: '#121212',
-    paper: '#1E1E1E',
-    main: '#121212',
-    light: '#1E1E1E'
-  },
-  colors: {
-    primary: {
-      main: '#81C784',
-      dark: '#4CAF50',
-      light: '#C8E6C9',
-      text: '#FFFFFF',
-      gradient: 'linear-gradient(135deg, #81C784 0%, #4CAF50 100%)',
-    },
-    text: {
-      primary: '#E0E0E0',
-      secondary: '#BDBDBD',
-      disabled: '#757575'
-    },
-    border: {
-      main: 'rgba(255, 255, 255, 0.1)'
-    },
-    status: {
-      error: '#f44336',
-      success: '#4caf50'
-    }
-  }
-};
-
-const muiTheme = createTheme({
-  palette: {
-    mode: 'dark',
-    primary: {
-      main: theme.colors.primary.main,
-      dark: theme.colors.primary.dark,
-      light: theme.colors.primary.light,
-    },
-    background: {
-      default: theme.background.default,
-      paper: theme.background.paper,
-    },
-    text: {
-      primary: theme.colors.text.primary,
-      secondary: theme.colors.text.secondary,
-    },
-  },
-});
 
 const router = createBrowserRouter([
   {
