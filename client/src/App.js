@@ -143,11 +143,11 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <StyledThemeProvider theme={theme}>
-      <MuiThemeProvider theme={muiTheme}>
-        <ErrorBoundary>
-          <AuthProvider>
-            <NotificationProvider>
+    <ErrorBoundary>
+      <NotificationProvider>
+        <StyledThemeProvider theme={theme}>
+          <MuiThemeProvider theme={muiTheme}>
+            <AuthProvider>
               <CssBaseline />
               <GlobalStyles />
               <RouterProvider router={router} />
@@ -163,11 +163,11 @@ function App() {
                 pauseOnHover
                 theme="dark"
               />
-            </NotificationProvider>
-          </AuthProvider>
-        </ErrorBoundary>
-      </MuiThemeProvider>
-    </StyledThemeProvider>
+            </AuthProvider>
+          </MuiThemeProvider>
+        </StyledThemeProvider>
+      </NotificationProvider>
+    </ErrorBoundary>
   );
 }
 
