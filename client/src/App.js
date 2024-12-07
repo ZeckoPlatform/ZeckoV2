@@ -1,5 +1,5 @@
 import React from 'react';
-import { createBrowserRouter, RouterProvider, BrowserRouter as Router } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import { AuthProvider } from './contexts/AuthContext';
@@ -125,17 +125,14 @@ const router = createBrowserRouter([
         path: 'login',
         element: <Login />
       },
-      // User dashboard route
       {
         path: 'dashboard',
         element: <ProtectedRoute><Dashboard /></ProtectedRoute>
       },
-      // Public product listing
       {
         path: 'products',
         element: <ProductList />
       },
-      // Admin product management
       {
         path: 'admin/products',
         element: <ProtectedRoute requiredRole="admin"><ProductManagement /></ProtectedRoute>
@@ -146,33 +143,31 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <NotificationProvider>
-      <ErrorBoundary>
-        <StyledThemeProvider theme={theme}>
-          <MuiThemeProvider theme={muiTheme}>
-            <AuthProvider>
-              <NotificationProvider>
-                <CssBaseline />
-                <GlobalStyles />
-                <RouterProvider router={router} />
-                <ToastContainer 
-                  position="top-right"
-                  autoClose={5000}
-                  hideProgressBar={false}
-                  newestOnTop
-                  closeOnClick
-                  rtl={false}
-                  pauseOnFocusLoss
-                  draggable
-                  pauseOnHover
-                  theme="dark"
-                />
-              </NotificationProvider>
-            </AuthProvider>
-          </MuiThemeProvider>
-        </StyledThemeProvider>
-      </ErrorBoundary>
-    </NotificationProvider>
+    <StyledThemeProvider theme={theme}>
+      <MuiThemeProvider theme={muiTheme}>
+        <ErrorBoundary>
+          <AuthProvider>
+            <NotificationProvider>
+              <CssBaseline />
+              <GlobalStyles />
+              <RouterProvider router={router} />
+              <ToastContainer 
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="dark"
+              />
+            </NotificationProvider>
+          </AuthProvider>
+        </ErrorBoundary>
+      </MuiThemeProvider>
+    </StyledThemeProvider>
   );
 }
 
