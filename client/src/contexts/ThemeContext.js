@@ -69,16 +69,20 @@ export const ThemeProvider = ({ children }) => {
     }
   }), [themeMode, theme]);
 
-  const toggleTheme = () => {
-    const newTheme = themeMode === 'light' ? 'dark' : 'light';
-    setThemeMode(newTheme);
-    localStorage.setItem('theme', newTheme);
-  };
+  const contextValue = useMemo(() => ({
+    themeMode,
+    toggleTheme: () => {
+      const newTheme = themeMode === 'light' ? 'dark' : 'light';
+      setThemeMode(newTheme);
+      localStorage.setItem('theme', newTheme);
+    },
+    theme
+  }), [themeMode, theme]);
 
   console.log('Theme being provided:', theme);
 
   return (
-    <ThemeContext.Provider value={{ themeMode, toggleTheme }}>
+    <ThemeContext.Provider value={contextValue}>
       <StyledThemeProvider theme={theme}>
         <MUIThemeProvider theme={currentMuiTheme}>
           <CssBaseline />

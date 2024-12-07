@@ -7,7 +7,7 @@
   },
   "scripts": {
     "start": "node server/server.js",
-    "heroku-postbuild": "cd client && npm install --legacy-peer-deps && npm run build",
+    "heroku-postbuild": "cd client && npm install --legacy-peer-deps && GENERATE_SOURCEMAP=false NODE_OPTIONS=--max_old_space_size=4096 npm run build",
     "build": "cd client && npm run build"
   },
   "dependencies": {

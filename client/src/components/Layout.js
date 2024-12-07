@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Navigation from './Navigation';
 import styled from 'styled-components';
+import { useTheme } from '../contexts/ThemeContext';
 
 const LayoutContainer = styled.div`
   min-height: 100vh;
@@ -18,6 +19,8 @@ const MainContent = styled.main`
 `;
 
 const Layout = () => {
+  const { themeMode, theme } = useTheme();
+  console.log('Current theme mode:', themeMode);
   console.log('Current theme:', theme);
 
   return (
