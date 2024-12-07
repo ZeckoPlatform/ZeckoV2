@@ -4,14 +4,21 @@ import Navigation from './Navigation';
 import styled from 'styled-components';
 import { useTheme } from '../contexts/ThemeContext';
 
-const LayoutContainer = styled.div`
+const LayoutContainer = styled.div.attrs(props => ({
+  theme: props.theme || { 
+    colors: { 
+      background: { default: '#FFFFFF' },
+      text: { primary: '#333333' }
+    },
+    mode: 'light'
+  }
+}))`
   min-height: 100vh;
-  background: ${({ theme }) => 
-    theme?.colors?.background?.default || 
-    (theme?.mode === 'dark' ? '#121212' : '#FFFFFF')};
-  color: ${({ theme }) => 
-    theme?.colors?.text?.primary || 
-    (theme?.mode === 'dark' ? '#FFFFFF' : '#333333')};
+  background: ${({ theme }) => {
+    console.log('Theme in styled component:', theme);
+    return theme?.colors?.background?.default || '#FFFFFF';
+  }};
+  color: ${({ theme }) => theme?.colors?.text?.primary || '#333333'};
 `;
 
 const MainContent = styled.main`
@@ -24,7 +31,7 @@ const Layout = () => {
   console.log('Current theme:', theme);
 
   return (
-    <LayoutContainer>
+    <LayoutContainer theme={theme}>
       <Navigation />
       <MainContent>
         <Outlet />

@@ -6,8 +6,8 @@ import { Bell, Menu, X } from 'react-feather';
 import { useNotification } from '../contexts/NotificationContext';
 
 const Nav = styled.nav`
-  background: ${({ theme }) => theme.colors.background.paper};
-  color: ${({ theme }) => theme.colors.text.primary};
+  background: ${({ theme }) => theme?.colors?.background?.paper || '#F5F5F5'};
+  color: ${({ theme }) => theme?.colors?.text?.primary || '#333333'};
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   position: sticky;
   top: 0;
@@ -26,7 +26,7 @@ const NavContent = styled.div`
 const Logo = styled(Link)`
   font-size: 1.5rem;
   font-weight: bold;
-  color: ${({ theme }) => theme.colors.primary.main};
+  color: ${({ theme }) => theme?.colors?.primary?.main || '#4CAF50'};
   text-decoration: none;
 `;
 
@@ -42,21 +42,22 @@ const NavLinks = styled.div`
     left: 0;
     right: 0;
     flex-direction: column;
-    background: ${({ theme }) => theme.colors.background.paper};
+    background: ${({ theme }) => theme?.colors?.background?.paper || '#F5F5F5'};
     padding: 1rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
 `;
 
 const NavLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: ${({ theme }) => theme?.colors?.text?.primary || '#333333'};
   text-decoration: none;
   padding: 0.5rem;
-  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  border-radius: ${({ theme }) => theme?.borderRadius?.sm || '4px'};
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.background.hover};
+    background-color: ${({ theme }) => 
+      theme?.colors?.background?.hover || 'rgba(0, 0, 0, 0.05)'};
   }
 `;
 
@@ -69,7 +70,7 @@ const NotificationBadge = styled.span`
   position: absolute;
   top: -5px;
   right: -5px;
-  background: ${({ theme }) => theme.colors.error};
+  background: ${({ theme }) => theme?.colors?.error || '#f44336'};
   color: white;
   border-radius: 50%;
   width: 16px;
@@ -84,9 +85,9 @@ const NotificationDropdown = styled.div`
   position: absolute;
   top: 100%;
   right: 0;
-  background: ${({ theme }) => theme.colors.background.paper};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  box-shadow: ${({ theme }) => theme.shadows.dropdown};
+  background: ${({ theme }) => theme?.colors?.background?.paper || '#F5F5F5'};
+  border-radius: ${({ theme }) => theme?.borderRadius?.md || '8px'};
+  box-shadow: ${({ theme }) => theme?.shadows?.dropdown || '0 2px 8px rgba(0,0,0,0.15)'};
   min-width: 250px;
   max-height: 400px;
   overflow-y: auto;
@@ -94,7 +95,8 @@ const NotificationDropdown = styled.div`
   
   > div {
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+    border-bottom: 1px solid ${({ theme }) => 
+      theme?.colors?.border || 'rgba(0, 0, 0, 0.1)'};
     
     &:last-child {
       border-bottom: none;
@@ -106,7 +108,7 @@ const MobileMenuButton = styled.button`
   display: none;
   background: none;
   border: none;
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: ${({ theme }) => theme?.colors?.text?.primary || '#333333'};
   cursor: pointer;
   padding: 0.5rem;
 
