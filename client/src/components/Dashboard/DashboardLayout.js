@@ -5,13 +5,13 @@ import Sidebar from '../Layout/Sidebar';
 const DashboardContainer = styled.div`
   display: flex;
   min-height: 100vh;
-  background: ${({ theme }) => theme.colors.background.default};
+  background: ${({ theme }) => theme?.colors?.background?.default || '#FFFFFF'};
 `;
 
 const MainContent = styled.main`
   flex: 1;
-  padding: ${({ theme }) => theme.spacing.lg};
-  margin-left: 280px; // Width of Sidebar
+  padding: ${({ theme }) => theme?.spacing?.lg || '24px'};
+  margin-left: 280px;
   overflow-y: auto;
 
   @media (max-width: 768px) {

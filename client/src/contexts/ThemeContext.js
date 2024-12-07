@@ -6,8 +6,9 @@ import CssBaseline from '@mui/material/CssBaseline';
 
 const ThemeContext = createContext();
 
-const defaultTheme = {
-  mode: 'light',
+// Ensure theme is always available
+const getTheme = (mode = 'light') => ({
+  mode,
   colors: {
     primary: {
       main: '#4CAF50',
@@ -17,18 +18,19 @@ const defaultTheme = {
       gradient: 'linear-gradient(135deg, #81C784 0%, #4CAF50 100%)',
     },
     background: {
-      default: '#FFFFFF',
-      paper: '#F5F5F5',
+      default: mode === 'dark' ? '#121212' : '#FFFFFF',
+      paper: mode === 'dark' ? '#1E1E1E' : '#F5F5F5',
       dark: '#121212',
-      hover: 'rgba(0, 0, 0, 0.05)',
-      main: '#FFFFFF',
+      hover: mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+      main: mode === 'dark' ? '#121212' : '#FFFFFF',
     },
     text: {
-      primary: '#333333',
-      secondary: '#666666',
+      primary: mode === 'dark' ? '#FFFFFF' : '#333333',
+      secondary: mode === 'dark' ? '#CCCCCC' : '#666666',
+      disabled: mode === 'dark' ? '#666666' : '#999999',
     },
     error: '#f44336',
-    border: 'rgba(0, 0, 0, 0.1)'
+    border: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
   },
   transitions: {
     short: '0.15s',
@@ -41,17 +43,46 @@ const defaultTheme = {
     md: '1rem',
     lg: '1.5rem',
     xl: '2rem',
+    xxl: '3rem',
   },
   borderRadius: {
     sm: '4px',
     md: '8px',
     lg: '16px',
   },
+  zIndex: {
+    drawer: 1200,
+    modal: 1300,
+    tooltip: 1400,
+  },
   shadows: {
-    dropdown: '0 2px 8px rgba(0,0,0,0.15)',
     card: '0 2px 4px rgba(0,0,0,0.1)',
-  }
-};
+    hover: '0 4px 8px rgba(0,0,0,0.2)',
+    dropdown: '0 2px 8px rgba(0,0,0,0.15)',
+  },
+  glass: {
+    background: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+    border: mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+  },
+  typography: {
+    weight: {
+      light: 300,
+      regular: 400,
+      medium: 500,
+      bold: 700,
+    },
+    size: {
+      h1: '2.5rem',
+      h2: '2rem',
+      h3: '1.75rem',
+      h4: '1.5rem',
+      h5: '1.25rem',
+      h6: '1rem',
+      body: '1rem',
+      small: '0.875rem',
+    },
+  },
+});
 
 export const ThemeProvider = ({ children }) => {
   const [themeMode, setThemeMode] = useState('dark');
@@ -66,23 +97,7 @@ export const ThemeProvider = ({ children }) => {
   }, []);
 
   const theme = useMemo(() => {
-    const newTheme = {
-      ...defaultTheme,
-      mode: themeMode,
-      colors: {
-        ...defaultTheme.colors,
-        background: {
-          ...defaultTheme.colors.background,
-          default: themeMode === 'dark' ? defaultTheme.colors.background.dark : defaultTheme.colors.background.default,
-        },
-        text: {
-          ...defaultTheme.colors.text,
-          primary: themeMode === 'dark' ? '#FFFFFF' : defaultTheme.colors.text.primary,
-        }
-      }
-    };
-    console.log('Theme being provided:', newTheme);
-    return newTheme;
+    return getTheme(themeMode);
   }, [themeMode]);
 
   const contextValue = useMemo(() => ({
@@ -91,11 +106,12 @@ export const ThemeProvider = ({ children }) => {
       const newTheme = themeMode === 'light' ? 'dark' : 'light';
       setThemeMode(newTheme);
       localStorage.setItem('theme', newTheme);
-    }
-  }), [themeMode]);
+    },
+    theme
+  }), [themeMode, theme]);
 
   if (!isThemeReady) {
-    return null; // or a loading spinner
+    return null;
   }
 
   return (

@@ -20,15 +20,15 @@ export const flexBetween = css`
 `;
 
 export const cardStyle = css`
-  background: ${({ theme }) => theme.colors.background.paper};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  box-shadow: ${({ theme }) => theme.shadows.card};
-  transition: transform ${({ theme }) => theme.transitions.medium},
-              box-shadow ${({ theme }) => theme.transitions.medium};
+  background: ${({ theme }) => theme?.colors?.background?.paper || '#F5F5F5'};
+  border-radius: ${({ theme }) => theme?.borderRadius?.md || '8px'};
+  box-shadow: ${({ theme }) => theme?.shadows?.card || '0 2px 4px rgba(0,0,0,0.1)'};
+  transition: transform ${({ theme }) => theme?.transitions?.medium || '0.3s'},
+              box-shadow ${({ theme }) => theme?.transitions?.medium || '0.3s'};
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: ${({ theme }) => theme.shadows.hover};
+    box-shadow: ${({ theme }) => theme?.shadows?.hover || '0 4px 8px rgba(0,0,0,0.2)'};
   }
 `;
 
@@ -36,10 +36,10 @@ export const buttonBase = css`
   ${flexCenter};
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-weight: ${({ theme }) => theme.typography.weight.medium};
+  border-radius: ${({ theme }) => theme?.borderRadius?.md || '8px'};
+  font-weight: ${({ theme }) => theme?.typography?.weight?.medium || 500};
   cursor: pointer;
-  transition: all ${({ theme }) => theme.transitions.short};
+  transition: all ${({ theme }) => theme?.transitions?.short || '0.15s'};
   
   &:disabled {
     opacity: 0.6;
