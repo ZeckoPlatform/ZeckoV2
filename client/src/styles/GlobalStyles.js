@@ -8,8 +8,8 @@ const GlobalStyles = createGlobalStyle`
   }
 
   body {
-    background-color: ${({ theme }) => theme.colors.background.main};
-    color: ${({ theme }) => theme.colors.text.primary};
+    background-color: ${({ theme }) => theme.background};
+    color: ${({ theme }) => theme.text.primary};
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 
       'Helvetica Neue', Arial, sans-serif;
   }
