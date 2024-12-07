@@ -1,7 +1,7 @@
 import { createTheme } from '@mui/material/styles';
 
 // Define theme variables
-const themeVariables = {
+export const theme = {
   colors: {
     primary: {
       main: '#4CAF50',
@@ -42,21 +42,21 @@ const themeVariables = {
 };
 
 // Create MUI theme
-const muiTheme = createTheme({
+export const muiTheme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: themeVariables.colors.primary.main,
-      dark: themeVariables.colors.primary.dark,
-      light: themeVariables.colors.primary.light,
+      main: theme.colors.primary.main,
+      dark: theme.colors.primary.dark,
+      light: theme.colors.primary.light,
     },
     background: {
-      default: themeVariables.colors.background.default,
-      paper: themeVariables.colors.background.paper,
+      default: theme.colors.background.default,
+      paper: theme.colors.background.paper,
     },
     text: {
-      primary: themeVariables.colors.text.primary,
-      secondary: themeVariables.colors.text.secondary,
+      primary: theme.colors.text.primary,
+      secondary: theme.colors.text.secondary,
     },
   },
   typography: {
@@ -88,7 +88,4 @@ const muiTheme = createTheme({
       },
     },
   },
-});
-
-// Export both muiTheme and themeVariables
-export { muiTheme, themeVariables as theme }; 
+}); 

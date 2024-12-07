@@ -1,15 +1,12 @@
 import React from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
-import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
-import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeProvider } from './contexts/ThemeContext';
 import GlobalStyles from './styles/GlobalStyles';
 import ErrorBoundary from './components/error/ErrorBoundary';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { muiTheme, theme } from './styles/theme';
 
 // Import components
 import Layout from './components/Layout';
@@ -58,29 +55,26 @@ const router = createBrowserRouter([
 function App() {
   return (
     <ErrorBoundary>
-      <StyledThemeProvider theme={theme}>
-        <MuiThemeProvider theme={muiTheme}>
-          <NotificationProvider>
-            <AuthProvider>
-              <CssBaseline />
-              <GlobalStyles />
-              <RouterProvider router={router} />
-              <ToastContainer 
-                position="top-right"
-                autoClose={5000}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="dark"
-              />
-            </AuthProvider>
-          </NotificationProvider>
-        </MuiThemeProvider>
-      </StyledThemeProvider>
+      <ThemeProvider>
+        <NotificationProvider>
+          <AuthProvider>
+            <GlobalStyles />
+            <RouterProvider router={router} />
+            <ToastContainer 
+              position="top-right"
+              autoClose={5000}
+              hideProgressBar={false}
+              newestOnTop
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="dark"
+            />
+          </AuthProvider>
+        </NotificationProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }
