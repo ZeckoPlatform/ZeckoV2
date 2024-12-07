@@ -16,8 +16,8 @@ const LayoutWrapper = styled.div`
 
 const Main = styled.main`
   grid-area: main;
-  padding: ${({ theme }) => theme.spacing.lg};
-  background: ${({ theme }) => theme.colors.background.main};
+  padding: ${({ theme }) => theme?.spacing?.lg || '1.5rem'};
+  background: ${({ theme }) => theme?.colors?.background?.default || '#FFFFFF'};
 `;
 
 const Layout = ({ children }) => {

@@ -10,7 +10,7 @@ const LayoutWrapper = styled.div`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: ${({ theme }) => theme.colors.background.main};
+  background: ${({ theme }) => theme?.colors?.background?.default || '#FFFFFF'};
 `;
 
 const MainContent = styled.main`

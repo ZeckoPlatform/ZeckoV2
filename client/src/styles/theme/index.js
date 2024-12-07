@@ -14,12 +14,16 @@ export const theme = {
       default: '#FFFFFF',
       paper: '#F5F5F5',
       dark: '#121212',
+      hover: 'rgba(0, 0, 0, 0.05)',
+      main: '#FFFFFF',
     },
     text: {
       primary: '#333333',
       secondary: '#666666',
       disabled: '#999999',
-    }
+    },
+    error: '#f44336',
+    border: 'rgba(0, 0, 0, 0.1)',
   },
   transitions: {
     short: '0.15s',
