@@ -26,6 +26,12 @@ import AddProduct from './components/admin/products/AddProduct';
 import EditProduct from './components/admin/products/EditProduct';
 
 const theme = {
+  background: {
+    default: '#121212',
+    paper: '#1E1E1E',
+    main: '#121212',
+    light: '#1E1E1E'
+  },
   colors: {
     primary: {
       main: '#81C784',
@@ -33,12 +39,6 @@ const theme = {
       light: '#C8E6C9',
       text: '#FFFFFF',
       gradient: 'linear-gradient(135deg, #81C784 0%, #4CAF50 100%)',
-    },
-    background: {
-      default: '#121212',
-      paper: '#1E1E1E',
-      main: '#121212',
-      light: '#1E1E1E'
     },
     text: {
       primary: '#E0E0E0',
@@ -50,46 +50,8 @@ const theme = {
     },
     status: {
       error: '#f44336',
-      warning: '#ff9800',
-      info: '#2196f3',
       success: '#4caf50'
     }
-  },
-  typography: {
-    size: {
-      xs: '0.75rem',
-      sm: '0.875rem',
-      md: '1rem',
-      lg: '1.125rem',
-      xl: '1.25rem'
-    }
-  },
-  spacing: {
-    xs: '0.25rem',
-    sm: '0.5rem',
-    md: '1rem',
-    lg: '1.5rem',
-    xl: '2rem'
-  },
-  borderRadius: {
-    sm: '4px',
-    md: '8px',
-    lg: '16px'
-  },
-  transitions: {
-    short: '0.15s ease-in-out',
-    medium: '0.25s ease-in-out',
-    long: '0.35s ease-in-out'
-  },
-  shadows: {
-    card: '0 2px 4px rgba(0,0,0,0.2)',
-    dropdown: '0 4px 8px rgba(0,0,0,0.3)',
-    modal: '0 8px 16px rgba(0,0,0,0.4)'
-  },
-  zIndex: {
-    drawer: 1200,
-    modal: 1300,
-    tooltip: 1400
   }
 };
 
@@ -102,8 +64,8 @@ const muiTheme = createTheme({
       light: theme.colors.primary.light,
     },
     background: {
-      default: theme.colors.background.default,
-      paper: theme.colors.background.paper,
+      default: theme.background.default,
+      paper: theme.background.paper,
     },
     text: {
       primary: theme.colors.text.primary,
@@ -144,9 +106,9 @@ const router = createBrowserRouter([
 function App() {
   return (
     <ErrorBoundary>
-      <NotificationProvider>
-        <StyledThemeProvider theme={theme}>
-          <MuiThemeProvider theme={muiTheme}>
+      <StyledThemeProvider theme={theme}>
+        <MuiThemeProvider theme={muiTheme}>
+          <NotificationProvider>
             <AuthProvider>
               <CssBaseline />
               <GlobalStyles />
@@ -164,9 +126,9 @@ function App() {
                 theme="dark"
               />
             </AuthProvider>
-          </MuiThemeProvider>
-        </StyledThemeProvider>
-      </NotificationProvider>
+          </NotificationProvider>
+        </MuiThemeProvider>
+      </StyledThemeProvider>
     </ErrorBoundary>
   );
 }
