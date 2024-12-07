@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/productModel');
-const Business = require('../models/Business');
+const Business = require('../models/businessModel');
 const { auth } = require('../middleware/auth');
 const cache = require('memory-cache');
 
