@@ -3,36 +3,36 @@ import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 
 const FooterWrapper = styled.footer`
-  background: ${({ theme }) => theme.colors.background.paper};
-  padding: ${({ theme }) => theme.spacing.xl} 0;
+  background: ${({ theme }) => theme?.colors?.background?.paper || '#F5F5F5'};
+  padding: ${({ theme }) => theme?.spacing?.xl || '2rem'} 0;
   margin-top: auto;
 `;
 
 const FooterContent = styled.div`
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 ${({ theme }) => theme.spacing.lg};
+  padding: 0 ${({ theme }) => theme?.spacing?.lg || '1.5rem'};
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: ${({ theme }) => theme.spacing.xl};
+  gap: ${({ theme }) => theme?.spacing?.xl || '2rem'};
 `;
 
 const FooterSection = styled.div`
   h3 {
-    color: ${({ theme }) => theme.colors.text.primary};
-    margin-bottom: ${({ theme }) => theme.spacing.md};
+    color: ${({ theme }) => theme?.colors?.text?.primary || '#333333'};
+    margin-bottom: ${({ theme }) => theme?.spacing?.md || '1rem'};
   }
 `;
 
 const FooterLink = styled(Link)`
   display: block;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: ${({ theme }) => theme?.colors?.text?.secondary || '#666666'};
   text-decoration: none;
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
+  margin-bottom: ${({ theme }) => theme?.spacing?.sm || '0.5rem'};
   transition: color 0.2s ease;
 
   &:hover {
-    color: ${({ theme }) => theme.colors.primary.main};
+    color: ${({ theme }) => theme?.colors?.primary?.main || '#4CAF50'};
   }
 `;
 

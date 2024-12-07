@@ -20,7 +20,8 @@ const defaultTheme = {
       default: '#FFFFFF',
       paper: '#F5F5F5',
       dark: '#121212',
-      hover: 'rgba(0, 0, 0, 0.05)'
+      hover: 'rgba(0, 0, 0, 0.05)',
+      main: '#FFFFFF',
     },
     text: {
       primary: '#333333',
@@ -65,62 +66,42 @@ export const ThemeProvider = ({ children }) => {
   }, []);
 
   const theme = useMemo(() => {
-    if (!isThemeReady) return defaultTheme;
-
-    return {
+    const newTheme = {
       ...defaultTheme,
-      ...baseTheme,
       mode: themeMode,
       colors: {
         ...defaultTheme.colors,
-        ...baseTheme.colors,
         background: {
           ...defaultTheme.colors.background,
-          ...baseTheme.colors.background,
-          default: themeMode === 'dark' 
-            ? baseTheme.colors.background.dark 
-            : baseTheme.colors.background.default,
+          default: themeMode === 'dark' ? defaultTheme.colors.background.dark : defaultTheme.colors.background.default,
         },
         text: {
           ...defaultTheme.colors.text,
-          ...baseTheme.colors.text,
-          primary: themeMode === 'dark' 
-            ? '#E0E0E0' 
-            : baseTheme.colors.text.primary,
+          primary: themeMode === 'dark' ? '#FFFFFF' : defaultTheme.colors.text.primary,
         }
       }
     };
-  }, [themeMode, isThemeReady]);
+    console.log('Theme being provided:', newTheme);
+    return newTheme;
+  }, [themeMode]);
 
-  const currentMuiTheme = useMemo(() => ({
-    ...muiTheme,
-    palette: {
-      ...muiTheme.palette,
-      mode: themeMode,
-      background: {
-        default: theme.colors.background.default,
-        paper: themeMode === 'dark' ? '#1E1E1E' : theme.colors.background.paper,
-      },
-      text: {
-        primary: theme.colors.text.primary,
-      }
+  const contextValue = useMemo(() => ({
+    themeMode,
+    toggleTheme: () => {
+      const newTheme = themeMode === 'light' ? 'dark' : 'light';
+      setThemeMode(newTheme);
+      localStorage.setItem('theme', newTheme);
     }
-  }), [themeMode, theme]);
-
-  const toggleTheme = () => {
-    const newTheme = themeMode === 'light' ? 'dark' : 'light';
-    setThemeMode(newTheme);
-    localStorage.setItem('theme', newTheme);
-  };
+  }), [themeMode]);
 
   if (!isThemeReady) {
     return null; // or a loading spinner
   }
 
   return (
-    <ThemeContext.Provider value={{ themeMode, toggleTheme, theme }}>
+    <ThemeContext.Provider value={contextValue}>
       <StyledThemeProvider theme={theme}>
-        <MUIThemeProvider theme={currentMuiTheme}>
+        <MUIThemeProvider theme={muiTheme}>
           <CssBaseline />
           {children}
         </MUIThemeProvider>

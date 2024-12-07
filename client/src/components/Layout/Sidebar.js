@@ -10,16 +10,16 @@ const SidebarContainer = styled.aside`
   position: fixed;
   left: 0;
   top: 0;
-  padding: ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme?.spacing?.lg || '1.5rem'};
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-  z-index: ${({ theme }) => theme.zIndex.drawer};
-  background: ${({ theme }) => theme.colors.background.paper};
+  gap: ${({ theme }) => theme?.spacing?.md || '1rem'};
+  z-index: ${({ theme }) => theme?.zIndex?.drawer || 1200};
+  background: ${({ theme }) => theme?.colors?.background?.paper || '#F5F5F5'};
 
   @media (max-width: 768px) {
     transform: translateX(-100%);
-    transition: transform ${({ theme }) => theme.transitions.medium};
+    transition: transform ${({ theme }) => theme?.transitions?.medium || '0.3s'};
 
     ${props => props.isOpen && `
       transform: translateX(0);
@@ -28,22 +28,22 @@ const SidebarContainer = styled.aside`
 `;
 
 const SidebarSection = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme?.spacing?.lg || '1.5rem'};
 `;
 
 const SidebarLink = styled(Link)`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  padding: ${({ theme }) => theme.spacing.sm};
-  color: ${({ theme }) => theme.colors.text.primary};
+  gap: ${({ theme }) => theme?.spacing?.sm || '0.5rem'};
+  padding: ${({ theme }) => theme?.spacing?.sm || '0.5rem'};
+  color: ${({ theme }) => theme?.colors?.text?.primary || '#333333'};
   text-decoration: none;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  transition: all ${({ theme }) => theme.transitions.short};
+  border-radius: ${({ theme }) => theme?.borderRadius?.md || '8px'};
+  transition: all ${({ theme }) => theme?.transitions?.short || '0.15s'};
 
   &:hover, &.active {
-    background: ${({ theme }) => theme.colors.primary.gradient};
-    color: ${({ theme }) => theme.colors.primary.text};
+    background: ${({ theme }) => theme?.colors?.primary?.gradient || 'linear-gradient(135deg, #81C784 0%, #4CAF50 100%)'};
+    color: ${({ theme }) => theme?.colors?.primary?.text || '#FFFFFF'};
   }
 
   svg {
