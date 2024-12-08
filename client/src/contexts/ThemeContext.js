@@ -110,6 +110,8 @@ export const ThemeProvider = ({ children }) => {
     theme
   }), [themeMode, theme]);
 
+  console.log('Current theme:', theme);
+
   if (!isThemeReady) {
     return null;
   }

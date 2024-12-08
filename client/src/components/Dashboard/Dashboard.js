@@ -8,8 +8,8 @@ const DashboardContainer = styled.div`
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
-  background: ${({ theme }) => theme.colors.background.paper};
-  color: ${({ theme }) => theme.colors.text.primary};
+  background: ${({ theme }) => theme?.colors?.background?.paper || '#F5F5F5'};
+  color: ${({ theme }) => theme?.colors?.text?.primary || '#333333'};
   min-height: calc(100vh - 64px);
 `;
 
@@ -23,10 +23,10 @@ const LoadingContainer = styled.div`
 
 const Section = styled.section`
   margin-bottom: 30px;
-  background: ${({ theme }) => theme.colors.background.paper};
+  background: ${({ theme }) => theme?.colors?.background?.paper || '#F5F5F5'};
   padding: 20px;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  box-shadow: ${({ theme }) => theme.shadows.card};
+  border-radius: ${({ theme }) => theme?.borderRadius?.md || '8px'};
+  box-shadow: ${({ theme }) => theme?.shadows?.card || '0 2px 4px rgba(0,0,0,0.1)'};
 `;
 
 const JobsList = styled.div`

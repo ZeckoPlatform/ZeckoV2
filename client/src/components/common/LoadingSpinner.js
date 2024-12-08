@@ -18,16 +18,16 @@ const SpinnerWrapper = styled(motion.div)`
 const SpinnerCircle = styled.div`
   width: ${({ size }) => size}px;
   height: ${({ size }) => size}px;
-  border: 4px solid ${({ theme }) => theme.colors.background.alt};
-  border-top: 4px solid ${({ theme }) => theme.colors.primary.main};
+  border: 4px solid ${({ theme }) => theme?.colors?.background?.alt || '#F5F5F5'};
+  border-top: 4px solid ${({ theme }) => theme?.colors?.primary?.main || '#4CAF50'};
   border-radius: 50%;
   animation: ${spin} 1s linear infinite;
 `;
 
 const LoadingText = styled.p`
-  margin-top: ${({ theme }) => theme.spacing.md};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  font-size: ${({ theme }) => theme.typography.size.sm};
+  margin-top: ${({ theme }) => theme?.spacing?.md || '16px'};
+  color: ${({ theme }) => theme?.colors?.text?.secondary || '#666666'};
+  font-size: ${({ theme }) => theme?.typography?.size?.sm || '0.875rem'};
 `;
 
 const LoadingSpinner = ({ 
