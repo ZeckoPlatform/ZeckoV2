@@ -1,10 +1,11 @@
 import { createBrowserRouter } from 'react-router-dom';
-import Layout from '../components/Layout';
+import App from '../App';
 import ErrorBoundary from '../components/error/ErrorBoundary';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import ForgotPassword from '../pages/ForgotPassword';
+import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 
 // Admin components
 import AdminDashboard from '../components/admin/AdminDashboard';
@@ -17,12 +18,11 @@ import EditProduct from '../components/admin/products/EditProduct';
 import Settings from '../components/admin/Settings';
 import UserManagement from '../components/admin/UserManagement';
 import Dashboard from '../components/Dashboard/Dashboard';
-import ProtectedRoute from '../components/ProtectedRoute';
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Layout />,
+    element: <App />,
     errorElement: <ErrorBoundary />,
     children: [
       {
@@ -42,47 +42,13 @@ export const router = createBrowserRouter([
         element: <ForgotPassword />
       },
       {
-        path: 'admin',
-        element: <AdminDashboard />,
+        path: 'dashboard',
+        element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
         children: [
-          {
-            index: true,
-            element: <DashboardStats />
-          },
-          {
-            path: 'analytics',
-            element: <Analytics />
-          },
-          {
-            path: 'orders',
-            element: <OrderManagement />
-          },
-          {
-            path: 'products',
-            element: <ProductManagement />
-          },
-          {
-            path: 'products/add',
-            element: <AddProduct />
-          },
-          {
-            path: 'products/edit/:id',
-            element: <EditProduct />
-          },
-          {
-            path: 'settings',
-            element: <Settings />
-          },
-          {
-            path: 'users',
-            element: <UserManagement />
-          }
+          // Your dashboard routes here
         ]
       },
-      {
-        path: 'dashboard',
-        element: <ProtectedRoute><Dashboard /></ProtectedRoute>
-      }
+      // Add other routes as needed
     ]
   }
 ]); 

@@ -1,19 +1,23 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { BrowserRouter } from 'react-router-dom';
+import { RouterProvider } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import ErrorBoundary from './components/error/ErrorBoundary';
-import App from './App';
+import { router } from './routes';
 
 ReactDOM.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <ErrorBoundary>
+    <ErrorBoundary>
+      <AuthProvider>
         <ThemeProvider>
-          <App />
+          <NotificationProvider>
+            <RouterProvider router={router} />
+          </NotificationProvider>
         </ThemeProvider>
-      </ErrorBoundary>
-    </BrowserRouter>
+      </AuthProvider>
+    </ErrorBoundary>
   </React.StrictMode>,
   document.getElementById('root')
 );

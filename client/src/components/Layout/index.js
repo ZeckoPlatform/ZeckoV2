@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Outlet, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import Sidebar from './Sidebar';
@@ -10,44 +10,25 @@ const LayoutWrapper = styled.div`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: ${({ theme }) => theme?.colors?.background?.default || '#FFFFFF'};
 `;
 
 const MainContent = styled.main`
   flex: 1;
   padding: ${({ theme }) => theme.spacing.lg};
   margin-left: ${({ isDashboard }) => isDashboard ? '280px' : '0'};
-  transition: margin-left 0.3s ease;
-
-  @media (max-width: 768px) {
-    margin-left: 0;
-    padding: ${({ theme }) => theme.spacing.md};
-  }
 `;
 
-const Layout = () => {
+const Layout = ({ children }) => {
   const location = useLocation();
-  const { loading } = useAuth();
+  const { isAuthenticated } = useAuth();
   const isDashboard = location.pathname.startsWith('/dashboard');
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (location.pathname === '/login') {
-    return (
-      <MainContent>
-        <Outlet />
-      </MainContent>
-    );
-  }
 
   return (
     <LayoutWrapper>
       <Header />
-      {isDashboard && <Sidebar />}
+      {isDashboard && isAuthenticated && <Sidebar />}
       <MainContent isDashboard={isDashboard}>
-        <Outlet />
+        {children}
       </MainContent>
       <Footer />
     </LayoutWrapper>
