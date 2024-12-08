@@ -71,23 +71,23 @@ const Dashboard = () => {
     cart: true
   });
   const { user } = useAuth();
-  const { error: notify } = useNotification();
+  const { showNotification } = useNotification();
 
   const loadData = useCallback(async (key, endpoint) => {
     setLoading(prev => ({ ...prev, [key]: true }));
     try {
       const { data: responseData, error } = await fetchData(endpoint);
       if (error) {
-        notify(`Failed to load ${key}: ${error}`);
+        showNotification(`Failed to load ${key}: ${error}`, 'error');
       } else {
         setData(prev => ({ ...prev, [key]: responseData }));
       }
     } catch (err) {
-      notify(`Error loading ${key}`);
+      showNotification(`Error loading ${key}`, 'error');
     } finally {
       setLoading(prev => ({ ...prev, [key]: false }));
     }
-  }, [notify]);
+  }, [showNotification]);
 
   useEffect(() => {
     console.log('Dashboard mounted, user:', user);

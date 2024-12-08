@@ -30,40 +30,31 @@ const timeoutMiddleware = (req, res, next) => {
             message: 'Request timeout',
             code: 'TIMEOUT_ERROR'
         });
-    }, 5000);
+    }, 20000);
 
     req.on('end', () => clearTimeout(timeout));
     next();
 };
 
+// Add request timeout handling
+const requestTimeout = 25000; // 25 seconds
+
 // Get featured jobs with caching
-router.get('/featured', timeoutMiddleware, async (req, res) => {
+router.get('/featured', async (req, res) => {
+    const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), requestTimeout)
+    );
+
     try {
-        const cachedJobs = cache.get('featured_jobs');
-        if (cachedJobs) {
-            return res.json(cachedJobs);
-        }
-
-        const jobs = await Job.find({ featured: true })
-            .select('title description company location salary type createdAt postedBy')
-            .sort({ createdAt: -1 })
-            .limit(6)
-            .populate('postedBy', 'username')
-            .lean()
-            .exec();
-
-        if (!jobs) {
-            return res.status(404).json({ message: 'No featured jobs found' });
-        }
-
-        cache.put('featured_jobs', jobs, 5 * 60 * 1000);
-        res.json(jobs);
+        const result = await Promise.race([
+            Job.find({ featured: true }).exec(),
+            timeoutPromise
+        ]);
+        res.json(result);
     } catch (error) {
         console.error('Featured jobs error:', error);
-        res.status(500).json({ 
-            message: 'Error fetching featured jobs',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
+        res.status(error.message === 'Request timeout' ? 503 : 500)
+           .json({ message: error.message });
     }
 });
 

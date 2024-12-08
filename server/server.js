@@ -9,6 +9,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const productRoutes = require('./routes/productRoutes');
+const morgan = require('morgan');
 
 // Initialize Express and create server
 const app = express();
@@ -23,7 +24,7 @@ app.use(helmet({
 // Rate limiting configuration
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 200,
     message: { error: 'Too many requests, please try again later.' },
     standardHeaders: true,
     legacyHeaders: false,
@@ -45,6 +46,19 @@ app.use(compression());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cors());
+
+// Add before your routes
+app.use(morgan('combined'));
+
+// Add response time header
+app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        console.log(`${req.method} ${req.url} - ${duration}ms`);
+    });
+    next();
+});
 
 // Import routes with error handling
 let routes = {};
@@ -114,6 +128,34 @@ app.use((err, req, res, next) => {
     });
 });
 
+// Add these settings
+const serverConfig = {
+    web_concurrency: process.env.WEB_CONCURRENCY || 1,
+    port: process.env.PORT || 5000,
+    connection_timeout: 29000,
+};
+
+// Update MongoDB connection
+mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 25000,
+    connectTimeoutMS: 10000,
+    maxPoolSize: 10,
+    minPoolSize: 1,
+    maxIdleTimeMS: 10000,
+});
+
+// Add error handling for MongoDB connection
+mongoose.connection.on('error', (err) => {
+    console.error('MongoDB connection error:', err);
+    // Attempt to reconnect
+    setTimeout(() => {
+        mongoose.connect(process.env.MONGODB_URI, mongooseOptions);
+    }, 5000);
+});
+
 // Start server function
 const startServer = async () => {
     try {
@@ -121,10 +163,15 @@ const startServer = async () => {
         await mongoose.connect(process.env.MONGODB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 5000,
+            serverSelectionTimeoutMS: 10000,
             socketTimeoutMS: 45000,
             connectTimeoutMS: 10000,
-            heartbeatFrequencyMS: 30000
+            heartbeatFrequencyMS: 30000,
+            maxPoolSize: 50,
+            minPoolSize: 5,
+            maxIdleTimeMS: 30000,
+            retryWrites: true,
+            w: 'majority'
         });
         console.log('Connected to MongoDB');
 

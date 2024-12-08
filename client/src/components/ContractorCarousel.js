@@ -176,7 +176,7 @@ export function ContractorCarousel() {
   const [touchStart, setTouchStart] = useState(null);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const wrapperRef = useRef(null);
-  const { error: notify } = useNotification();
+  const { showNotification } = useNotification();
 
   const scroll = useCallback((direction) => {
     if (!wrapperRef.current) return;
@@ -224,7 +224,7 @@ export function ContractorCarousel() {
         setContractors(response.data);
       } catch (err) {
         console.error('Error fetching contractors:', err);
-        notify('Failed to load contractors');
+        showNotification('Failed to load contractors', 'error');
         setError(err.message);
       } finally {
         setLoading(false);
@@ -232,7 +232,7 @@ export function ContractorCarousel() {
     };
 
     fetchContractors();
-  }, [notify]);
+  }, [showNotification]);
 
   useEffect(() => {
     if (!autoScrollEnabled) return;

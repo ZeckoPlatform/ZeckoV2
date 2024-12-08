@@ -129,4 +129,10 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
+// Add indexes for frequently queried fields
+userSchema.index({ email: 1 });
+userSchema.index({ username: 1 });
+userSchema.index({ role: 1 });
+userSchema.index({ 'activity.lastLogin': -1 });
+
 module.exports = mongoose.model('User', userSchema);

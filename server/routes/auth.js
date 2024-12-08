@@ -4,8 +4,15 @@ const BusinessUser = require('../models/businessUserModel');
 const { authenticateToken } = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const timeout = require('connect-timeout');
 
 const router = express.Router();
+
+router.use(timeout('25s'));
+
+router.use((req, res, next) => {
+    if (!req.timedout) next();
+});
 
 router.get('/verify', authenticateToken, async (req, res) => {
   try {
@@ -48,7 +55,17 @@ router.post('/login', async (req, res) => {
     
     console.log('Login attempt for:', email);
 
-    let user = await User.findOne({ email });
+    // Add timeout promise
+    const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database timeout')), 20000)
+    );
+
+    // Race between DB query and timeout
+    const user = await Promise.race([
+        User.findOne({ email }).select('+password'),
+        timeoutPromise
+    ]);
+
     let isBusinessUser = false;
 
     if (!user) {
@@ -90,6 +107,9 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
+    if (error.message === 'Database timeout') {
+        return res.status(503).json({ message: 'Service temporarily unavailable' });
+    }
     res.status(500).json({ message: 'Server error during login' });
   }
 });

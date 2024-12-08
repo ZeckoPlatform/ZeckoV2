@@ -58,7 +58,7 @@ function UserProfile() {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { error: notify } = useNotification();
+  const { showNotification } = useNotification();
 
   const fetchProfileData = useCallback(async () => {
     setLoading(true);
@@ -70,11 +70,11 @@ function UserProfile() {
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Failed to load profile data';
       setError(errorMessage);
-      notify(errorMessage);
+      showNotification(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
-  }, [user.id, notify]);
+  }, [user.id, showNotification]);
 
   useEffect(() => {
     if (user) {

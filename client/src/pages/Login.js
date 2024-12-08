@@ -96,7 +96,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
-  const { success, error: notify } = useNotification();
+  const { showNotification } = useNotification();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -115,7 +115,7 @@ const Login = () => {
     try {
       const result = await login(formData);
       if (result.success) {
-        notify.success('Login successful!');
+        showNotification('Login successful!', 'success');
         if (result.user.role === 'admin') {
           navigate('/admin');
         } else {
@@ -126,7 +126,7 @@ const Login = () => {
       console.error('Login error:', err);
       const errorMessage = err.message || 'An error occurred during login';
       setError(errorMessage);
-      notify.error(errorMessage);
+      showNotification(errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }
