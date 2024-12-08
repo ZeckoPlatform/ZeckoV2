@@ -1,128 +1,81 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { ThemeProvider as MUIThemeProvider } from '@mui/material/styles';
+import React, { createContext, useContext, useState } from 'react';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
-import { muiTheme, theme as baseTheme } from '../styles/theme/index';
-import CssBaseline from '@mui/material/CssBaseline';
 
-const ThemeContext = createContext();
-
-// Ensure theme is always available
-const getTheme = (mode = 'light') => ({
-  mode,
+const defaultTheme = {
   colors: {
     primary: {
-      main: '#4CAF50',
-      dark: '#45a049',
-      light: '#81C784',
-      text: '#FFFFFF',
-      gradient: 'linear-gradient(135deg, #81C784 0%, #4CAF50 100%)',
+      main: '#1976d2',
+      dark: '#115293',
+      light: '#4791db',
+      gradient: 'linear-gradient(45deg, #1976d2 30%, #115293 90%)',
+      text: '#FFFFFF'
     },
     background: {
-      default: mode === 'dark' ? '#121212' : '#FFFFFF',
-      paper: mode === 'dark' ? '#1E1E1E' : '#F5F5F5',
-      dark: '#121212',
-      hover: mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-      main: mode === 'dark' ? '#121212' : '#FFFFFF',
+      default: '#FFFFFF',
+      main: '#F5F5F5',
+      paper: '#FFFFFF'
     },
     text: {
-      primary: mode === 'dark' ? '#FFFFFF' : '#333333',
-      secondary: mode === 'dark' ? '#CCCCCC' : '#666666',
-      disabled: mode === 'dark' ? '#666666' : '#999999',
-    },
-    error: '#f44336',
-    border: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-  },
-  transitions: {
-    short: '0.15s',
-    medium: '0.3s',
-    long: '0.5s',
+      primary: '#333333',
+      secondary: '#666666'
+    }
   },
   spacing: {
-    xs: '0.25rem',
-    sm: '0.5rem',
-    md: '1rem',
-    lg: '1.5rem',
-    xl: '2rem',
-    xxl: '3rem',
-  },
-  borderRadius: {
-    sm: '4px',
-    md: '8px',
-    lg: '16px',
-  },
-  zIndex: {
-    drawer: 1200,
-    modal: 1300,
-    tooltip: 1400,
-  },
-  shadows: {
-    card: '0 2px 4px rgba(0,0,0,0.1)',
-    hover: '0 4px 8px rgba(0,0,0,0.2)',
-    dropdown: '0 2px 8px rgba(0,0,0,0.15)',
-  },
-  glass: {
-    background: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-    border: mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+    xs: '0.5rem',
+    sm: '1rem',
+    md: '1.5rem',
+    lg: '2rem',
+    xl: '3rem',
+    xxl: '4rem'
   },
   typography: {
-    weight: {
-      light: 300,
-      regular: 400,
-      medium: 500,
-      bold: 700,
-    },
     size: {
       h1: '2.5rem',
       h2: '2rem',
       h3: '1.75rem',
       h4: '1.5rem',
-      h5: '1.25rem',
-      h6: '1rem',
-      body: '1rem',
-      small: '0.875rem',
-    },
+      body: '1rem'
+    }
   },
-});
+  transitions: {
+    short: '0.3s',
+    medium: '0.5s',
+    long: '0.7s'
+  },
+  borderRadius: {
+    sm: '2px',
+    md: '4px',
+    lg: '8px',
+    xl: '16px'
+  }
+};
+
+const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  const [themeMode, setThemeMode] = useState('dark');
-  const [isThemeReady, setIsThemeReady] = useState(false);
+  const [mode, setMode] = useState('light');
   
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      setThemeMode(savedTheme);
+  const theme = {
+    ...defaultTheme,
+    mode,
+    colors: {
+      ...defaultTheme.colors,
+      background: {
+        default: mode === 'dark' ? '#121212' : '#FFFFFF',
+        main: mode === 'dark' ? '#1E1E1E' : '#F5F5F5',
+        paper: mode === 'dark' ? '#242424' : '#FFFFFF'
+      },
+      text: {
+        primary: mode === 'dark' ? '#FFFFFF' : '#333333',
+        secondary: mode === 'dark' ? '#AAAAAA' : '#666666'
+      }
     }
-    setIsThemeReady(true);
-  }, []);
-
-  const theme = useMemo(() => {
-    return getTheme(themeMode);
-  }, [themeMode]);
-
-  const contextValue = useMemo(() => ({
-    themeMode,
-    toggleTheme: () => {
-      const newTheme = themeMode === 'light' ? 'dark' : 'light';
-      setThemeMode(newTheme);
-      localStorage.setItem('theme', newTheme);
-    },
-    theme
-  }), [themeMode, theme]);
-
-  console.log('Current theme:', theme);
-
-  if (!isThemeReady) {
-    return null;
-  }
+  };
 
   return (
-    <ThemeContext.Provider value={contextValue}>
+    <ThemeContext.Provider value={{ mode, setMode, theme }}>
       <StyledThemeProvider theme={theme}>
-        <MUIThemeProvider theme={muiTheme}>
-          <CssBaseline />
-          {children}
-        </MUIThemeProvider>
+        {children}
       </StyledThemeProvider>
     </ThemeContext.Provider>
   );
@@ -130,7 +83,7 @@ export const ThemeProvider = ({ children }) => {
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
