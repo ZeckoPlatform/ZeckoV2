@@ -2,7 +2,7 @@ import React from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import theme from './theme';
+import theme from './styles/theme';
 import Layout from './components/Layout/Layout';
 import PrivateRoute from './components/routing/PrivateRoute';
 import {
