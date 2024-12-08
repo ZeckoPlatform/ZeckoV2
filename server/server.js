@@ -9,7 +9,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const productRoutes = require('./routes/productRoutes');
-// const morgan = require('morgan');
+const morgan = require('morgan');
 const connectDB = require('./config/db');
 const timeout = require('express-timeout-handler');
 
@@ -99,8 +99,10 @@ try {
     console.error('Error during route import:', error.message);
 }
 
-// Move auth routes registration before other routes
-app.use('/api/auth', routes.auth);
+// Register routes with error checking
+if (routes.auth) {
+    app.use('/api/auth', routes.auth);
+}
 
 // Then register other routes
 Object.entries(routes).forEach(([name, router]) => {
@@ -146,6 +148,7 @@ const serverConfig = {
 };
 
 // Update MongoDB connection
+mongoose.set('strictQuery', false);
 mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
