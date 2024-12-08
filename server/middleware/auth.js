@@ -65,6 +65,11 @@ const auth = async (req, res, next) => {
         // Cache user data for 5 minutes
         cache.put(`auth_${token}`, userData, 5 * 60 * 1000);
         
+        // Add error handling for token expiration
+        if (decoded.exp && Date.now() >= decoded.exp * 1000) {
+            throw new Error('Token has expired');
+        }
+        
         req.user = userData;
         next();
     } catch (error) {
@@ -73,10 +78,20 @@ const auth = async (req, res, next) => {
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
         
-        res.status(401).json({ 
+        // Enhanced error handling
+        const errorResponse = {
             message: 'Authentication failed',
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
+        };
+
+        // Specific error handling for different scenarios
+        if (error.name === 'JsonWebTokenError') {
+            errorResponse.message = 'Invalid token';
+        } else if (error.name === 'TokenExpiredError') {
+            errorResponse.message = 'Token has expired';
+        }
+        
+        res.status(401).json(errorResponse);
     }
 };
 
@@ -103,6 +118,7 @@ const isVendor = checkRole(['vendor', 'admin']);
 
 // Change authenticateToken to auth for consistency
 const authenticateToken = auth;  // Add this line to maintain backward compatibility
+
 module.exports = {
     auth,
     authenticateToken, // For backward compatibility

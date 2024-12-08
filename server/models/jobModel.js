@@ -3,8 +3,7 @@ const mongoose = require('mongoose');
 const jobSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: true,
-    trim: true
+    required: true
   },
   description: {
     type: String,
@@ -19,51 +18,24 @@ const jobSchema = new mongoose.Schema({
     required: true
   },
   salary: {
-    type: Number,
-    required: true
+    type: String
   },
   type: {
     type: String,
-    enum: ['fulltime', 'contract', 'temporary'],
-    default: 'fulltime'
-  },
-  category: {
-    type: String,
-    enum: ['construction', 'renovation', 'maintenance'],
-    required: true
-  },
-  status: {
-    type: String,
-    enum: ['open', 'closed', 'in-progress'],
-    default: 'open'
-  },
-  postedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    enum: ['full-time', 'part-time', 'contract', 'internship'],
+    default: 'full-time'
   },
   featured: {
     type: Boolean,
     default: false
   },
-  applications: [{
+  postedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'JobApplication'
-  }],
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+    ref: 'User',
+    required: true
   }
+}, {
+  timestamps: true
 });
 
-jobSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
-
-const Job = mongoose.model('Job', jobSchema);
-module.exports = Job;
+module.exports = mongoose.model('Job', jobSchema);
