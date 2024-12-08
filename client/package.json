@@ -1,6 +1,6 @@
 {
-  "name": "zecko-client",
-  "version": "1.0.0",
+  "name": "client",
+  "version": "0.1.0",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.13.5",
@@ -33,7 +33,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "GENERATE_SOURCEMAP=false react-scripts build",
+    "build": "CI=false react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
