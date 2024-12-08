@@ -9,8 +9,9 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const productRoutes = require('./routes/productRoutes');
-const morgan = require('morgan');
+// const morgan = require('morgan');
 const connectDB = require('./config/db');
+const timeout = require('express-timeout-handler');
 
 // Initialize Express and create server
 const app = express();
@@ -60,6 +61,14 @@ app.use((req, res, next) => {
     });
     next();
 });
+
+// Add before routes
+app.use(timeout.handler({
+    timeout: 30000,
+    onTimeout: function(req, res) {
+        res.status(503).send('Service unavailable. Please retry.');
+    }
+}));
 
 // Import routes with error handling
 let routes = {};
@@ -136,11 +145,47 @@ const serverConfig = {
     connection_timeout: 29000,
 };
 
+// Update MongoDB connection
+mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 25000,
+    connectTimeoutMS: 10000,
+    maxPoolSize: 10,
+    minPoolSize: 1,
+    maxIdleTimeMS: 10000,
+});
+
+// Add error handling for MongoDB connection
+mongoose.connection.on('error', (err) => {
+    console.error('MongoDB connection error:', err);
+    // Attempt to reconnect
+    setTimeout(() => {
+        mongoose.connect(process.env.MONGODB_URI, mongooseOptions);
+    }, 5000);
+});
+
 // Start server function
 const startServer = async () => {
     try {
-        await connectDB();
-        
+        // Connect to MongoDB
+        await mongoose.connect(process.env.MONGODB_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 10000,
+            socketTimeoutMS: 45000,
+            connectTimeoutMS: 10000,
+            heartbeatFrequencyMS: 30000,
+            maxPoolSize: 50,
+            minPoolSize: 5,
+            maxIdleTimeMS: 30000,
+            retryWrites: true,
+            w: 'majority'
+        });
+        console.log('Connected to MongoDB');
+
+        // Start server
         const PORT = process.env.PORT || 5000;
         server.listen(PORT, '0.0.0.0', () => {
             console.log(`Server running on port ${PORT}`);

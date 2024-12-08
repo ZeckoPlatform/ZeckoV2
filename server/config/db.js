@@ -9,8 +9,8 @@ const connectDB = async () => {
             socketTimeoutMS: 45000,
             connectTimeoutMS: 10000,
             heartbeatFrequencyMS: 30000,
-            maxPoolSize: 50,
-            minPoolSize: 5,
+            maxPoolSize: 10,
+            minPoolSize: 1,
             maxIdleTimeMS: 30000,
             retryWrites: true,
             w: 'majority'
