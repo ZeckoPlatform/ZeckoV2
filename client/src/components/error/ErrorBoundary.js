@@ -98,8 +98,12 @@ class ErrorBoundaryClass extends React.Component {
   };
 
   handleGoHome = () => {
-    this.props.navigate('/');
-    this.setState({ hasError: false, error: null, errorInfo: null });
+    if (this.props.navigate) {
+      this.props.navigate('/');
+      this.setState({ hasError: false, error: null, errorInfo: null });
+    } else {
+      window.location.href = '/';
+    }
   };
 
   render() {
@@ -136,9 +140,15 @@ class ErrorBoundaryClass extends React.Component {
   }
 }
 
-// Wrap with navigate hook
+// Wrap with navigate hook, but make it optional
 const ErrorBoundary = (props) => {
-  const navigate = useNavigate();
+  let navigate;
+  try {
+    navigate = useNavigate();
+  } catch (error) {
+    // If useNavigate fails, we'll fall back to window.location
+    navigate = null;
+  }
   return <ErrorBoundaryClass {...props} navigate={navigate} />;
 };
 
