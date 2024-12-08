@@ -59,6 +59,14 @@ const Button = styled.button`
   }
 `;
 
+// Separate navigation wrapper
+const NavigationWrapper = ({ children }) => {
+  const navigate = useNavigate();
+  return React.Children.map(children, child => 
+    React.cloneElement(child, { navigate })
+  );
+};
+
 class ErrorBoundaryClass extends React.Component {
   constructor(props) {
     super(props);
@@ -70,27 +78,16 @@ class ErrorBoundaryClass extends React.Component {
   }
 
   static getDerivedStateFromError(error) {
-    // Log the error to help with debugging
     console.error('Error caught in getDerivedStateFromError:', error);
     return { hasError: true, error };
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log detailed error information
     console.error('Error caught in componentDidCatch:', {
       error,
       componentStack: errorInfo.componentStack
     });
-    
-    // Update state with error info for potential logging
-    this.setState({
-      errorInfo
-    });
-
-    // Here you could also send the error to your error tracking service
-    // if (typeof window.errorTracker === 'function') {
-    //   window.errorTracker(error, errorInfo);
-    // }
+    this.setState({ errorInfo });
   }
 
   handleReload = () => {
@@ -100,10 +97,10 @@ class ErrorBoundaryClass extends React.Component {
   handleGoHome = () => {
     if (this.props.navigate) {
       this.props.navigate('/');
-      this.setState({ hasError: false, error: null, errorInfo: null });
     } else {
       window.location.href = '/';
     }
+    this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
   render() {
@@ -140,16 +137,11 @@ class ErrorBoundaryClass extends React.Component {
   }
 }
 
-// Wrap with navigate hook, but make it optional
-const ErrorBoundary = (props) => {
-  let navigate;
-  try {
-    navigate = useNavigate();
-  } catch (error) {
-    // If useNavigate fails, we'll fall back to window.location
-    navigate = null;
-  }
-  return <ErrorBoundaryClass {...props} navigate={navigate} />;
-};
+// Clean wrapper that always uses hooks in the same order
+const ErrorBoundary = (props) => (
+  <NavigationWrapper>
+    <ErrorBoundaryClass {...props} />
+  </NavigationWrapper>
+);
 
 export default ErrorBoundary; 
