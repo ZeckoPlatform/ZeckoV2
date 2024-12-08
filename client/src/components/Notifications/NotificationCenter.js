@@ -22,8 +22,11 @@ import { api } from '../../services/api';
 import { useSocket } from '../../contexts/SocketContext';
 
 const NotificationContainer = styled.div`
-  min-width: 300px;
-  max-width: 400px;
+  width: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 `;
 
 const NotificationHeader = styled.div`
@@ -31,25 +34,17 @@ const NotificationHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+  border-bottom: 1px solid #eee;
 `;
 
 const NotificationItem = styled(ListItem)`
-  transition: background-color 0.2s;
-  
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.background.hover};
-  }
-
-  ${({ unread, theme }) => unread && `
-    background-color: ${theme.colors.background.light};
-  `}
+  background: ${props => props.unread ? '#f5f5f5' : 'transparent'};
 `;
 
 const EmptyState = styled.div`
   padding: 2rem;
   text-align: center;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: #666;
 `;
 
 const getNotificationIcon = (type) => {
