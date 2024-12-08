@@ -54,7 +54,7 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <ErrorBoundary>
+    <div className="App">
       <ThemeProvider>
         <NotificationProvider>
           <AuthProvider>
@@ -75,7 +75,7 @@ function App() {
           </AuthProvider>
         </NotificationProvider>
       </ThemeProvider>
-    </ErrorBoundary>
+    </div>
   );
 }
 

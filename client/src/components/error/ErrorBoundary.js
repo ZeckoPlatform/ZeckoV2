@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { FiAlertTriangle, FiRefreshCw, FiHome } from 'react-icons/fi';
 
@@ -59,14 +59,6 @@ const Button = styled.button`
   }
 `;
 
-// Separate navigation wrapper
-const NavigationWrapper = ({ children }) => {
-  const navigate = useNavigate();
-  return React.Children.map(children, child => 
-    React.cloneElement(child, { navigate })
-  );
-};
-
 class ErrorBoundaryClass extends React.Component {
   constructor(props) {
     super(props);
@@ -95,11 +87,7 @@ class ErrorBoundaryClass extends React.Component {
   };
 
   handleGoHome = () => {
-    if (this.props.navigate) {
-      this.props.navigate('/');
-    } else {
-      window.location.href = '/';
-    }
+    window.location.href = '/';
     this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
@@ -137,11 +125,4 @@ class ErrorBoundaryClass extends React.Component {
   }
 }
 
-// Clean wrapper that always uses hooks in the same order
-const ErrorBoundary = (props) => (
-  <NavigationWrapper>
-    <ErrorBoundaryClass {...props} />
-  </NavigationWrapper>
-);
-
-export default ErrorBoundary; 
+export default ErrorBoundaryClass; 
