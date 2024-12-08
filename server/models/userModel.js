@@ -86,7 +86,66 @@ const userSchema = new mongoose.Schema({
   tempSecret: {
     type: String,
     select: false
-  }
+  },
+  subscription: {
+    plan: {
+      type: String,
+      enum: ['free', 'basic', 'pro', 'enterprise'],
+      default: 'free'
+    },
+    startDate: Date,
+    endDate: Date,
+    autoRenew: { type: Boolean, default: false }
+  },
+  credits: { type: Number, default: 0 },
+  billing: {
+    customerId: String,
+    defaultPaymentMethod: String,
+    invoices: [{
+      id: String,
+      amount: Number,
+      status: String,
+      date: Date
+    }]
+  },
+  businessProfile: {
+    companyName: String,
+    businessType: String,
+    registrationNumber: String,
+    vatNumber: String,
+    services: [{
+      category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
+      subcategories: [String],
+      pricing: {
+        hourlyRate: Number,
+        minimumCharge: Number,
+        currency: { type: String, default: 'USD' }
+      }
+    }],
+    portfolio: [{
+      title: String,
+      description: String,
+      images: [String],
+      completionDate: Date
+    }],
+    reviews: [{
+      client: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      rating: Number,
+      comment: String,
+      date: { type: Date, default: Date.now }
+    }],
+    averageRating: { type: Number, default: 0 }
+  },
+  leads: [{
+    lead: { type: mongoose.Schema.Types.ObjectId, ref: 'Lead' },
+    status: {
+      type: String,
+      enum: ['viewed', 'contacted', 'hired', 'completed', 'declined'],
+      default: 'viewed'
+    },
+    viewedAt: Date,
+    creditsUsed: Number
+  }]
 }, {
   timestamps: true
 });
@@ -134,5 +193,43 @@ userSchema.index({ email: 1 });
 userSchema.index({ username: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ 'activity.lastLogin': -1 });
+
+// Add new methods for credit management
+userSchema.methods.addCredits = async function(amount, transactionType, description) {
+  this.credits += amount;
+  await this.save();
+  
+  // Create credit transaction record
+  await mongoose.model('CreditBalance').create({
+    user: this._id,
+    amount,
+    type: transactionType,
+    description
+  });
+};
+
+userSchema.methods.useCredits = async function(amount, leadId) {
+  if (this.credits < amount) {
+    throw new Error('Insufficient credits');
+  }
+  
+  this.credits -= amount;
+  await this.save();
+  
+  // Create credit transaction record
+  await mongoose.model('CreditBalance').create({
+    user: this._id,
+    amount: -amount,
+    type: 'usage',
+    description: `Used for lead ${leadId}`,
+    leadId
+  });
+};
+
+// Add method to check subscription status
+userSchema.methods.hasActiveSubscription = function() {
+  if (!this.subscription.endDate) return false;
+  return new Date() < new Date(this.subscription.endDate);
+};
 
 module.exports = mongoose.model('User', userSchema);
