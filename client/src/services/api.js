@@ -2,9 +2,7 @@ import axios from 'axios';
 
 // Create and export the API instance
 export const api = axios.create({
-  baseURL: process.env.NODE_ENV === 'production' 
-    ? 'https://zeckov2-deceb43992ac.herokuapp.com/api'
-    : 'http://localhost:5000/api',
+  baseURL: process.env.REACT_APP_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json'
   },
@@ -19,6 +17,19 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Add response interceptor
+api.interceptors.response.use(
+    response => response,
+    error => {
+        console.error('API Error:', error);
+        // Handle specific errors
+        if (error.response?.status === 503) {
+            // Handle service unavailable
+        }
+        return Promise.reject(error);
+    }
+);
 
 // API endpoints configuration
 export const endpoints = {

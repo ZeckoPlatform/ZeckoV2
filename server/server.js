@@ -64,9 +64,11 @@ app.use((req, res, next) => {
 
 // Add before routes
 app.use(timeout.handler({
-    timeout: 30000,
+    timeout: 60000,
     onTimeout: function(req, res) {
-        res.status(503).send('Service unavailable. Please retry.');
+        res.status(503).json({
+            error: 'Service temporarily unavailable. Please try again.'
+        });
     }
 }));
 
@@ -134,9 +136,21 @@ if (process.env.NODE_ENV === 'production') {
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Error:', err);
+    
+    // Handle specific errors
+    if (err.name === 'ValidationError') {
+        return res.status(400).json({ error: err.message });
+    }
+    
+    if (err.name === 'UnauthorizedError') {
+        return res.status(401).json({ error: 'Invalid token' });
+    }
+    
+    // Default error
     res.status(500).json({ 
-        message: 'Something went wrong!',
-        error: process.env.NODE_ENV === 'development' ? err.message : undefined
+        error: process.env.NODE_ENV === 'production' 
+            ? 'Internal server error' 
+            : err.message 
     });
 });
 
