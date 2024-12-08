@@ -96,7 +96,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
-  const notify = useNotification();
+  const { success, error: notify } = useNotification();
   const navigate = useNavigate();
 
   const handleChange = (e) => {

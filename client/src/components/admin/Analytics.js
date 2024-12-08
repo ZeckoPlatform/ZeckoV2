@@ -36,7 +36,7 @@ function Analytics() {
     growth: []
   });
   const [loading, setLoading] = useState(true);
-  const notify = useNotification();
+  const { error: notify } = useNotification();
 
   const fetchAnalyticsData = useCallback(async () => {
     setLoading(true);
@@ -55,7 +55,7 @@ function Analytics() {
         growth: growth.data
       });
     } catch (error) {
-      notify.error('Failed to load analytics data');
+      notify('Failed to load analytics data');
       console.error('Analytics data fetch error:', error);
     } finally {
       setLoading(false);

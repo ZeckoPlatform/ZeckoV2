@@ -72,17 +72,15 @@ export function NotificationProvider({ children }) {
   const addNotification = useCallback((message, type = 'info') => {
     const id = Date.now();
     setNotifications(prev => [...prev, { id, message, type }]);
-
-    // Auto-remove after 5 seconds
     setTimeout(() => removeNotification(id), 5000);
   }, [removeNotification]);
 
-  const notify = useCallback({
-    error: (message) => addNotification(message, 'error'),
-    success: (message) => addNotification(message, 'success'),
-    warning: (message) => addNotification(message, 'warning'),
-    info: (message) => addNotification(message, 'info'),
-  }, [addNotification]);
+  const notify = {
+    error: useCallback((message) => addNotification(message, 'error'), [addNotification]),
+    success: useCallback((message) => addNotification(message, 'success'), [addNotification]),
+    warning: useCallback((message) => addNotification(message, 'warning'), [addNotification]),
+    info: useCallback((message) => addNotification(message, 'info'), [addNotification]),
+  };
 
   return (
     <NotificationContext.Provider value={notify}>

@@ -155,7 +155,7 @@ function JobCarousel() {
   const [touchStart, setTouchStart] = useState(null);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const wrapperRef = useRef(null);
-  const notify = useNotification();
+  const { error: notify } = useNotification();
 
   const scroll = useCallback((direction) => {
     if (!wrapperRef.current) return;
@@ -203,7 +203,7 @@ function JobCarousel() {
         setJobs(response.data);
       } catch (err) {
         console.error('Error fetching jobs:', err);
-        notify.error('Failed to load jobs');
+        notify('Failed to load jobs');
         setError(err.message);
       } finally {
         setLoading(false);

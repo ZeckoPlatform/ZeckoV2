@@ -71,19 +71,19 @@ const Dashboard = () => {
     cart: true
   });
   const { user } = useAuth();
-  const notify = useNotification();
+  const { error: notify } = useNotification();
 
   const loadData = useCallback(async (key, endpoint) => {
     setLoading(prev => ({ ...prev, [key]: true }));
     try {
       const { data: responseData, error } = await fetchData(endpoint);
       if (error) {
-        notify.error(`Failed to load ${key}: ${error}`);
+        notify(`Failed to load ${key}: ${error}`);
       } else {
         setData(prev => ({ ...prev, [key]: responseData }));
       }
     } catch (err) {
-      notify.error(`Error loading ${key}`);
+      notify(`Error loading ${key}`);
     } finally {
       setLoading(prev => ({ ...prev, [key]: false }));
     }

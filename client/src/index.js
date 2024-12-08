@@ -6,17 +6,20 @@ import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import ErrorBoundary from './components/error/ErrorBoundary';
 import { router } from './routes';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 ReactDOM.render(
   <React.StrictMode>
     <ErrorBoundary>
-      <AuthProvider>
-        <ThemeProvider>
-          <NotificationProvider>
+      <NotificationProvider>
+        <AuthProvider>
+          <ThemeProvider>
             <RouterProvider router={router} />
-          </NotificationProvider>
-        </ThemeProvider>
-      </AuthProvider>
+            <ToastContainer />
+          </ThemeProvider>
+        </AuthProvider>
+      </NotificationProvider>
     </ErrorBoundary>
   </React.StrictMode>,
   document.getElementById('root')

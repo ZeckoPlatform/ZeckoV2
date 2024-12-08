@@ -71,7 +71,7 @@ function FeaturedJobs() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const notify = useNotification();
+  const { error: notify } = useNotification();
 
   const fetchJobs = useCallback(async () => {
     setLoading(true);
@@ -83,7 +83,7 @@ function FeaturedJobs() {
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Failed to load jobs';
       setError(errorMessage);
-      notify.error(errorMessage);
+      notify(errorMessage);
     } finally {
       setLoading(false);
     }
