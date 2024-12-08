@@ -1,24 +1,46 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import Layout from './components/Layout';
-import Home from './pages/Home';
-import Jobs from './pages/Jobs';
-import Contractors from './pages/Contractors';
-import NotFound from './pages/NotFound';
-import { useNotification } from './contexts/NotificationContext';
+import { ThemeProvider } from '@mui/material/styles';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import theme from './theme';
+import Layout from './components/layout/Layout';
+import PrivateRoute from './components/routing/PrivateRoute';
+import {
+  Home,
+  Login,
+  Register,
+  Dashboard,
+  Products,
+  Services,
+  Profile,
+  Orders
+} from './pages';
 
 function App() {
-  const { showNotification } = useNotification();
-
   return (
-    <Routes>
-      <Route path="/" element={<Layout />}>
-        <Route index element={<Home />} />
-        <Route path="jobs/*" element={<Jobs />} />
-        <Route path="contractors/*" element={<Contractors />} />
-        <Route path="*" element={<NotFound />} />
-      </Route>
-    </Routes>
+    <ThemeProvider theme={theme}>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Home />} />
+              <Route path="login" element={<Login />} />
+              <Route path="register" element={<Register />} />
+              <Route path="products" element={<Products />} />
+              <Route path="services" element={<Services />} />
+              
+              {/* Protected Routes */}
+              <Route element={<PrivateRoute />}>
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="profile" element={<Profile />} />
+                <Route path="orders" element={<Orders />} />
+              </Route>
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

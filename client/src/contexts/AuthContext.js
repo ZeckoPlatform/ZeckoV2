@@ -1,99 +1,80 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { fetchData, endpoints } from '../services/api';
-import { useNotification } from '../contexts/NotificationContext';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { authAPI } from '../services/api';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
-export function AuthProvider({ children }) {
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const notify = useNotification();
+  const [error, setError] = useState(null);
 
-  const login = useCallback(async (email, password) => {
-    try {
-      const response = await fetchData(endpoints.auth.login, {
-        method: 'POST',
-        body: { email, password },
-      });
-      
-      setUser(response.data.user);
-      localStorage.setItem('token', response.data.token);
-      notify.success('Successfully logged in');
-      return response.data;
-    } catch (error) {
-      notify.error(error.message || 'Failed to login');
-      throw error;
-    }
-  }, [notify]);
+  useEffect(() => {
+    checkAuth();
+  }, []);
 
-  const register = useCallback(async (userData) => {
-    try {
-      const response = await fetchData(endpoints.auth.register, {
-        method: 'POST',
-        body: userData,
-      });
-      
-      notify.success('Registration successful');
-      return response.data;
-    } catch (error) {
-      notify.error(error.message || 'Failed to register');
-      throw error;
-    }
-  }, [notify]);
-
-  const logout = useCallback(async () => {
-    try {
-      await fetchData(endpoints.auth.logout, { method: 'POST' });
-      setUser(null);
-      localStorage.removeItem('token');
-      notify.success('Successfully logged out');
-    } catch (error) {
-      notify.error('Failed to logout');
-      throw error;
-    }
-  }, [notify]);
-
-  const checkAuth = useCallback(async () => {
+  const checkAuth = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) {
-        setLoading(false);
-        return;
+      if (token) {
+        const response = await authAPI.getCurrentUser();
+        setUser(response.data);
       }
-
-      const response = await fetchData(endpoints.auth.me);
-      setUser(response.data);
-    } catch (error) {
-      localStorage.removeItem('token');
+    } catch (err) {
+      console.error('Auth check failed:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  React.useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  const login = async (credentials) => {
+    try {
+      setError(null);
+      const response = await authAPI.login(credentials);
+      const { token, user } = response.data;
+      localStorage.setItem('token', token);
+      setUser(user);
+      return true;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Login failed');
+      return false;
+    }
+  };
+
+  const register = async (userData) => {
+    try {
+      setError(null);
+      const response = await authAPI.register(userData);
+      const { token, user } = response.data;
+      localStorage.setItem('token', token);
+      setUser(user);
+      return true;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Registration failed');
+      return false;
+    }
+  };
+
+  const logout = () => {
+    authAPI.logout();
+    setUser(null);
+  };
 
   const value = {
     user,
     loading,
+    error,
     login,
     register,
     logout,
-    checkAuth,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
+};

@@ -1,100 +1,77 @@
 import axios from 'axios';
 
-// Create and export the API instance
-export const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || '/api',
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+const api = axios.create({
+  baseURL: BASE_URL,
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
   },
-  timeout: 60000
 });
 
-// Add token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Add response interceptor
-api.interceptors.response.use(
-    response => response,
-    error => {
-        console.error('API Error:', error);
-        // Handle specific errors
-        if (error.response?.status === 503) {
-            // Handle service unavailable
-        }
-        return Promise.reject(error);
+// Request interceptor for adding auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
-// API endpoints configuration
-export const endpoints = {
-  products: {
-    list: (params) => `/products?${new URLSearchParams(params)}`,
-    featured: '/products/featured',
+// Response interceptor for handling errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export const authAPI = {
+  login: (credentials) => api.post('/auth/login', credentials),
+  register: (userData) => api.post('/auth/register', userData),
+  logout: () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   },
-  jobs: {
-    user: (userId) => `/jobs/user/${userId}`,
-    featured: '/jobs/featured',
-    list: '/jobs',
-    details: (id) => `/jobs/${id}`,
-    create: '/jobs',
-    update: (id) => `/jobs/${id}`,
-    delete: (id) => `/jobs/${id}`,
-  },
-  contractors: {
-    featured: '/contractors/featured',
-    list: '/contractors',
-    details: (id) => `/contractors/${id}`,
-    create: '/contractors',
-    update: (id) => `/contractors/${id}`,
-    delete: (id) => `/contractors/${id}`,
-  },
-  business: '/business',
-  orders: {
-    user: '/orders/user',
-  },
-  users: {
-    addresses: '/users/addresses',
-    profile: '/users/profile',
-    update: '/users/profile',
-  },
-  auth: {
-    login: '/auth/login',
-    register: '/auth/register',
-    logout: '/auth/logout',
-    me: '/auth/me',
-  },
-  cart: '/cart',
+  getCurrentUser: () => api.get('/users/me'),
 };
 
-// API methods
-export const fetchData = async (endpoint) => {
-  try {
-    const response = await api.get(endpoint);
-    return { data: response.data, error: null };
-  } catch (error) {
-    console.error(`API Error (${endpoint}):`, error);
-    return {
-      data: null,
-      error: error.response?.data?.message || 'Failed to fetch data'
-    };
-  }
+export const productsAPI = {
+  getAll: (params) => api.get('/products', { params }),
+  getOne: (id) => api.get(`/products/${id}`),
+  create: (data) => api.post('/products', data),
+  update: (id, data) => api.put(`/products/${id}`, data),
+  delete: (id) => api.delete(`/products/${id}`),
 };
 
-export const postData = async (endpoint, data) => {
-  try {
-    const response = await api.post(endpoint, data);
-    return { data: response.data, error: null };
-  } catch (error) {
-    console.error(`API Error (${endpoint}):`, error);
-    return {
-      data: null,
-      error: error.response?.data?.message || 'Failed to submit data'
-    };
-  }
-}; 
+export const servicesAPI = {
+  getAll: (params) => api.get('/services', { params }),
+  getOne: (id) => api.get(`/services/${id}`),
+  create: (data) => api.post('/services', data),
+  update: (id, data) => api.put(`/services/${id}`, data),
+  delete: (id) => api.delete(`/services/${id}`),
+};
+
+export const ordersAPI = {
+  getAll: () => api.get('/orders'),
+  getOne: (id) => api.get(`/orders/${id}`),
+  create: (data) => api.post('/orders', data),
+  update: (id, data) => api.put(`/orders/${id}`, data),
+};
+
+export const userAPI = {
+  updateProfile: (data) => api.put('/users/profile', data),
+  getNotifications: () => api.get('/notifications'),
+  markNotificationRead: (id) => api.put(`/notifications/${id}/read`),
+};
+
+export default api; 

@@ -25,26 +25,27 @@ const NotificationContainer = styled.div`
   width: 300px;
   max-height: 400px;
   overflow-y: auto;
-  background: white;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  background: ${({ theme }) => theme.palette.background.paper};
+  box-shadow: ${({ theme }) => theme.shadows[1]};
 `;
 
 const NotificationHeader = styled.div`
-  padding: 1rem;
+  padding: ${({ theme }) => theme.spacing(2)};
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid ${({ theme }) => theme.palette.divider};
 `;
 
 const NotificationItem = styled(ListItem)`
-  background: ${props => props.unread ? '#f5f5f5' : 'transparent'};
+  background: ${({ theme, unread }) => 
+    unread ? theme.palette.action.hover : 'transparent'};
 `;
 
 const EmptyState = styled.div`
-  padding: 2rem;
+  padding: ${({ theme }) => theme.spacing(4)};
   text-align: center;
-  color: #666;
+  color: ${({ theme }) => theme.palette.text.secondary};
 `;
 
 const getNotificationIcon = (type) => {
