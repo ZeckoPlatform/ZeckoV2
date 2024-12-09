@@ -6,7 +6,6 @@ import theme from './styles/theme';
 import Layout from './components/Layout/Layout';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import AdminRoute from './components/PrivateRoute';
-import ErrorBoundary from './components/common/ErrorBoundary';
 
 // Import pages with correct paths
 import Home from './pages/Home';
@@ -16,6 +15,9 @@ import Dashboard from './pages/Dashboard';
 import ProductList from './pages/ProductList';
 import Cart from './pages/Cart';
 import Profile from './pages/Profile';
+
+// Correct import path for ErrorBoundary
+import ErrorBoundary from './components/error/ErrorBoundary';
 
 function App() {
   return (
@@ -31,7 +33,7 @@ function App() {
                 <Route path="register" element={<Register />} />
                 <Route path="products" element={<ProductList />} />
                 <Route path="cart" element={<Cart />} />
-              
+                
                 {/* Protected Routes */}
                 <Route
                   path="dashboard"
