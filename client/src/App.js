@@ -4,7 +4,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import theme from './styles/theme';
 import Layout from './components/Layout/Layout';
-import PrivateRoute from './routes/PrivateRoute';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import AdminRoute from './components/PrivateRoute';
 import {
   Home,
   Login,
@@ -15,7 +16,6 @@ import {
   Profile,
   Orders
 } from './pages';
-import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 function App() {
   return (
@@ -40,8 +40,22 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="profile" element={<Profile />} />
-              <Route path="orders" element={<Orders />} />
+              <Route
+                path="profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="orders"
+                element={
+                  <ProtectedRoute>
+                    <Orders />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
           </Routes>
         </BrowserRouter>
