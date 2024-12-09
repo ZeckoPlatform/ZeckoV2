@@ -5,7 +5,7 @@ import JobCarousel from '../components/JobCarousel';
 import ContractorCarousel from '../components/ContractorCarousel';
 import FeaturedJobs from '../components/FeaturedJobs';
 import { fadeIn, slideUp } from '../styles/animations';
-import { fetchData, endpoints } from '../services/api';
+import { productsAPI } from '../services/api';
 import { CircularProgress } from '@mui/material';
 
 const HomeContainer = styled.div`
@@ -80,9 +80,9 @@ function Home() {
     const loadFeaturedData = async () => {
       try {
         await Promise.all([
-          fetchData(endpoints.products.featured),
-          fetchData(endpoints.jobs.featured),
-          fetchData(endpoints.contractors.featured)
+          productsAPI.getAll(),
+          productsAPI.getAll(),
+          productsAPI.getAll()
         ]);
       } catch (error) {
         console.error('Error loading featured data:', error);
