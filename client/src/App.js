@@ -7,14 +7,14 @@ import Layout from './components/Layout/Layout';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import AdminRoute from './components/PrivateRoute';
 
-// Import existing pages
-import Home from './pages/Home/Home';
+// Import pages with correct paths
+import Home from './pages/Home';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
-import Dashboard from './pages/Dashboard/Dashboard';
-import ProductList from './pages/ProductList/ProductList';
-import Cart from './pages/Cart/Cart';
-import Profile from './pages/Profile/Profile';
+import Dashboard from './pages/Dashboard';
+import ProductList from './pages/ProductList';
+import Cart from './pages/Cart';
+import Profile from './pages/Profile';
 
 function App() {
   return (
