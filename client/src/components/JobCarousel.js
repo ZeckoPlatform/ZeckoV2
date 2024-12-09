@@ -3,8 +3,9 @@ import styled, { keyframes } from 'styled-components';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'react-feather';
 import { SkeletonCard } from './LoadingSkeleton';
-import { fetchData, endpoints } from '../services/api';
+import { productsAPI } from '../services/api';
 import { useNotification } from '../contexts/NotificationContext';
+import { CircularProgress } from '@mui/material';
 
 const slideIn = keyframes`
   from { transform: translateX(20px); opacity: 0; }
@@ -197,20 +198,20 @@ function JobCarousel() {
   }, []);
 
   useEffect(() => {
-    const fetchJobs = async () => {
+    const loadJobs = async () => {
       try {
-        const response = await fetchData(endpoints.jobs.featured);
+        const response = await productsAPI.getAll();
         setJobs(response.data);
-      } catch (err) {
-        console.error('Error fetching jobs:', err);
+      } catch (error) {
+        console.error('Error loading jobs:', error);
         notify('Failed to load jobs');
-        setError(err.message);
+        setError(error.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchJobs();
+    loadJobs();
   }, [notify]);
 
   useEffect(() => {
@@ -234,13 +235,7 @@ function JobCarousel() {
   }, [scroll]);
 
   if (loading) {
-    return (
-      <CarouselContainer>
-        <JobsWrapper>
-          {[1, 2, 3].map(i => <SkeletonCard key={i} />)}
-        </JobsWrapper>
-      </CarouselContainer>
-    );
+    return <CircularProgress />;
   }
 
   if (error) {

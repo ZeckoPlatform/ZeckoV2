@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Link } from 'react-router-dom';
-import { fetchData, endpoints } from '../services/api';
-import { useNotification } from '../contexts/NotificationContext';
+import { productsAPI } from '../services/api';
+import { CircularProgress } from '@mui/material';
 
 const JobsContainer = styled.div`
   display: grid;
@@ -11,7 +10,7 @@ const JobsContainer = styled.div`
   padding: ${({ theme }) => theme.spacing.lg};
 `;
 
-const JobCard = styled(Link)`
+const JobCard = styled.div`
   background: ${({ theme }) => theme.colors.background.paper};
   padding: ${({ theme }) => theme.spacing.md};
   border-radius: ${({ theme }) => theme.borderRadius.md};
@@ -67,44 +66,33 @@ const ErrorMessage = styled.div`
   margin: 20px 0;
 `;
 
-function FeaturedJobs() {
-  const [jobs, setJobs] = useState([]);
+const FeaturedJobs = () => {
+  const [featuredJobs, setFeaturedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const { showNotification } = useNotification();
-
-  const fetchJobs = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetchData(endpoints.jobs.featured);
-      setJobs(response.data);
-    } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Failed to load jobs';
-      setError(errorMessage);
-      showNotification(errorMessage, 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [showNotification]);
 
   useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs]);
+    const loadFeaturedJobs = async () => {
+      try {
+        const response = await productsAPI.getAll({ featured: true });
+        setFeaturedJobs(response.data);
+      } catch (error) {
+        console.error('Error loading featured jobs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFeaturedJobs();
+  }, []);
 
   if (loading) {
-    return <LoadingContainer>Loading jobs...</LoadingContainer>;
-  }
-
-  if (error) {
-    return <ErrorMessage>{error}</ErrorMessage>;
+    return <CircularProgress />;
   }
 
   return (
     <JobsContainer>
-      {jobs.map(job => (
-        <JobCard key={job._id} to={`/jobs/${job._id}`}>
+      {featuredJobs.map(job => (
+        <JobCard key={job._id}>
           <JobTitle>{job.title}</JobTitle>
           <JobDetails>
             <p><strong>Company:</strong> {job.company}</p>
@@ -118,6 +106,6 @@ function FeaturedJobs() {
       ))}
     </JobsContainer>
   );
-}
+};
 
 export default FeaturedJobs;

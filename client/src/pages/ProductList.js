@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import SearchBar from '../components/SearchBar';
+import { productsAPI } from '../services/api';
+import { CircularProgress } from '@mui/material';
 
 const ProductGrid = styled.div`
   display: grid;
@@ -69,24 +71,23 @@ const ProductList = () => {
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    fetchProducts();
-  }, [searchQuery, currentPage]);
-
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/products?search=${searchQuery}&page=${currentPage}`);
-      if (response.ok) {
-        const data = await response.json();
-        setProducts(data.products);
-        setTotalPages(data.totalPages);
+    const loadProducts = async () => {
+      try {
+        const response = await productsAPI.getAll();
+        setProducts(response.data);
+      } catch (error) {
+        console.error('Error loading products:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    loadProducts();
+  }, []);
+
+  if (loading) {
+    return <CircularProgress />;
+  }
 
   const handleSearch = (query) => {
     setSearchQuery(query);
@@ -132,7 +133,6 @@ const ProductList = () => {
           </ProductCard>
         ))}
       </ProductGrid>
-      {loading && <LoadingMessage>Loading...</LoadingMessage>}
       <PaginationContainer>
         {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
           <PageButton

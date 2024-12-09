@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { useAuth } from '../contexts/AuthContext';
+import { userAPI, ordersAPI } from '../services/api';
+import { CircularProgress } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 
 const ProfileContainer = styled.div`
@@ -113,8 +114,10 @@ const ErrorMessage = styled(Message)`
 `;
 
 function Profile() {
-  const { user, logout } = useAuth();
-  const [orders, setOrders] = useState([]);
+  const [profileData, setProfileData] = useState({
+    user: null,
+    orders: []
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -138,211 +141,29 @@ function Profile() {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    fetchOrders();
+    const loadProfileData = async () => {
+      try {
+        const [userRes, ordersRes] = await Promise.all([
+          userAPI.getCurrentUser(),
+          ordersAPI.getAll()
+        ]);
+
+        setProfileData({
+          user: userRes.data,
+          orders: ordersRes.data
+        });
+      } catch (error) {
+        console.error('Error loading profile data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProfileData();
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      setProfileForm({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        bio: user.bio || ''
-      });
-      fetchAddresses();
-    }
-  }, [user]);
-
-  const fetchOrders = async () => {
-    try {
-      const response = await fetch('/api/orders/user', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setOrders(data);
-      } else {
-        setError('Failed to fetch orders');
-      }
-    } catch (error) {
-      setError('Error fetching orders');
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAddresses = async () => {
-    try {
-      const response = await fetch('/api/users/addresses', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch addresses');
-      const data = await response.json();
-      setAddresses(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleProfileChange = (e) => {
-    setProfileForm({
-      ...profileForm,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleAddressChange = (e) => {
-    setAddressForm({
-      ...addressForm,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch('/api/users/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(profileForm)
-      });
-
-      if (!response.ok) throw new Error('Failed to update profile');
-
-      const updatedProfile = await response.json();
-      setIsEditingProfile(false);
-      setSuccess('Profile updated successfully');
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleAddAddress = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch('/api/users/addresses', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(addressForm)
-      });
-
-      if (!response.ok) throw new Error('Failed to add address');
-
-      const newAddress = await response.json();
-      setAddresses([...addresses, newAddress]);
-      setIsAddingAddress(false);
-      setAddressForm({
-        street: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        country: ''
-      });
-      setSuccess('Address added successfully');
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleEditAddress = async (address) => {
-    setEditingAddressId(address._id);
-    setAddressForm({
-      street: address.street,
-      city: address.city,
-      state: address.state,
-      zipCode: address.zipCode,
-      country: address.country
-    });
-    setIsAddingAddress(true);
-  };
-
-  const handleUpdateAddress = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch(`/api/users/addresses/${editingAddressId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(addressForm)
-      });
-
-      if (!response.ok) throw new Error('Failed to update address');
-
-      const updatedAddress = await response.json();
-      setAddresses(addresses.map(addr => 
-        addr._id === editingAddressId ? updatedAddress : addr
-      ));
-      setEditingAddressId(null);
-      setIsAddingAddress(false);
-      setAddressForm({
-        street: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        country: ''
-      });
-      setSuccess('Address updated successfully');
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleDeleteAddress = async (addressId) => {
-    if (window.confirm('Are you sure you want to delete this address?')) {
-      try {
-        const response = await fetch(`/api/users/addresses/${addressId}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
-        if (!response.ok) throw new Error('Failed to delete address');
-
-        setAddresses(addresses.filter(addr => addr._id !== addressId));
-        setSuccess('Address deleted successfully');
-      } catch (err) {
-        setError(err.message);
-      }
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-      try {
-        const response = await fetch('/api/users/profile', {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
-        if (!response.ok) throw new Error('Failed to delete account');
-
-        await logout();
-        navigate('/');
-      } catch (err) {
-        setError(err.message);
-      }
-    }
-  };
-
   if (loading) {
-    return <div>Loading...</div>;
+    return <CircularProgress />;
   }
 
   if (error) {
@@ -404,10 +225,10 @@ function Profile() {
         ) : (
           <div>
             <h2>Account Information</h2>
-            <p><strong>Name:</strong> {user.name}</p>
-            <p><strong>Email:</strong> {user.email}</p>
-            <p><strong>Phone:</strong> {user.phone || 'Not provided'}</p>
-            <p><strong>Bio:</strong> {user.bio || 'No bio provided'}</p>
+            <p><strong>Name:</strong> {profileData.user?.name}</p>
+            <p><strong>Email:</strong> {profileData.user?.email}</p>
+            <p><strong>Phone:</strong> {profileData.user?.phone || 'Not provided'}</p>
+            <p><strong>Bio:</strong> {profileData.user?.bio || 'No bio provided'}</p>
             <ActionButton onClick={() => setIsEditingProfile(true)}>Edit Profile</ActionButton>
             <ActionButton onClick={() => logout()}>Logout</ActionButton>
             <ActionButton danger onClick={() => handleDeleteAccount()}>Delete Account</ActionButton>
@@ -505,13 +326,13 @@ function Profile() {
       <ProfileSection>
         <h2>Order History</h2>
         <OrderHistory>
-          {orders.length === 0 ? (
+          {profileData.orders.length === 0 ? (
             <div>
               <p>No orders yet.</p>
               <Button onClick={() => navigate('/shop')}>Start Shopping</Button>
             </div>
           ) : (
-            orders.map(order => (
+            profileData.orders.map(order => (
               <OrderCard key={order._id}>
                 <h3>Order #{order._id}</h3>
                 <p><strong>Date:</strong> {new Date(order.createdAt).toLocaleDateString()}</p>

@@ -3,8 +3,9 @@ import styled, { keyframes } from 'styled-components';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'react-feather';
 import { SkeletonCard } from './LoadingSkeleton';
-import { fetchData, endpoints } from '../services/api';
+import { servicesAPI } from '../services/api';
 import { useNotification } from '../contexts/NotificationContext';
+import { CircularProgress } from '@mui/material';
 
 const slideIn = keyframes`
   from { transform: translateX(20px); opacity: 0; }
@@ -218,20 +219,20 @@ export function ContractorCarousel() {
   }, []);
 
   useEffect(() => {
-    const fetchContractors = async () => {
+    const loadContractors = async () => {
       try {
-        const response = await fetchData(endpoints.contractors.featured);
+        const response = await servicesAPI.getAll();
         setContractors(response.data);
-      } catch (err) {
-        console.error('Error fetching contractors:', err);
+      } catch (error) {
+        console.error('Error loading contractors:', error);
         showNotification('Failed to load contractors', 'error');
-        setError(err.message);
+        setError(error.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchContractors();
+    loadContractors();
   }, [showNotification]);
 
   useEffect(() => {
@@ -255,13 +256,7 @@ export function ContractorCarousel() {
   }, [scroll]);
 
   if (loading) {
-    return (
-      <CarouselContainer>
-        <ContractorsWrapper>
-          {[1, 2, 3].map(i => <SkeletonCard key={i} />)}
-        </ContractorsWrapper>
-      </CarouselContainer>
-    );
+    return <CircularProgress />;
   }
 
   if (error) {

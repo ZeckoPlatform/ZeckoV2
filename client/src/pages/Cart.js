@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../contexts/AuthContext';
-import { fetchCart, removeFromCart } from '../services/cartService';
+import { ordersAPI, productsAPI } from '../services/api';
 import { FaShoppingCart, FaTrash, FaArrowRight, FaStore } from 'react-icons/fa';
+import { CircularProgress } from '@mui/material';
 
 const CartContainer = styled.div`
   padding: 20px;
@@ -80,27 +81,40 @@ const ItemActions = styled.div`
 `;
 
 function Cart() {
-  const [cart, setCart] = useState({ items: [] });
+  const [cartData, setCartData] = useState({
+    items: [],
+    total: 0
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadCart();
-  }, []);
+    const loadCartData = async () => {
+      try {
+        const response = await ordersAPI.getAll();
+        const cartItems = response.data;
+        const productDetails = await Promise.all(
+          cartItems.map(item => productsAPI.getOne(item.productId))
+        );
+        
+        setCartData({
+          items: cartItems.map((item, index) => ({
+            ...item,
+            product: productDetails[index].data
+          })),
+          total: cartItems.reduce((sum, item) => sum + item.price, 0)
+        });
+      } catch (error) {
+        console.error('Error loading cart data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const loadCart = async () => {
-    try {
-      setLoading(true);
-      const cartData = await fetchCart();
-      setCart(cartData);
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    loadCartData();
+  }, []);
 
   const handleRemoveFromCart = async (productId) => {
     try {
@@ -111,7 +125,9 @@ function Cart() {
     }
   };
 
-  if (loading) return <CartContainer>Loading...</CartContainer>;
+  if (loading) {
+    return <CircularProgress />;
+  }
   if (error) return <CartContainer>Error: {error}</CartContainer>;
   if (!user) {
     return (
@@ -129,7 +145,7 @@ function Cart() {
         <FaShoppingCart />
         <h1>Shopping Cart</h1>
       </CartHeader>
-      {cart.items.length === 0 ? (
+      {cartData.items.length === 0 ? (
         <div>
           <p>Your cart is empty.</p>
           <Link to="/shop">
@@ -141,7 +157,7 @@ function Cart() {
         </div>
       ) : (
         <div>
-          {cart.items.map((item) => (
+          {cartData.items.map((item) => (
             <CartItem key={item.product._id}>
               <ItemDetails>
                 <h3>{item.product.name}</h3>
@@ -156,7 +172,7 @@ function Cart() {
               </ItemActions>
             </CartItem>
           ))}
-          <h3>Total: ${cart.total ? cart.total.toFixed(2) : '0.00'}</h3>
+          <h3>Total: ${cartData.total ? cartData.total.toFixed(2) : '0.00'}</h3>
           <Link to="/checkout">
             <CartButton>
               Proceed to Checkout
