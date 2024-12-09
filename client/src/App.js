@@ -6,6 +6,7 @@ import theme from './styles/theme';
 import Layout from './components/Layout/Layout';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import AdminRoute from './components/PrivateRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Import pages with correct paths
 import Home from './pages/Home';
@@ -18,40 +19,42 @@ import Profile from './pages/Profile';
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Home />} />
-              <Route path="login" element={<Login />} />
-              <Route path="register" element={<Register />} />
-              <Route path="products" element={<ProductList />} />
-              <Route path="cart" element={<Cart />} />
+    <ErrorBoundary>
+      <ThemeProvider theme={theme}>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Home />} />
+                <Route path="login" element={<Login />} />
+                <Route path="register" element={<Register />} />
+                <Route path="products" element={<ProductList />} />
+                <Route path="cart" element={<Cart />} />
               
-              {/* Protected Routes */}
-              <Route
-                path="dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="profile"
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                }
-              />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </ThemeProvider>
+                {/* Protected Routes */}
+                <Route
+                  path="dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="profile"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  }
+                />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 
