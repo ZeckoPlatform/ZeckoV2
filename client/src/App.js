@@ -6,7 +6,7 @@ import theme from './styles/theme';
 import Layout from './components/Layout/Layout';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import AdminRoute from './components/PrivateRoute';
-import ErrorBoundary from './components/ErrorBoundary';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 // Import pages with correct paths
 import Home from './pages/Home';
