@@ -6,16 +6,15 @@ import theme from './styles/theme';
 import Layout from './components/Layout/Layout';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import AdminRoute from './components/PrivateRoute';
-import {
-  Home,
-  Login,
-  Register,
-  Dashboard,
-  Products,
-  Services,
-  Profile,
-  Orders
-} from './pages';
+
+// Import existing pages
+import Home from './pages/Home/Home';
+import Login from './pages/Auth/Login';
+import Register from './pages/Auth/Register';
+import Dashboard from './pages/Dashboard/Dashboard';
+import ProductList from './pages/ProductList/ProductList';
+import Cart from './pages/Cart/Cart';
+import Profile from './pages/Profile/Profile';
 
 function App() {
   return (
@@ -28,8 +27,8 @@ function App() {
               <Route index element={<Home />} />
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
-              <Route path="products" element={<Products />} />
-              <Route path="services" element={<Services />} />
+              <Route path="products" element={<ProductList />} />
+              <Route path="cart" element={<Cart />} />
               
               {/* Protected Routes */}
               <Route
@@ -45,14 +44,6 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Profile />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="orders"
-                element={
-                  <ProtectedRoute>
-                    <Orders />
                   </ProtectedRoute>
                 }
               />
