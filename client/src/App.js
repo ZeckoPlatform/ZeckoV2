@@ -9,8 +9,8 @@ import AdminRoute from './components/PrivateRoute';
 
 // Import pages with correct paths
 import Home from './pages/Home';
-import Login from './pages/Auth/Login';
-import Register from './pages/Auth/Register';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ProductList from './pages/ProductList';
 import Cart from './pages/Cart';
