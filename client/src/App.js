@@ -15,6 +15,7 @@ import {
   Profile,
   Orders
 } from './pages';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 function App() {
   return (
@@ -31,11 +32,16 @@ function App() {
               <Route path="services" element={<Services />} />
               
               {/* Protected Routes */}
-              <Route element={<PrivateRoute />}>
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="profile" element={<Profile />} />
-                <Route path="orders" element={<Orders />} />
-              </Route>
+              <Route
+                path="dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="profile" element={<Profile />} />
+              <Route path="orders" element={<Orders />} />
             </Route>
           </Routes>
         </BrowserRouter>
