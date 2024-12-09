@@ -2,7 +2,7 @@ import React from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import theme from './styles/theme';
+import { muiTheme } from './styles/theme';
 import Layout from './components/Layout/Layout';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import AdminRoute from './components/PrivateRoute';
@@ -22,7 +22,7 @@ import ErrorBoundary from './components/error/ErrorBoundary';
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={muiTheme}>
         <AuthProvider>
           <BrowserRouter>
             <Routes>
