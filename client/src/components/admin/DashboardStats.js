@@ -9,6 +9,7 @@ import {
   TrendingDown
 } from 'react-feather';
 import { Line } from 'react-chartjs-2';
+import api from '../../services/api';
 
 const StatsGrid = styled.div`
   display: grid;
@@ -63,13 +64,8 @@ function DashboardStats() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('/api/admin/stats', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      const data = await response.json();
-      setStats(data);
+      const response = await api.get('/admin/stats');
+      setStats(response.data);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching stats:', error);
