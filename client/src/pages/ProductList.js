@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import SearchBar from '../components/SearchBar';
-import { productsAPI } from '../services/api';
+import { productsAPI, cartAPI } from '../services/api';
 import { CircularProgress } from '@mui/material';
 
 const ProductGrid = styled.div`
@@ -100,13 +100,7 @@ const ProductList = () => {
 
   const addToCart = async (productId) => {
     try {
-      const response = await fetch('/api/cart/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ productId }),
-      });
+      const response = await cartAPI.addToCart(productId);
       if (response.ok) {
         console.log('Added to cart');
       }
