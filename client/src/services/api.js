@@ -53,12 +53,11 @@ export const productsAPI = {
   delete: (id) => api.delete(`/products/${id}`),
 };
 
-export const servicesAPI = {
-  getAll: (params) => api.get('/services', { params }),
-  getOne: (id) => api.get(`/services/${id}`),
-  create: (data) => api.post('/services', data),
-  update: (id, data) => api.put(`/services/${id}`, data),
-  delete: (id) => api.delete(`/services/${id}`),
+export const cartAPI = {
+  addToCart: (productId) => api.post('/cart/add', { productId }),
+  getCart: () => api.get('/cart'),
+  updateQuantity: (productId, quantity) => api.put('/cart/update', { productId, quantity }),
+  removeFromCart: (productId) => api.delete(`/cart/${productId}`),
 };
 
 export const ordersAPI = {
