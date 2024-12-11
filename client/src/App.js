@@ -17,7 +17,7 @@ import Cart from './pages/Cart';
 import Profile from './pages/Profile';
 
 // Correct import path for ErrorBoundary
-import ErrorBoundary from './components/ErrorBoundary';
+import ErrorBoundary from './components/error/ErrorBoundary';
 
 function App() {
   return (
