@@ -3,7 +3,7 @@ import styled, { keyframes } from 'styled-components';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'react-feather';
 import { SkeletonCard } from './LoadingSkeleton';
-import { servicesAPI } from '../services/api';
+import { productsAPI } from '../services/api';
 import { useNotification } from '../contexts/NotificationContext';
 import { CircularProgress } from '@mui/material';
 
@@ -221,7 +221,7 @@ export function ContractorCarousel() {
   useEffect(() => {
     const loadContractors = async () => {
       try {
-        const response = await servicesAPI.getAll();
+        const response = await productsAPI.getAll();
         setContractors(response.data);
       } catch (error) {
         console.error('Error loading contractors:', error);
