@@ -73,4 +73,36 @@ export const userAPI = {
   markNotificationRead: (id) => api.put(`/notifications/${id}/read`),
 };
 
+// Add these endpoints
+export const endpoints = {
+  analytics: {
+    users: '/analytics/users',
+    orders: '/analytics/orders',
+    revenue: '/analytics/revenue',
+    growth: '/analytics/growth'
+  },
+  contractors: {
+    list: '/contractors',
+    details: (id) => `/contractors/${id}`
+  },
+  jobs: {
+    list: '/jobs',
+    details: (id) => `/jobs/${id}`
+  },
+  users: {
+    profile: '/users/profile'
+  }
+};
+
+// Add the fetchData utility function
+export const fetchData = async (endpoint, options = {}) => {
+  try {
+    const response = await api.get(endpoint, options);
+    return { data: response.data, error: null };
+  } catch (error) {
+    console.error('API Error:', error);
+    return { data: null, error: error.message };
+  }
+};
+
 export default api; 
