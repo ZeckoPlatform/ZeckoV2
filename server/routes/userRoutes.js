@@ -487,6 +487,9 @@ router.delete('/addresses/:addressId', auth, async (req, res) => {
   }
 });
 
+// GET /api/users/me
+router.get('/me', auth, userController.getProfile);
+
 console.log('Loading userRoutes.js - END');
 
 module.exports = router;
