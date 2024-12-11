@@ -82,41 +82,12 @@ const ItemActions = styled.div`
 `;
 
 function Cart() {
-  const [cartData, setCartData] = useState({
-    items: [],
-    total: 0
-  });
+  const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
-
-  useEffect(() => {
-    const loadCartData = async () => {
-      try {
-        const response = await ordersAPI.getAll();
-        const cartItems = response.data;
-        const productDetails = await Promise.all(
-          cartItems.map(item => productsAPI.getOne(item.productId))
-        );
-        
-        setCartData({
-          items: cartItems.map((item, index) => ({
-            ...item,
-            product: productDetails[index].data
-          })),
-          total: cartItems.reduce((sum, item) => sum + item.price, 0)
-        });
-      } catch (error) {
-        console.error('Error loading cart data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadCartData();
-  }, []);
 
   const loadCart = async () => {
     try {
@@ -127,7 +98,7 @@ function Cart() {
     }
   };
 
-  const removeFromCart = async (productId) => {
+  const handleRemoveFromCart = async (productId) => {
     try {
       await cartAPI.removeFromCart(productId);
       await loadCart();
@@ -136,6 +107,10 @@ function Cart() {
       showNotification('Failed to remove item', 'error');
     }
   };
+
+  useEffect(() => {
+    loadCart();
+  }, []);
 
   if (loading) {
     return <CircularProgress />;
@@ -157,7 +132,7 @@ function Cart() {
         <FaShoppingCart />
         <h1>Shopping Cart</h1>
       </CartHeader>
-      {cartData.items.length === 0 ? (
+      {cartItems.length === 0 ? (
         <div>
           <p>Your cart is empty.</p>
           <Link to="/shop">
@@ -169,7 +144,7 @@ function Cart() {
         </div>
       ) : (
         <div>
-          {cartData.items.map((item) => (
+          {cartItems.map((item) => (
             <CartItem key={item.product._id}>
               <ItemDetails>
                 <h3>{item.product.name}</h3>
@@ -184,7 +159,7 @@ function Cart() {
               </ItemActions>
             </CartItem>
           ))}
-          <h3>Total: ${cartData.total ? cartData.total.toFixed(2) : '0.00'}</h3>
+          <h3>Total: ${cartItems.reduce((sum, item) => sum + item.price, 0).toFixed(2)}</h3>
           <Link to="/checkout">
             <CartButton>
               Proceed to Checkout
