@@ -8,20 +8,26 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  validateStatus: function (status) {
+    return status >= 200 && status < 300;
+  },
 });
 
-// Request interceptor for adding auth token
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Remove /api prefix if it exists in the URL since it's already in baseURL
+    if (config.url?.startsWith('/api')) {
+      config.url = config.url.substring(4);
+    }
     console.log('API Request:', {
       baseURL: config.baseURL,
       url: config.url,
       method: config.method,
-      data: config.data,
       headers: config.headers
     });
     return config;
@@ -32,27 +38,31 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor for handling errors
+// Response interceptor
 api.interceptors.response.use(
   (response) => {
     console.log('API Response:', {
       status: response.status,
-      data: response.data,
-      headers: response.headers
+      url: response.config.url,
+      data: response.data
     });
     return response;
   },
   (error) => {
-    console.error('API Response Error:', {
+    console.error('API Error:', {
+      message: error.message,
       status: error.response?.status,
       data: error.response?.data,
-      message: error.message,
-      stack: error.stack
+      url: error.config?.url
     });
+    
+    // Handle 401 Unauthorized errors
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
       window.location.href = '/login';
     }
+    
     return Promise.reject(error);
   }
 );
