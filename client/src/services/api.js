@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+console.log('API Base URL:', BASE_URL);
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -16,17 +17,38 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    console.log('API Request:', {
+      baseURL: config.baseURL,
+      url: config.url,
+      method: config.method,
+      data: config.data,
+      headers: config.headers
+    });
     return config;
   },
   (error) => {
+    console.error('API Request Error:', error);
     return Promise.reject(error);
   }
 );
 
 // Response interceptor for handling errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('API Response:', {
+      status: response.status,
+      data: response.data,
+      headers: response.headers
+    });
+    return response;
+  },
   (error) => {
+    console.error('API Response Error:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+      stack: error.stack
+    });
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       window.location.href = '/login';

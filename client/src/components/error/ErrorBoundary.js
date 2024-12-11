@@ -103,10 +103,15 @@ class ErrorBoundaryClass extends React.Component {
           </Title>
           <Message>
             We're sorry for the inconvenience. Please try again or return to the home page.
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <pre style={{ marginTop: '1rem', textAlign: 'left', fontSize: '0.8rem' }}>
-                {this.state.error.toString()}
-              </pre>
+            {process.env.NODE_ENV !== 'production' && (
+              <div style={{ marginTop: '20px', textAlign: 'left' }}>
+                <pre style={{ whiteSpace: 'pre-wrap' }}>
+                  {this.state.error && this.state.error.toString()}
+                </pre>
+                <pre style={{ whiteSpace: 'pre-wrap', marginTop: '10px' }}>
+                  {this.state.errorInfo && this.state.errorInfo.componentStack}
+                </pre>
+              </div>
             )}
           </Message>
           <ActionsContainer>
