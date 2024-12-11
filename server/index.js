@@ -18,9 +18,15 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// API Routes - Ensure this is defined before static file serving
-const apiRouter = require('./routes/api'); // Import your API routes
-app.use('/api', apiRouter);
+// Import API routes
+const userRoutes = require('./routes/userRoutes');
+const productRoutes = require('./routes/productRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+
+// API Routes
+app.use('/api/users', userRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
