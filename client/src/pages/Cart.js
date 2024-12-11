@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../contexts/AuthContext';
-import { ordersAPI, productsAPI } from '../services/api';
+import { ordersAPI, productsAPI, cartAPI } from '../services/api';
 import { FaShoppingCart, FaTrash, FaArrowRight, FaStore } from 'react-icons/fa';
 import { CircularProgress } from '@mui/material';
+import { useNotification } from '../contexts/NotificationContext';
 
 const CartContainer = styled.div`
   padding: 20px;
@@ -89,6 +90,7 @@ function Cart() {
   const [error, setError] = useState(null);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     const loadCartData = async () => {
@@ -116,12 +118,22 @@ function Cart() {
     loadCartData();
   }, []);
 
-  const handleRemoveFromCart = async (productId) => {
+  const loadCart = async () => {
     try {
-      await removeFromCart(productId);
-      loadCart(); // Reload cart after removal
+      const response = await cartAPI.getCart();
+      setCartItems(response.data);
     } catch (error) {
-      console.error('Error removing item:', error);
+      showNotification('Failed to load cart', 'error');
+    }
+  };
+
+  const removeFromCart = async (productId) => {
+    try {
+      await cartAPI.removeFromCart(productId);
+      await loadCart();
+      showNotification('Item removed from cart', 'success');
+    } catch (error) {
+      showNotification('Failed to remove item', 'error');
     }
   };
 

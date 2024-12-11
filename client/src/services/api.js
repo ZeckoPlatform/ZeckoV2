@@ -71,6 +71,11 @@ export const userAPI = {
   updateProfile: (data) => api.put('/users/profile', data),
   getNotifications: () => api.get('/notifications'),
   markNotificationRead: (id) => api.put(`/notifications/${id}/read`),
+  deleteAccount: () => api.delete('/users/account'),
+  addAddress: (data) => api.post('/users/addresses', data),
+  updateAddress: (id, data) => api.put(`/users/addresses/${id}`, data),
+  deleteAddress: (id) => api.delete(`/users/addresses/${id}`),
+  getAddresses: () => api.get('/users/addresses'),
 };
 
 // Add these endpoints

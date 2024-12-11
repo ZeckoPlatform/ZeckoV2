@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { userAPI, ordersAPI } from '../services/api';
+import { userAPI, ordersAPI, authAPI } from '../services/api';
 import { CircularProgress } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 const ProfileContainer = styled.div`
   max-width: 1200px;
@@ -139,6 +141,8 @@ function Profile() {
     country: ''
   });
   const [success, setSuccess] = useState('');
+  const { logout } = useAuth();
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     const loadProfileData = async () => {
@@ -169,6 +173,80 @@ function Profile() {
   if (error) {
     return <div>Error: {error}</div>;
   }
+
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target;
+    setProfileForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddressChange = (e) => {
+    const { name, value } = e.target;
+    setAddressForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    try {
+      await userAPI.updateProfile(profileForm);
+      showNotification('Profile updated successfully', 'success');
+    } catch (error) {
+      showNotification('Failed to update profile', 'error');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (window.confirm('Are you sure you want to delete your account? This cannot be undone.')) {
+      try {
+        await userAPI.deleteAccount();
+        logout();
+        showNotification('Account deleted successfully', 'success');
+      } catch (error) {
+        showNotification('Failed to delete account', 'error');
+      }
+    }
+  };
+
+  const handleAddAddress = async (e) => {
+    e.preventDefault();
+    try {
+      await userAPI.addAddress(addressForm);
+      setAddresses(prev => [...prev, addressForm]);
+      setAddressForm({
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: ''
+      });
+      showNotification('Address added successfully', 'success');
+    } catch (error) {
+      showNotification('Failed to add address', 'error');
+    }
+  };
+
+  const handleUpdateAddress = async (id, address) => {
+    try {
+      await userAPI.updateAddress(id, address);
+      setAddresses(prev => prev.map(a => a.id === id ? address : a));
+      showNotification('Address updated successfully', 'success');
+    } catch (error) {
+      showNotification('Failed to update address', 'error');
+    }
+  };
+
+  const handleEditAddress = (address) => {
+    setEditingAddressId(address._id);
+  };
+
+  const handleDeleteAddress = async (id) => {
+    try {
+      await userAPI.deleteAddress(id);
+      setAddresses(prev => prev.filter(a => a.id !== id));
+      showNotification('Address deleted successfully', 'success');
+    } catch (error) {
+      showNotification('Failed to delete address', 'error');
+    }
+  };
 
   return (
     <ProfileContainer>
