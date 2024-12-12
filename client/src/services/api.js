@@ -127,7 +127,7 @@ export const authAPI = {
       return response;
     } catch (error) {
       console.error('Login error:', error);
-      throw new Error(error.response?.data?.message || 'Login failed');
+      return { data: null, error: error.response?.data?.message || 'Login failed' };
     }
   },
   register: (userData) => api.post('/api/auth/register', userData),
@@ -137,11 +137,21 @@ export const authAPI = {
   },
   getCurrentUser: async () => {
     try {
+      // First check if we have a token
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return { data: null, error: 'No authentication token' };
+      }
+      
       const response = await api.get('/auth/me');
-      return response;
+      return { data: response.data, error: null };
     } catch (error) {
-      console.error('API Error:', error.response || error);
-      throw error;
+      console.error('Get current user error:', error);
+      // Don't throw on 404, just return null user
+      if (error.response?.status === 404) {
+        return { data: null, error: 'User not found' };
+      }
+      return { data: null, error: error.response?.data?.message || 'Failed to get user' };
     }
   },
 };
@@ -155,13 +165,13 @@ export const productsAPI = {
         timeout: 10000
       });
       console.log('Products response:', response.data);
-      return response.data;
+      return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
       console.error('Error in productsAPI.getAll:', error);
       if (error.response?.status === 500) {
         throw new Error('Server error while fetching products');
       }
-      throw new Error(error.message || 'Failed to fetch products');
+      return [];
     }
   },
   getOne: (id) => api.get(`/products/${id}`),
@@ -220,10 +230,16 @@ export const endpoints = {
 export const fetchData = async (endpoint, options = {}) => {
   try {
     const response = await api.get(endpoint, options);
-    return { data: response.data, error: null };
+    return { 
+      data: Array.isArray(response.data) ? safeArray(response.data) : safeObject(response.data), 
+      error: null 
+    };
   } catch (error) {
     console.error('API Error:', error);
-    return { data: null, error: error.message };
+    return { 
+      data: Array.isArray(response.data) ? [] : {}, 
+      error: error.message 
+    };
   }
 };
 
@@ -239,6 +255,16 @@ export const checkAPIHealth = async () => {
     console.error('API health check failed:', error);
     return false;
   }
+};
+
+// Add this helper function
+export const safeArray = (data) => {
+  return Array.isArray(data) ? data : [];
+};
+
+// Add this helper function
+export const safeObject = (data) => {
+  return data && typeof data === 'object' ? data : {};
 };
 
 export default api; 
