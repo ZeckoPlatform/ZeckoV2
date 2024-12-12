@@ -6,7 +6,7 @@ import { CartProvider } from './contexts/CartContext';
 import { ProductProvider } from './contexts/ProductContext';
 import { muiTheme } from './styles/theme';
 import ErrorBoundary from './components/error/ErrorBoundary';
-import AppRoutes from './routes';
+import Routes from './routes';
 
 function App() {
   return (
@@ -16,7 +16,7 @@ function App() {
           <AuthProvider>
             <ProductProvider>
               <CartProvider>
-                <AppRoutes />
+                <Routes />
               </CartProvider>
             </ProductProvider>
           </AuthProvider>
