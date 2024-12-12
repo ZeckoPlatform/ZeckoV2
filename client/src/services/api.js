@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://zeckov2-deceb43992ac.herokuapp.com'
-  : 'http://localhost:5000';
+  ? 'https://zeckov2-deceb43992ac.herokuapp.com/api'
+  : 'http://localhost:5000/api';
 
 console.log('API Base URL:', BASE_URL);
 
@@ -22,10 +22,6 @@ api.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-    }
-    // Remove /api prefix if it exists in the URL since it's already in baseURL
-    if (config.url?.startsWith('/api')) {
-      config.url = config.url.substring(4);
     }
     console.log('API Request:', {
       baseURL: config.baseURL,
