@@ -27,10 +27,24 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, []);
 
+  const login = async (credentials) => {
+    try {
+      const response = await authAPI.login(credentials);
+      const { token, user: userData } = response.data;
+      localStorage.setItem('token', token);
+      setUser(userData);
+      return { success: true, user: userData };
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     setUser,
-    loading
+    loading,
+    login
   };
 
   // Don't render children until authentication is initialized
