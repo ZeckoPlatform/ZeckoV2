@@ -30,13 +30,16 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const response = await authAPI.login(credentials);
-      const { token, user: userData } = response.data;
-      localStorage.setItem('token', token);
-      setUser(userData);
-      return { success: true, user: userData };
+      if (response?.data) {
+        const { token, user } = response.data;
+        localStorage.setItem('token', token);
+        setUser(user);
+        return { success: true, user };
+      }
+      throw new Error('Invalid response from server');
     } catch (error) {
       console.error('Login error:', error);
-      throw error;
+      throw new Error(error.response?.data?.message || 'Login failed');
     }
   };
 

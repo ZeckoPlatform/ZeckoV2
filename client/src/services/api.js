@@ -67,13 +67,29 @@ api.interceptors.response.use(
 );
 
 export const authAPI = {
-  login: (credentials) => api.post('/api/auth/login', credentials),
+  login: async (credentials) => {
+    try {
+      const response = await api.post('/auth/login', credentials);
+      return response;
+    } catch (error) {
+      console.error('API Error:', error.response || error);
+      throw error;
+    }
+  },
   register: (userData) => api.post('/api/auth/register', userData),
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   },
-  getCurrentUser: () => api.get('/api/users/me'),
+  getCurrentUser: async () => {
+    try {
+      const response = await api.get('/auth/me');
+      return response;
+    } catch (error) {
+      console.error('API Error:', error.response || error);
+      throw error;
+    }
+  },
 };
 
 export const productsAPI = {
