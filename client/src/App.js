@@ -1,6 +1,6 @@
 import React from 'react';
 import { ThemeProvider } from '@mui/material/styles';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { muiTheme } from './styles/theme';
 import Layout from './components/Layout/Layout';
@@ -23,31 +23,34 @@ function App() {
         <BrowserRouter>
           <AuthProvider>
             <Routes>
-              <Route path="/" element={<Layout />}>
+              <Route element={<Layout />}>
                 {/* Public Routes */}
-                <Route index element={<Home />} />
-                <Route path="login" element={<Login />} />
-                <Route path="register" element={<Register />} />
-                <Route path="products" element={<ProductList />} />
-                <Route path="cart" element={<Cart />} />
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/products" element={<ProductList />} />
+                <Route path="/cart" element={<Cart />} />
                 
                 {/* Protected Routes */}
-                <Route
-                  path="dashboard"
+                <Route 
+                  path="/dashboard" 
                   element={
                     <ProtectedRoute>
                       <Dashboard />
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="profile"
+                <Route 
+                  path="/profile" 
                   element={
                     <ProtectedRoute>
                       <Profile />
                     </ProtectedRoute>
                   }
                 />
+
+                {/* Catch all route */}
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
             </Routes>
           </AuthProvider>

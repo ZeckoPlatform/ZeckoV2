@@ -6,7 +6,6 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -16,10 +15,8 @@ export const AuthProvider = ({ children }) => {
           const response = await authAPI.getCurrentUser();
           setUser(response.data);
         }
-      } catch (err) {
-        console.error('Auth initialization error:', err);
-        setError(err.message);
-        // Clear invalid tokens
+      } catch (error) {
+        console.error('Auth initialization error:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       } finally {
@@ -33,12 +30,12 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     setUser,
-    loading,
-    error
+    loading
   };
 
+  // Don't render children until authentication is initialized
   if (loading) {
-    return <div>Loading...</div>; // Or your loading component
+    return <div>Loading...</div>;
   }
 
   return (
