@@ -41,6 +41,16 @@ const productSchema = new mongoose.Schema({
   }
 });
 
+// Add indexes for commonly queried fields
+productSchema.index({ name: 1 });
+productSchema.index({ category: 1 });
+productSchema.index({ createdAt: -1 });
+
+// Add query timeout
+productSchema.pre('find', function() {
+    this.maxTimeMS(5000);
+});
+
 // Pre-save middleware to update timestamps
 productSchema.pre('save', function(next) {
   this.updatedAt = new Date();

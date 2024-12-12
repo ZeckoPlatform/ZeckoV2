@@ -74,6 +74,25 @@ app.use(timeout.handler({
     }
 }));
 
+// Add performance monitoring middleware at the top of your middleware stack
+app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        if (duration > 1000) { // Log slow requests (over 1 second)
+            console.warn(`Slow request: ${req.method} ${req.url} took ${duration}ms`);
+        }
+    });
+    next();
+});
+
+// Optimize static file serving
+app.use(express.static(path.join(__dirname, '../client/build'), {
+    maxAge: '1d', // Cache static files for 1 day
+    etag: true,
+    lastModified: true
+}));
+
 // Import routes with error handling
 let routes = {};
 
@@ -116,63 +135,41 @@ Object.entries(routes).forEach(([name, router]) => {
     }
 });
 
-// Serve static files in production
-if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, '../client/build')));
-    app.get('*', (req, res) => {
-        if (!req.path.startsWith('/api')) {
-            res.sendFile(path.join(__dirname, '../client/build/index.html'));
-        }
-    });
+// Register product routes with error handling
+try {
+    console.log('Registering product routes...');
+    app.use('/api/products', productRoutes);
+    console.log('Product routes registered successfully');
+} catch (error) {
+    console.error('Error registering product routes:', error);
 }
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error('Error:', err);
-    
-    // Handle specific errors
-    if (err.name === 'ValidationError') {
-        return res.status(400).json({ error: err.message });
+// Add route-specific timeout handling
+app.use('/api/products', timeout.handler({
+    timeout: 30000,
+    onTimeout: function(req, res) {
+        console.error('Product route timeout:', req.url);
+        res.status(503).json({
+            error: 'Request timeout while fetching products'
+        });
     }
-    
-    if (err.name === 'UnauthorizedError') {
-        return res.status(401).json({ error: 'Invalid token' });
-    }
-    
-    // Default error
-    res.status(500).json({ 
-        error: process.env.NODE_ENV === 'production' 
-            ? 'Internal server error' 
-            : err.message 
-    });
-});
+}));
 
-// Add these settings
-const serverConfig = {
-    web_concurrency: process.env.WEB_CONCURRENCY || 1,
-    port: process.env.PORT || 5000,
-    connection_timeout: 60000,
-};
-
-// Modify MongoDB options to be more conservative
+// Optimize MongoDB connection options
 const mongooseOptions = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 30000,
-    socketTimeoutMS: 75000,
-    connectTimeoutMS: 30000,
-    heartbeatFrequencyMS: 30000,
-    maxPoolSize: 10,        // Reduced from 50
-    minPoolSize: 2,         // Reduced from 5
-    maxIdleTimeMS: 60000,
+    serverSelectionTimeoutMS: 5000,    // Reduced from 30000
+    socketTimeoutMS: 45000,            // Reduced from 75000
+    connectTimeoutMS: 10000,           // Reduced from 30000
+    heartbeatFrequencyMS: 10000,       // Reduced from 30000
+    maxPoolSize: 10,
+    minPoolSize: 2,
+    maxIdleTimeMS: 30000,             // Reduced from 60000
     retryWrites: true,
     w: 'majority',
-    autoIndex: true,
-    serverApi: {
-        version: '1',
-        strict: true,
-        deprecationErrors: true
-    }
+    // Add connection pool monitoring
+    monitorCommands: true
 };
 
 // Remove the duplicate mongoose.connect call
@@ -224,14 +221,106 @@ const startServer = async () => {
 // Add MongoDB connection event handlers
 mongoose.connection.on('connected', () => {
     console.log('MongoDB connected successfully');
+    // Monitor connection pool
+    setInterval(() => {
+        const poolStats = mongoose.connection.db.admin().serverStatus();
+        console.log('MongoDB pool stats:', {
+            active: poolStats.connections?.current,
+            available: poolStats.connections?.available,
+            pending: poolStats.connections?.pending
+        });
+    }, 60000); // Check every minute
 });
 
-mongoose.connection.on('error', (err) => {
-    console.error('MongoDB connection error:', err);
+// Optimize compression
+app.use(compression({
+    level: 6,
+    threshold: 10 * 1024, // Only compress responses above 10KB
+    filter: (req, res) => {
+        if (req.headers['x-no-compression']) {
+            return false;
+        }
+        return compression.filter(req, res);
+    }
+}));
+
+// Serve static files in production with optimized settings
+if (process.env.NODE_ENV === 'production') {
+    app.get('*', (req, res, next) => {
+        if (req.path.startsWith('/api')) {
+            return next();
+        }
+        
+        // Add caching headers
+        res.set({
+            'Cache-Control': 'public, max-age=86400',
+            'Expires': new Date(Date.now() + 86400000).toUTCString()
+        });
+        
+        res.sendFile(path.join(__dirname, '../client/build/index.html'), err => {
+            if (err) {
+                console.error('Error serving static file:', err);
+                res.status(500).send('Error loading page');
+            }
+        });
+    });
+}
+
+// Add request timeout handling
+const requestTimeout = 30000; // 30 seconds
+app.use((req, res, next) => {
+    req.setTimeout(requestTimeout, () => {
+        console.error(`Request timeout: ${req.method} ${req.url}`);
+        res.status(503).json({ error: 'Request timeout' });
+    });
+    next();
 });
 
-mongoose.connection.on('disconnected', () => {
-    console.log('MongoDB disconnected');
+// Add error handling middleware
+app.use((err, req, res, next) => {
+    console.error('Error:', err);
+    
+    // Handle specific errors
+    if (err.name === 'ValidationError') {
+        return res.status(400).json({ error: err.message });
+    }
+    
+    if (err.name === 'UnauthorizedError') {
+        return res.status(401).json({ error: 'Invalid token' });
+    }
+    
+    // Default error
+    res.status(500).json({ 
+        error: process.env.NODE_ENV === 'production' 
+            ? 'Internal server error' 
+            : err.message 
+    });
+});
+
+// Add these settings
+const serverConfig = {
+    web_concurrency: process.env.WEB_CONCURRENCY || 1,
+    port: process.env.PORT || 5000,
+    connection_timeout: 60000,
+};
+
+// Add MongoDB connection monitoring
+mongoose.connection.on('connected', () => {
+    // Test database connection
+    mongoose.connection.db.admin().ping()
+        .then(() => console.log('MongoDB responding to ping'))
+        .catch(err => console.error('MongoDB ping failed:', err));
+});
+
+// Add error handling specific to product routes
+app.use('/api/products', (err, req, res, next) => {
+    console.error('Product route error:', err);
+    res.status(503).json({
+        error: 'Service temporarily unavailable',
+        message: process.env.NODE_ENV === 'production' 
+            ? 'Error processing product request' 
+            : err.message
+    });
 });
 
 // Add graceful shutdown handling

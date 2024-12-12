@@ -11,18 +11,25 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 15000, // 15 second timeout
+  retries: 3,     // Number of retry attempts
+  retryDelay: 1000, // Delay between retries in ms
   validateStatus: function (status) {
     return status >= 200 && status < 300;
   },
 });
 
-// Request interceptor
+// Request interceptor with retry logic
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Add request timestamp for monitoring
+    config.metadata = { startTime: new Date() };
+    
     console.log('API Request:', {
       baseURL: config.baseURL,
       url: config.url,
@@ -37,30 +44,62 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor
+// Response interceptor with retry logic
 api.interceptors.response.use(
   (response) => {
+    // Calculate request duration
+    const duration = new Date() - response.config.metadata.startTime;
+    if (duration > 1000) { // Log slow requests (over 1s)
+      console.warn(`Slow API request: ${response.config.url} took ${duration}ms`);
+    }
+    
     console.log('API Response:', {
       status: response.status,
       url: response.config.url,
+      duration: `${duration}ms`,
       data: response.data
     });
     return response;
   },
-  (error) => {
+  async (error) => {
+    const { config } = error;
+    
+    // Skip retry for specific status codes
+    if (error.response?.status === 401 || error.response?.status === 404) {
+      if (error.response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+      return Promise.reject(error);
+    }
+    
+    // Implement retry logic
+    config.retryCount = config.retryCount || 0;
+    
+    if (config.retryCount < config.retries && 
+        (error.response?.status === 503 || error.code === 'ECONNABORTED')) {
+      config.retryCount += 1;
+      
+      console.log(`Retrying request (${config.retryCount}/${config.retries})`);
+      
+      // Exponential backoff
+      const delay = config.retryDelay * Math.pow(2, config.retryCount - 1);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      // Add timestamp for the retry
+      config.metadata = { startTime: new Date() };
+      
+      return api(config);
+    }
+    
     console.error('API Error:', {
       message: error.message,
       status: error.response?.status,
       data: error.response?.data,
-      url: error.config?.url
+      url: error.config?.url,
+      retryCount: config.retryCount
     });
-    
-    // Handle 401 Unauthorized errors
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
     
     return Promise.reject(error);
   }
@@ -104,7 +143,18 @@ export const authAPI = {
 };
 
 export const productsAPI = {
-  getAll: (params) => api.get('/products', { params }),
+  getAll: async (params) => {
+    try {
+      const response = await api.get('/products', { 
+        params,
+        timeout: 10000 // 10s timeout for product listing
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      throw new Error(error.response?.data?.message || 'Failed to fetch products');
+    }
+  },
   getOne: (id) => api.get(`/products/${id}`),
   create: (data) => api.post('/products', data),
   update: (id, data) => api.put(`/products/${id}`, data),
@@ -165,6 +215,20 @@ export const fetchData = async (endpoint, options = {}) => {
   } catch (error) {
     console.error('API Error:', error);
     return { data: null, error: error.message };
+  }
+};
+
+// Add a health check function
+export const checkAPIHealth = async () => {
+  try {
+    const start = Date.now();
+    await api.get('/health');
+    const duration = Date.now() - start;
+    console.log(`API health check successful (${duration}ms)`);
+    return true;
+  } catch (error) {
+    console.error('API health check failed:', error);
+    return false;
   }
 };
 
