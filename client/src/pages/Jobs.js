@@ -1,59 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import styled from 'styled-components';
-import { CircularProgress } from '@mui/material';
-import { fetchData, endpoints } from '../services/api';
+import { Card } from '../styles/components/Card.styles';
 
 const JobsContainer = styled.div`
-  text-align: center;
-  padding: 2rem;
-
-  @media (max-width: 768px) {
-    padding: 1rem;
-  }
+  padding: ${({ theme }) => theme.spacing.lg};
 `;
 
-const SectionTitle = styled.h2`
-  text-align: center;
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
-  color: ${({ theme }) => theme.colors.text.primary};
-  font-size: ${({ theme }) => theme.typography.size.h2};
+const JobsList = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.md};
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 `;
 
-function Jobs() {
-  const [loading, setLoading] = useState(true);
-  const [jobs, setJobs] = useState([]);
-
-  useEffect(() => {
-    const loadJobs = async () => {
-      try {
-        const response = await fetchData(endpoints.jobs.list);
-        if (response.data) {
-          setJobs(response.data);
-        }
-      } catch (error) {
-        console.error('Error loading jobs:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadJobs();
-  }, []);
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
-        <CircularProgress />
-      </div>
-    );
-  }
-
+const Jobs = () => {
   return (
     <JobsContainer>
-      <SectionTitle>Available Jobs</SectionTitle>
-      {/* Add job listing components here */}
+      <h1>Available Jobs</h1>
+      <JobsList>
+        {/* Job listings will go here */}
+      </JobsList>
     </JobsContainer>
   );
-}
+};
 
 export default Jobs; 

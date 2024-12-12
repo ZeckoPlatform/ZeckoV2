@@ -1,5 +1,6 @@
 import React from 'react';
 import { createBrowserRouter } from 'react-router-dom';
+import App from '../App';
 import Layout from '../components/Layout/Layout';
 import Home from '../pages/Home';
 import ProductList from '../pages/ProductList';
@@ -16,47 +17,52 @@ import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Layout />,
+    element: <App />,
     children: [
       {
-        index: true,
-        element: <Home />
-      },
-      {
-        path: 'jobs',
-        element: <Jobs />
-      },
-      {
-        path: 'contractors',
-        element: <Contractors />
-      },
-      {
-        path: 'products',
-        element: <ProductList />
-      },
-      {
-        path: 'products/:id',
-        element: <ProductDetails />
-      },
-      {
-        path: 'cart',
-        element: <Cart />
-      },
-      {
-        path: 'login',
-        element: <Login />
-      },
-      {
-        path: 'register',
-        element: <Register />
-      },
-      {
-        path: 'profile',
-        element: <ProtectedRoute><Profile /></ProtectedRoute>
-      },
-      {
-        path: '*',
-        element: <NotFound />
+        element: <Layout />,
+        children: [
+          {
+            index: true,
+            element: <Home />
+          },
+          {
+            path: 'jobs',
+            element: <Jobs />
+          },
+          {
+            path: 'contractors',
+            element: <Contractors />
+          },
+          {
+            path: 'products',
+            element: <ProductList />
+          },
+          {
+            path: 'products/:id',
+            element: <ProductDetails />
+          },
+          {
+            path: 'cart',
+            element: <Cart />
+          },
+          {
+            path: 'login',
+            element: <Login />
+          },
+          {
+            path: 'register',
+            element: <Register />
+          },
+          {
+            path: 'profile',
+            element: <ProtectedRoute><Profile /></ProtectedRoute>
+          },
+          {
+            path: '*',
+            element: <NotFound />
+          }
+        ]
       }
     ]
   }

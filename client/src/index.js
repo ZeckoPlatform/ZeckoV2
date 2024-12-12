@@ -4,6 +4,8 @@ import { RouterProvider } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { ProductProvider } from './contexts/ProductContext';
+import { CartProvider } from './contexts/CartContext';
 import ErrorBoundary from './components/error/ErrorBoundary';
 import { router } from './routes';
 import { ToastContainer } from 'react-toastify';
@@ -15,8 +17,12 @@ ReactDOM.render(
       <NotificationProvider>
         <AuthProvider>
           <ThemeProvider>
-            <RouterProvider router={router} />
-            <ToastContainer />
+            <ProductProvider>
+              <CartProvider>
+                <RouterProvider router={router} />
+                <ToastContainer />
+              </CartProvider>
+            </ProductProvider>
           </ThemeProvider>
         </AuthProvider>
       </NotificationProvider>
