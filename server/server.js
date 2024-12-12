@@ -12,7 +12,7 @@ const productRoutes = require('./routes/productRoutes');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
 const timeout = require('express-timeout-handler');
-const serviceRoutes = require('./routes/services');
+// const serviceRoutes = require('./routes/services');
 
 // Initialize Express and create server
 const app = express();
@@ -82,18 +82,18 @@ try {
     const routePaths = {
         auth: './routes/auth',
         user: './routes/userRoutes',
-        product: './routes/productRoutes',
-        job: './routes/jobRoutes'
+        product: './routes/productRoutes'
     };
 
     // Import routes with error handling for each
     Object.entries(routePaths).forEach(([name, path]) => {
         try {
-            if (fs.existsSync(`${__dirname}/${path}.js`)) {
+            const fullPath = `${__dirname}/${path}.js`;
+            if (fs.existsSync(fullPath)) {
                 routes[name] = require(path);
                 console.log(`Successfully loaded ${name} routes from ${path}`);
             } else {
-                console.warn(`Route file not found: ${path}.js`);
+                console.warn(`Route file not found: ${fullPath}`);
             }
         } catch (error) {
             console.error(`Error loading ${name} routes:`, error.message);
@@ -115,17 +115,6 @@ Object.entries(routes).forEach(([name, router]) => {
         console.log(`Registered route: /api/${name}`);
     }
 });
-
-// Register routes
-try {
-    console.log('Loading product routes from:', './routes/productRoutes');
-    app.use('/api/products', productRoutes);
-    console.log('Successfully loaded product routes');
-} catch (error) {
-    console.error('Error loading product routes:', error);
-}
-
-app.use('/api/services', serviceRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
