@@ -237,7 +237,7 @@ export const fetchData = async (endpoint, options = {}) => {
   } catch (error) {
     console.error('API Error:', error);
     return { 
-      data: Array.isArray(response.data) ? [] : {}, 
+      data: Array.isArray(error.response?.data) ? [] : {},
       error: error.message 
     };
   }
