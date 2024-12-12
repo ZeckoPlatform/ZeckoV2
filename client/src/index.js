@@ -17,8 +17,8 @@ import 'react-toastify/dist/ReactToastify.css';
 ReactDOM.render(
   <React.StrictMode>
     <ErrorBoundary>
-      <MuiThemeProvider theme={muiTheme}>
-        <ThemeProvider>
+      <ThemeProvider>
+        <MuiThemeProvider theme={muiTheme}>
           <GlobalStyles />
           <NotificationProvider>
             <AuthProvider>
@@ -30,8 +30,8 @@ ReactDOM.render(
               </ProductProvider>
             </AuthProvider>
           </NotificationProvider>
-        </ThemeProvider>
-      </MuiThemeProvider>
+        </MuiThemeProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   </React.StrictMode>,
   document.getElementById('root')

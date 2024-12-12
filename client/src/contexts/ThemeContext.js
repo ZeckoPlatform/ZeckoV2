@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
-import { theme as baseTheme } from '../styles/theme';
+import { theme as baseTheme } from '../styles/theme/index.js';
 
 const ThemeContext = createContext();
 
@@ -23,6 +23,31 @@ export const ThemeProvider = ({ children }) => {
         secondary: mode === 'dark' ? '#AAAAAA' : baseTheme.colors.text.secondary,
         disabled: mode === 'dark' ? '#666666' : baseTheme.colors.text.disabled,
       }
+    },
+    typography: {
+      size: {
+        xs: '0.75rem',
+        sm: '0.875rem',
+        md: '1rem',
+        lg: '1.25rem',
+        xl: '1.5rem',
+        h1: '2.5rem',
+        h2: '2rem',
+        h3: '1.75rem'
+      },
+      weight: {
+        regular: 400,
+        medium: 500,
+        bold: 700
+      }
+    },
+    shadows: {
+      card: '0 2px 4px rgba(0,0,0,0.1)',
+      hover: '0 4px 8px rgba(0,0,0,0.1)'
+    },
+    zIndex: {
+      modal: 1000,
+      dropdown: 100
     }
   };
 
