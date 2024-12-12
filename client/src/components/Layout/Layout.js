@@ -1,13 +1,13 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import Navbar from '../Navbar/Navbar';
-import Footer from '../Footer/Footer';
+import Navigation from '../Navigation';
+import Footer from '../Footer';
 
 const Layout = () => {
   return (
     <div>
-      <Navbar />
-      <main>
+      <Navigation />
+      <main className="container mx-auto px-4 py-8">
         <Outlet />
       </main>
       <Footer />
