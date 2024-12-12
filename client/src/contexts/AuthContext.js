@@ -9,66 +9,43 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (token) {
-        const response = await authAPI.getCurrentUser();
-        setUser(response.data);
+    const initializeAuth = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const response = await authAPI.getCurrentUser();
+          setUser(response.data);
+        }
+      } catch (err) {
+        console.error('Auth initialization error:', err);
+        setError(err.message);
+        // Clear invalid tokens
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Auth check failed:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  const login = async (credentials) => {
-    try {
-      setError(null);
-      const response = await authAPI.login(credentials);
-      const { token, user } = response.data;
-      localStorage.setItem('token', token);
-      setUser(user);
-      return true;
-    } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
-      return false;
-    }
-  };
-
-  const register = async (userData) => {
-    try {
-      setError(null);
-      const response = await authAPI.register(userData);
-      const { token, user } = response.data;
-      localStorage.setItem('token', token);
-      setUser(user);
-      return true;
-    } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
-      return false;
-    }
-  };
-
-  const logout = () => {
-    authAPI.logout();
-    setUser(null);
-  };
+    initializeAuth();
+  }, []);
 
   const value = {
     user,
+    setUser,
     loading,
-    error,
-    login,
-    register,
-    logout,
+    error
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  if (loading) {
+    return <div>Loading...</div>; // Or your loading component
+  }
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {

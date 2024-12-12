@@ -5,9 +5,9 @@ import { AuthProvider } from './contexts/AuthContext';
 import { muiTheme } from './styles/theme';
 import Layout from './components/Layout/Layout';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
-import AdminRoute from './components/PrivateRoute';
+import ErrorBoundary from './components/error/ErrorBoundary';
 
-// Import pages with correct paths
+// Import pages
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -16,18 +16,15 @@ import ProductList from './pages/ProductList';
 import Cart from './pages/Cart';
 import Profile from './pages/Profile';
 
-// Correct import path for ErrorBoundary
-import ErrorBoundary from './components/error/ErrorBoundary';
-
 function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider theme={muiTheme}>
-        <AuthProvider>
-          <BrowserRouter>
+        <BrowserRouter>
+          <AuthProvider>
             <Routes>
-              {/* Public Routes */}
               <Route path="/" element={<Layout />}>
+                {/* Public Routes */}
                 <Route index element={<Home />} />
                 <Route path="login" element={<Login />} />
                 <Route path="register" element={<Register />} />
@@ -53,8 +50,8 @@ function App() {
                 />
               </Route>
             </Routes>
-          </BrowserRouter>
-        </AuthProvider>
+          </AuthProvider>
+        </BrowserRouter>
       </ThemeProvider>
     </ErrorBoundary>
   );
