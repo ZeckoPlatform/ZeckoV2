@@ -60,6 +60,7 @@ export const ThemeProvider = ({ children }) => {
     mode,
     colors: {
       ...defaultTheme.colors,
+      primary: defaultTheme.colors.primary,
       background: {
         default: mode === 'dark' ? '#121212' : '#FFFFFF',
         main: mode === 'dark' ? '#1E1E1E' : '#F5F5F5',
