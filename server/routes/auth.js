@@ -51,7 +51,7 @@ router.get('/verify', authenticateToken, async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
-    console.log('Login endpoint hit');
+    console.log('Login endpoint hit at:', new Date().toISOString());
     console.log('Request body:', req.body);
     
     const { email, password } = req.body;
@@ -60,18 +60,28 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    console.log('Login attempt for:', email);
-
-    // Add timeout promise
+    console.log('Attempting database query for:', email);
+    
+    // Increase timeout for database operations
     const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Database timeout')), 20000)
+        setTimeout(() => reject(new Error('Database timeout')), 45000)  // Increased from 20000
     );
 
-    // Race between DB query and timeout
-    const user = await Promise.race([
-        User.findOne({ email }).select('+password'),
-        timeoutPromise
-    ]);
+    let user;
+    try {
+      user = await Promise.race([
+          User.findOne({ email }).select('+password'),
+          timeoutPromise
+      ]);
+
+      if (!user) {
+        console.log('User not found in regular users, checking business users');
+        user = await BusinessUser.findOne({ email }).select('+password');
+      }
+    } catch (dbError) {
+      console.error('Database query error:', dbError);
+      throw dbError;
+    }
 
     let isBusinessUser = false;
 

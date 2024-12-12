@@ -65,8 +65,9 @@ app.use((req, res, next) => {
 
 // Add before routes
 app.use(timeout.handler({
-    timeout: 60000,
+    timeout: 120000,
     onTimeout: function(req, res) {
+        console.error('Request timeout:', req.url);
         res.status(503).json({
             error: 'Service temporarily unavailable. Please try again.'
         });
@@ -161,21 +162,27 @@ app.use((err, req, res, next) => {
 const serverConfig = {
     web_concurrency: process.env.WEB_CONCURRENCY || 1,
     port: process.env.PORT || 5000,
-    connection_timeout: 29000,
+    connection_timeout: 60000,
+};
+
+// Adjust MongoDB connection settings
+const mongooseOptions = {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 30000,
+    socketTimeoutMS: 75000,
+    connectTimeoutMS: 30000,
+    heartbeatFrequencyMS: 30000,
+    maxPoolSize: 50,
+    minPoolSize: 5,
+    maxIdleTimeMS: 60000,
+    retryWrites: true,
+    w: 'majority'
 };
 
 // Update MongoDB connection
 mongoose.set('strictQuery', false);
-mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 25000,
-    connectTimeoutMS: 10000,
-    maxPoolSize: 10,
-    minPoolSize: 1,
-    maxIdleTimeMS: 10000,
-});
+mongoose.connect(process.env.MONGODB_URI, mongooseOptions);
 
 // Add error handling for MongoDB connection
 mongoose.connection.on('error', (err) => {
@@ -190,19 +197,7 @@ mongoose.connection.on('error', (err) => {
 const startServer = async () => {
     try {
         // Connect to MongoDB
-        await mongoose.connect(process.env.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 10000,
-            socketTimeoutMS: 45000,
-            connectTimeoutMS: 10000,
-            heartbeatFrequencyMS: 30000,
-            maxPoolSize: 50,
-            minPoolSize: 5,
-            maxIdleTimeMS: 30000,
-            retryWrites: true,
-            w: 'majority'
-        });
+        await mongoose.connect(process.env.MONGODB_URI, mongooseOptions);
         console.log('Connected to MongoDB');
 
         // Start server
