@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes as RouterRoutes, Route } from 'react-router-dom';
 import Layout from '../components/Layout/Layout';
 import Home from '../pages/Home';
-import Products from '../pages/Products';
+import ProductList from '../pages/ProductList';
 import ProductDetails from '../pages/ProductDetails';
 import Cart from '../pages/Cart';
 import Login from '../pages/Login';
@@ -16,7 +16,7 @@ const Routes = () => {
     <RouterRoutes>
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
-        <Route path="/products" element={<Products />} />
+        <Route path="/products" element={<ProductList />} />
         <Route path="/products/:id" element={<ProductDetails />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/login" element={<Login />} />
