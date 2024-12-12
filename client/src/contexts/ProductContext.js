@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { productAPI } from '../services/api';
+import { productsAPI } from '../services/api';
 
 const ProductContext = createContext();
 
@@ -15,7 +15,7 @@ export const ProductProvider = ({ children }) => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await productAPI.getAllProducts();
+      const response = await productsAPI.getAll();
       setProducts(response.data);
       setError(null);
     } catch (err) {
