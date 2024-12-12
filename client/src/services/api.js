@@ -69,10 +69,21 @@ api.interceptors.response.use(
 export const authAPI = {
   login: async (credentials) => {
     try {
-      const response = await api.post('/auth/login', credentials);
+      console.log('Login URL:', `${BASE_URL}/auth/login`);
+      const response = await api.post('/auth/login', credentials, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
       return response;
     } catch (error) {
-      console.error('API Error:', error.response || error);
+      console.error('Login API Error:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
       throw error;
     }
   },

@@ -51,8 +51,15 @@ router.get('/verify', authenticateToken, async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
+    console.log('Login endpoint hit');
+    console.log('Request body:', req.body);
+    
     const { email, password } = req.body;
     
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
     console.log('Login attempt for:', email);
 
     // Add timeout promise

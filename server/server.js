@@ -12,6 +12,7 @@ const productRoutes = require('./routes/productRoutes');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
 const timeout = require('express-timeout-handler');
+const serviceRoutes = require('./routes/services');
 
 // Initialize Express and create server
 const app = express();
@@ -122,6 +123,8 @@ try {
 } catch (error) {
     console.error('Error loading product routes:', error);
 }
+
+app.use('/api/services', serviceRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {

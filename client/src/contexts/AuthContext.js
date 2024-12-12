@@ -29,17 +29,29 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
+      console.log('Attempting login...');
       const response = await authAPI.login(credentials);
-      if (response?.data) {
-        const { token, user } = response.data;
-        localStorage.setItem('token', token);
-        setUser(user);
-        return { success: true, user };
+      console.log('Login response:', response);
+
+      if (response?.data?.token && response?.data?.user) {
+        localStorage.setItem('token', response.data.token);
+        setUser(response.data.user);
+        return { success: true, user: response.data.user };
+      } else {
+        console.error('Invalid response structure:', response);
+        throw new Error('Invalid response from server');
       }
-      throw new Error('Invalid response from server');
     } catch (error) {
       console.error('Login error:', error);
-      throw new Error(error.response?.data?.message || 'Login failed');
+      if (error.response?.status === 404) {
+        throw new Error('Login service unavailable. Please try again later.');
+      } else if (error.response?.status === 401) {
+        throw new Error('Invalid email or password');
+      } else if (error.response?.status === 400) {
+        throw new Error(error.response.data.message || 'Invalid input');
+      } else {
+        throw new Error('An error occurred during login. Please try again.');
+      }
     }
   };
 
