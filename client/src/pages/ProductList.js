@@ -76,16 +76,23 @@ const ProductList = () => {
       try {
         setLoading(true);
         setError(null);
-        const result = await productsAPI.getAll({
+        const response = await productsAPI.getAll({
           page: currentPage,
           search: searchQuery
         });
-        // Ensure products is always an array
-        setProducts(Array.isArray(result) ? result : []);
+        
+        // Ensure we have a valid response with data property
+        const productData = response?.data || [];
+        setProducts(Array.isArray(productData) ? productData : []);
+        
+        // Set total pages if available in response
+        if (response?.meta?.totalPages) {
+          setTotalPages(response.meta.totalPages);
+        }
       } catch (error) {
         console.error('Error loading products:', error);
         setError('Failed to load products. Please try again later.');
-        setProducts([]); // Set empty array on error
+        setProducts([]);
       } finally {
         setLoading(false);
       }
@@ -93,6 +100,38 @@ const ProductList = () => {
 
     loadProducts();
   }, [currentPage, searchQuery]);
+
+  if (loading) {
+    return (
+      <LoadingMessage>
+        <CircularProgress />
+        <p>Loading products...</p>
+      </LoadingMessage>
+    );
+  }
+
+  // Early return for error state
+  if (error) {
+    return (
+      <div>
+        <h1>Products</h1>
+        <SearchBar onSearch={handleSearch} />
+        <p>{error}</p>
+        <button onClick={() => window.location.reload()}>Retry</button>
+      </div>
+    );
+  }
+
+  // Early return for empty state
+  if (!Array.isArray(products) || products.length === 0) {
+    return (
+      <div>
+        <h1>Products</h1>
+        <SearchBar onSearch={handleSearch} />
+        <p>No products found.</p>
+      </div>
+    );
+  }
 
   const handleSearch = (query) => {
     setSearchQuery(query);
@@ -113,72 +152,50 @@ const ProductList = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <LoadingMessage>
-        <CircularProgress />
-        <p>Loading products...</p>
-      </LoadingMessage>
-    );
-  }
-
-  if (error) {
-    return (
-      <div>
-        <p>{error}</p>
-        <button onClick={() => window.location.reload()}>Retry</button>
-      </div>
-    );
-  }
-
-  if (!products || products.length === 0) {
-    return (
-      <div>
-        <h1>Products</h1>
-        <SearchBar onSearch={handleSearch} />
-        <p>No products found.</p>
-      </div>
-    );
-  }
-
   return (
     <div>
       <h1>Products</h1>
       <SearchBar onSearch={handleSearch} />
-      <ProductGrid>
-        {products.map(product => (
-          <ProductCard key={product._id || product.id}>
-            <Link to={`/products/${product._id || product.id}`}>
-              <ProductImage 
-                src={product.image || '/placeholder.png'} 
-                alt={product.name || 'Product'} 
-              />
-              <ProductName>{product.name || 'Unnamed Product'}</ProductName>
-              <ProductPrice>
-                ${(product.price || 0).toFixed(2)}
-              </ProductPrice>
-            </Link>
-            <AddToCartButton 
-              onClick={() => addToCart(product._id || product.id)}
-              disabled={!product._id && !product.id}
-            >
-              Add to Cart
-            </AddToCartButton>
-          </ProductCard>
-        ))}
-      </ProductGrid>
-      {totalPages > 1 && (
-        <PaginationContainer>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-            <PageButton
-              key={page}
-              active={page === currentPage}
-              onClick={() => handlePageChange(page)}
-            >
-              {page}
-            </PageButton>
-          ))}
-        </PaginationContainer>
+      {products && products.length > 0 ? (
+        <>
+          <ProductGrid>
+            {products.map(product => (
+              <ProductCard key={product._id || product.id}>
+                <Link to={`/products/${product._id || product.id}`}>
+                  <ProductImage 
+                    src={product.image || '/placeholder.png'} 
+                    alt={product.name || 'Product'} 
+                  />
+                  <ProductName>{product.name || 'Unnamed Product'}</ProductName>
+                  <ProductPrice>
+                    ${(product.price || 0).toFixed(2)}
+                  </ProductPrice>
+                </Link>
+                <AddToCartButton 
+                  onClick={() => addToCart(product._id || product.id)}
+                  disabled={!product._id && !product.id}
+                >
+                  Add to Cart
+                </AddToCartButton>
+              </ProductCard>
+            ))}
+          </ProductGrid>
+          {totalPages > 1 && (
+            <PaginationContainer>
+              {[...Array(totalPages)].map((_, index) => (
+                <PageButton
+                  key={index + 1}
+                  active={index + 1 === currentPage}
+                  onClick={() => handlePageChange(index + 1)}
+                >
+                  {index + 1}
+                </PageButton>
+              ))}
+            </PaginationContainer>
+          )}
+        </>
+      ) : (
+        <p>No products available.</p>
       )}
     </div>
   );
