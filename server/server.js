@@ -165,7 +165,7 @@ const serverConfig = {
     connection_timeout: 60000,
 };
 
-// Adjust MongoDB connection settings
+// Modify MongoDB options to be more conservative
 const mongooseOptions = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -173,48 +173,116 @@ const mongooseOptions = {
     socketTimeoutMS: 75000,
     connectTimeoutMS: 30000,
     heartbeatFrequencyMS: 30000,
-    maxPoolSize: 50,
-    minPoolSize: 5,
+    maxPoolSize: 10,        // Reduced from 50
+    minPoolSize: 2,         // Reduced from 5
     maxIdleTimeMS: 60000,
     retryWrites: true,
-    w: 'majority'
+    w: 'majority',
+    autoIndex: true,
+    serverApi: {
+        version: '1',
+        strict: true,
+        deprecationErrors: true
+    }
 };
 
-// Update MongoDB connection
+// Remove the duplicate mongoose.connect call
 mongoose.set('strictQuery', false);
-mongoose.connect(process.env.MONGODB_URI, mongooseOptions);
 
-// Add error handling for MongoDB connection
-mongoose.connection.on('error', (err) => {
-    console.error('MongoDB connection error:', err);
-    // Attempt to reconnect
-    setTimeout(() => {
-        mongoose.connect(process.env.MONGODB_URI, mongooseOptions);
-    }, 5000);
+// Modify the startServer function with better retry logic
+const startServer = async () => {
+    let retries = 5;
+    
+    while (retries > 0) {
+        try {
+            console.log(`Attempting to connect to MongoDB (${retries} retries left)...`);
+            
+            // Connect to MongoDB with timeout
+            await Promise.race([
+                mongoose.connect(process.env.MONGODB_URI, mongooseOptions),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('MongoDB connection timeout')), 30000)
+                )
+            ]);
+            
+            console.log('Successfully connected to MongoDB');
+            
+            // Start server only after successful DB connection
+            const PORT = process.env.PORT || 5000;
+            server.listen(PORT, '0.0.0.0', () => {
+                console.log(`Server running on port ${PORT}`);
+                console.log('Environment:', process.env.NODE_ENV);
+            });
+            
+            return; // Exit the retry loop on success
+            
+        } catch (error) {
+            console.error('Server startup error:', error);
+            retries--;
+            
+            if (retries === 0) {
+                console.error('Max retries reached. Exiting...');
+                process.exit(1);
+            }
+            
+            // Wait before retrying
+            console.log('Waiting 5 seconds before retrying...');
+            await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+    }
+};
+
+// Add MongoDB connection event handlers
+mongoose.connection.on('connected', () => {
+    console.log('MongoDB connected successfully');
 });
 
-// Start server function
-const startServer = async () => {
-    try {
-        // Connect to MongoDB
-        await mongoose.connect(process.env.MONGODB_URI, mongooseOptions);
-        console.log('Connected to MongoDB');
+mongoose.connection.on('error', (err) => {
+    console.error('MongoDB connection error:', err);
+});
 
-        // Start server
-        const PORT = process.env.PORT || 5000;
-        server.listen(PORT, '0.0.0.0', () => {
-            console.log(`Server running on port ${PORT}`);
-            console.log('Environment:', process.env.NODE_ENV);
+mongoose.connection.on('disconnected', () => {
+    console.log('MongoDB disconnected');
+});
+
+// Add graceful shutdown handling
+const gracefulShutdown = async () => {
+    try {
+        console.log('Received shutdown signal. Starting graceful shutdown...');
+        
+        await new Promise((resolve) => {
+            server.close(resolve);
+            console.log('Server closed');
         });
+        
+        await mongoose.connection.close();
+        console.log('MongoDB connection closed');
+        
+        process.exit(0);
     } catch (error) {
-        console.error('Server startup error:', error);
+        console.error('Error during shutdown:', error);
         process.exit(1);
     }
 };
 
+// Handle various shutdown signals
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    gracefulShutdown();
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    gracefulShutdown();
+});
+
 // Start the server
 startServer().catch(error => {
-    console.error('Failed to start server:', error);
+    console.error('Fatal error during server startup:', error);
     process.exit(1);
 });
 
