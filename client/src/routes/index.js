@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes as RouterRoutes, Route } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import Layout from '../components/Layout/Layout';
 import Home from '../pages/Home';
 import ProductList from '../pages/ProductList';
@@ -11,28 +11,43 @@ import Profile from '../pages/Profile';
 import NotFound from '../pages/NotFound';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 
-const Routes = () => {
-  return (
-    <RouterRoutes>
-      <Route element={<Layout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/products" element={<ProductList />} />
-        <Route path="/products/:id" element={<ProductDetails />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<NotFound />} />
-      </Route>
-    </RouterRoutes>
-  );
-};
-
-export default Routes; 
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Layout />,
+    children: [
+      {
+        index: true,
+        element: <Home />
+      },
+      {
+        path: 'products',
+        element: <ProductList />
+      },
+      {
+        path: 'products/:id',
+        element: <ProductDetails />
+      },
+      {
+        path: 'cart',
+        element: <Cart />
+      },
+      {
+        path: 'login',
+        element: <Login />
+      },
+      {
+        path: 'register',
+        element: <Register />
+      },
+      {
+        path: 'profile',
+        element: <ProtectedRoute><Profile /></ProtectedRoute>
+      },
+      {
+        path: '*',
+        element: <NotFound />
+      }
+    ]
+  }
+]); 
