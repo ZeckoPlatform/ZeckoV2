@@ -1,10 +1,8 @@
 import styled from 'styled-components';
+import { Card } from '../../styles/components/Card.styles';
 
 export const AuthFormContainer = styled.div`
-  background: ${({ theme }) => theme.colors.background.paper};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  padding: ${({ theme }) => theme.spacing.md};
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  ${Card}
   max-width: 400px;
   margin: 2rem auto;
 `;
@@ -57,14 +55,13 @@ const SocialButtons = styled.div`
 `;
 
 const SocialButton = styled.button`
-  ${cardStyle};
+  ${Card}
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: ${({ theme }) => theme.spacing.sm};
   padding: ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.background.paper};
   border: none;
   cursor: pointer;
   transition: all ${({ theme }) => theme.transitions.short};
@@ -77,4 +74,13 @@ const SocialButton = styled.button`
     width: 20px;
     height: 20px;
   }
-`; 
+`;
+
+export {
+  AuthHeader,
+  AuthTitle,
+  AuthSubtitle,
+  FormDivider,
+  SocialButtons,
+  SocialButton
+}; 

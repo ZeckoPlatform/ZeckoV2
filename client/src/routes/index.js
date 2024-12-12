@@ -8,6 +8,8 @@ import Cart from '../pages/Cart';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import Profile from '../pages/Profile';
+import Jobs from '../pages/Jobs';
+import Contractors from '../pages/Contractors';
 import NotFound from '../pages/NotFound';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 
@@ -19,6 +21,14 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <Home />
+      },
+      {
+        path: 'jobs',
+        element: <Jobs />
+      },
+      {
+        path: 'contractors',
+        element: <Contractors />
       },
       {
         path: 'products',
