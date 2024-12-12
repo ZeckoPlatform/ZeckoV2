@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://zeckov2-deceb43992ac.herokuapp.com'
+  : 'http://localhost:5000';
+
 console.log('API Base URL:', BASE_URL);
 
 const api = axios.create({
@@ -68,13 +71,13 @@ api.interceptors.response.use(
 );
 
 export const authAPI = {
-  login: (credentials) => api.post('/auth/login', credentials),
-  register: (userData) => api.post('/auth/register', userData),
+  login: (credentials) => api.post('/api/auth/login', credentials),
+  register: (userData) => api.post('/api/auth/register', userData),
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   },
-  getCurrentUser: () => api.get('/users/me'),
+  getCurrentUser: () => api.get('/api/users/me'),
 };
 
 export const productsAPI = {

@@ -10,7 +10,12 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? 'https://zeckov2-deceb43992ac.herokuapp.com'
+    : 'http://localhost:3000',
+  credentials: true
+}));
 app.use(express.json());
 
 // Connect to MongoDB with more detailed logging
