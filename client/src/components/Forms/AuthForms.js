@@ -1,22 +1,18 @@
 import styled from 'styled-components';
-import { cardStyle, glassEffect } from '../../styles/mixins';
 
-const AuthContainer = styled.div`
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: ${({ theme }) => theme.spacing.lg};
-  background: ${({ theme }) => theme.colors.primary.gradient};
+export const AuthFormContainer = styled.div`
+  background: ${({ theme }) => theme.colors.background.paper};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  padding: ${({ theme }) => theme.spacing.md};
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  max-width: 400px;
+  margin: 2rem auto;
 `;
 
-const AuthCard = styled.div`
-  ${cardStyle};
-  ${glassEffect};
-  width: 100%;
-  max-width: 480px;
-  padding: ${({ theme }) => theme.spacing.xl};
-  text-align: center;
+export const AuthForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md};
 `;
 
 const AuthHeader = styled.div`
@@ -32,12 +28,6 @@ const AuthTitle = styled.h2`
 const AuthSubtitle = styled.p`
   color: ${({ theme }) => theme.colors.text.secondary};
   font-size: ${({ theme }) => theme.typography.size.md};
-`;
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
 `;
 
 const FormDivider = styled.div`
