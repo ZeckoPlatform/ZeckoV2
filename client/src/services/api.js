@@ -108,7 +108,7 @@ api.interceptors.response.use(
 export const authAPI = {
   login: async (credentials) => {
     try {
-      console.log('Login URL:', `${BASE_URL}/auth/login`);
+      console.log('Attempting login...');
       const response = await api.post('/auth/login', credentials, {
         withCredentials: true,
         headers: {
@@ -116,14 +116,18 @@ export const authAPI = {
           'Accept': 'application/json'
         }
       });
+      
+      if (response.data?.token) {
+        localStorage.setItem('token', response.data.token);
+        if (response.data.user) {
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
+      }
+      
       return response;
     } catch (error) {
-      console.error('Login API Error:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
-      throw error;
+      console.error('Login error:', error);
+      throw new Error(error.response?.data?.message || 'Login failed');
     }
   },
   register: (userData) => api.post('/api/auth/register', userData),
@@ -145,14 +149,19 @@ export const authAPI = {
 export const productsAPI = {
   getAll: async (params) => {
     try {
+      console.log('Fetching products with params:', params);
       const response = await api.get('/products', { 
         params,
-        timeout: 10000 // 10s timeout for product listing
+        timeout: 10000
       });
+      console.log('Products response:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error fetching products:', error);
-      throw new Error(error.response?.data?.message || 'Failed to fetch products');
+      console.error('Error in productsAPI.getAll:', error);
+      if (error.response?.status === 500) {
+        throw new Error('Server error while fetching products');
+      }
+      throw new Error(error.message || 'Failed to fetch products');
     }
   },
   getOne: (id) => api.get(`/products/${id}`),

@@ -59,13 +59,32 @@ const Button = styled.button`
   }
 `;
 
+const ErrorDetails = styled.div`
+  margin-top: 20px;
+  text-align: left;
+  background: ${({ theme }) => theme?.colors?.background?.default || '#FFFFFF'};
+  padding: 1rem;
+  border-radius: 8px;
+  max-width: 800px;
+  overflow-x: auto;
+`;
+
+const ErrorCode = styled.pre`
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: ${({ theme }) => theme?.colors?.text?.secondary || '#666666'};
+  margin: 0.5rem 0;
+`;
+
 class ErrorBoundaryClass extends React.Component {
   constructor(props) {
     super(props);
     this.state = { 
       hasError: false, 
       error: null,
-      errorInfo: null 
+      errorInfo: null,
+      errorCount: 0
     };
   }
 
@@ -75,43 +94,81 @@ class ErrorBoundaryClass extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
+    // Log error to your error reporting service
     console.error('Error caught by boundary:', error);
     console.error('Component stack:', errorInfo.componentStack);
-    this.setState({ errorInfo });
+    
+    this.setState(prevState => ({ 
+      errorInfo,
+      errorCount: prevState.errorCount + 1
+    }));
+
+    // Optional: Send error to your error tracking service
+    if (process.env.NODE_ENV === 'production') {
+      // Example: Sentry.captureException(error);
+      this.logErrorToService(error, errorInfo);
+    }
   }
 
+  logErrorToService = (error, errorInfo) => {
+    // Implement your error logging logic here
+    const errorData = {
+      error: error.toString(),
+      componentStack: errorInfo.componentStack,
+      timestamp: new Date().toISOString(),
+      url: window.location.href,
+      userAgent: navigator.userAgent
+    };
+    
+    console.error('Error logged:', errorData);
+  };
+
   handleReload = () => {
+    // Clear any cached data that might be causing the error
+    sessionStorage.clear();
     window.location.reload();
   };
 
   handleGoHome = () => {
-    window.location.href = '/';
+    // Clear error state and navigate home
     this.setState({ hasError: false, error: null, errorInfo: null });
+    window.location.href = '/';
   };
 
   render() {
     if (this.state.hasError) {
+      const isDevelopment = process.env.NODE_ENV !== 'production';
+      const showDetailedError = isDevelopment || this.state.errorCount > 3;
+
       return (
         <ErrorContainer>
           <IconWrapper>
             <FiAlertTriangle />
           </IconWrapper>
           <Title>
-            Oops! Something went wrong
+            {this.state.errorCount > 3 
+              ? 'Persistent Error Detected'
+              : 'Oops! Something went wrong'}
           </Title>
           <Message>
-            We're sorry for the inconvenience. Please try again or return to the home page.
-            {process.env.NODE_ENV !== 'production' && (
-              <div style={{ marginTop: '20px', textAlign: 'left' }}>
-                <pre style={{ whiteSpace: 'pre-wrap' }}>
-                  {this.state.error && this.state.error.toString()}
-                </pre>
-                <pre style={{ whiteSpace: 'pre-wrap', marginTop: '10px' }}>
-                  {this.state.errorInfo && this.state.errorInfo.componentStack}
-                </pre>
-              </div>
-            )}
+            {this.state.errorCount > 3 
+              ? 'We\'re experiencing technical difficulties. Our team has been notified.'
+              : 'We\'re sorry for the inconvenience. Please try again or return to the home page.'}
           </Message>
+          
+          {showDetailedError && (
+            <ErrorDetails>
+              <ErrorCode>
+                {this.state.error && this.state.error.toString()}
+              </ErrorCode>
+              {this.state.errorInfo && (
+                <ErrorCode>
+                  {this.state.errorInfo.componentStack}
+                </ErrorCode>
+              )}
+            </ErrorDetails>
+          )}
+
           <ActionsContainer>
             <Button onClick={this.handleReload}>
               <FiRefreshCw /> Reload Page

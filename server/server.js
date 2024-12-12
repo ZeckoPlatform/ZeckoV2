@@ -159,17 +159,11 @@ app.use('/api/products', timeout.handler({
 const mongooseOptions = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000,    // Reduced from 30000
-    socketTimeoutMS: 45000,            // Reduced from 75000
-    connectTimeoutMS: 10000,           // Reduced from 30000
-    heartbeatFrequencyMS: 10000,       // Reduced from 30000
+    serverSelectionTimeoutMS: 10000,
+    socketTimeoutMS: 45000,
+    connectTimeoutMS: 10000,
     maxPoolSize: 10,
-    minPoolSize: 2,
-    maxIdleTimeMS: 30000,             // Reduced from 60000
-    retryWrites: true,
-    w: 'majority',
-    // Add connection pool monitoring
-    monitorCommands: true
+    minPoolSize: 2
 };
 
 // Remove the duplicate mongoose.connect call
