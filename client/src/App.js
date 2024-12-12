@@ -1,20 +1,12 @@
 import React from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
+import { ProductProvider } from './contexts/ProductContext';
 import { muiTheme } from './styles/theme';
-import Layout from './components/Layout/Layout';
-import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import ErrorBoundary from './components/error/ErrorBoundary';
-
-// Import pages
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import ProductList from './pages/ProductList';
-import Cart from './pages/Cart';
-import Profile from './pages/Profile';
+import AppRoutes from './routes';
 
 function App() {
   return (
@@ -22,37 +14,11 @@ function App() {
       <ThemeProvider theme={muiTheme}>
         <BrowserRouter>
           <AuthProvider>
-            <Routes>
-              <Route element={<Layout />}>
-                {/* Public Routes */}
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/products" element={<ProductList />} />
-                <Route path="/cart" element={<Cart />} />
-                
-                {/* Protected Routes */}
-                <Route 
-                  path="/dashboard" 
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route 
-                  path="/profile" 
-                  element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Catch all route */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Route>
-            </Routes>
+            <ProductProvider>
+              <CartProvider>
+                <AppRoutes />
+              </CartProvider>
+            </ProductProvider>
           </AuthProvider>
         </BrowserRouter>
       </ThemeProvider>

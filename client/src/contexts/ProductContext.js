@@ -1,53 +1,38 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { productsAPI } from '../services/api';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { productAPI } from '../services/api';
 
-const ProductContext = createContext(null);
+const ProductContext = createContext();
 
 export const ProductProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({
-    category: '',
-    minPrice: '',
-    maxPrice: '',
-    search: '',
-    sort: 'newest'
-  });
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await productsAPI.getAll(filters);
+      const response = await productAPI.getAllProducts();
       setProducts(response.data);
       setError(null);
     } catch (err) {
       setError('Failed to fetch products');
-      console.error(err);
+      console.error('Error fetching products:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchProducts();
-  }, [filters]);
-
-  const updateFilters = (newFilters) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
-  };
-
-  const value = {
-    products,
-    loading,
-    error,
-    filters,
-    updateFilters,
-    refreshProducts: fetchProducts
-  };
-
   return (
-    <ProductContext.Provider value={value}>
+    <ProductContext.Provider value={{
+      products,
+      loading,
+      error,
+      refreshProducts: fetchProducts
+    }}>
       {children}
     </ProductContext.Provider>
   );
