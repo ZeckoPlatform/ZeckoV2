@@ -66,6 +66,7 @@ const ProductPrice = styled.p`
 const ProductList = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -73,21 +74,25 @@ const ProductList = () => {
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const response = await productsAPI.getAll();
-        setProducts(response.data);
+        setLoading(true);
+        setError(null);
+        const result = await productsAPI.getAll({
+          page: currentPage,
+          search: searchQuery
+        });
+        // Ensure products is always an array
+        setProducts(Array.isArray(result) ? result : []);
       } catch (error) {
         console.error('Error loading products:', error);
+        setError('Failed to load products. Please try again later.');
+        setProducts([]); // Set empty array on error
       } finally {
         setLoading(false);
       }
     };
 
     loadProducts();
-  }, []);
-
-  if (loading) {
-    return <CircularProgress />;
-  }
+  }, [currentPage, searchQuery]);
 
   const handleSearch = (query) => {
     setSearchQuery(query);
@@ -100,14 +105,41 @@ const ProductList = () => {
 
   const addToCart = async (productId) => {
     try {
-      const response = await cartAPI.addToCart(productId);
-      if (response.ok) {
-        console.log('Added to cart');
-      }
+      await cartAPI.addToCart(productId);
+      // Show success message or update cart UI
     } catch (error) {
       console.error('Error adding to cart:', error);
+      // Show error message to user
     }
   };
+
+  if (loading) {
+    return (
+      <LoadingMessage>
+        <CircularProgress />
+        <p>Loading products...</p>
+      </LoadingMessage>
+    );
+  }
+
+  if (error) {
+    return (
+      <div>
+        <p>{error}</p>
+        <button onClick={() => window.location.reload()}>Retry</button>
+      </div>
+    );
+  }
+
+  if (!products || products.length === 0) {
+    return (
+      <div>
+        <h1>Products</h1>
+        <SearchBar onSearch={handleSearch} />
+        <p>No products found.</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -115,29 +147,39 @@ const ProductList = () => {
       <SearchBar onSearch={handleSearch} />
       <ProductGrid>
         {products.map(product => (
-          <ProductCard key={product._id}>
-            <Link to={`/products/${product._id}`}>
-              <ProductImage src={product.image} alt={product.name} />
-              <ProductName>{product.name}</ProductName>
-              <ProductPrice>${product.price.toFixed(2)}</ProductPrice>
+          <ProductCard key={product._id || product.id}>
+            <Link to={`/products/${product._id || product.id}`}>
+              <ProductImage 
+                src={product.image || '/placeholder.png'} 
+                alt={product.name || 'Product'} 
+              />
+              <ProductName>{product.name || 'Unnamed Product'}</ProductName>
+              <ProductPrice>
+                ${(product.price || 0).toFixed(2)}
+              </ProductPrice>
             </Link>
-            <AddToCartButton onClick={() => addToCart(product._id)}>
+            <AddToCartButton 
+              onClick={() => addToCart(product._id || product.id)}
+              disabled={!product._id && !product.id}
+            >
               Add to Cart
             </AddToCartButton>
           </ProductCard>
         ))}
       </ProductGrid>
-      <PaginationContainer>
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-          <PageButton
-            key={page}
-            active={page === currentPage}
-            onClick={() => handlePageChange(page)}
-          >
-            {page}
-          </PageButton>
-        ))}
-      </PaginationContainer>
+      {totalPages > 1 && (
+        <PaginationContainer>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+            <PageButton
+              key={page}
+              active={page === currentPage}
+              onClick={() => handlePageChange(page)}
+            >
+              {page}
+            </PageButton>
+          ))}
+        </PaginationContainer>
+      )}
     </div>
   );
 };

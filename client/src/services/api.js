@@ -165,13 +165,14 @@ export const productsAPI = {
         timeout: 10000
       });
       console.log('Products response:', response.data);
-      return Array.isArray(response.data) ? response.data : [];
+      
+      // Always return an array, even if the response is empty or invalid
+      if (!response.data) return [];
+      return Array.isArray(response.data) ? response.data : [response.data];
+      
     } catch (error) {
       console.error('Error in productsAPI.getAll:', error);
-      if (error.response?.status === 500) {
-        throw new Error('Server error while fetching products');
-      }
-      return [];
+      return []; // Return empty array on error
     }
   },
   getOne: (id) => api.get(`/products/${id}`),
