@@ -110,36 +110,34 @@ function Home() {
   }
 
   return (
-    <>
-      <HomeContainer>
-        <Hero>
-          <HeroTitle>Welcome to Our Platform</HeroTitle>
-          <HeroSubtitle>Find the perfect contractor for your project</HeroSubtitle>
-          <CTAButton to="/register">Get Started</CTAButton>
-        </Hero>
+    <HomeContainer>
+      <Hero>
+        <HeroTitle>Welcome to Our Platform</HeroTitle>
+        <HeroSubtitle>Find the perfect contractor for your project</HeroSubtitle>
+        <CTAButton to="/register">Get Started</CTAButton>
+      </Hero>
 
-        <FeaturedSection>
-          <SectionTitle>Featured Jobs</SectionTitle>
-          <Grid>
-            <JobCarousel />
-          </Grid>
-        </FeaturedSection>
+      <FeaturedSection>
+        <SectionTitle>Featured Jobs</SectionTitle>
+        <Grid>
+          <JobCarousel />
+        </Grid>
+      </FeaturedSection>
 
-        <FeaturedSection>
-          <SectionTitle>Featured Contractors</SectionTitle>
-          <Grid>
-            <ContractorCarousel />
-          </Grid>
-        </FeaturedSection>
+      <FeaturedSection>
+        <SectionTitle>Featured Contractors</SectionTitle>
+        <Grid>
+          <ContractorCarousel />
+        </Grid>
+      </FeaturedSection>
 
-        <FeaturedSection>
-          <SectionTitle>Featured Jobs</SectionTitle>
-          <Grid>
-            <FeaturedJobs />
-          </Grid>
-        </FeaturedSection>
-      </HomeContainer>
-    </>
+      <FeaturedSection>
+        <SectionTitle>Featured Jobs</SectionTitle>
+        <Grid>
+          <FeaturedJobs />
+        </Grid>
+      </FeaturedSection>
+    </HomeContainer>
   );
 }
 

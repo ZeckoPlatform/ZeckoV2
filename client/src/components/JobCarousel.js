@@ -148,7 +148,7 @@ const JobDetails = styled.div`
   }
 `;
 
-function JobCarousel() {
+const JobCarousel = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
