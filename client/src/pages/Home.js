@@ -28,16 +28,39 @@ const Home = () => {
     }
   ];
 
+  const featuredProducts = [
+    {
+      _id: 'product1',
+      name: 'Featured Product 1',
+      description: 'High-quality product with amazing features',
+    },
+    {
+      _id: 'product2',
+      name: 'Featured Product 2',
+      description: 'Premium product for your needs',
+    },
+    {
+      _id: 'product3',
+      name: 'Featured Product 3',
+      description: 'Best-selling product in our catalog',
+    }
+  ];
+
   return (
     <Container>
       <HeroSection>
         <h1>Welcome to Our Platform</h1>
-        <p>Find the best services and connect with professionals</p>
+        <p>Find the best services and products</p>
       </HeroSection>
 
       <Section>
         <SectionTitle>Featured Services</SectionTitle>
         <SimpleCarousel items={featuredServices} type="service" />
+      </Section>
+
+      <Section>
+        <SectionTitle>Featured Products</SectionTitle>
+        <SimpleCarousel items={featuredProducts} type="product" />
       </Section>
 
       <Section>
@@ -47,7 +70,19 @@ const Home = () => {
         ) : error ? (
           <ErrorState>{error}</ErrorState>
         ) : (
-          <SimpleCarousel items={products} type="product" />
+          <ProductsGrid>
+            {products.length === 0 ? (
+              <EmptyState>No products available.</EmptyState>
+            ) : (
+              products.map(product => (
+                <ProductCard key={product._id}>
+                  <h3>{product.name}</h3>
+                  <p>{product.description}</p>
+                  <span>${product.price}</span>
+                </ProductCard>
+              ))
+            )}
+          </ProductsGrid>
         )}
       </Section>
     </Container>
@@ -62,20 +97,20 @@ const Container = styled.div`
 
 const HeroSection = styled.section`
   text-align: center;
-  padding: 3rem 1rem;
+  padding: 4rem 2rem;
   background: ${({ theme }) => theme.colors.background.light};
   border-radius: 8px;
   margin-bottom: 3rem;
 
   h1 {
+    font-size: 2.5rem;
     color: ${({ theme }) => theme.colors.text.primary};
     margin-bottom: 1rem;
-    font-size: 2.5rem;
   }
 
   p {
-    color: ${({ theme }) => theme.colors.text.secondary};
     font-size: 1.2rem;
+    color: ${({ theme }) => theme.colors.text.secondary};
   }
 `;
 
@@ -89,6 +124,39 @@ const SectionTitle = styled.h2`
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
+const ProductsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 2rem;
+`;
+
+const ProductCard = styled.div`
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+
+  &:hover {
+    transform: translateY(-5px);
+  }
+
+  h3 {
+    margin-bottom: 0.5rem;
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+
+  p {
+    color: ${({ theme }) => theme.colors.text.secondary};
+    margin-bottom: 1rem;
+  }
+
+  span {
+    color: ${({ theme }) => theme.colors.primary.main};
+    font-weight: bold;
+  }
+`;
+
 const LoadingState = styled.div`
   text-align: center;
   padding: 2rem;
@@ -99,6 +167,13 @@ const ErrorState = styled.div`
   text-align: center;
   padding: 2rem;
   color: ${({ theme }) => theme.colors.error.main};
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 2rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  grid-column: 1 / -1;
 `;
 
 export default Home;
