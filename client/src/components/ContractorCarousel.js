@@ -180,7 +180,7 @@ export function ContractorCarousel() {
   const { showNotification } = useNotification();
 
   const scroll = useCallback((direction) => {
-    if (!wrapperRef.current) return;
+    if (!wrapperRef.current || !contractors?.length) return;
     
     const scrollAmount = 300;
     const currentScroll = wrapperRef.current.scrollLeft;
@@ -193,10 +193,12 @@ export function ContractorCarousel() {
       behavior: 'smooth'
     });
 
-    const itemWidth = 300;
-    const newIndex = Math.round(newScroll / itemWidth) % contractors.length;
-    setCurrentIndex(newIndex >= 0 ? newIndex : 0);
-  }, [contractors.length]);
+    if (contractors.length > 0) {
+      const itemWidth = 300;
+      const newIndex = Math.round(newScroll / itemWidth) % contractors.length;
+      setCurrentIndex(newIndex >= 0 ? newIndex : 0);
+    }
+  }, [contractors]);
 
   const handleTouchStart = useCallback((e) => {
     setTouchStart(e.touches[0].clientX);
@@ -269,51 +271,57 @@ export function ContractorCarousel() {
 
   return (
     <CarouselContainer>
-      <ScrollButton 
-        direction="left" 
-        onClick={() => scroll('left')}
-        aria-label="Previous contractor"
-      >
-        <ChevronLeft />
-      </ScrollButton>
-      <ContractorsWrapper
-        ref={wrapperRef}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {contractors.map((contractor, index) => (
-          <ContractorCard 
-            key={contractor._id}
-            to={`/contractors/${contractor._id}`}
-            onMouseEnter={() => setAutoScrollEnabled(false)}
-            onMouseLeave={() => setAutoScrollEnabled(true)}
+      {contractors?.length > 0 ? (
+        <>
+          <ScrollButton 
+            direction="left" 
+            onClick={() => scroll('left')}
+            aria-label="Previous contractor"
           >
-            <ContractorInfo>
-              <ContractorName>{contractor.name}</ContractorName>
-              <p>{contractor.specialty}</p>
-              <Rating>
-                {contractor.rating.toFixed(1)} <span role="img" aria-label="rating">⭐</span>
-              </Rating>
-            </ContractorInfo>
-          </ContractorCard>
-        ))}
-      </ContractorsWrapper>
-      <ScrollButton 
-        direction="right" 
-        onClick={() => scroll('right')}
-        aria-label="Next contractor"
-      >
-        <ChevronRight />
-      </ScrollButton>
-      <ProgressIndicator>
-        {contractors.map((_, index) => (
-          <ProgressDot 
-            key={index} 
-            $active={index === currentIndex}
-          />
-        ))}
-      </ProgressIndicator>
+            <ChevronLeft />
+          </ScrollButton>
+          <ContractorsWrapper
+            ref={wrapperRef}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            {contractors.map((contractor, index) => (
+              <ContractorCard 
+                key={contractor._id || index}
+                to={`/contractors/${contractor._id}`}
+                onMouseEnter={() => setAutoScrollEnabled(false)}
+                onMouseLeave={() => setAutoScrollEnabled(true)}
+              >
+                <ContractorInfo>
+                  <ContractorName>{contractor.name}</ContractorName>
+                  <p>{contractor.specialty}</p>
+                  <Rating>
+                    {contractor.rating.toFixed(1)} <span role="img" aria-label="rating">⭐</span>
+                  </Rating>
+                </ContractorInfo>
+              </ContractorCard>
+            ))}
+          </ContractorsWrapper>
+          <ScrollButton 
+            direction="right" 
+            onClick={() => scroll('right')}
+            aria-label="Next contractor"
+          >
+            <ChevronRight />
+          </ScrollButton>
+          <ProgressIndicator>
+            {contractors.map((_, index) => (
+              <ProgressDot 
+                key={index} 
+                $active={index === currentIndex}
+              />
+            ))}
+          </ProgressIndicator>
+        </>
+      ) : (
+        <div>No contractors available</div>
+      )}
     </CarouselContainer>
   );
 }

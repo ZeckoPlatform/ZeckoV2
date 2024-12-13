@@ -75,10 +75,12 @@ const Grid = styled.div`
 
 function Home() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const loadFeaturedData = async () => {
       try {
+        setLoading(true);
         await Promise.all([
           productsAPI.getAll(),
           productsAPI.getAll(),
@@ -86,6 +88,7 @@ function Home() {
         ]);
       } catch (error) {
         console.error('Error loading featured data:', error);
+        setError(error.message);
       } finally {
         setLoading(false);
       }
@@ -100,6 +103,10 @@ function Home() {
         <CircularProgress />
       </div>
     );
+  }
+
+  if (error) {
+    return <div>Error loading content: {error}</div>;
   }
 
   return (

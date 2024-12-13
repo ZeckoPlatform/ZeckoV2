@@ -159,7 +159,7 @@ function JobCarousel() {
   const { error: notify } = useNotification();
 
   const scroll = useCallback((direction) => {
-    if (!wrapperRef.current) return;
+    if (!wrapperRef.current || !jobs?.length) return;
     
     const scrollAmount = 300;
     const currentScroll = wrapperRef.current.scrollLeft;
@@ -172,10 +172,12 @@ function JobCarousel() {
       behavior: 'smooth'
     });
 
-    const itemWidth = 300;
-    const newIndex = Math.round(newScroll / itemWidth) % jobs.length;
-    setCurrentIndex(newIndex >= 0 ? newIndex : 0);
-  }, [jobs.length]);
+    if (jobs.length > 0) {
+      const itemWidth = 300;
+      const newIndex = Math.round(newScroll / itemWidth) % jobs.length;
+      setCurrentIndex(newIndex >= 0 ? newIndex : 0);
+    }
+  }, [jobs]);
 
   const handleTouchStart = useCallback((e) => {
     setTouchStart(e.touches[0].clientX);
@@ -248,49 +250,55 @@ function JobCarousel() {
 
   return (
     <CarouselContainer>
-      <ScrollButton 
-        direction="left" 
-        onClick={() => scroll('left')}
-        aria-label="Previous job"
-      >
-        <ChevronLeft />
-      </ScrollButton>
-      <JobsWrapper
-        ref={wrapperRef}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {jobs.map((job, index) => (
-          <JobCard 
-            key={job._id}
-            to={`/jobs/${job._id}`}
-            onMouseEnter={() => setAutoScrollEnabled(false)}
-            onMouseLeave={() => setAutoScrollEnabled(true)}
+      {jobs?.length > 0 ? (
+        <>
+          <ScrollButton 
+            direction="left" 
+            onClick={() => scroll('left')}
+            aria-label="Previous job"
           >
-            <JobDetails>
-              <h3>{job.title}</h3>
-              <p>{job.company}</p>
-              <p>{job.location}</p>
-            </JobDetails>
-          </JobCard>
-        ))}
-      </JobsWrapper>
-      <ScrollButton 
-        direction="right" 
-        onClick={() => scroll('right')}
-        aria-label="Next job"
-      >
-        <ChevronRight />
-      </ScrollButton>
-      <ProgressIndicator>
-        {jobs.map((_, index) => (
-          <ProgressDot 
-            key={index} 
-            $active={index === currentIndex}
-          />
-        ))}
-      </ProgressIndicator>
+            <ChevronLeft />
+          </ScrollButton>
+          <JobsWrapper
+            ref={wrapperRef}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            {jobs.map((job, index) => (
+              <JobCard 
+                key={job._id}
+                to={`/jobs/${job._id}`}
+                onMouseEnter={() => setAutoScrollEnabled(false)}
+                onMouseLeave={() => setAutoScrollEnabled(true)}
+              >
+                <JobDetails>
+                  <h3>{job.title}</h3>
+                  <p>{job.company}</p>
+                  <p>{job.location}</p>
+                </JobDetails>
+              </JobCard>
+            ))}
+          </JobsWrapper>
+          <ScrollButton 
+            direction="right" 
+            onClick={() => scroll('right')}
+            aria-label="Next job"
+          >
+            <ChevronRight />
+          </ScrollButton>
+          <ProgressIndicator>
+            {jobs.map((_, index) => (
+              <ProgressDot 
+                key={index} 
+                $active={index === currentIndex}
+              />
+            ))}
+          </ProgressIndicator>
+        </>
+      ) : (
+        <div>No jobs available</div>
+      )}
     </CarouselContainer>
   );
 }
