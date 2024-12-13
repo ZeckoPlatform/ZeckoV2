@@ -26,6 +26,10 @@ export const router = createBrowserRouter([
       { 
         path: 'dashboard', 
         element: <PrivateRoute><Dashboard /></PrivateRoute>
+      },
+      {
+        path: 'post-job',
+        element: <PrivateRoute><PostJob /></PrivateRoute>
       }
     ]
   }
