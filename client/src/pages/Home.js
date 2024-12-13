@@ -1,136 +1,82 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
-import { Link } from 'react-router-dom';
-import SimpleCarousel from '../components/SimpleCarousel';
-import { productsAPI } from '../services/api';
-import { CircularProgress } from '@mui/material';
-import { fadeIn, slideUp } from '../styles/animations';
+import { useProducts } from '../contexts/ProductContext';
 
-const HomeContainer = styled.div`
-  text-align: center;
-  padding: 2rem;
-
-  @media (max-width: 768px) {
-    padding: 1rem;
-  }
-`;
-
-const Hero = styled.section`
-  background: ${({ theme }) => theme.colors.primary.gradient};
-  padding: ${({ theme }) => `${theme.spacing.xxl} ${theme.spacing.lg}`};
-  text-align: center;
-  color: ${({ theme }) => theme.colors.primary.text};
-  animation: ${fadeIn} 1s ease-in;
-`;
-
-const HeroTitle = styled.h1`
-  font-size: clamp(2.5rem, 5vw, 4rem);
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-  animation: ${slideUp} 1s ease-out;
-`;
-
-const HeroSubtitle = styled.p`
-  font-size: clamp(1rem, 2vw, 1.25rem);
-  max-width: 600px;
-  margin: 0 auto;
-  opacity: 0.9;
-`;
-
-const CTAButton = styled(Link)`
-  display: inline-block;
-  background-color: ${({ theme }) => theme.colors.primary.main};
-  color: ${({ theme }) => theme.colors.primary.text};
-  padding: 1rem 2rem;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  text-decoration: none;
-  font-weight: bold;
-  transition: background-color ${({ theme }) => theme.transitions.short};
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.primary.dark};
-  }
-`;
-
-const FeaturedSection = styled.section`
-  padding: ${({ theme }) => `${theme.spacing.xxl} ${theme.spacing.lg}`};
-  background: ${({ theme }) => theme.colors.background.main};
-`;
-
-const SectionTitle = styled.h2`
-  text-align: center;
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
-  color: ${({ theme }) => theme.colors.text.primary};
-  font-size: ${({ theme }) => theme.typography.size.h2};
-`;
-
-function Home() {
-  const [data, setData] = useState({
-    contractors: [],
-    jobs: []
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const Home = () => {
+  const { products, loading, error, fetchProducts } = useProducts();
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const response = await productsAPI.getAll();
-        
-        // Simulate different data for contractors and jobs
-        const items = Array.isArray(response?.data) ? response.data : [];
-        setData({
-          contractors: items.slice(0, 5),  // First 5 items as contractors
-          jobs: items.slice(5, 10)         // Next 5 items as jobs
-        });
-      } catch (err) {
-        console.error('Error loading data:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
+    // Only fetch products when component mounts
+    fetchProducts();
+  }, [fetchProducts]);
 
   if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
-        <CircularProgress />
-      </div>
-    );
+    return <Container>Loading...</Container>;
   }
 
   if (error) {
-    return <div>Error loading content: {error}</div>;
+    return <Container>Error: {error}</Container>;
   }
 
   return (
-    <HomeContainer>
-      <Hero>
-        <HeroTitle>Welcome to Our Platform</HeroTitle>
-        <HeroSubtitle>Find the perfect contractor for your project</HeroSubtitle>
-        <CTAButton to="/register">Get Started</CTAButton>
-      </Hero>
-
-      <FeaturedSection>
-        <SectionTitle>Featured Contractors</SectionTitle>
-        <SimpleCarousel 
-          items={data.contractors} 
-          type="contractor" 
-        />
-      </FeaturedSection>
-
-      <FeaturedSection>
-        <SectionTitle>Featured Jobs</SectionTitle>
-        <SimpleCarousel 
-          items={data.jobs} 
-          type="job" 
-        />
-      </FeaturedSection>
-    </HomeContainer>
+    <Container>
+      <Header>
+        <h1>Welcome to Our Platform</h1>
+      </Header>
+      
+      <ProductsSection>
+        <h2>Latest Products</h2>
+        {products.length > 0 ? (
+          <ProductGrid>
+            {products.map(product => (
+              <ProductCard key={product._id}>
+                <h3>{product.title}</h3>
+                <p>{product.description}</p>
+                <p>Price: ${product.price}</p>
+              </ProductCard>
+            ))}
+          </ProductGrid>
+        ) : (
+          <EmptyState>No products available</EmptyState>
+        )}
+      </ProductsSection>
+    </Container>
   );
-}
+};
+
+const Container = styled.div`
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+`;
+
+const Header = styled.div`
+  text-align: center;
+  margin-bottom: 2rem;
+`;
+
+const ProductsSection = styled.section`
+  margin-top: 2rem;
+`;
+
+const ProductGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-top: 1rem;
+`;
+
+const ProductCard = styled.div`
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 2rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+`;
 
 export default Home;

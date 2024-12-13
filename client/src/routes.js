@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import PrivateRoute from './components/PrivateRoute';
 import Navigation from './components/Navigation';
+import PostJob from './pages/PostJob';
 
 // Wrapper component to include Navigation in all routes
 const Layout = () => {
@@ -42,6 +43,14 @@ export const router = createBrowserRouter([
             element: (
               <PrivateRoute>
                 <Dashboard />
+              </PrivateRoute>
+            )
+          },
+          {
+            path: 'post-job',
+            element: (
+              <PrivateRoute>
+                <PostJob />
               </PrivateRoute>
             )
           }

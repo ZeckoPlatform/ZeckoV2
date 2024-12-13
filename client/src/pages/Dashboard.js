@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const canPostJob = user?.role === 'business' || user?.role === 'vendor';
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -45,6 +49,10 @@ const Dashboard = () => {
     fetchDashboardData();
   }, []);
 
+  const handlePostJob = () => {
+    navigate('/post-job');
+  };
+
   if (loading) {
     return <DashboardContainer>Loading...</DashboardContainer>;
   }
@@ -56,7 +64,14 @@ const Dashboard = () => {
   return (
     <DashboardContainer>
       <WelcomeSection>
-        <h1>Welcome, {user?.username || 'User'}!</h1>
+        <WelcomeHeader>
+          <h1>Welcome, {user?.username || 'User'}!</h1>
+          {canPostJob && (
+            <PostJobButton onClick={handlePostJob}>
+              Post a Job
+            </PostJobButton>
+          )}
+        </WelcomeHeader>
       </WelcomeSection>
 
       <DashboardSection>
@@ -144,6 +159,28 @@ const EmptyState = styled.div`
   text-align: center;
   color: ${({ theme }) => theme.colors.text.secondary};
   padding: 2rem;
+`;
+
+const WelcomeHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+`;
+
+const PostJobButton = styled.button`
+  background: ${({ theme }) => theme.colors.primary.main};
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.primary.dark};
+  }
 `;
 
 export default Dashboard;
