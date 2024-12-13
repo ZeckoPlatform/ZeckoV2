@@ -12,7 +12,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const canPostJob = user?.role === 'business' || user?.role === 'vendor';
+  const canPostJob = user?.role === 'user' || !user?.role;
 
   const [activeSection, setActiveSection] = useState('profile');
 
