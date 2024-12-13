@@ -1,50 +1,61 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../services/api';
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { api } from '../services/api';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
-  // Check for existing token on mount
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
+  const login = useCallback(async (credentials) => {
+    try {
+      const response = await api.post('/auth/login', credentials);
+      const { token, user } = response.data;
+      
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      setUser(user);
+      
+      // Set the token in the API instance
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      // Optionally fetch user data here
+      
+      return response.data;
+    } catch (error) {
+      throw error;
     }
-    setLoading(false);
   }, []);
 
-  const login = async (credentials) => {
-    const response = await api.post('/auth/login', credentials);
-    const { token, user } = response.data;
-    
-    if (token) {
-      localStorage.setItem('token', token);
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setUser(user);
-    }
-    
-    return response.data;
-  };
-
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
       delete api.defaults.headers.common['Authorization'];
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
     }
-  };
+  }, []);
+
+  const getCurrentUser = useCallback(async () => {
+    try {
+      const response = await api.get('/auth/me');
+      const userData = response.data;
+      setUser(userData);
+      return userData;
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+      return null;
+    }
+  }, []);
 
   const value = {
     user,
     login,
     logout,
-    loading
+    getCurrentUser,
+    isAuthenticated: !!user
   };
 
   return (

@@ -20,7 +20,7 @@ const Navbar = () => {
     <NavContainer>
       <NavContent>
         <Logo to="/">
-          <LogoText>ZeckOv2</LogoText>
+          <LogoText>Zecko</LogoText>
         </Logo>
 
         <NavLinks>
