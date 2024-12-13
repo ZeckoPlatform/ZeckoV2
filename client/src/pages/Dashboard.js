@@ -139,4 +139,22 @@ const PostJobButton = styled.button`
   }
 `;
 
+const ActionButton = styled.button`
+  padding: 12px 24px;
+  background: ${({ theme }) => theme?.colors?.primary?.main || '#2962ff'};
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 20px;
+
+  &:hover {
+    background: ${({ theme }) => theme?.colors?.primary?.dark || '#1a45b0'};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+`;
+
 export default Dashboard;
