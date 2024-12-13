@@ -1,158 +1,44 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 
-const RegisterContainer = styled.div`
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: ${({ theme }) => theme.spacing.lg};
-  background: ${({ theme }) => theme.colors.background.gradient};
-`;
-
-const RegisterCard = styled(motion.div)`
-  background: ${({ theme }) => theme.colors.background.paper};
-  padding: ${({ theme }) => theme.spacing.xl};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  box-shadow: ${({ theme }) => theme.shadows.card};
-  width: 100%;
-  max-width: 500px;
-`;
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`;
-
-const FormRow = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: ${({ theme }) => theme.spacing.md};
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const Label = styled.label`
-  color: ${({ theme }) => theme.colors.text.secondary};
-  font-size: 0.9rem;
-`;
-
-const Input = styled.input`
-  padding: ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${({ theme }) => theme.colors.text.disabled};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: 1rem;
-  transition: all 0.2s ease;
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary.main};
-    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary.light}40;
-  }
-`;
-
-const Button = styled(motion.button)`
-  padding: ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.primary.gradient};
-  color: ${({ theme }) => theme.colors.primary.text};
-  border: none;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-`;
-
-const ErrorMessage = styled(motion.div)`
-  color: ${({ theme }) => theme.colors.status.error};
-  font-size: 0.9rem;
-  margin-top: ${({ theme }) => theme.spacing.sm};
-`;
-
-const PasswordRequirements = styled.ul`
-  font-size: 0.8rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-  margin-top: ${({ theme }) => theme.spacing.sm};
-  padding-left: ${({ theme }) => theme.spacing.md};
-`;
-
-const LinkText = styled(Link)`
-  color: ${({ theme }) => theme.colors.primary.main};
-  text-decoration: none;
-  font-size: 0.9rem;
-  text-align: center;
-  margin-top: ${({ theme }) => theme.spacing.md};
-  display: block;
-
-  &:hover {
-    text-decoration: underline;
-  }
-`;
-
 const Register = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    username: '',
     email: '',
     password: '',
-    confirmPassword: '',
-    phoneNumber: ''
+    accountType: 'personal', // 'personal', 'business', or 'vendor'
+    businessName: '',
+    businessType: '',
+    vendorCategory: '',
+    location: '',
+    description: ''
   });
+  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { register, error, setError } = useAuth();
-  const navigate = useNavigate();
-
-  const validatePassword = (password) => {
-    const requirements = {
-      length: password.length >= 8,
-      uppercase: /[A-Z]/.test(password),
-      lowercase: /[a-z]/.test(password),
-      number: /[0-9]/.test(password),
-      special: /[!@#$%^&*]/.test(password)
-    };
-    return requirements;
-  };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (error) setError(null);
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    const passwordReqs = validatePassword(formData.password);
-    if (!Object.values(passwordReqs).every(Boolean)) {
-      setError('Password does not meet requirements');
-      return;
-    }
-
     setIsLoading(true);
+    setError('');
+
     try {
-      await register(formData);
-      navigate('/dashboard');
-    } catch (error) {
-      console.error('Registration error:', error);
+      const response = await api.post('/auth/register', formData);
+      if (response.data.success) {
+        navigate('/login');
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Registration failed');
     } finally {
       setIsLoading(false);
     }
@@ -160,110 +46,224 @@ const Register = () => {
 
   return (
     <RegisterContainer>
-      <RegisterCard
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <h2>Create Account</h2>
+      <RegisterCard>
+        <h1>Register</h1>
         <Form onSubmit={handleSubmit}>
-          <FormRow>
-            <FormGroup>
-              <Label htmlFor="firstName">First Name</Label>
-              <Input
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                required
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input
-                type="text"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                required
-              />
-            </FormGroup>
-          </FormRow>
           <FormGroup>
-            <Label htmlFor="email">Email</Label>
+            <Label>Account Type</Label>
+            <Select
+              name="accountType"
+              value={formData.accountType}
+              onChange={handleChange}
+            >
+              <option value="personal">Personal</option>
+              <option value="business">Business</option>
+              <option value="vendor">Vendor</option>
+            </Select>
+          </FormGroup>
+
+          <FormGroup>
+            <Label>Username</Label>
+            <Input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              required
+            />
+          </FormGroup>
+
+          <FormGroup>
+            <Label>Email</Label>
             <Input
               type="email"
-              id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
               required
             />
           </FormGroup>
+
           <FormGroup>
-            <Label htmlFor="phoneNumber">Phone Number</Label>
+            <Label>Password</Label>
             <Input
-              type="tel"
-              id="phoneNumber"
-              name="phoneNumber"
-              value={formData.phoneNumber}
+              type="password"
+              name="password"
+              value={formData.password}
               onChange={handleChange}
               required
             />
           </FormGroup>
-          <FormRow>
-            <FormGroup>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-              />
-            </FormGroup>
-          </FormRow>
-          <PasswordRequirements>
-            <li>At least 8 characters long</li>
-            <li>Contains uppercase and lowercase letters</li>
-            <li>Contains numbers</li>
-            <li>Contains special characters (!@#$%^&*)</li>
-          </PasswordRequirements>
-          {error && (
-            <ErrorMessage
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              {error}
-            </ErrorMessage>
+
+          {formData.accountType !== 'personal' && (
+            <>
+              <FormGroup>
+                <Label>Business Name</Label>
+                <Input
+                  type="text"
+                  name="businessName"
+                  value={formData.businessName}
+                  onChange={handleChange}
+                  required
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <Label>Business Type</Label>
+                <Input
+                  type="text"
+                  name="businessType"
+                  value={formData.businessType}
+                  onChange={handleChange}
+                  required
+                />
+              </FormGroup>
+
+              {formData.accountType === 'vendor' && (
+                <FormGroup>
+                  <Label>Vendor Category</Label>
+                  <Input
+                    type="text"
+                    name="vendorCategory"
+                    value={formData.vendorCategory}
+                    onChange={handleChange}
+                    required
+                  />
+                </FormGroup>
+              )}
+
+              <FormGroup>
+                <Label>Location</Label>
+                <Input
+                  type="text"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  required
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <Label>Description</Label>
+                <Textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  required
+                />
+              </FormGroup>
+            </>
           )}
-          <Button
-            type="submit"
-            disabled={isLoading}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            {isLoading ? 'Creating Account...' : 'Register'}
+
+          {error && <ErrorMessage>{error}</ErrorMessage>}
+          
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? 'Registering...' : 'Register'}
           </Button>
         </Form>
-        <LinkText to="/login">Already have an account? Sign in</LinkText>
       </RegisterCard>
     </RegisterContainer>
   );
 };
+
+// Styled components
+const RegisterContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: ${({ theme }) => theme.colors.background.light};
+`;
+
+const RegisterCard = styled.div`
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 500px;
+`;
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const Label = styled.label`
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const Input = styled.input`
+  padding: 0.75rem;
+  border: 1px solid ${({ theme }) => theme.colors.border.main};
+  border-radius: 4px;
+  font-size: 1rem;
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.primary.main};
+  }
+`;
+
+const Select = styled.select`
+  padding: 0.75rem;
+  border: 1px solid ${({ theme }) => theme.colors.border.main};
+  border-radius: 4px;
+  font-size: 1rem;
+  background: white;
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.primary.main};
+  }
+`;
+
+const Textarea = styled.textarea`
+  padding: 0.75rem;
+  border: 1px solid ${({ theme }) => theme.colors.border.main};
+  border-radius: 4px;
+  font-size: 1rem;
+  min-height: 100px;
+  resize: vertical;
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.primary.main};
+  }
+`;
+
+const Button = styled.button`
+  padding: 0.75rem;
+  background: ${({ theme }) => theme.colors.primary.main};
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.primary.dark};
+  }
+
+  &:disabled {
+    background: ${({ theme }) => theme.colors.primary.light};
+    cursor: not-allowed;
+  }
+`;
+
+const ErrorMessage = styled.div`
+  color: ${({ theme }) => theme.colors.error.main};
+  font-size: 0.875rem;
+`;
 
 export default Register;
