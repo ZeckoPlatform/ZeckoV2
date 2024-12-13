@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../contexts/AuthContext';
-import { useNotification } from '../contexts/NotificationContext';
 
 // Styled Components
 const LoginContainer = styled.div`
@@ -78,16 +77,6 @@ const ErrorMessage = styled.div`
   margin-top: 0.5rem;
 `;
 
-const LinkText = styled(Link)`
-  color: ${({ theme }) => theme.colors.primary.main};
-  text-decoration: none;
-  font-size: 0.875rem;
-  
-  &:hover {
-    text-decoration: underline;
-  }
-`;
-
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
@@ -96,7 +85,6 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
-  const { showNotification } = useNotification();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -117,7 +105,6 @@ const Login = () => {
       console.log('Login result:', result);
       
       if (result?.success) {
-        showNotification('Login successful!', 'success');
         setTimeout(() => {
           if (result?.user?.role === 'admin') {
             navigate('/admin');
@@ -130,7 +117,6 @@ const Login = () => {
       console.error('Login error:', err);
       const errorMessage = err.message || 'An error occurred during login';
       setError(errorMessage);
-      showNotification(errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -163,20 +149,10 @@ const Login = () => {
               required
             />
           </FormGroup>
-          {error && (
-            <ErrorMessage>{error}</ErrorMessage>
-          )}
-          <Button
-            type="submit"
-            disabled={isLoading}
-          >
+          {error && <ErrorMessage>{error}</ErrorMessage>}
+          <Button type="submit" disabled={isLoading}>
             {isLoading ? 'Logging in...' : 'Login'}
           </Button>
-          <div>
-            <LinkText to="/forgot-password">Forgot Password?</LinkText>
-            {' | '}
-            <LinkText to="/register">Create Account</LinkText>
-          </div>
         </Form>
       </LoginCard>
     </LoginContainer>
