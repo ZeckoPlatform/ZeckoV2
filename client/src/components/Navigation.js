@@ -148,7 +148,7 @@ function Navigation() {
   return (
     <Nav>
       <NavContent>
-        <Logo to="/">JobConnect</Logo>
+        <Logo to="/">Zecko</Logo>
         <MobileMenuButton onClick={() => setIsOpen(!isOpen)}>
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </MobileMenuButton>

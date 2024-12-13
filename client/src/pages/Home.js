@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { useProducts } from '../contexts/ProductContext';
 import SimpleCarousel from '../components/SimpleCarousel';
+import { HeroSection } from '../components/HeroSection';
 
 const Home = () => {
   const { products, loading, error, fetchProducts } = useProducts();
@@ -47,45 +48,43 @@ const Home = () => {
   ];
 
   return (
-    <Container>
-      <HeroSection>
-        <h1>Welcome to Our Platform</h1>
-        <p>Find the best services and products</p>
-      </HeroSection>
+    <>
+      <HeroSection />
+      <Container>
+        <Section>
+          <SectionTitle>Featured Services</SectionTitle>
+          <SimpleCarousel items={featuredServices} type="service" />
+        </Section>
 
-      <Section>
-        <SectionTitle>Featured Services</SectionTitle>
-        <SimpleCarousel items={featuredServices} type="service" />
-      </Section>
+        <Section>
+          <SectionTitle>Featured Products</SectionTitle>
+          <SimpleCarousel items={featuredProducts} type="product" />
+        </Section>
 
-      <Section>
-        <SectionTitle>Featured Products</SectionTitle>
-        <SimpleCarousel items={featuredProducts} type="product" />
-      </Section>
-
-      <Section>
-        <SectionTitle>Latest Products</SectionTitle>
-        {loading ? (
-          <LoadingState>Loading...</LoadingState>
-        ) : error ? (
-          <ErrorState>{error}</ErrorState>
-        ) : (
-          <ProductsGrid>
-            {products.length === 0 ? (
-              <EmptyState>No products available.</EmptyState>
-            ) : (
-              products.map(product => (
-                <ProductCard key={product._id}>
-                  <h3>{product.name}</h3>
-                  <p>{product.description}</p>
-                  <span>${product.price}</span>
-                </ProductCard>
-              ))
-            )}
-          </ProductsGrid>
-        )}
-      </Section>
-    </Container>
+        <Section>
+          <SectionTitle>Latest Products</SectionTitle>
+          {loading ? (
+            <LoadingState>Loading...</LoadingState>
+          ) : error ? (
+            <ErrorState>{error}</ErrorState>
+          ) : (
+            <ProductsGrid>
+              {products.length === 0 ? (
+                <EmptyState>No products available.</EmptyState>
+              ) : (
+                products.map(product => (
+                  <ProductCard key={product._id}>
+                    <h3>{product.name}</h3>
+                    <p>{product.description}</p>
+                    <span>${product.price}</span>
+                  </ProductCard>
+                ))
+              )}
+            </ProductsGrid>
+          )}
+        </Section>
+      </Container>
+    </>
   );
 };
 
@@ -93,25 +92,6 @@ const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
-`;
-
-const HeroSection = styled.section`
-  text-align: center;
-  padding: 4rem 2rem;
-  background: ${({ theme }) => theme.colors.background.light};
-  border-radius: 8px;
-  margin-bottom: 3rem;
-
-  h1 {
-    font-size: 2.5rem;
-    color: ${({ theme }) => theme.colors.text.primary};
-    margin-bottom: 1rem;
-  }
-
-  p {
-    font-size: 1.2rem;
-    color: ${({ theme }) => theme.colors.text.secondary};
-  }
 `;
 
 const Section = styled.section`
