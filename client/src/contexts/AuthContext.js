@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
 
 const AuthContext = createContext(null);
@@ -6,6 +6,16 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Check for existing token on mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      // Optionally fetch user data here
+    }
+    setLoading(false);
+  }, []);
 
   const login = async (credentials) => {
     const response = await api.post('/auth/login', credentials);
@@ -20,11 +30,15 @@ export const AuthProvider = ({ children }) => {
     return response.data;
   };
 
-  const logout = useCallback(async () => {
-    localStorage.removeItem('token');
-    delete api.defaults.headers.common['Authorization'];
-    setUser(null);
-  }, []);
+  const logout = async () => {
+    try {
+      localStorage.removeItem('token');
+      delete api.defaults.headers.common['Authorization'];
+      setUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   const value = {
     user,
