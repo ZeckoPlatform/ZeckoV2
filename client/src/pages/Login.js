@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -101,21 +101,19 @@ const Login = () => {
     setError('');
 
     try {
-      const result = await login(formData);
-      console.log('Login result:', result);
+      const response = await login(formData);
+      console.log('Login response:', response);
       
-      if (result?.success) {
-        setTimeout(() => {
-          if (result?.user?.role === 'admin') {
-            navigate('/admin');
-          } else {
-            navigate('/dashboard');
-          }
-        }, 100);
+      if (response?.data?.token) {
+        const path = response?.data?.user?.role === 'admin' ? '/admin' : '/dashboard';
+        console.log('Redirecting to:', path);
+        navigate(path);
+      } else {
+        setError('Login failed. Please try again.');
       }
     } catch (err) {
       console.error('Login error:', err);
-      const errorMessage = err.message || 'An error occurred during login';
+      const errorMessage = err.response?.data?.error || err.message || 'An error occurred during login';
       setError(errorMessage);
     } finally {
       setIsLoading(false);
