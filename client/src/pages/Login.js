@@ -114,13 +114,17 @@ const Login = () => {
 
     try {
       const result = await login(formData);
-      if (result.success) {
+      console.log('Login result:', result);
+      
+      if (result?.success) {
         showNotification('Login successful!', 'success');
-        if (result.user.role === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/dashboard');
-        }
+        setTimeout(() => {
+          if (result?.user?.role === 'admin') {
+            navigate('/admin');
+          } else {
+            navigate('/dashboard');
+          }
+        }, 100);
       }
     } catch (err) {
       console.error('Login error:', err);
