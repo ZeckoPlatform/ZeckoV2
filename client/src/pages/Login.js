@@ -104,14 +104,12 @@ const Login = () => {
       const response = await login(formData);
       console.log('Login response:', response);
       
-      const data = response.data || response;
-      
-      if (data?.success && data?.user) {
-        const path = data.user.role === 'admin' ? '/admin' : '/dashboard';
+      if (response?.token && response?.user) {
+        const path = response.user.role === 'admin' ? '/admin' : '/dashboard';
         console.log('Navigation path:', path);
         navigate(path);
       } else {
-        console.error('Invalid response structure:', data);
+        console.error('Invalid response structure:', response);
         setError('Login failed. Please try again.');
       }
     } catch (err) {
