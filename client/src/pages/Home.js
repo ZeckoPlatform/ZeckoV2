@@ -1,82 +1,104 @@
 import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { useProducts } from '../contexts/ProductContext';
+import SimpleCarousel from '../components/SimpleCarousel';
 
 const Home = () => {
   const { products, loading, error, fetchProducts } = useProducts();
 
   useEffect(() => {
-    // Only fetch products when component mounts
     fetchProducts();
   }, [fetchProducts]);
 
-  if (loading) {
-    return <Container>Loading...</Container>;
-  }
-
-  if (error) {
-    return <Container>Error: {error}</Container>;
-  }
+  const featuredServices = [
+    {
+      _id: 'service1',
+      title: 'Professional Services',
+      description: 'Expert solutions for your needs',
+    },
+    {
+      _id: 'service2',
+      title: 'Business Solutions',
+      description: 'Grow your business with us',
+    },
+    {
+      _id: 'service3',
+      title: 'Technical Support',
+      description: '24/7 dedicated assistance',
+    }
+  ];
 
   return (
     <Container>
-      <Header>
+      <HeroSection>
         <h1>Welcome to Our Platform</h1>
-      </Header>
-      
-      <ProductsSection>
-        <h2>Latest Products</h2>
-        {products.length > 0 ? (
-          <ProductGrid>
-            {products.map(product => (
-              <ProductCard key={product._id}>
-                <h3>{product.title}</h3>
-                <p>{product.description}</p>
-                <p>Price: ${product.price}</p>
-              </ProductCard>
-            ))}
-          </ProductGrid>
+        <p>Find the best services and connect with professionals</p>
+      </HeroSection>
+
+      <Section>
+        <SectionTitle>Featured Services</SectionTitle>
+        <SimpleCarousel items={featuredServices} type="service" />
+      </Section>
+
+      <Section>
+        <SectionTitle>Latest Products</SectionTitle>
+        {loading ? (
+          <LoadingState>Loading...</LoadingState>
+        ) : error ? (
+          <ErrorState>{error}</ErrorState>
         ) : (
-          <EmptyState>No products available</EmptyState>
+          <SimpleCarousel items={products} type="product" />
         )}
-      </ProductsSection>
+      </Section>
     </Container>
   );
 };
 
 const Container = styled.div`
-  padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  padding: 2rem;
 `;
 
-const Header = styled.div`
+const HeroSection = styled.section`
+  text-align: center;
+  padding: 3rem 1rem;
+  background: ${({ theme }) => theme.colors.background.light};
+  border-radius: 8px;
+  margin-bottom: 3rem;
+
+  h1 {
+    color: ${({ theme }) => theme.colors.text.primary};
+    margin-bottom: 1rem;
+    font-size: 2.5rem;
+  }
+
+  p {
+    color: ${({ theme }) => theme.colors.text.secondary};
+    font-size: 1.2rem;
+  }
+`;
+
+const Section = styled.section`
+  margin-bottom: 3rem;
+`;
+
+const SectionTitle = styled.h2`
   text-align: center;
   margin-bottom: 2rem;
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
-const ProductsSection = styled.section`
-  margin-top: 2rem;
-`;
-
-const ProductGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 2rem;
-  margin-top: 1rem;
-`;
-
-const ProductCard = styled.div`
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-`;
-
-const EmptyState = styled.div`
+const LoadingState = styled.div`
   text-align: center;
   padding: 2rem;
   color: ${({ theme }) => theme.colors.text.secondary};
+`;
+
+const ErrorState = styled.div`
+  text-align: center;
+  padding: 2rem;
+  color: ${({ theme }) => theme.colors.error.main};
 `;
 
 export default Home;
