@@ -6,6 +6,7 @@ import Profile from './Profile';
 import Orders from './Orders';
 import Notifications from './Notifications';
 import PostJob from './PostJob';
+import api from '../services/api';
 
 const Dashboard = () => {
   const { user } = useAuth();

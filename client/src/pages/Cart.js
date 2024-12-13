@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../contexts/AuthContext';
-import { ordersAPI, productsAPI, cartAPI } from '../services/api';
+import api from '../services/api';
 import { FaShoppingCart, FaTrash, FaArrowRight, FaStore } from 'react-icons/fa';
 import { CircularProgress } from '@mui/material';
 import { useNotification } from '../contexts/NotificationContext';
@@ -91,7 +91,7 @@ function Cart() {
 
   const loadCart = async () => {
     try {
-      const response = await cartAPI.getCart();
+      const response = await api.cartAPI.getCart();
       setCartItems(response.data);
     } catch (error) {
       showNotification('Failed to load cart', 'error');
@@ -100,7 +100,7 @@ function Cart() {
 
   const handleRemoveFromCart = async (productId) => {
     try {
-      await cartAPI.removeFromCart(productId);
+      await api.cartAPI.removeFromCart(productId);
       await loadCart();
       showNotification('Item removed from cart', 'success');
     } catch (error) {

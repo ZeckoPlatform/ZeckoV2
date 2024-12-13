@@ -4,7 +4,7 @@ const BASE_URL = process.env.NODE_ENV === 'production'
   ? 'https://zeckov2-deceb43992ac.herokuapp.com/api'
   : 'http://localhost:5000/api';
 
-const api = axios.create({
+const axiosInstance = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
@@ -12,7 +12,7 @@ const api = axios.create({
 });
 
 // Request interceptor
-api.interceptors.request.use(
+axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -26,7 +26,7 @@ api.interceptors.request.use(
 );
 
 // Response interceptor
-api.interceptors.response.use(
+axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
@@ -38,4 +38,4 @@ api.interceptors.response.use(
   }
 );
 
-export { api }; 
+export default axiosInstance; 

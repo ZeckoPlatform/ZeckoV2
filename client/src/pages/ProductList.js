@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import SearchBar from '../components/SearchBar';
-import { productsAPI, cartAPI } from '../services/api';
+import { productsAPI } from '../services/api';
 import { CircularProgress } from '@mui/material';
 
 const ProductGrid = styled.div`
@@ -64,59 +64,47 @@ const ProductPrice = styled.p`
 `;
 
 const ProductList = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-
-  const handleSearch = (query) => {
-    setSearchQuery(query);
-    setCurrentPage(1);
-  };
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
-
-  const addToCart = async (productId) => {
-    if (!productId) return;
-    try {
-      await cartAPI.addToCart(productId);
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-    }
-  };
+  const [state, setState] = useState({
+    products: [],
+    loading: true,
+    error: null,
+    searchQuery: '',
+    currentPage: 1
+  });
 
   useEffect(() => {
     let mounted = true;
 
     const loadProducts = async () => {
+      if (!mounted) return;
+
+      setState(prev => ({ ...prev, loading: true, error: null }));
+
       try {
-        setLoading(true);
-        setError(null);
-        
         const response = await productsAPI.getAll({
-          page: currentPage,
-          search: searchQuery
+          page: state.currentPage,
+          search: state.searchQuery
         });
 
         if (!mounted) return;
 
-        // Ensure we have a valid array of products
         const productData = response?.data || [];
-        setProducts(Array.isArray(productData) ? productData : []);
         
+        setState(prev => ({
+          ...prev,
+          products: Array.isArray(productData) ? productData : [],
+          loading: false
+        }));
+
       } catch (error) {
         if (!mounted) return;
         console.error('Error loading products:', error);
-        setError('Failed to load products');
-        setProducts([]);
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
+        setState(prev => ({
+          ...prev,
+          error: 'Failed to load products',
+          loading: false,
+          products: []
+        }));
       }
     };
 
@@ -125,9 +113,17 @@ const ProductList = () => {
     return () => {
       mounted = false;
     };
-  }, [currentPage, searchQuery]);
+  }, [state.currentPage, state.searchQuery]);
 
-  if (loading) {
+  const handleSearch = (query) => {
+    setState(prev => ({
+      ...prev,
+      searchQuery: query,
+      currentPage: 1
+    }));
+  };
+
+  if (state.loading) {
     return (
       <div>
         <h1>Products</h1>
@@ -139,63 +135,52 @@ const ProductList = () => {
     );
   }
 
-  if (error) {
+  if (state.error) {
     return (
       <div>
         <h1>Products</h1>
         <SearchBar onSearch={handleSearch} />
-        <div>{error}</div>
+        <div>{state.error}</div>
       </div>
     );
   }
 
-  if (!products || products.length === 0) {
-    return (
-      <div>
-        <h1>Products</h1>
-        <SearchBar onSearch={handleSearch} />
-        <div>No products found</div>
-      </div>
-    );
-  }
+  const safeProducts = Array.isArray(state.products) ? state.products : [];
 
   return (
     <div>
       <h1>Products</h1>
       <SearchBar onSearch={handleSearch} />
-      <ProductGrid>
-        {products.map(product => {
-          if (!product) return null;
-          
-          const id = product._id || product.id;
-          if (!id) return null;
+      {safeProducts.length > 0 ? (
+        <ProductGrid>
+          {safeProducts.map(product => {
+            if (!product) return null;
+            const id = product._id || product.id;
+            if (!id) return null;
 
-          return (
-            <ProductCard key={id}>
-              <Link to={`/products/${id}`}>
-                <ProductImage 
-                  src={product.image || '/placeholder.png'} 
-                  alt={product.name || 'Product'} 
-                />
-                <ProductName>
-                  {product.name || 'Unnamed Product'}
-                </ProductName>
-                <ProductPrice>
-                  ${(product.price || 0).toFixed(2)}
-                </ProductPrice>
-              </Link>
-              <AddToCartButton 
-                onClick={() => addToCart(id)}
-                disabled={!id}
-              >
-                Add to Cart
-              </AddToCartButton>
-            </ProductCard>
-          );
-        })}
-      </ProductGrid>
+            return (
+              <ProductCard key={id}>
+                <Link to={`/products/${id}`}>
+                  <ProductImage 
+                    src={product.image || '/placeholder.png'} 
+                    alt={product.name || 'Product'} 
+                  />
+                  <ProductName>
+                    {product.name || 'Unnamed Product'}
+                  </ProductName>
+                  <ProductPrice>
+                    ${(product.price || 0).toFixed(2)}
+                  </ProductPrice>
+                </Link>
+              </ProductCard>
+            );
+          })}
+        </ProductGrid>
+      ) : (
+        <div>No products found</div>
+      )}
     </div>
   );
 };
 
-export default ProductList;
+export default React.memo(ProductList);
