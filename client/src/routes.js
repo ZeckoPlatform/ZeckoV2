@@ -9,6 +9,8 @@ import PostJob from './pages/PostJob';
 import Profile from './pages/Profile';
 import Orders from './pages/Orders';
 import Notifications from './pages/Notifications';
+import Shop from './pages/Shop';
+import Services from './pages/Services';
 import PrivateRoute from './components/PrivateRoute';
 
 export const router = createBrowserRouter([
@@ -19,15 +21,11 @@ export const router = createBrowserRouter([
       { index: true, element: <Home /> },
       { path: 'login', element: <Login /> },
       { path: 'register', element: <Register /> },
+      { path: 'shop', element: <Shop /> },
+      { path: 'services', element: <Services /> },
       { 
-        path: 'dashboard/*', 
-        element: <PrivateRoute><Dashboard /></PrivateRoute>,
-        children: [
-          { index: true, element: <Profile /> },
-          { path: 'orders', element: <Orders /> },
-          { path: 'notifications', element: <Notifications /> },
-          { path: 'post-job', element: <PostJob /> }
-        ]
+        path: 'dashboard', 
+        element: <PrivateRoute><Dashboard /></PrivateRoute>
       }
     ]
   }

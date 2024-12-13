@@ -1,198 +1,77 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import styled from 'styled-components';
-import { productService } from '../services/productService';
+import { useProducts } from '../contexts/ProductContext';
 
-const ShopContainer = styled.div`
-  padding: 20px;
+const Shop = () => {
+  const { products, loading, error } = useProducts();
+
+  if (loading) return <LoadingState>Loading...</LoadingState>;
+  if (error) return <ErrorState>{error}</ErrorState>;
+
+  return (
+    <Container>
+      <Title>Shop</Title>
+      <ProductsGrid>
+        {products.length === 0 ? (
+          <EmptyState>No products available.</EmptyState>
+        ) : (
+          products.map(product => (
+            <ProductCard key={product._id}>
+              <h3>{product.name}</h3>
+              <p>{product.description}</p>
+              <span>${product.price}</span>
+            </ProductCard>
+          ))
+        )}
+      </ProductsGrid>
+    </Container>
+  );
+};
+
+const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
+  padding: 2rem;
 `;
 
-const FiltersContainer = styled.div`
-  display: flex;
-  gap: 20px;
-  margin-bottom: 20px;
-`;
-
-const Select = styled.select`
-  padding: ${({ theme }) => theme.spacing.md};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  border: 1px solid ${({ theme }) => theme.colors.text.disabled}40;
-`;
-
-const ProductGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
-`;
-
-const ProductCard = styled.div`
-  border: 1px solid ${({ theme }) => theme.colors.text.disabled}40;
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  padding: ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.background.paper};
-  transition: transform ${({ theme }) => theme.transitions.short};
-
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: ${({ theme }) => theme.shadows.card};
-  }
-`;
-
-const ProductImage = styled.img`
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 4px;
-`;
-
-const ProductInfo = styled.div`
-  margin-top: 10px;
-`;
-
-const ProductTitle = styled.h3`
-  margin: 0;
-  color: ${({ theme }) => theme.colors.primary.main};
-`;
-
-const ProductPrice = styled.p`
-  font-weight: bold;
+const Title = styled.h1`
+  margin-bottom: 2rem;
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
-function Shop() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({
-    category: '',
-    price: '',
-    sort: ''
-  });
+const ProductsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 2rem;
+`;
 
-  useEffect(() => {
-    fetchProducts();
-  }, [filters]);
+const ProductCard = styled.div`
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await productService.getProducts(filters);
-      console.log('API Response:', response); // Debug log
-      
-      // Handle different possible response formats
-      const productsData = response?.products || response || [];
-      setProducts(Array.isArray(productsData) ? productsData : []);
-    } catch (err) {
-      console.error('Error fetching products:', err);
-      setError(err.message || 'Error fetching products');
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  &:hover {
+    transform: translateY(-5px);
+  }
+`;
 
-  const handleFilterChange = (e) => {
-    setFilters(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
+const LoadingState = styled.div`
+  text-align: center;
+  padding: 2rem;
+`;
 
-  const getFilteredProducts = () => {
-    if (!Array.isArray(products)) return [];
-    
-    return products
-      .filter(product => {
-        if (!filters.category) return true;
-        return product?.category === filters.category;
-      })
-      .filter(product => {
-        if (!filters.price) return true;
-        const [min, max] = filters.price.split('-').map(Number);
-        return product?.price >= min && product?.price <= max;
-      })
-      .sort((a, b) => {
-        switch (filters.sort) {
-          case 'price-low':
-            return (a?.price || 0) - (b?.price || 0);
-          case 'price-high':
-            return (b?.price || 0) - (a?.price || 0);
-          case 'newest':
-            return new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0);
-          default:
-            return 0;
-        }
-      });
-  };
+const ErrorState = styled.div`
+  text-align: center;
+  padding: 2rem;
+  color: ${({ theme }) => theme.colors.error.main};
+`;
 
-  if (loading) return <div>Loading products...</div>;
-  if (error) return <div>Error: {error} <button onClick={fetchProducts}>Retry</button></div>;
-
-  const filteredProducts = getFilteredProducts();
-
-  return (
-    <ShopContainer>
-      <h1>Shop</h1>
-      <FiltersContainer>
-        <Select
-          name="category"
-          value={filters.category}
-          onChange={handleFilterChange}
-        >
-          <option value="">All Categories</option>
-          <option value="tools">Tools</option>
-          <option value="materials">Materials</option>
-          <option value="equipment">Equipment</option>
-        </Select>
-
-        <Select
-          name="price"
-          value={filters.price}
-          onChange={handleFilterChange}
-        >
-          <option value="">All Prices</option>
-          <option value="0-50">$0 - $50</option>
-          <option value="51-100">$51 - $100</option>
-          <option value="101-500">$101 - $500</option>
-          <option value="501-1000">$501 - $1000</option>
-        </Select>
-
-        <Select
-          name="sort"
-          value={filters.sort}
-          onChange={handleFilterChange}
-        >
-          <option value="newest">Newest First</option>
-          <option value="price-low">Price: Low to High</option>
-          <option value="price-high">Price: High to Low</option>
-        </Select>
-      </FiltersContainer>
-
-      {!filteredProducts || filteredProducts.length === 0 ? (
-        <div>No products found matching your criteria.</div>
-      ) : (
-        <ProductGrid>
-          {filteredProducts.map((product) => (
-            <ProductCard key={product?._id || Math.random()}>
-              <ProductImage 
-                src={product?.image || 'placeholder-image-url'} 
-                alt={product?.name || 'Product'} 
-                onError={(e) => {
-                  e.target.src = 'placeholder-image-url';
-                }}
-              />
-              <ProductInfo>
-                <ProductTitle>{product?.name || 'Unnamed Product'}</ProductTitle>
-                <ProductPrice>${product?.price || 'N/A'}</ProductPrice>
-              </ProductInfo>
-            </ProductCard>
-          ))}
-        </ProductGrid>
-      )}
-    </ShopContainer>
-  );
-}
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 2rem;
+  grid-column: 1 / -1;
+`;
 
 export default Shop;
