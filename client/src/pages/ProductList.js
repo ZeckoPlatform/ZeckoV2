@@ -71,68 +71,6 @@ const ProductList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    const loadProducts = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await productsAPI.getAll({
-          page: currentPage,
-          search: searchQuery
-        });
-        
-        // Ensure we have a valid response with data property
-        const productData = response?.data || [];
-        setProducts(Array.isArray(productData) ? productData : []);
-        
-        // Set total pages if available in response
-        if (response?.meta?.totalPages) {
-          setTotalPages(response.meta.totalPages);
-        }
-      } catch (error) {
-        console.error('Error loading products:', error);
-        setError('Failed to load products. Please try again later.');
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadProducts();
-  }, [currentPage, searchQuery]);
-
-  if (loading) {
-    return (
-      <LoadingMessage>
-        <CircularProgress />
-        <p>Loading products...</p>
-      </LoadingMessage>
-    );
-  }
-
-  // Early return for error state
-  if (error) {
-    return (
-      <div>
-        <h1>Products</h1>
-        <SearchBar onSearch={handleSearch} />
-        <p>{error}</p>
-        <button onClick={() => window.location.reload()}>Retry</button>
-      </div>
-    );
-  }
-
-  // Early return for empty state
-  if (!Array.isArray(products) || products.length === 0) {
-    return (
-      <div>
-        <h1>Products</h1>
-        <SearchBar onSearch={handleSearch} />
-        <p>No products found.</p>
-      </div>
-    );
-  }
-
   const handleSearch = (query) => {
     setSearchQuery(query);
     setCurrentPage(1);
@@ -143,60 +81,119 @@ const ProductList = () => {
   };
 
   const addToCart = async (productId) => {
+    if (!productId) return;
     try {
       await cartAPI.addToCart(productId);
-      // Show success message or update cart UI
     } catch (error) {
       console.error('Error adding to cart:', error);
-      // Show error message to user
     }
   };
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadProducts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await productsAPI.getAll({
+          page: currentPage,
+          search: searchQuery
+        });
+
+        if (!mounted) return;
+
+        // Ensure we have a valid array of products
+        const productData = response?.data || [];
+        setProducts(Array.isArray(productData) ? productData : []);
+        
+      } catch (error) {
+        if (!mounted) return;
+        console.error('Error loading products:', error);
+        setError('Failed to load products');
+        setProducts([]);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadProducts();
+
+    return () => {
+      mounted = false;
+    };
+  }, [currentPage, searchQuery]);
+
+  if (loading) {
+    return (
+      <div>
+        <h1>Products</h1>
+        <SearchBar onSearch={handleSearch} />
+        <LoadingMessage>
+          <CircularProgress />
+        </LoadingMessage>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div>
+        <h1>Products</h1>
+        <SearchBar onSearch={handleSearch} />
+        <div>{error}</div>
+      </div>
+    );
+  }
+
+  if (!products || products.length === 0) {
+    return (
+      <div>
+        <h1>Products</h1>
+        <SearchBar onSearch={handleSearch} />
+        <div>No products found</div>
+      </div>
+    );
+  }
 
   return (
     <div>
       <h1>Products</h1>
       <SearchBar onSearch={handleSearch} />
-      {products && products.length > 0 ? (
-        <>
-          <ProductGrid>
-            {products.map(product => (
-              <ProductCard key={product._id || product.id}>
-                <Link to={`/products/${product._id || product.id}`}>
-                  <ProductImage 
-                    src={product.image || '/placeholder.png'} 
-                    alt={product.name || 'Product'} 
-                  />
-                  <ProductName>{product.name || 'Unnamed Product'}</ProductName>
-                  <ProductPrice>
-                    ${(product.price || 0).toFixed(2)}
-                  </ProductPrice>
-                </Link>
-                <AddToCartButton 
-                  onClick={() => addToCart(product._id || product.id)}
-                  disabled={!product._id && !product.id}
-                >
-                  Add to Cart
-                </AddToCartButton>
-              </ProductCard>
-            ))}
-          </ProductGrid>
-          {totalPages > 1 && (
-            <PaginationContainer>
-              {[...Array(totalPages)].map((_, index) => (
-                <PageButton
-                  key={index + 1}
-                  active={index + 1 === currentPage}
-                  onClick={() => handlePageChange(index + 1)}
-                >
-                  {index + 1}
-                </PageButton>
-              ))}
-            </PaginationContainer>
-          )}
-        </>
-      ) : (
-        <p>No products available.</p>
-      )}
+      <ProductGrid>
+        {products.map(product => {
+          if (!product) return null;
+          
+          const id = product._id || product.id;
+          if (!id) return null;
+
+          return (
+            <ProductCard key={id}>
+              <Link to={`/products/${id}`}>
+                <ProductImage 
+                  src={product.image || '/placeholder.png'} 
+                  alt={product.name || 'Product'} 
+                />
+                <ProductName>
+                  {product.name || 'Unnamed Product'}
+                </ProductName>
+                <ProductPrice>
+                  ${(product.price || 0).toFixed(2)}
+                </ProductPrice>
+              </Link>
+              <AddToCartButton 
+                onClick={() => addToCart(id)}
+                disabled={!id}
+              >
+                Add to Cart
+              </AddToCartButton>
+            </ProductCard>
+          );
+        })}
+      </ProductGrid>
     </div>
   );
 };
