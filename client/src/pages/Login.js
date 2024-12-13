@@ -104,11 +104,12 @@ const Login = () => {
       const response = await login(formData);
       console.log('Login response:', response);
       
-      if (response?.data?.token) {
-        const path = response?.data?.user?.role === 'admin' ? '/admin' : '/dashboard';
-        console.log('Redirecting to:', path);
+      if (response?.token && response?.user) {
+        const path = response.user.role === 'admin' ? '/admin' : '/dashboard';
+        console.log('Navigation path:', path);
         navigate(path);
       } else {
+        console.error('Invalid response structure:', response);
         setError('Login failed. Please try again.');
       }
     } catch (err) {
