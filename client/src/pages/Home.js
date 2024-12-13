@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
-import JobCarousel from '../components/JobCarousel';
-import ContractorCarousel from '../components/ContractorCarousel';
-import FeaturedJobs from '../components/FeaturedJobs';
-import { fadeIn, slideUp } from '../styles/animations';
+import SimpleCarousel from '../components/SimpleCarousel';
 import { productsAPI } from '../services/api';
 import { CircularProgress } from '@mui/material';
 
@@ -65,36 +62,35 @@ const SectionTitle = styled.h2`
   font-size: ${({ theme }) => theme.typography.size.h2};
 `;
 
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: ${({ theme }) => theme.spacing.lg};
-  max-width: 1200px;
-  margin: 0 auto;
-`;
-
 function Home() {
+  const [data, setData] = useState({
+    contractors: [],
+    jobs: []
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const loadFeaturedData = async () => {
+    const loadData = async () => {
       try {
         setLoading(true);
-        await Promise.all([
-          productsAPI.getAll(),
-          productsAPI.getAll(),
-          productsAPI.getAll()
-        ]);
-      } catch (error) {
-        console.error('Error loading featured data:', error);
-        setError(error.message);
+        const response = await productsAPI.getAll();
+        
+        // Simulate different data for contractors and jobs
+        const items = Array.isArray(response?.data) ? response.data : [];
+        setData({
+          contractors: items.slice(0, 5),  // First 5 items as contractors
+          jobs: items.slice(5, 10)         // Next 5 items as jobs
+        });
+      } catch (err) {
+        console.error('Error loading data:', err);
+        setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    loadFeaturedData();
+    loadData();
   }, []);
 
   if (loading) {
@@ -118,24 +114,19 @@ function Home() {
       </Hero>
 
       <FeaturedSection>
-        <SectionTitle>Featured Jobs</SectionTitle>
-        <Grid>
-          <JobCarousel />
-        </Grid>
-      </FeaturedSection>
-
-      <FeaturedSection>
         <SectionTitle>Featured Contractors</SectionTitle>
-        <Grid>
-          <ContractorCarousel />
-        </Grid>
+        <SimpleCarousel 
+          items={data.contractors} 
+          type="contractor" 
+        />
       </FeaturedSection>
 
       <FeaturedSection>
         <SectionTitle>Featured Jobs</SectionTitle>
-        <Grid>
-          <FeaturedJobs />
-        </Grid>
+        <SimpleCarousel 
+          items={data.jobs} 
+          type="job" 
+        />
       </FeaturedSection>
     </HomeContainer>
   );
