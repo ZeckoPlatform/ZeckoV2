@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import SimpleCarousel from '../components/SimpleCarousel';
 import { productsAPI } from '../services/api';
 import { CircularProgress } from '@mui/material';
+import { fadeIn, slideUp } from '../styles/animations';
 
 const HomeContainer = styled.div`
   text-align: center;
@@ -19,13 +20,13 @@ const Hero = styled.section`
   padding: ${({ theme }) => `${theme.spacing.xxl} ${theme.spacing.lg}`};
   text-align: center;
   color: ${({ theme }) => theme.colors.primary.text};
-  animation: ${fadeIn} ${({ theme }) => theme.transitions.long} ease-in;
+  animation: ${fadeIn} 1s ease-in;
 `;
 
 const HeroTitle = styled.h1`
   font-size: clamp(2.5rem, 5vw, 4rem);
   margin-bottom: ${({ theme }) => theme.spacing.lg};
-  animation: ${slideUp} ${({ theme }) => theme.transitions.long} ease-out;
+  animation: ${slideUp} 1s ease-out;
 `;
 
 const HeroSubtitle = styled.p`
