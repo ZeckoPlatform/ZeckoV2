@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import styled from 'styled-components';
 import Navbar from './components/Navbar';
 import { useAuth } from './contexts/AuthContext';
+import { PostLeadForm } from './components/PostLead/PostLeadForm';
 
 const App = () => {
   const { user } = useAuth();
