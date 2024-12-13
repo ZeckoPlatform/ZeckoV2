@@ -18,11 +18,11 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(user));
       setUser(user);
       
-      // Set the token in the API instance
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
       return response.data;
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
     }
   }, []);
@@ -40,12 +40,27 @@ export const AuthProvider = ({ children }) => {
 
   const getCurrentUser = useCallback(async () => {
     try {
-      const response = await api.get('/auth/me');
-      const userData = response.data;
+      // First check local storage
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        return parsedUser;
+      }
+
+      // If no local user, try to fetch from API
+      const response = await api.get('/auth/verify');
+      const userData = response.data.user;
       setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
       return userData;
     } catch (error) {
       console.error('Error fetching current user:', error);
+      // If API call fails, return the local user data if available
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        return JSON.parse(savedUser);
+      }
       return null;
     }
   }, []);
