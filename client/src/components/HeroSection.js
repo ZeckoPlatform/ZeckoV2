@@ -6,9 +6,9 @@ import { motion } from 'framer-motion';
 const HeroContainer = styled.section`
   background: linear-gradient(
     135deg,
-    #1a237e 0%,
-    #0d47a1 35%,
-    #2962ff 100%
+    #006400 25%,
+    #228B22 50%,
+    #32CD32 100%
   );
   position: relative;
   color: white;
@@ -25,7 +25,7 @@ const HeroContainer = styled.section`
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(circle at 20% 150%, rgba(41, 98, 255, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 20% 150%, rgba(50, 205, 50, 0.15) 0%, transparent 50%),
       radial-gradient(circle at 80% -50%, rgba(255, 255, 255, 0.13) 0%, transparent 50%);
     z-index: 1;
   }
@@ -86,7 +86,7 @@ const CTAButton = styled(motion(Link))`
     rgba(255, 255, 255, 1) 0%,
     rgba(255, 255, 255, 0.9) 100%
   );
-  color: #1a237e;
+  color: #006400;
   text-decoration: none;
   border-radius: 50px;
   font-weight: bold;
@@ -108,7 +108,7 @@ const CTAButton = styled(motion(Link))`
 `;
 
 const HighlightSpan = styled.span`
-  color: #82b1ff;
+  color: #90EE90;
   font-weight: bold;
 `;
 
