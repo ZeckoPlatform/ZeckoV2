@@ -8,21 +8,27 @@ import api from '../services/api';
 const Home = () => {
   const { theme } = useTheme();
   const [featuredJobs, setFeaturedJobs] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchFeaturedJobs = async () => {
+    const fetchFeaturedItems = async () => {
       try {
-        const response = await api.getJobs({ featured: true, limit: 5 });
-        setFeaturedJobs(response.data.jobs);
+        const [jobsResponse, productsResponse] = await Promise.all([
+          api.getJobs({ featured: true, limit: 5 }),
+          api.getProducts({ featured: true, limit: 5 })
+        ]);
+        
+        setFeaturedJobs(jobsResponse.data.jobs);
+        setFeaturedProducts(productsResponse.data.products);
       } catch (error) {
-        console.error('Error fetching featured jobs:', error);
+        console.error('Error fetching featured items:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchFeaturedJobs();
+    fetchFeaturedItems();
   }, []);
 
   return (
@@ -41,21 +47,8 @@ const Home = () => {
       </Section>
 
       <Section>
-        <SectionTitle>Why Choose Us</SectionTitle>
-        <FeaturesGrid>
-          <FeatureCard>
-            <h3>Quality Listings</h3>
-            <p>Curated job postings from verified employers</p>
-          </FeatureCard>
-          <FeatureCard>
-            <h3>Easy Apply</h3>
-            <p>Simple and quick application process</p>
-          </FeatureCard>
-          <FeatureCard>
-            <h3>Career Growth</h3>
-            <p>Opportunities for professional development</p>
-          </FeatureCard>
-        </FeaturesGrid>
+        <SectionTitle>Featured Products</SectionTitle>
+        <SimpleCarousel items={featuredProducts} type="product" />
       </Section>
     </HomeContainer>
   );
@@ -115,30 +108,6 @@ const SectionTitle = styled.h2`
   text-align: center;
   margin-bottom: 2rem;
   color: ${props => props.theme.colors.text};
-`;
-
-const FeaturesGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
-  padding: 1rem;
-`;
-
-const FeatureCard = styled.div`
-  background: ${props => props.theme.colors.background};
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  text-align: center;
-  
-  h3 {
-    color: ${props => props.theme.colors.primary};
-    margin-bottom: 1rem;
-  }
-  
-  p {
-    color: ${props => props.theme.colors.text};
-  }
 `;
 
 export default Home;
