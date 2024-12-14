@@ -72,7 +72,13 @@ const api = {
   createProduct: (productData) => axiosInstance.post('/products', productData),
   updateProduct: (id, productData) => axiosInstance.put(`/products/${id}`, productData),
   deleteProduct: (id) => axiosInstance.delete(`/products/${id}`),
-  getProductById: (id) => axiosInstance.get(`/products/${id}`)
+  getProductById: (id) => axiosInstance.get(`/products/${id}`),
+  
+  // User
+  getUserProfile: () => axiosInstance.get('/users/me'),
+  updateUserProfile: (profileData) => axiosInstance.put('/users/profile', profileData),
+  getUserSecuritySettings: () => axiosInstance.get('/users/security-settings'),
+  getUserAddresses: () => axiosInstance.get('/users/addresses')
 };
 
 export default api;

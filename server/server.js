@@ -14,6 +14,7 @@ const connectDB = require('./config/db');
 const timeout = require('express-timeout-handler');
 // const serviceRoutes = require('./routes/services');
 const jobRoutes = require('./routes/api/lead');
+const userRoutes = require('./routes/userRoutes');
 
 // Initialize Express and create server
 const app = express();
@@ -366,4 +367,5 @@ module.exports = {
 };
 
 app.use('/api/jobs', jobRoutes);
+app.use('/api/users', userRoutes);
 
