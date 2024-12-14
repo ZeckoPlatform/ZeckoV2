@@ -2,14 +2,13 @@
 
 import { 
   FaHardHat, FaBriefcase, FaBroom, FaHome, FaWrench, 
-  FaGraduationCap, FaCar, FaPaw, FaBuilding, FaHeart,
-  FaCamera, FaLaptop, FaPaintBrush, FaTree, FaMusic,
-  FaShoppingBag, FaPlane, FaSpa, FaUtensils, FaDumbbell,
-  FaTools, FaTruck, FaLeaf, FaCut, FaGavel,
-  FaMedkit, FaGraduationCap, FaPalette, FaTheaterMasks,
-  FaVideo, FaUserTie, FaChalkboardTeacher, FaWrench,
-  FaHandsHelping, FaStore, FaWarehouse, FaIndustry,
-  FaFlask
+  FaCar, FaPaw, FaBuilding, FaHeart, FaCamera, 
+  FaLaptop, FaPaintBrush, FaTree, FaMusic, FaShoppingBag, 
+  FaPlane, FaSpa, FaUtensils, FaDumbbell, FaTools, 
+  FaTruck, FaLeaf, FaCut, FaGavel, FaMedkit, 
+  FaGraduationCap, FaPalette, FaTheaterMasks, FaVideo, 
+  FaUserTie, FaChalkboardTeacher, FaHandsHelping, FaStore, 
+  FaWarehouse, FaIndustry, FaShield, FaFlask
 } from 'react-icons/fa';
 
 export const jobCategories = {
@@ -950,12 +949,4 @@ export const getAllCategories = () => {
 
 export const getSubcategories = (category) => {
   return jobCategories[category]?.subcategories || [];
-};
-
-export const getCategoryIcon = (category) => {
-  return jobCategories[category]?.icon;
-};
-
-export const getCategoryDescription = (category) => {
-  return jobCategories[category]?.description;
 };

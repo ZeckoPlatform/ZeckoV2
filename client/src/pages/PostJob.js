@@ -243,4 +243,18 @@ const ErrorMessage = styled.div`
   margin-bottom: 1rem;
 `;
 
+const Select = styled.select`
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 4px;
+  font-size: 16px;
+  margin-bottom: 1rem;
+  
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.primary.main};
+  }
+`;
+
 export default PostJob; 
