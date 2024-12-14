@@ -4,45 +4,31 @@ import { createTheme } from '@mui/material/styles';
 export const theme = {
   colors: {
     primary: {
-      main: '#4CAF50',
-      dark: '#45a049',
-      light: '#81C784',
-      text: '#FFFFFF',
-      gradient: 'linear-gradient(135deg, #81C784 0%, #4CAF50 100%)',
+      main: '#1976d2',
+      light: '#42a5f5',
+      dark: '#1565c0',
     },
     background: {
-      default: '#FFFFFF',
-      paper: '#F5F5F5',
-      dark: '#121212',
-      hover: 'rgba(0, 0, 0, 0.05)',
-      main: '#FFFFFF',
+      default: '#ffffff',
+      paper: '#f5f5f5',
+      main: '#ffffff',
     },
     text: {
-      primary: '#333333',
+      primary: '#000000',
       secondary: '#666666',
       disabled: '#999999',
     },
-    error: '#f44336',
-    border: 'rgba(0, 0, 0, 0.1)',
+    border: {
+      main: '#e0e0e0',
+    },
+    error: {
+      main: '#d32f2f',
+    },
+    warning: {
+      main: '#ed6c02',
+      dark: '#e65100',
+    },
   },
-  transitions: {
-    short: '0.15s',
-    medium: '0.3s',
-    long: '0.5s',
-  },
-  spacing: {
-    xs: '0.25rem',
-    sm: '0.5rem',
-    md: '1rem',
-    lg: '1.5rem',
-    xl: '2rem',
-    xxl: '3rem',
-  },
-  borderRadius: {
-    sm: '4px',
-    md: '8px',
-    lg: '16px',
-  }
 };
 
 // Create MUI theme

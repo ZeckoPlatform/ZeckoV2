@@ -4,6 +4,7 @@ import styled, { keyframes } from 'styled-components';
 import api from '../services/api';
 import debounce from 'lodash/debounce';
 import { useTheme } from '../contexts/ThemeContext';
+import { withErrorBoundary } from '../components/error/withErrorBoundary';
 
 // Animation keyframes
 const rotate = keyframes`
@@ -75,6 +76,89 @@ const useSearchHistory = (initialHistory = []) => {
   return { searchHistory, addToHistory, clearHistory };
 };
 
+const JobsSection = withErrorBoundary(({ jobs, onDelete, onStatusUpdate }) => (
+  <JobsGrid>
+    {jobs.map(job => (
+      <JobCard key={job._id}>
+        <StatusIndicator status={job.status}>{job.status}</StatusIndicator>
+        <JobTitle>{job.title}</JobTitle>
+        <JobDetail>Company: {job.company}</JobDetail>
+        <JobDetail>Category: {job.category}</JobDetail>
+        <JobDetail>Budget: £{job.budget}</JobDetail>
+        <JobDetail>
+          Posted: {new Date(job.createdAt).toLocaleDateString()}
+        </JobDetail>
+        <ButtonGroup>
+          <EditButton to={`/edit-job/${job._id}`}>
+            Edit
+          </EditButton>
+          <DeleteButton onClick={() => onDelete(job._id)}>
+            Delete
+          </DeleteButton>
+          <StatusButton onClick={() => onStatusUpdate(job._id)}>
+            Update Status
+          </StatusButton>
+        </ButtonGroup>
+      </JobCard>
+    ))}
+  </JobsGrid>
+), {
+  fallback: <div>Error loading jobs. Please try again later.</div>
+});
+
+const SearchSection = withErrorBoundary(({ 
+  searchTerm, 
+  searchField, 
+  onSearchChange, 
+  onFieldChange 
+}) => (
+  <SearchContainer>
+    <SearchForm onSubmit={(e) => e.preventDefault()}>
+      <SearchInput
+        type="text"
+        value={searchTerm}
+        onChange={onSearchChange}
+        placeholder="Search jobs..."
+      />
+      <Select 
+        value={searchField}
+        onChange={onFieldChange}
+      >
+        <option value="title">Title</option>
+        <option value="company">Company</option>
+        <option value="category">Category</option>
+        <option value="location">Location</option>
+      </Select>
+    </SearchForm>
+
+    {searchHistory.length > 0 && (
+      <SearchHistoryContainer>
+        <SearchHistoryHeader>
+          <h4>Recent Searches</h4>
+          <ClearButton onClick={clearHistory}>
+            Clear History
+          </ClearButton>
+        </SearchHistoryHeader>
+        <SearchHistoryList>
+          {searchHistory.map((item, index) => (
+            <SearchHistoryItem 
+              key={index}
+              onClick={() => handleHistoryItemClick(item)}
+            >
+              <span>{item.term}</span>
+              <SearchHistoryMeta>
+                {item.field} • {new Date(item.timestamp).toLocaleDateString()}
+              </SearchHistoryMeta>
+            </SearchHistoryItem>
+          ))}
+        </SearchHistoryList>
+      </SearchHistoryContainer>
+    )}
+  </SearchContainer>
+), {
+  fallback: <div>Search functionality is currently unavailable.</div>
+});
+
 const Dashboard = () => {
   const { theme, mode, setMode } = useTheme();
   const [userJobs, setUserJobs] = useState([]);
@@ -124,6 +208,7 @@ const Dashboard = () => {
 
   const fetchUserJobs = async () => {
     try {
+      setLoading(true);
       const response = await api.get('/jobs/user', {
         params: {
           sort: sortBy,
@@ -133,9 +218,10 @@ const Dashboard = () => {
         }
       });
       setUserJobs(response.data);
+      setError('');
     } catch (err) {
-      setError('Failed to fetch your jobs');
       console.error('Error fetching jobs:', err);
+      setError('Failed to load jobs. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -186,6 +272,11 @@ const Dashboard = () => {
       setProfileData(response.data);
     } catch (err) {
       console.error('Error fetching profile:', err);
+      // Set default values if profile fetch fails
+      setProfileData({
+        profilePicture: null,
+        username: 'User'
+      });
     }
   };
 
@@ -235,108 +326,51 @@ const Dashboard = () => {
         </HeaderRight>
       </Header>
 
-      {error && <ErrorMessage>{error}</ErrorMessage>}
+      <ErrorBoundary>
+        <Controls>
+          <SearchSection 
+            searchTerm={searchTerm}
+            searchField={searchField}
+            onSearchChange={handleSearchChange}
+            onFieldChange={(e) => setSearchField(e.target.value)}
+          />
 
-      <Controls>
-        <SearchContainer>
-          <SearchForm onSubmit={(e) => e.preventDefault()}>
-            <SearchInput
-              type="text"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              placeholder="Search jobs..."
-            />
-            <Select 
-              value={searchField}
-              onChange={(e) => setSearchField(e.target.value)}
-            >
-              <option value="title">Title</option>
-              <option value="company">Company</option>
-              <option value="category">Category</option>
-              <option value="location">Location</option>
-            </Select>
-          </SearchForm>
+          <Select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="createdAt">Sort by Date</option>
+            <option value="budget">Sort by Budget</option>
+            <option value="deadline">Sort by Deadline</option>
+          </Select>
 
-          {searchHistory.length > 0 && (
-            <SearchHistoryContainer>
-              <SearchHistoryHeader>
-                <h4>Recent Searches</h4>
-                <ClearButton onClick={clearHistory}>
-                  Clear History
-                </ClearButton>
-              </SearchHistoryHeader>
-              <SearchHistoryList>
-                {searchHistory.map((item, index) => (
-                  <SearchHistoryItem 
-                    key={index}
-                    onClick={() => handleHistoryItemClick(item)}
-                  >
-                    <span>{item.term}</span>
-                    <SearchHistoryMeta>
-                      {item.field} • {new Date(item.timestamp).toLocaleDateString()}
-                    </SearchHistoryMeta>
-                  </SearchHistoryItem>
-                ))}
-              </SearchHistoryList>
-            </SearchHistoryContainer>
-          )}
-        </SearchContainer>
+          <Select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+            <option value="all">All Status</option>
+            <option value="open">Open</option>
+            <option value="in-progress">In Progress</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </Select>
+        </Controls>
 
-        <Select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-          <option value="createdAt">Sort by Date</option>
-          <option value="budget">Sort by Budget</option>
-          <option value="deadline">Sort by Deadline</option>
-        </Select>
+        <Section>
+          <h2>Your Posted Jobs</h2>
+          <JobsSection 
+            jobs={currentJobs}
+            onDelete={handleDelete}
+            onStatusUpdate={handleStatusUpdate}
+          />
 
-        <Select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-          <option value="all">All Status</option>
-          <option value="open">Open</option>
-          <option value="in-progress">In Progress</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </Select>
-      </Controls>
-
-      <Section>
-        <h2>Your Posted Jobs</h2>
-        <JobsGrid>
-          {currentJobs.map(job => (
-            <JobCard key={job._id}>
-              <StatusIndicator status={job.status}>{job.status}</StatusIndicator>
-              <JobTitle>{job.title}</JobTitle>
-              <JobDetail>Company: {job.company}</JobDetail>
-              <JobDetail>Category: {job.category}</JobDetail>
-              <JobDetail>Budget: £{job.budget}</JobDetail>
-              <JobDetail>
-                Posted: {new Date(job.createdAt).toLocaleDateString()}
-              </JobDetail>
-              <ButtonGroup>
-                <EditButton to={`/edit-job/${job._id}`}>
-                  Edit
-                </EditButton>
-                <DeleteButton onClick={() => handleDelete(job._id)}>
-                  Delete
-                </DeleteButton>
-                <StatusButton onClick={() => handleStatusUpdate(job._id)}>
-                  Update Status
-                </StatusButton>
-              </ButtonGroup>
-            </JobCard>
-          ))}
-        </JobsGrid>
-
-        <Pagination>
-          {Array.from({ length: Math.ceil(userJobs.length / jobsPerPage) }).map((_, index) => (
-            <PageButton
-              key={index}
-              active={currentPage === index + 1}
-              onClick={() => paginate(index + 1)}
-            >
-              {index + 1}
-            </PageButton>
-          ))}
-        </Pagination>
-      </Section>
+          <Pagination>
+            {Array.from({ length: Math.ceil(userJobs.length / jobsPerPage) }).map((_, index) => (
+              <PageButton
+                key={index}
+                active={currentPage === index + 1}
+                onClick={() => paginate(index + 1)}
+              >
+                {index + 1}
+              </PageButton>
+            ))}
+          </Pagination>
+        </Section>
+      </ErrorBoundary>
     </DashboardContainer>
   );
 };
@@ -766,4 +800,10 @@ const ThemeToggle = styled.button`
   }
 `;
 
-export default Dashboard;
+export default withErrorBoundary(Dashboard, {
+  fallback: <div>Dashboard is currently unavailable. Please try again later.</div>,
+  onError: (error, errorInfo) => {
+    // Log error to your error tracking service
+    console.error('Dashboard Error:', error, errorInfo);
+  }
+});

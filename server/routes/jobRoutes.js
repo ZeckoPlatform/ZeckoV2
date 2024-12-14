@@ -194,43 +194,25 @@ router.get('/user', auth, async (req, res) => {
       query.status = status;
     }
     
-    // Add search if both search term and field are provided
+    // Add search if provided
     if (search && searchField) {
       query[searchField] = new RegExp(search, 'i');
     }
-    
-    // Build sort object with error handling
-    let sortObj = {};
-    try {
-      switch(sort) {
-        case 'budget':
-          sortObj = { budget: -1 };
-          break;
-        case 'deadline':
-          sortObj = { deadline: 1 };
-          break;
-        default:
-          sortObj = { createdAt: -1 };
-      }
-    } catch (err) {
-      console.error('Sort error:', err);
-      sortObj = { createdAt: -1 }; // fallback to default sort
-    }
 
-    console.log('Query:', query); // Debug log
-    console.log('Sort:', sortObj); // Debug log
+    // Default sort to createdAt if not specified
+    const sortObj = sort === 'deadline' ? { deadline: 1 } : 
+                   sort === 'budget' ? { budget: -1 } : 
+                   { createdAt: -1 };
 
     const jobs = await Job.find(query)
       .sort(sortObj)
       .populate('postedBy', 'name email')
-      .lean() // For better performance
-      .exec();
-      
-    console.log('Found jobs:', jobs.length); // Debug log
-    res.json(jobs);
+      .lean();
+
+    return res.json(jobs);
   } catch (error) {
-    console.error('Search jobs error:', error);
-    res.status(500).json({ 
+    console.error('Error in jobs/user:', error);
+    return res.status(500).json({ 
       message: 'Error fetching jobs',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });

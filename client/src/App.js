@@ -4,18 +4,22 @@ import styled from 'styled-components';
 import Navbar from './components/Navbar';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { useAuth } from './contexts/AuthContext';
+import ErrorBoundary from './components/error/ErrorBoundary';
+import { withErrorBoundary } from './components/error/withErrorBoundary';
 
 const App = () => {
   const { user } = useAuth();
 
   return (
     <ThemeProvider>
-      <AppContainer>
-        <Navbar />
-        <MainContent>
-          <Outlet />
-        </MainContent>
-      </AppContainer>
+      <ErrorBoundary>
+        <AppContainer>
+          <Navbar />
+          <MainContent>
+            <Outlet />
+          </MainContent>
+        </AppContainer>
+      </ErrorBoundary>
     </ThemeProvider>
   );
 };
@@ -32,4 +36,11 @@ const MainContent = styled.main`
   min-height: calc(100vh - 60px);
 `;
 
-export default App;
+// Wrap the entire App with error boundary
+export default withErrorBoundary(App, {
+  fallback: <div>Something went wrong. Please refresh the page.</div>,
+  onError: (error, errorInfo) => {
+    // Log error to your error tracking service
+    console.error('App Error:', error, errorInfo);
+  }
+});
