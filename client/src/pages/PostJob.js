@@ -33,7 +33,7 @@ const PostJob = () => {
       await api.post('/jobs', formData);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to post job');
+      setError(err.response?.data?.error || 'Failed to post lead');
     } finally {
       setLoading(false);
     }
@@ -42,7 +42,7 @@ const PostJob = () => {
   return (
     <Container>
       <FormCard>
-        <h1>Post a New Job</h1>
+        <h1>Post a New Lead</h1>
         {error && <ErrorMessage>{error}</ErrorMessage>}
         <Form onSubmit={handleSubmit}>
           <FormGroup>
@@ -110,7 +110,7 @@ const PostJob = () => {
           </FormGroup>
 
           <Button type="submit" disabled={loading}>
-            {loading ? 'Posting...' : 'Post Job'}
+            {loading ? 'Posting...' : 'Post Lead'}
           </Button>
         </Form>
       </FormCard>
