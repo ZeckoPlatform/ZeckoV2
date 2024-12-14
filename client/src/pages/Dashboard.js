@@ -438,7 +438,7 @@ const Dashboard = () => {
                       onClick={() => handleEditJob(job)}
                       disabled={actionLoading[job._id]}
                     >
-                      <FiEdit />
+                      {actionLoading[job._id] ? <LoadingSpinner small /> : <FiEdit />}
                     </ActionButton>
                     <ActionButton 
                       onClick={() => handleDeleteClick(job)}
