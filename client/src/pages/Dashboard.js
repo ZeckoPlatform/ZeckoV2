@@ -28,7 +28,7 @@ const HeaderRight = styled.div`
 
 const PostJobButton = styled(Link)`
   padding: 0.5rem 1rem;
-  background: ${({ theme }) => theme.colors.primary};
+  background: #007bff;
   color: white;
   border-radius: 4px;
   text-decoration: none;
@@ -54,11 +54,11 @@ const ProfileDropdown = styled.div`
 const ProfileLink = styled(Link)`
   display: block;
   padding: 0.5rem 1rem;
-  color: ${({ theme }) => theme.colors.text};
+  color: #333;
   text-decoration: none;
   
   &:hover {
-    background: ${({ theme }) => theme.colors.background};
+    background: #f5f5f5;
   }
 `;
 
@@ -69,10 +69,10 @@ const LogoutButton = styled.button`
   border: none;
   background: none;
   cursor: pointer;
-  color: ${({ theme }) => theme.colors.danger};
+  color: #dc3545;
   
   &:hover {
-    background: ${({ theme }) => theme.colors.background};
+    background: #f5f5f5;
   }
 `;
 
@@ -83,7 +83,7 @@ const SearchContainer = styled.div`
 const SearchInput = styled.input`
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  border: 1px solid #ddd;
   border-radius: 4px;
 `;
 
@@ -93,7 +93,7 @@ const LoadingSpinner = styled.div`
 `;
 
 const ErrorMessage = styled.div`
-  color: ${({ theme }) => theme.colors.danger};
+  color: #dc3545;
   padding: 1rem;
   text-align: center;
 `;
@@ -101,7 +101,7 @@ const ErrorMessage = styled.div`
 const EmptyState = styled.div`
   text-align: center;
   padding: 2rem;
-  color: ${({ theme }) => theme.colors.textSecondary};
+  color: #6c757d;
 `;
 
 const JobsList = styled.div`
@@ -124,7 +124,7 @@ const JobTitle = styled.h3`
 `;
 
 const JobCompany = styled.div`
-  color: ${({ theme }) => theme.colors.textSecondary};
+  color: #6c757d;
 `;
 
 const JobActions = styled.div`
@@ -137,10 +137,10 @@ const ActionButton = styled.button`
   border: none;
   background: none;
   cursor: pointer;
-  color: ${({ theme }) => theme.colors.textSecondary};
+  color: #6c757d;
   
   &:hover {
-    color: ${({ theme }) => theme.colors.primary};
+    color: #007bff;
   }
 `;
 
@@ -153,9 +153,9 @@ const Pagination = styled.div`
 
 const PageButton = styled.button`
   padding: 0.5rem 1rem;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  background: ${({ active }) => active ? theme.colors.primary : 'white'};
-  color: ${({ active }) => active ? 'white' : theme.colors.text};
+  border: 1px solid #ddd;
+  background: ${props => props.active ? '#007bff' : 'white'};
+  color: ${props => props.active ? 'white' : '#333'};
   cursor: pointer;
   border-radius: 4px;
   
