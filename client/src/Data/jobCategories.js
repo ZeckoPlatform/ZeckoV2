@@ -8,7 +8,7 @@ import {
   FaTruck, FaLeaf, FaCut, FaGavel, FaMedkit, 
   FaGraduationCap, FaPalette, FaTheaterMasks, FaVideo, 
   FaUserTie, FaChalkboardTeacher, FaHandsHelping, FaStore, 
-  FaWarehouse, FaIndustry, FaShield, FaFlask
+  FaWarehouse, FaIndustry, FaShieldAlt, FaFlask
 } from 'react-icons/fa';
 
 export const jobCategories = {
@@ -687,7 +687,7 @@ export const jobCategories = {
   },
   "Security & Safety": {
     name: "Security & Safety",
-    icon: FaShield,
+    icon: FaShieldAlt,
     description: "Comprehensive security and safety services for businesses and individuals",
     subcategories: [
       "Security Guards",
