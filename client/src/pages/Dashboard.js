@@ -316,21 +316,10 @@ const Dashboard = () => {
         setLoading(true);
         setError(null);
         
-        const token = localStorage.getItem('token');
-        if (!token) {
-          navigate('/login');
-          return;
-        }
-
-        const response = await api.get('/jobs/search', {
-          params: { 
-            term,
-            page: currentPage,
-            limit: pageSize
-          },
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+        const response = await api.searchJobs({ 
+          term,
+          page: currentPage,
+          limit: pageSize
         });
 
         if (response.data && response.data.jobs) {
@@ -342,18 +331,12 @@ const Dashboard = () => {
         }
       } catch (err) {
         console.error('Search error:', err);
-        if (err.response?.status === 401) {
-          localStorage.removeItem('token');
-          navigate('/login');
-        } else {
-          setError('Search failed. Please try again.');
-          toast.error('Search failed');
-        }
+        handleApiError(err);
       } finally {
         setLoading(false);
       }
     }, 300),
-    [currentPage, pageSize, navigate]
+    [currentPage, pageSize]
   );
 
   const handlePageChange = (page) => {
@@ -433,17 +416,7 @@ const Dashboard = () => {
         return;
       }
 
-      const response = await api.get('/jobs/user', {
-        params: { 
-          page, 
-          limit: pageSize 
-        },
-        headers: { 
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      console.log('API Response:', response.data);
+      const response = await api.getUserJobs({ page, limit: pageSize });
 
       if (response.data && Array.isArray(response.data.jobs)) {
         setJobs(response.data.jobs);
@@ -454,17 +427,7 @@ const Dashboard = () => {
       }
     } catch (err) {
       console.error('Fetch error:', err);
-      
-      if (err.response?.status === 404) {
-        toast.error('Jobs endpoint not found. Please check API configuration.');
-        setError({
-          message: 'API endpoint not found',
-          details: 'The jobs endpoint is not available',
-          code: 404
-        });
-      } else {
-        handleApiError(err);
-      }
+      handleApiError(err);
     } finally {
       setLoading(false);
     }

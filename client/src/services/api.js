@@ -38,8 +38,7 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-// Create API object using axiosInstance
-const api = {
+export default {
   // Auth
   login: (credentials) => axiosInstance.post('/auth/login', credentials),
   register: (userData) => axiosInstance.post('/auth/register', userData),
@@ -59,5 +58,3 @@ const api = {
   // Search
   searchJobs: (params) => axiosInstance.get('/jobs/search', { params })
 };
-
-export default api;  // Export the api object instead of axiosInstance
