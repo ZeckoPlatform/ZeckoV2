@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { FiChevronLeft, FiChevronRight, FiEye, FiEdit, FiTrash2, FiUser, FiRefreshCw } from 'react-icons/fi';
 import api from '../services/api';
@@ -201,8 +201,59 @@ const ErrorContainer = styled.div`
   margin: 1rem 0;
 `;
 
+const MenuButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: ${props => props.theme.colors.text};
+  
+  &:hover {
+    background: ${props => props.theme.colors.backgroundHover};
+  }
+`;
+
+const RefreshButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: ${props => props.theme.colors.secondary};
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  
+  &:hover {
+    background: ${props => props.theme.colors.secondaryDark};
+  }
+`;
+
+const JobStatus = styled.span`
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  background: ${props => 
+    props.status === 'Active' ? props.theme.colors.success :
+    props.status === 'Pending' ? props.theme.colors.warning :
+    props.status === 'Closed' ? props.theme.colors.danger :
+    props.theme.colors.secondary};
+  color: white;
+`;
+
+const JobContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
 const Dashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { theme } = useTheme();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -239,6 +290,16 @@ const Dashboard = () => {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  // Check for new job posted and refresh list
+  useEffect(() => {
+    if (location.state?.jobPosted) {
+      fetchJobs(1);
+      toast.success('Job posted successfully!');
+      // Clear the state
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state]);
 
   const handleSearch = useCallback(
     debounce(async (term) => {
@@ -322,18 +383,29 @@ const Dashboard = () => {
         return;
       }
 
-      const response = await api.get('/jobs', {
-        params: { page, limit: pageSize },
-        headers: { Authorization: `Bearer ${token}` }
+      // Get user ID from token or localStorage
+      const userId = localStorage.getItem('userId');
+
+      // Updated endpoint to get user's jobs
+      const response = await api.get('/api/jobs/user', {
+        params: { 
+          userId,
+          page, 
+          limit: pageSize 
+        },
+        headers: { 
+          Authorization: `Bearer ${token}`
+        }
       });
 
-      if (response.data && response.data.jobs) {
+      if (response.data && Array.isArray(response.data.jobs)) {
         setJobs(response.data.jobs);
         setTotalPages(Math.ceil(response.data.total / pageSize));
-        // Cache the successful response
-        localStorage.setItem('cachedJobs', JSON.stringify(response.data.jobs));
-        setLastSuccessfulFetch(new Date().toISOString());
-        setRetryCount(0);
+        console.log('Fetched jobs:', response.data.jobs); // Debug log
+      } else {
+        console.log('No jobs found or invalid response:', response.data); // Debug log
+        setJobs([]);
+        setTotalPages(1);
       }
     } catch (err) {
       console.error('Fetch error:', err);
@@ -471,6 +543,18 @@ const Dashboard = () => {
     </ActionButton>
   );
 
+  const handleProfileClick = () => {
+    setShowProfileMenu(false);
+    navigate('/dashboard'); // Stay on dashboard for now since profile isn't ready
+    toast.info('Profile feature coming soon!');
+  };
+
+  // Add manual refresh functionality
+  const handleRefresh = () => {
+    fetchJobs(currentPage);
+    toast.info('Refreshing job list...');
+  };
+
   return (
     <DashboardContainer>
       {isOffline && (
@@ -487,14 +571,21 @@ const Dashboard = () => {
           <h1>Dashboard</h1>
         </HeaderLeft>
         <HeaderRight>
-          <PostJobButton to="/post-job">Post New Job</PostJobButton>
+          <RefreshButton onClick={handleRefresh}>
+            <FiRefreshCw /> Refresh
+          </RefreshButton>
+          <PostJobButton to="/jobs/new">Post New Job</PostJobButton>
           <ProfileButton onClick={() => setShowProfileMenu(!showProfileMenu)}>
             <FiUser />
           </ProfileButton>
           {showProfileMenu && (
             <ProfileDropdown>
-              <ProfileLink to="/profile">Profile</ProfileLink>
-              <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
+              <MenuButton onClick={handleProfileClick}>
+                <FiUser /> Dashboard
+              </MenuButton>
+              <MenuButton onClick={handleLogout}>
+                Logout
+              </MenuButton>
             </ProfileDropdown>
           )}
         </HeaderRight>
@@ -527,7 +618,10 @@ const Dashboard = () => {
       )}
       
       {!loading && !error && jobs.length === 0 && (
-        <EmptyState>No jobs found</EmptyState>
+        <EmptyState>
+          <p>No jobs found. Post your first job!</p>
+          <PostJobButton to="/jobs/new">Post a Job</PostJobButton>
+        </EmptyState>
       )}
       
       {!loading && !error && jobs.length > 0 && (
@@ -535,8 +629,13 @@ const Dashboard = () => {
           <JobsList>
             {jobs.map(job => (
               <JobCard key={job._id}>
-                <JobTitle>{job.title}</JobTitle>
-                <JobCompany>{job.company}</JobCompany>
+                <JobContent>
+                  <JobTitle>{job.title}</JobTitle>
+                  <JobCompany>{job.company}</JobCompany>
+                  <JobStatus status={job.status}>
+                    {job.status || 'Active'}
+                  </JobStatus>
+                </JobContent>
                 <JobActions>
                   {renderActionButton(job, 'View', <FiEye />, handleViewJob)}
                   {renderActionButton(job, 'Edit', <FiEdit />, handleEditJob)}
