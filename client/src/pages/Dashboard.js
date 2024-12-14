@@ -4,6 +4,7 @@ import styled, { keyframes } from 'styled-components';
 import api from '../services/api';
 import debounce from 'lodash/debounce';
 import { useTheme } from '../contexts/ThemeContext';
+import ErrorBoundary from '../components/error/ErrorBoundary';
 import { withErrorBoundary } from '../components/error/withErrorBoundary';
 
 // Animation keyframes
@@ -178,6 +179,7 @@ const Dashboard = () => {
     profilePicture: null,
     username: ''
   });
+  const [showSearchHistory, setShowSearchHistory] = useState(false);
 
   useEffect(() => {
     fetchUserJobs();
@@ -803,7 +805,6 @@ const ThemeToggle = styled.button`
 export default withErrorBoundary(Dashboard, {
   fallback: <div>Dashboard is currently unavailable. Please try again later.</div>,
   onError: (error, errorInfo) => {
-    // Log error to your error tracking service
     console.error('Dashboard Error:', error, errorInfo);
   }
 });
