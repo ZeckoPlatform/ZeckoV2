@@ -49,7 +49,44 @@ const PostJob = () => {
         {error && <ErrorMessage>{error}</ErrorMessage>}
         <Form onSubmit={handleSubmit}>
           <FormGroup>
-            <Label>Title</Label>
+            <Label>Category *</Label>
+            <Select
+              value={selectedCategory}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value);
+                setSelectedSubcategory(''); // Reset subcategory when category changes
+              }}
+              required
+            >
+              <option value="">Select a Category</option>
+              {getAllCategories().map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </Select>
+          </FormGroup>
+
+          {selectedCategory && (
+            <FormGroup>
+              <Label>Subcategory *</Label>
+              <Select
+                value={selectedSubcategory}
+                onChange={(e) => setSelectedSubcategory(e.target.value)}
+                required
+              >
+                <option value="">Select a Subcategory</option>
+                {getSubcategories(selectedCategory).map((subcategory) => (
+                  <option key={subcategory} value={subcategory}>
+                    {subcategory}
+                  </option>
+                ))}
+              </Select>
+            </FormGroup>
+          )}
+
+          <FormGroup>
+            <Label>Title *</Label>
             <Input
               type="text"
               name="title"
@@ -60,7 +97,7 @@ const PostJob = () => {
           </FormGroup>
 
           <FormGroup>
-            <Label>Description</Label>
+            <Label>Description *</Label>
             <Textarea
               name="description"
               value={formData.description}
@@ -111,41 +148,6 @@ const PostJob = () => {
               required
             />
           </FormGroup>
-
-          <FormGroup>
-            <Label>Category</Label>
-            <Select
-              value={selectedCategory}
-              onChange={(e) => {
-                setSelectedCategory(e.target.value);
-                setSelectedSubcategory(''); // Reset subcategory when category changes
-              }}
-            >
-              <option value="">Select a Category</option>
-              {getAllCategories().map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </Select>
-          </FormGroup>
-
-          {selectedCategory && (
-            <FormGroup>
-              <Label>Subcategory</Label>
-              <Select
-                value={selectedSubcategory}
-                onChange={(e) => setSelectedSubcategory(e.target.value)}
-              >
-                <option value="">Select a Subcategory</option>
-                {getSubcategories(selectedCategory).map((subcategory) => (
-                  <option key={subcategory} value={subcategory}>
-                    {subcategory}
-                  </option>
-                ))}
-              </Select>
-            </FormGroup>
-          )}
 
           <Button type="submit" disabled={loading}>
             {loading ? 'Posting...' : 'Post Lead'}
