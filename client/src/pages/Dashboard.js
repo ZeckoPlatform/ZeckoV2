@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import api from '../services/api';
 import debounce from 'lodash/debounce';
+import { useTheme } from '../contexts/ThemeContext';
 
 // Animation keyframes
 const rotate = keyframes`
@@ -75,6 +76,7 @@ const useSearchHistory = (initialHistory = []) => {
 };
 
 const Dashboard = () => {
+  const { theme, mode, setMode } = useTheme();
   const [userJobs, setUserJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -187,6 +189,10 @@ const Dashboard = () => {
     }
   };
 
+  const toggleTheme = () => {
+    setMode(mode === 'light' ? 'dark' : 'light');
+  };
+
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -196,6 +202,9 @@ const Dashboard = () => {
           <h1>Dashboard</h1>
         </HeaderLeft>
         <HeaderRight>
+          <ThemeToggle onClick={toggleTheme}>
+            {mode === 'light' ? '🌙' : '☀️'}
+          </ThemeToggle>
           <PostJobButton to="/post-job">Post New Job</PostJobButton>
           <ProfileMenu>
             <ProfileButton 
@@ -652,6 +661,7 @@ const ProfileButton = styled.button`
   gap: 0.5rem;
   position: relative;
   transition: all 0.3s ease;
+  color: ${({ theme }) => theme.colors.text.primary};
   
   ${({ isOpen }) => isOpen && `
     &::after {
@@ -689,7 +699,7 @@ const ProfileDropdown = styled.div`
   position: absolute;
   top: 100%;
   right: 0;
-  background: white;
+  background: ${({ theme }) => theme.colors.background.paper};
   border: 1px solid ${({ theme }) => theme.colors.border.main};
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -698,13 +708,6 @@ const ProfileDropdown = styled.div`
   opacity: 0;
   transform: translateY(-10px);
   animation: dropdownAppear 0.3s ease forwards;
-  
-  @keyframes dropdownAppear {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
 `;
 
 const ProfileLink = styled(Link)`
@@ -742,6 +745,24 @@ const ProfileImage = styled.img`
   
   &:hover {
     animation: ${pulse} 1s ease infinite;
+  }
+`;
+
+const ThemeToggle = styled.button`
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.background.paper};
+    transform: scale(1.1);
   }
 `;
 
