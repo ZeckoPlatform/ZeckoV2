@@ -366,6 +366,16 @@ module.exports = {
     server
 };
 
+// Import routes
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+const leadRoutes = require('./routes/api/lead');
+
+// Apply routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/leads', leadRoutes);
+
 app.use('/api/jobs', jobRoutes);
 app.use('/api/users', userRoutes);
 
