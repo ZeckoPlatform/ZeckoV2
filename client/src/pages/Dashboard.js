@@ -6,7 +6,8 @@ import debounce from 'lodash/debounce';
 import { useTheme } from '../contexts/ThemeContext';
 import ErrorBoundary from '../components/error/ErrorBoundary';
 import { withErrorBoundary } from '../components/error/withErrorBoundary';
-import { FiChevronLeft, FiChevronRight, FiEye, FiEdit, FiTrash2 } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiEye, FiEdit, FiTrash2, FiUser } from 'react-icons/fi';
+import { toast } from 'react-toastify';
 
 // Animation keyframes
 const rotate = keyframes`
@@ -178,6 +179,11 @@ const Dashboard = () => {
   const [pageSize] = useState(10);
   const [selectedJob, setSelectedJob] = useState(null);
   const [showJobDetails, setShowJobDetails] = useState(false);
+  const [actionLoading, setActionLoading] = useState({});
+  const [editingJob, setEditingJob] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [jobToDelete, setJobToDelete] = useState(null);
 
   // Handler functions
   const handleSearch = useCallback(
@@ -329,6 +335,62 @@ const Dashboard = () => {
     );
   };
 
+  // Edit job functionality
+  const handleEditJob = (job) => {
+    setEditingJob(job);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateJob = async (updatedData) => {
+    try {
+      setActionLoading(prev => ({ ...prev, [editingJob._id]: true }));
+      
+      const response = await api.put(`/jobs/${editingJob._id}`, updatedData);
+      
+      // Update jobs list with new data
+      setJobs(jobs.map(job => 
+        job._id === editingJob._id ? response.data : job
+      ));
+      
+      setShowEditModal(false);
+      setEditingJob(null);
+      toast.success('Job updated successfully');
+    } catch (error) {
+      console.error('Error updating job:', error);
+      toast.error(error.response?.data?.message || 'Failed to update job');
+    } finally {
+      setActionLoading(prev => ({ ...prev, [editingJob._id]: false }));
+    }
+  };
+
+  // Delete job functionality
+  const handleDeleteClick = (job) => {
+    setJobToDelete(job);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!jobToDelete) return;
+
+    try {
+      setActionLoading(prev => ({ ...prev, [jobToDelete._id]: true }));
+      
+      await api.delete(`/jobs/${jobToDelete._id}`);
+      
+      // Remove job from list
+      setJobs(jobs.filter(job => job._id !== jobToDelete._id));
+      
+      setShowDeleteConfirm(false);
+      setJobToDelete(null);
+      toast.success('Job deleted successfully');
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete job');
+    } finally {
+      setActionLoading(prev => ({ ...prev, [jobToDelete._id]: false }));
+    }
+  };
+
   return (
     <DashboardContainer>
       <Header>
@@ -389,13 +451,22 @@ const Dashboard = () => {
                     </StatusIndicator>
                   </JobContent>
                   <JobActions>
-                    <ActionButton onClick={() => handleViewJob(job)}>
+                    <ActionButton 
+                      onClick={() => handleViewJob(job)}
+                      disabled={actionLoading[job._id]}
+                    >
                       <FiEye />
                     </ActionButton>
-                    <ActionButton onClick={() => handleEditJob(job._id)}>
+                    <ActionButton 
+                      onClick={() => handleEditJob(job)}
+                      disabled={actionLoading[job._id]}
+                    >
                       <FiEdit />
                     </ActionButton>
-                    <ActionButton onClick={() => handleDeleteJob(job._id)}>
+                    <ActionButton 
+                      onClick={() => handleDeleteClick(job)}
+                      disabled={actionLoading[job._id]}
+                    >
                       <FiTrash2 />
                     </ActionButton>
                   </JobActions>
@@ -449,6 +520,66 @@ const Dashboard = () => {
               </Button>
               <Button secondary onClick={() => setShowJobDetails(false)}>
                 Close
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && editingJob && (
+        <Modal onClose={() => !actionLoading[editingJob._id] && setShowEditModal(false)}>
+          <ModalContent>
+            <ModalHeader>
+              <h2>Edit Job</h2>
+              <CloseButton 
+                onClick={() => !actionLoading[editingJob._id] && setShowEditModal(false)}
+                disabled={actionLoading[editingJob._id]}
+              >
+                ×
+              </CloseButton>
+            </ModalHeader>
+            <ModalBody>
+              <JobForm
+                initialData={editingJob}
+                onSubmit={handleUpdateJob}
+                isLoading={actionLoading[editingJob._id]}
+              />
+            </ModalBody>
+          </ModalContent>
+        </Modal>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && jobToDelete && (
+        <Modal onClose={() => !actionLoading[jobToDelete._id] && setShowDeleteConfirm(false)}>
+          <ModalContent>
+            <ModalHeader>
+              <h2>Confirm Delete</h2>
+              <CloseButton 
+                onClick={() => !actionLoading[jobToDelete._id] && setShowDeleteConfirm(false)}
+                disabled={actionLoading[jobToDelete._id]}
+              >
+                ×
+              </CloseButton>
+            </ModalHeader>
+            <ModalBody>
+              <p>Are you sure you want to delete "{jobToDelete.title}"?</p>
+              <p>This action cannot be undone.</p>
+            </ModalBody>
+            <ModalFooter>
+              <Button 
+                onClick={handleDeleteConfirm}
+                disabled={actionLoading[jobToDelete._id]}
+              >
+                {actionLoading[jobToDelete._id] ? <LoadingSpinner small /> : 'Delete'}
+              </Button>
+              <Button 
+                secondary
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={actionLoading[jobToDelete._id]}
+              >
+                Cancel
               </Button>
             </ModalFooter>
           </ModalContent>
@@ -951,6 +1082,108 @@ const RequirementItem = styled.li`
 const PaginationEllipsis = styled.span`
   padding: 0.5rem;
   color: ${({ theme }) => theme.colors.text.secondary};
+`;
+
+const LoadingSpinner = styled.div`
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid ${({ theme }) => theme.colors.primary.main};
+  border-radius: 50%;
+  width: ${({ small }) => small ? '16px' : '24px'};
+  height: ${({ small }) => small ? '16px' : '24px'};
+  animation: spin 1s linear infinite;
+  margin: ${({ small }) => small ? '0' : '2rem auto'};
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 2rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+`;
+
+const JobsList = styled.div`
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+`;
+
+const JobContent = styled.div`
+  flex: 1;
+`;
+
+const JobCompany = styled.div`
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin-bottom: 0.25rem;
+`;
+
+const JobLocation = styled.div`
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: 0.875rem;
+`;
+
+const JobActions = styled.div`
+  display: flex;
+  gap: 0.5rem;
+`;
+
+const ActionButton = styled.button`
+  padding: 0.5rem;
+  border: none;
+  background: none;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  cursor: pointer;
+  border-radius: 4px;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.background.light};
+    color: ${({ theme }) => theme.colors.primary.main};
+  }
+`;
+
+const Button = styled.button`
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: ${({ secondary, theme }) => 
+    secondary ? 'white' : theme.colors.primary.main};
+  color: ${({ secondary, theme }) => 
+    secondary ? theme.colors.text.primary : 'white'};
+  border: 1px solid ${({ secondary, theme }) => 
+    secondary ? theme.colors.border.main : 'transparent'};
+
+  &:hover {
+    background: ${({ secondary, theme }) => 
+      secondary ? theme.colors.background.light : theme.colors.primary.dark};
+  }
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+`;
+
+const UserIcon = styled(FiUser)`
+  width: 24px;
+  height: 24px;
+`;
+
+const JobForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 `;
 
 export default withErrorBoundary(Dashboard, {
