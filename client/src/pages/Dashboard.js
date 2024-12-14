@@ -1,156 +1,505 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import Profile from './Profile';
-import Orders from './Orders';
-import Notifications from './Notifications';
-import PostJob from './PostJob';
 import api from '../services/api';
+import debounce from 'lodash/debounce';
 
 const Dashboard = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const canPostJob = user?.role === 'user' || !user?.role;
+  const [userJobs, setUserJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const jobsPerPage = 6;
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchField, setSearchField] = useState('title');
+  const [searchHistory, setSearchHistory] = useState(() => {
+    const saved = localStorage.getItem('searchHistory');
+    return saved ? JSON.parse(saved) : [];
+  });
 
-  const [activeSection, setActiveSection] = useState('profile');
+  useEffect(() => {
+    fetchUserJobs();
+  }, [sortBy, filterStatus]);
 
-  const handlePostJob = () => {
-    navigate('/post-job');
+  const debouncedSearch = useCallback(
+    debounce((term, field) => {
+      if (term.length >= 2) {
+        fetchUserJobs();
+        const newHistory = [
+          { term, field, timestamp: new Date().toISOString() },
+          ...searchHistory
+        ].slice(0, 5);
+        setSearchHistory(newHistory);
+        localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+      }
+    }, 500),
+    [searchHistory]
+  );
+
+  const handleSearchChange = (e) => {
+    const newTerm = e.target.value;
+    setSearchTerm(newTerm);
+    debouncedSearch(newTerm, searchField);
   };
 
-  const renderContent = () => {
-    switch(activeSection) {
-      case 'profile':
-        return <Profile />;
-      case 'orders':
-        return <Orders />;
-      case 'notifications':
-        return <Notifications />;
-      case 'post-job':
-        return <PostJob />;
-      default:
-        return <Profile />;
+  const useHistoryItem = (item) => {
+    setSearchTerm(item.term);
+    setSearchField(item.field);
+    fetchUserJobs();
+  };
+
+  const clearSearchHistory = () => {
+    setSearchHistory([]);
+    localStorage.removeItem('searchHistory');
+  };
+
+  const fetchUserJobs = async () => {
+    try {
+      const response = await api.get('/jobs/user', {
+        params: {
+          sort: sortBy,
+          status: filterStatus,
+          search: searchTerm,
+          searchField: searchField
+        }
+      });
+      setUserJobs(response.data);
+    } catch (err) {
+      setError('Failed to fetch your jobs');
+      console.error('Error fetching jobs:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleDelete = async (jobId) => {
+    if (window.confirm('Are you sure you want to delete this job?')) {
+      try {
+        await api.delete(`/jobs/${jobId}`);
+        setUserJobs(userJobs.filter(job => job._id !== jobId));
+      } catch (err) {
+        setError('Failed to delete job');
+        console.error('Error deleting job:', err);
+      }
+    }
+  };
+
+  const handleStatusUpdate = async (jobId) => {
+    try {
+      const newStatus = prompt('Enter new status (open/in-progress/completed/cancelled):');
+      if (!newStatus) return;
+
+      await api.patch(`/jobs/${jobId}/status`, { status: newStatus });
+      fetchUserJobs();
+    } catch (err) {
+      setError('Failed to update job status');
+      console.error('Error updating status:', err);
+    }
+  };
+
+  // Get current jobs for pagination
+  const indexOfLastJob = currentPage * jobsPerPage;
+  const indexOfFirstJob = indexOfLastJob - jobsPerPage;
+  const currentJobs = userJobs.slice(indexOfFirstJob, indexOfLastJob);
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  if (loading) return <div>Loading...</div>;
+
   return (
     <DashboardContainer>
-      <WelcomeSection>
-        <WelcomeHeader>
-          <h1>Welcome, {user?.username || 'User'}!</h1>
-          {canPostJob && (
-            <PostJobButton onClick={handlePostJob}>
-              Post a Job
-            </PostJobButton>
-          )}
-        </WelcomeHeader>
-      </WelcomeSection>
+      <Header>
+        <h1>Dashboard</h1>
+        <PostJobButton to="/post-job">Post New Job</PostJobButton>
+      </Header>
 
-      <DashboardLayout>
-        <Sidebar>
-          <NavItem 
-            active={activeSection === 'profile'} 
-            onClick={() => setActiveSection('profile')}
-          >
-            Profile
-          </NavItem>
-          <NavItem 
-            active={activeSection === 'orders'} 
-            onClick={() => setActiveSection('orders')}
-          >
-            Orders
-          </NavItem>
-          <NavItem 
-            active={activeSection === 'notifications'} 
-            onClick={() => setActiveSection('notifications')}
-          >
-            Notifications
-          </NavItem>
-          {canPostJob && (
-            <NavItem 
-              active={activeSection === 'post-job'} 
-              onClick={handlePostJob}
+      {error && <ErrorMessage>{error}</ErrorMessage>}
+
+      <Controls>
+        <SearchContainer>
+          <SearchForm onSubmit={(e) => e.preventDefault()}>
+            <SearchInput
+              type="text"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              placeholder="Search jobs..."
+            />
+            <Select 
+              value={searchField}
+              onChange={(e) => setSearchField(e.target.value)}
             >
-              Post a Job
-            </NavItem>
-          )}
-        </Sidebar>
+              <option value="title">Title</option>
+              <option value="company">Company</option>
+              <option value="category">Category</option>
+              <option value="location">Location</option>
+            </Select>
+          </SearchForm>
 
-        <ContentArea>
-          {renderContent()}
-        </ContentArea>
-      </DashboardLayout>
+          {searchHistory.length > 0 && (
+            <SearchHistoryContainer>
+              <SearchHistoryHeader>
+                <h4>Recent Searches</h4>
+                <ClearButton onClick={clearSearchHistory}>
+                  Clear History
+                </ClearButton>
+              </SearchHistoryHeader>
+              <SearchHistoryList>
+                {searchHistory.map((item, index) => (
+                  <SearchHistoryItem 
+                    key={index}
+                    onClick={() => useHistoryItem(item)}
+                  >
+                    <span>{item.term}</span>
+                    <SearchHistoryMeta>
+                      {item.field} • {new Date(item.timestamp).toLocaleDateString()}
+                    </SearchHistoryMeta>
+                  </SearchHistoryItem>
+                ))}
+              </SearchHistoryList>
+            </SearchHistoryContainer>
+          )}
+        </SearchContainer>
+
+        <Select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="createdAt">Sort by Date</option>
+          <option value="budget">Sort by Budget</option>
+          <option value="deadline">Sort by Deadline</option>
+        </Select>
+
+        <Select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+          <option value="all">All Status</option>
+          <option value="open">Open</option>
+          <option value="in-progress">In Progress</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </Select>
+      </Controls>
+
+      <Section>
+        <h2>Your Posted Jobs</h2>
+        <JobsGrid>
+          {currentJobs.map(job => (
+            <JobCard key={job._id}>
+              <StatusIndicator status={job.status}>{job.status}</StatusIndicator>
+              <JobTitle>{job.title}</JobTitle>
+              <JobDetail>Company: {job.company}</JobDetail>
+              <JobDetail>Category: {job.category}</JobDetail>
+              <JobDetail>Budget: £{job.budget}</JobDetail>
+              <JobDetail>
+                Posted: {new Date(job.createdAt).toLocaleDateString()}
+              </JobDetail>
+              <ButtonGroup>
+                <EditButton to={`/edit-job/${job._id}`}>
+                  Edit
+                </EditButton>
+                <DeleteButton onClick={() => handleDelete(job._id)}>
+                  Delete
+                </DeleteButton>
+                <StatusButton onClick={() => handleStatusUpdate(job._id)}>
+                  Update Status
+                </StatusButton>
+              </ButtonGroup>
+            </JobCard>
+          ))}
+        </JobsGrid>
+
+        <Pagination>
+          {Array.from({ length: Math.ceil(userJobs.length / jobsPerPage) }).map((_, index) => (
+            <PageButton
+              key={index}
+              active={currentPage === index + 1}
+              onClick={() => paginate(index + 1)}
+            >
+              {index + 1}
+            </PageButton>
+          ))}
+        </Pagination>
+      </Section>
     </DashboardContainer>
   );
 };
 
+// Styled Components
 const DashboardContainer = styled.div`
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
 `;
 
-const DashboardLayout = styled.div`
-  display: flex;
-  gap: 2rem;
-  margin-top: 2rem;
-`;
-
-const Sidebar = styled.nav`
-  width: 250px;
-  background: white;
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-`;
-
-const NavItem = styled.div`
-  padding: 1rem;
-  cursor: pointer;
-  border-radius: 4px;
-  margin-bottom: 0.5rem;
-  background: ${props => props.active ? props.theme.colors.primary.main : 'transparent'};
-  color: ${props => props.active ? 'white' : props.theme.colors.text.primary};
-
-  &:hover {
-    background: ${props => props.active ? props.theme.colors.primary.main : props.theme.colors.background.light};
-  }
-`;
-
-const ContentArea = styled.main`
-  flex: 1;
-  background: white;
-  border-radius: 8px;
-  padding: 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-`;
-
-const WelcomeSection = styled.div`
-  margin-bottom: 2rem;
-`;
-
-const WelcomeHeader = styled.div`
+const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 2rem;
 `;
 
-const PostJobButton = styled.button`
+const Section = styled.section`
+  margin-bottom: 2rem;
+`;
+
+const JobsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+`;
+
+const JobCard = styled.div`
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
+const JobTitle = styled.h3`
+  margin: 0 0 1rem 0;
+  color: ${({ theme }) => theme.colors.primary.main};
+`;
+
+const JobDetail = styled.p`
+  margin: 0.5rem 0;
+  color: ${({ theme }) => theme.colors.text.secondary};
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+`;
+
+const PostJobButton = styled(Link)`
+  background: ${({ theme }) => theme.colors.primary.main};
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  text-decoration: none;
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.primary.dark};
+  }
+`;
+
+const EditButton = styled(Link)`
+  background: ${({ theme }) => theme.colors.secondary.main};
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  text-decoration: none;
+  text-align: center;
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.secondary.dark};
+  }
+`;
+
+const DeleteButton = styled.button`
+  background: ${({ theme }) => theme.colors.error.main};
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.error.dark};
+  }
+`;
+
+const NoJobs = styled.div`
+  text-align: center;
+  padding: 2rem;
+  grid-column: 1 / -1;
+  
+  a {
+    color: ${({ theme }) => theme.colors.primary.main};
+    text-decoration: none;
+    margin-left: 0.5rem;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+`;
+
+const ErrorMessage = styled.div`
+  color: ${({ theme }) => theme.colors.error.main};
+  background: ${({ theme }) => theme.colors.error.light};
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+`;
+
+const Controls = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+`;
+
+const Select = styled.select`
+  padding: 0.5rem;
+  border: 1px solid ${({ theme }) => theme.colors.border.main};
+  border-radius: 4px;
+`;
+
+const StatusIndicator = styled.div`
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  
+  ${({ status, theme }) => {
+    switch (status) {
+      case 'open':
+        return `
+          background: ${theme.colors.success.light};
+          color: ${theme.colors.success.main};
+        `;
+      case 'in-progress':
+        return `
+          background: ${theme.colors.warning.light};
+          color: ${theme.colors.warning.main};
+        `;
+      case 'completed':
+        return `
+          background: ${theme.colors.info.light};
+          color: ${theme.colors.info.main};
+        `;
+      case 'cancelled':
+        return `
+          background: ${theme.colors.error.light};
+          color: ${theme.colors.error.main};
+        `;
+      default:
+        return '';
+    }
+  }}
+`;
+
+const Pagination = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+`;
+
+const PageButton = styled.button`
+  padding: 0.5rem 1rem;
+  border: 1px solid ${({ theme }) => theme.colors.border.main};
+  border-radius: 4px;
+  background: ${({ active, theme }) => active ? theme.colors.primary.main : 'white'};
+  color: ${({ active, theme }) => active ? 'white' : theme.colors.text.primary};
+  cursor: pointer;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.primary.light};
+    color: white;
+  }
+`;
+
+const SearchForm = styled.form`
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+`;
+
+const SearchInput = styled.input`
+  padding: 0.5rem;
+  border: 1px solid ${({ theme }) => theme.colors.border.main};
+  border-radius: 4px;
+  flex: 1;
+  
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.primary.main};
+  }
+`;
+
+const SearchButton = styled.button`
+  padding: 0.5rem 1rem;
   background: ${({ theme }) => theme.colors.primary.main};
   color: white;
   border: none;
   border-radius: 4px;
-  padding: 0.75rem 1.5rem;
   cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s;
-
+  
   &:hover {
     background: ${({ theme }) => theme.colors.primary.dark};
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+`;
+
+const SearchContainer = styled.div`
+  position: relative;
+  flex: 1;
+`;
+
+const SearchHistoryContainer = styled.div`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid ${({ theme }) => theme.colors.border.main};
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+`;
+
+const SearchHistoryHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.main};
+
+  h4 {
+    margin: 0;
+    color: ${({ theme }) => theme.colors.text.secondary};
+  }
+`;
+
+const SearchHistoryList = styled.div`
+  max-height: 200px;
+  overflow-y: auto;
+`;
+
+const SearchHistoryItem = styled.button`
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.background.light};
+  }
+`;
+
+const SearchHistoryMeta = styled.span`
+  font-size: 0.875rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+`;
+
+const ClearButton = styled.button`
+  padding: 0.25rem 0.5rem;
+  border: none;
+  background: none;
+  color: ${({ theme }) => theme.colors.error.main};
+  cursor: pointer;
+  font-size: 0.875rem;
+
+  &:hover {
+    text-decoration: underline;
   }
 `;
 

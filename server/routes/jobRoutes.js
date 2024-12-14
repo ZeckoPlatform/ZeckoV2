@@ -181,4 +181,41 @@ router.use((error, req, res, next) => {
     });
 });
 
+// Add this route if it's not already there
+router.get('/user', auth, async (req, res) => {
+  try {
+    const { sort, status, search, searchField } = req.query;
+    
+    // Build query
+    const query = { postedBy: req.user.id };
+    
+    // Add status filter
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+    
+    // Add search
+    if (search && searchField) {
+      query[searchField] = new RegExp(search, 'i'); // Case-insensitive search
+    }
+    
+    // Build sort object
+    let sortObj = { createdAt: -1 }; // Default sort
+    if (sort === 'budget') {
+      sortObj = { budget: -1 };
+    } else if (sort === 'deadline') {
+      sortObj = { deadline: 1 };
+    }
+
+    const jobs = await Job.find(query)
+      .sort(sortObj)
+      .populate('postedBy', 'name email');
+      
+    res.json(jobs);
+  } catch (error) {
+    console.error('Search jobs error:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;
