@@ -6,8 +6,219 @@ import api from '../services/api';
 import debounce from 'lodash/debounce';
 import { toast } from 'react-toastify';
 
+// Styled Components
+const DashboardContainer = styled.div`
+  padding: 2rem;
+`;
+
+const Header = styled.header`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+`;
+
+const HeaderLeft = styled.div``;
+
+const HeaderRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`;
+
+const PostJobButton = styled(Link)`
+  padding: 0.5rem 1rem;
+  background: ${props => props.theme.colors.primary};
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+  
+  &:hover {
+    background: ${props => props.theme.colors.primaryDark};
+  }
+`;
+
+const ProfileButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: ${props => props.theme.colors.text};
+`;
+
+const ProfileDropdown = styled.div`
+  position: absolute;
+  right: 2rem;
+  top: 4rem;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 0.5rem;
+  z-index: 1000;
+`;
+
+const ProfileLink = styled(Link)`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: ${props => props.theme.colors.text};
+  text-decoration: none;
+  
+  &:hover {
+    background: ${props => props.theme.colors.background};
+  }
+`;
+
+const LogoutButton = styled.button`
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: none;
+  color: ${props => props.theme.colors.danger};
+  cursor: pointer;
+  text-align: left;
+  
+  &:hover {
+    background: ${props => props.theme.colors.background};
+  }
+`;
+
+const SearchContainer = styled.div`
+  margin-bottom: 2rem;
+`;
+
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid ${props => props.theme.colors.border};
+  border-radius: 4px;
+`;
+
+const LoadingSpinner = styled.div`
+  text-align: center;
+  padding: 2rem;
+`;
+
+const ErrorContainer = styled.div`
+  padding: 1rem;
+  background: ${props => props.theme.colors.danger}10;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+`;
+
+const ErrorMessage = styled.div`
+  color: ${props => props.theme.colors.danger};
+`;
+
+const RetryButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: ${props => props.theme.colors.primary};
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 1rem;
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 2rem;
+  color: ${props => props.theme.colors.textLight};
+`;
+
+const JobsList = styled.div`
+  display: grid;
+  gap: 1rem;
+`;
+
+const JobCard = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+`;
+
+const JobContent = styled.div`
+  flex: 1;
+`;
+
+const JobTitle = styled.h3`
+  margin: 0;
+  color: ${props => props.theme.colors.text};
+`;
+
+const JobCompany = styled.p`
+  margin: 0.5rem 0;
+  color: ${props => props.theme.colors.textLight};
+`;
+
+const JobStatus = styled.span`
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  background: ${props => 
+    props.status === 'active' ? props.theme.colors.success + '20' :
+    props.status === 'closed' ? props.theme.colors.danger + '20' :
+    props.theme.colors.warning + '20'
+  };
+  color: ${props => 
+    props.status === 'active' ? props.theme.colors.success :
+    props.status === 'closed' ? props.theme.colors.danger :
+    props.theme.colors.warning
+  };
+`;
+
+const JobActions = styled.div`
+  display: flex;
+  gap: 0.5rem;
+`;
+
+const ActionButton = styled.button`
+  padding: 0.5rem;
+  border: none;
+  background: none;
+  color: ${props => props.theme.colors.text};
+  cursor: pointer;
+  
+  &:hover {
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const Pagination = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+`;
+
+const PaginationButton = styled.button`
+  padding: 0.5rem;
+  border: none;
+  background: none;
+  color: ${props => props.theme.colors.text};
+  cursor: pointer;
+  
+  &:disabled {
+    color: ${props => props.theme.colors.textLight};
+    cursor: not-allowed;
+  }
+`;
+
+const PageInfo = styled.span`
+  color: ${props => props.theme.colors.text};
+`;
+
 const Dashboard = () => {
-  const [jobs, setJobs] = useState([]);
+  const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -17,20 +228,20 @@ const Dashboard = () => {
   const pageSize = 10;
   const navigate = useNavigate();
 
-  const fetchJobs = async (page) => {
+  const fetchLeads = async (page) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.getUserJobs({ page, limit: pageSize });
+      const response = await api.getUserLeads({ page, limit: pageSize });
       
-      if (response.data && Array.isArray(response.data.jobs)) {
-        setJobs(response.data.jobs);
+      if (response.data && Array.isArray(response.data.leads)) {
+        setLeads(response.data.leads);
         setTotalPages(Math.ceil(response.data.total / pageSize));
       }
     } catch (err) {
       console.error('Fetch error:', err);
       setError({
-        message: 'Failed to load jobs',
+        message: 'Failed to load leads',
         details: err.response?.data?.message || err.message
       });
     } finally {
@@ -39,41 +250,41 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    fetchJobs(currentPage);
+    fetchLeads(currentPage);
   }, [currentPage]);
 
   const handleSearch = useCallback(
     debounce(async (term) => {
       if (term) {
         try {
-          const response = await api.searchJobs({ term });
-          setJobs(response.data.jobs);
+          const response = await api.searchLeads({ term });
+          setLeads(response.data.leads);
         } catch (err) {
           console.error('Search error:', err);
         }
       } else {
-        fetchJobs(currentPage);
+        fetchLeads(currentPage);
       }
     }, 500),
     []
   );
 
-  const handleViewJob = (jobId) => {
-    navigate(`/jobs/${jobId}`);
+  const handleViewLead = (leadId) => {
+    navigate(`/leads/${leadId}`);
   };
 
-  const handleEditJob = (jobId) => {
-    navigate(`/jobs/edit/${jobId}`);
+  const handleEditLead = (leadId) => {
+    navigate(`/leads/edit/${leadId}`);
   };
 
-  const handleDeleteJob = async (jobId) => {
-    if (window.confirm('Are you sure you want to delete this job?')) {
+  const handleDeleteLead = async (leadId) => {
+    if (window.confirm('Are you sure you want to delete this lead?')) {
       try {
-        await api.deleteJob(jobId);
-        toast.success('Job deleted successfully');
-        fetchJobs(currentPage);
+        await api.deleteLead(leadId);
+        toast.success('Lead deleted successfully');
+        fetchLeads(currentPage);
       } catch (err) {
-        toast.error('Failed to delete job');
+        toast.error('Failed to delete lead');
       }
     }
   };
@@ -84,9 +295,9 @@ const Dashboard = () => {
     navigate('/login');
   };
 
-  const renderActionButton = (job, label, icon, handler) => (
+  const renderActionButton = (lead, label, icon, handler) => (
     <ActionButton
-      onClick={() => handler(job._id)}
+      onClick={() => handler(lead._id)}
       title={label}
     >
       {icon}
@@ -115,7 +326,7 @@ const Dashboard = () => {
     <DashboardContainer>
       <Header>
         <HeaderLeft>
-          <h1>My Jobs</h1>
+          <h1>My Leads</h1>
         </HeaderLeft>
         <HeaderRight>
           <PostJobButton to="/jobs/new">Post New Job</PostJobButton>
@@ -143,7 +354,7 @@ const Dashboard = () => {
             setSearchTerm(e.target.value);
             handleSearch(e.target.value);
           }}
-          placeholder="Search jobs..."
+          placeholder="Search leads..."
         />
       </SearchContainer>
 
@@ -154,36 +365,36 @@ const Dashboard = () => {
           <ErrorMessage>
             <h4>{error.message}</h4>
             <p>{error.details}</p>
-            <RetryButton onClick={() => fetchJobs(currentPage)}>
+            <RetryButton onClick={() => fetchLeads(currentPage)}>
               <FiRefreshCw /> Retry
             </RetryButton>
           </ErrorMessage>
         </ErrorContainer>
       )}
       
-      {!loading && !error && jobs.length === 0 && (
+      {!loading && !error && leads.length === 0 && (
         <EmptyState>
-          <p>No jobs found. Post your first job!</p>
-          <PostJobButton to="/jobs/new">Post a Job</PostJobButton>
+          <p>No leads found. Post your first lead!</p>
+          <PostJobButton to="/jobs/new">Post a Lead</PostJobButton>
         </EmptyState>
       )}
       
-      {!loading && !error && jobs.length > 0 && (
+      {!loading && !error && leads.length > 0 && (
         <>
           <JobsList>
-            {jobs.map(job => (
-              <JobCard key={job._id}>
+            {leads.map(lead => (
+              <JobCard key={lead._id}>
                 <JobContent>
-                  <JobTitle>{job.title}</JobTitle>
-                  <JobCompany>{job.company}</JobCompany>
-                  <JobStatus status={job.status}>
-                    {job.status || 'Active'}
+                  <JobTitle>{lead.title}</JobTitle>
+                  <JobCompany>{lead.company}</JobCompany>
+                  <JobStatus status={lead.status}>
+                    {lead.status || 'Active'}
                   </JobStatus>
                 </JobContent>
                 <JobActions>
-                  {renderActionButton(job, 'View', <FiEye />, handleViewJob)}
-                  {renderActionButton(job, 'Edit', <FiEdit />, handleEditJob)}
-                  {renderActionButton(job, 'Delete', <FiTrash2 />, handleDeleteJob)}
+                  {renderActionButton(lead, 'View', <FiEye />, handleViewLead)}
+                  {renderActionButton(lead, 'Edit', <FiEdit />, handleEditLead)}
+                  {renderActionButton(lead, 'Delete', <FiTrash2 />, handleDeleteLead)}
                 </JobActions>
               </JobCard>
             ))}
@@ -194,12 +405,5 @@ const Dashboard = () => {
     </DashboardContainer>
   );
 };
-
-// Styled components (keep all the original styling)
-const DashboardContainer = styled.div`
-  padding: 2rem;
-`;
-
-// ... (keep all other styled components exactly as they were)
 
 export default Dashboard;

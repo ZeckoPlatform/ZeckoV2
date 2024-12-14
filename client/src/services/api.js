@@ -51,10 +51,21 @@ const api = {
   
   // Jobs
   getJobs: (params) => axiosInstance.get('/jobs', { params }),
+  getUserJobs: (params) => axiosInstance.get('/jobs/user', { params }),
   createJob: (jobData) => axiosInstance.post('/jobs', jobData),
   updateJob: (id, jobData) => axiosInstance.put(`/jobs/${id}`, jobData),
   deleteJob: (id) => axiosInstance.delete(`/jobs/${id}`),
   getJobById: (id) => axiosInstance.get(`/jobs/${id}`),
+  searchJobs: (params) => axiosInstance.get('/jobs/search', { params }),
+  
+  // Leads
+  getLeads: (params) => axiosInstance.get('/leads', { params }),
+  getUserLeads: (params) => axiosInstance.get('/leads/user', { params }),
+  createLead: (leadData) => axiosInstance.post('/leads', leadData),
+  updateLead: (id, leadData) => axiosInstance.put(`/leads/${id}`, leadData),
+  deleteLead: (id) => axiosInstance.delete(`/leads/${id}`),
+  getLeadById: (id) => axiosInstance.get(`/leads/${id}`),
+  searchLeads: (params) => axiosInstance.get('/leads/search', { params }),
   
   // Products
   getProducts: (params) => axiosInstance.get('/products', { params }),
