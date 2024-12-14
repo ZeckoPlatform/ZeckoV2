@@ -38,6 +38,7 @@ const Dashboard = () => {
   const { searchHistory, addToHistory, clearHistory } = useSearchHistory(
     JSON.parse(localStorage.getItem('searchHistory') || '[]')
   );
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   useEffect(() => {
     fetchUserJobs();
@@ -117,13 +118,35 @@ const Dashboard = () => {
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    // Add any other cleanup needed
+    window.location.href = '/login';
+  };
+
   if (loading) return <div>Loading...</div>;
 
   return (
     <DashboardContainer>
       <Header>
-        <h1>Dashboard</h1>
-        <PostJobButton to="/post-job">Post New Job</PostJobButton>
+        <HeaderLeft>
+          <h1>Dashboard</h1>
+        </HeaderLeft>
+        <HeaderRight>
+          <PostJobButton to="/post-job">Post New Job</PostJobButton>
+          <ProfileMenu>
+            <ProfileButton onClick={() => setShowProfileMenu(!showProfileMenu)}>
+              <UserIcon /> {/* Add your user icon component */}
+            </ProfileButton>
+            {showProfileMenu && (
+              <ProfileDropdown>
+                <ProfileLink to="/profile">Profile</ProfileLink>
+                <ProfileLink to="/settings">Settings</ProfileLink>
+                <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
+              </ProfileDropdown>
+            )}
+          </ProfileMenu>
+        </HeaderRight>
       </Header>
 
       {error && <ErrorMessage>{error}</ErrorMessage>}
@@ -244,6 +267,18 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+`;
+
+const HeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`;
+
+const HeaderRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 `;
 
 const Section = styled.section`
@@ -523,6 +558,62 @@ const StatusButton = styled.button`
   
   &:hover {
     background: ${({ theme }) => theme.colors.warning.dark};
+  }
+`;
+
+const ProfileMenu = styled.div`
+  position: relative;
+`;
+
+const ProfileButton = styled.button`
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: ${({ theme }) => theme.colors.text.primary};
+  
+  &:hover {
+    color: ${({ theme }) => theme.colors.primary.main};
+  }
+`;
+
+const ProfileDropdown = styled.div`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid ${({ theme }) => theme.colors.border.main};
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-width: 150px;
+  z-index: 1000;
+`;
+
+const ProfileLink = styled(Link)`
+  display: block;
+  padding: 0.75rem 1rem;
+  color: ${({ theme }) => theme.colors.text.primary};
+  text-decoration: none;
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.background.light};
+  }
+`;
+
+const LogoutButton = styled.button`
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: none;
+  color: ${({ theme }) => theme.colors.error.main};
+  cursor: pointer;
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.background.light};
   }
 `;
 
