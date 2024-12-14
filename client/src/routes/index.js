@@ -9,7 +9,7 @@ import Cart from '../pages/Cart';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import Profile from '../pages/Profile';
-import Jobs from '../pages/Jobs';
+import Jobs from '../pages/Lead';
 import Contractors from '../pages/Contractors';
 import NotFound from '../pages/NotFound';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';

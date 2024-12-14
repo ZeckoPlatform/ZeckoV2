@@ -8,7 +8,7 @@ import Register from '../pages/Register';
 import UserProfile from '../pages/UserProfile';
 import Checkout from '../pages/Checkout';
 import BusinessDirectory from '../pages/BusinessDirectory';
-import JobBoard from '../pages/JobBoard';
+import JobBoard from '../pages/LeadBoard';
 import Shop from '../pages/Shop';
 
 // Log each component to verify it's a valid function

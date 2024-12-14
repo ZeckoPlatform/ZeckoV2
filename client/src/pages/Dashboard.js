@@ -5,10 +5,13 @@ import { FiChevronLeft, FiChevronRight, FiEye, FiEdit, FiTrash2, FiUser, FiRefre
 import api from '../services/api';
 import debounce from 'lodash/debounce';
 import { toast } from 'react-toastify';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Styled Components
 const DashboardContainer = styled.div`
   padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
 `;
 
 const Header = styled.header`
@@ -26,7 +29,7 @@ const HeaderRight = styled.div`
   gap: 1rem;
 `;
 
-const PostJobButton = styled(Link)`
+const PostLeadButton = styled(Link)`
   padding: 0.5rem 1rem;
   background: ${props => props.theme.colors.primary};
   color: white;
@@ -130,12 +133,12 @@ const EmptyState = styled.div`
   color: ${props => props.theme.colors.textLight};
 `;
 
-const JobsList = styled.div`
+const LeadsList = styled.div`
   display: grid;
   gap: 1rem;
 `;
 
-const JobCard = styled.div`
+const LeadCard = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -145,21 +148,21 @@ const JobCard = styled.div`
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 `;
 
-const JobContent = styled.div`
+const LeadContent = styled.div`
   flex: 1;
 `;
 
-const JobTitle = styled.h3`
+const LeadTitle = styled.h3`
   margin: 0;
   color: ${props => props.theme.colors.text};
 `;
 
-const JobCompany = styled.p`
+const LeadCompany = styled.p`
   margin: 0.5rem 0;
   color: ${props => props.theme.colors.textLight};
 `;
 
-const JobStatus = styled.span`
+const LeadStatus = styled.span`
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-size: 0.875rem;
@@ -175,7 +178,7 @@ const JobStatus = styled.span`
   };
 `;
 
-const JobActions = styled.div`
+const LeadActions = styled.div`
   display: flex;
   gap: 0.5rem;
 `;
@@ -232,7 +235,11 @@ const Dashboard = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.getUserLeads({ page, limit: pageSize });
+      const response = await api.getLeads({ 
+        page, 
+        limit: pageSize,
+        userId: localStorage.getItem('userId') // Add user filter
+      });
       
       if (response.data && Array.isArray(response.data.leads)) {
         setLeads(response.data.leads);
@@ -269,6 +276,12 @@ const Dashboard = () => {
     []
   );
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    navigate('/login');
+  };
+
   const handleViewLead = (leadId) => {
     navigate(`/leads/${leadId}`);
   };
@@ -289,12 +302,6 @@ const Dashboard = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
-
   const renderActionButton = (lead, label, icon, handler) => (
     <ActionButton
       onClick={() => handler(lead._id)}
@@ -312,7 +319,9 @@ const Dashboard = () => {
       >
         <FiChevronLeft />
       </PaginationButton>
-      <PageInfo>Page {currentPage} of {totalPages}</PageInfo>
+      <PageInfo>
+        Page {currentPage} of {totalPages}
+      </PageInfo>
       <PaginationButton 
         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
         disabled={currentPage === totalPages}
@@ -326,10 +335,10 @@ const Dashboard = () => {
     <DashboardContainer>
       <Header>
         <HeaderLeft>
-          <h1>My Leads</h1>
+          <h1>Dashboard</h1>
         </HeaderLeft>
         <HeaderRight>
-          <PostJobButton to="/jobs/new">Post New Job</PostJobButton>
+          <PostLeadButton to="/leads/new">Post New Lead</PostLeadButton>
           <ProfileButton onClick={() => setShowProfileMenu(!showProfileMenu)}>
             <FiUser />
           </ProfileButton>
@@ -349,12 +358,12 @@ const Dashboard = () => {
       <SearchContainer>
         <SearchInput
           type="text"
-          value={searchTerm}
+          placeholder="Search leads..."
           onChange={(e) => {
             setSearchTerm(e.target.value);
             handleSearch(e.target.value);
           }}
-          placeholder="Search leads..."
+          value={searchTerm}
         />
       </SearchContainer>
 
@@ -374,33 +383,40 @@ const Dashboard = () => {
       
       {!loading && !error && leads.length === 0 && (
         <EmptyState>
-          <p>No leads found. Post your first lead!</p>
-          <PostJobButton to="/jobs/new">Post a Lead</PostJobButton>
+          <p>No leads found. Create your first lead!</p>
+          <PostLeadButton to="/leads/new">Create Lead</PostLeadButton>
         </EmptyState>
       )}
       
       {!loading && !error && leads.length > 0 && (
-        <>
-          <JobsList>
+        <AnimatePresence>
+          <LeadsList>
             {leads.map(lead => (
-              <JobCard key={lead._id}>
-                <JobContent>
-                  <JobTitle>{lead.title}</JobTitle>
-                  <JobCompany>{lead.company}</JobCompany>
-                  <JobStatus status={lead.status}>
+              <LeadCard
+                key={lead._id}
+                as={motion.div}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <LeadContent>
+                  <LeadTitle>{lead.title}</LeadTitle>
+                  <LeadCompany>{lead.company}</LeadCompany>
+                  <LeadStatus status={lead.status}>
                     {lead.status || 'Active'}
-                  </JobStatus>
-                </JobContent>
-                <JobActions>
+                  </LeadStatus>
+                </LeadContent>
+                <LeadActions>
                   {renderActionButton(lead, 'View', <FiEye />, handleViewLead)}
                   {renderActionButton(lead, 'Edit', <FiEdit />, handleEditLead)}
                   {renderActionButton(lead, 'Delete', <FiTrash2 />, handleDeleteLead)}
-                </JobActions>
-              </JobCard>
+                </LeadActions>
+              </LeadCard>
             ))}
-          </JobsList>
+          </LeadsList>
           {renderPagination()}
-        </>
+        </AnimatePresence>
       )}
     </DashboardContainer>
   );

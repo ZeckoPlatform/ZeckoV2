@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../services/api';
-import { jobCategories, getAllCategories, getSubcategories } from '../Data/jobCategories';
+import { jobCategories, getAllCategories, getSubcategories } from '../Data/leadCategories';
 
 const PostJob = () => {
   const navigate = useNavigate();

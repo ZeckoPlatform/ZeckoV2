@@ -13,7 +13,7 @@ const morgan = require('morgan');
 const connectDB = require('./config/db');
 const timeout = require('express-timeout-handler');
 // const serviceRoutes = require('./routes/services');
-const jobRoutes = require('./routes/api/jobs');
+const jobRoutes = require('./routes/api/lead');
 
 // Initialize Express and create server
 const app = express();

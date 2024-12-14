@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/extend-expect';
-import JobListing from './JobListing';
+import JobListing from './LeadListing';
 
 // Mock fetch function
 global.fetch = jest.fn();

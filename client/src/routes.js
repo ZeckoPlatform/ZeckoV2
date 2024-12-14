@@ -5,7 +5,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import PostJob from './pages/PostJob';
+import PostJob from './pages/PostLead';
 import Profile from './pages/Profile';
 import Orders from './pages/Orders';
 import Notifications from './pages/Notifications';
