@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../../middleware/auth');
+const { authenticateToken } = require('../../middleware/auth');
 const Lead = require('../../models/Lead');
 
 router.get('/', async (req, res) => {
@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.post('/', auth, async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
     try {
         const lead = new Lead({
             ...req.body,
