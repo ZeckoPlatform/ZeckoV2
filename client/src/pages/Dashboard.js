@@ -805,6 +805,7 @@ const ThemeToggle = styled.button`
 export default withErrorBoundary(Dashboard, {
   fallback: <div>Dashboard is currently unavailable. Please try again later.</div>,
   onError: (error, errorInfo) => {
+    // Log error to your error tracking service
     console.error('Dashboard Error:', error, errorInfo);
   }
 });
