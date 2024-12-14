@@ -12,11 +12,33 @@ if (!Job) {
 
 // Add validation middleware
 const validateJob = (req, res, next) => {
-    const { title, description, company, location } = req.body;
-    if (!title || !description || !company || !location) {
+    const { 
+      title, 
+      description, 
+      company, 
+      location, 
+      category,      // Added category
+      subcategory,   // Added subcategory
+      budget,        // Added budget
+      deadline,      // Added deadline
+      requirements   // Added requirements
+    } = req.body;
+
+    if (!title || !description || !company || !location || 
+        !category || !subcategory || !budget || !deadline || !requirements) {
         return res.status(400).json({ 
             message: 'Missing required fields',
-            required: ['title', 'description', 'company', 'location']
+            required: [
+              'title', 
+              'description', 
+              'company', 
+              'location',
+              'category',
+              'subcategory',
+              'budget',
+              'deadline',
+              'requirements'
+            ]
         });
     }
     next();

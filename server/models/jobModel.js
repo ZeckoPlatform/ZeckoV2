@@ -9,6 +9,14 @@ const jobSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  category: {
+    type: String,
+    required: true
+  },
+  subcategory: {
+    type: String,
+    required: true
+  },
   company: {
     type: String,
     required: true
@@ -17,8 +25,17 @@ const jobSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  salary: {
-    type: String
+  budget: {
+    type: Number,
+    required: true
+  },
+  deadline: {
+    type: Date,
+    required: true
+  },
+  requirements: {
+    type: String,
+    required: true
   },
   type: {
     type: String,
