@@ -46,20 +46,24 @@ const ProfileDropdown = styled.div`
   position: absolute;
   right: 2rem;
   top: 4rem;
-  background: white;
+  background: ${props => props.theme.colors.background};
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   padding: 0.5rem;
+  z-index: 1000;
 `;
 
 const ProfileLink = styled(Link)`
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.5rem 1rem;
-  color: #333;
+  color: ${props => props.theme.colors.text};
   text-decoration: none;
+  width: 100%;
   
   &:hover {
-    background: #f5f5f5;
+    background: ${props => props.theme.colors.backgroundHover};
   }
 `;
 
@@ -361,21 +365,10 @@ const Dashboard = () => {
     }
   };
 
-  const fetchJobs = async (page, retryAttempt = 0) => {
+  const fetchJobs = async (page) => {
     try {
       setLoading(true);
       setError(null);
-
-      // Check offline status
-      if (isOffline) {
-        const cachedJobs = localStorage.getItem('cachedJobs');
-        if (cachedJobs) {
-          setJobs(JSON.parse(cachedJobs));
-          toast.info('Showing cached data (offline mode)');
-          return;
-        }
-        throw new Error('No internet connection');
-      }
 
       const token = localStorage.getItem('token');
       if (!token) {
@@ -383,13 +376,8 @@ const Dashboard = () => {
         return;
       }
 
-      // Get user ID from token or localStorage
-      const userId = localStorage.getItem('userId');
-
-      // Updated endpoint to get user's jobs
-      const response = await api.get('/api/jobs/user', {
+      const response = await api.get('/jobs/user', {
         params: { 
-          userId,
           page, 
           limit: pageSize 
         },
@@ -398,47 +386,28 @@ const Dashboard = () => {
         }
       });
 
+      console.log('API Response:', response.data);
+
       if (response.data && Array.isArray(response.data.jobs)) {
         setJobs(response.data.jobs);
         setTotalPages(Math.ceil(response.data.total / pageSize));
-        console.log('Fetched jobs:', response.data.jobs); // Debug log
       } else {
-        console.log('No jobs found or invalid response:', response.data); // Debug log
         setJobs([]);
         setTotalPages(1);
       }
     } catch (err) {
       console.error('Fetch error:', err);
       
-      if (err.response?.status === 401) {
-        localStorage.removeItem('token');
-        navigate('/login');
-        return;
+      if (err.response?.status === 404) {
+        toast.error('Jobs endpoint not found. Please check API configuration.');
+        setError({
+          message: 'API endpoint not found',
+          details: 'The jobs endpoint is not available',
+          code: 404
+        });
+      } else {
+        handleApiError(err);
       }
-
-      // Retry logic
-      if (retryAttempt < MAX_RETRIES) {
-        const delay = Math.pow(2, retryAttempt) * 1000; // Exponential backoff
-        toast.info(`Retrying in ${delay/1000} seconds...`);
-        setTimeout(() => {
-          fetchJobs(page, retryAttempt + 1);
-        }, delay);
-        return;
-      }
-
-      setError({
-        message: 'Failed to fetch jobs',
-        details: err.response?.data?.message || err.message,
-        code: err.response?.status
-      });
-      
-      toast.error(
-        <div>
-          <strong>Error fetching jobs</strong>
-          <p>{err.response?.data?.message || 'Please try again later'}</p>
-          <button onClick={() => fetchJobs(page)}>Retry</button>
-        </div>
-      );
     } finally {
       setLoading(false);
     }
@@ -545,8 +514,7 @@ const Dashboard = () => {
 
   const handleProfileClick = () => {
     setShowProfileMenu(false);
-    navigate('/dashboard'); // Stay on dashboard for now since profile isn't ready
-    toast.info('Profile feature coming soon!');
+    navigate('/profile'); // Direct navigation to profile page
   };
 
   // Add manual refresh functionality
@@ -580,9 +548,9 @@ const Dashboard = () => {
           </ProfileButton>
           {showProfileMenu && (
             <ProfileDropdown>
-              <MenuButton onClick={handleProfileClick}>
-                <FiUser /> Dashboard
-              </MenuButton>
+              <ProfileLink to="/profile">
+                <FiUser /> Profile
+              </ProfileLink>
               <MenuButton onClick={handleLogout}>
                 Logout
               </MenuButton>

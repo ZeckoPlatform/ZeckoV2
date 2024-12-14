@@ -38,22 +38,26 @@ axiosInstance.interceptors.response.use(
   }
 );
 
+// Create API object using axiosInstance
 const api = {
-  // ... existing methods ...
+  // Auth
+  login: (credentials) => axiosInstance.post('/auth/login', credentials),
+  register: (userData) => axiosInstance.post('/auth/register', userData),
   
-  getProfile: async () => {
-    try {
-      const response = await axios.get('/api/users/profile', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      throw error;
-    }
-  }
+  // Profile
+  getProfile: () => axiosInstance.get('/users/profile'),
+  updateProfile: (data) => axiosInstance.put('/users/profile', data),
+  
+  // Jobs
+  getJobs: (params) => axiosInstance.get('/jobs', { params }),
+  getUserJobs: (params) => axiosInstance.get('/jobs/user', { params }),
+  createJob: (jobData) => axiosInstance.post('/jobs', jobData),
+  updateJob: (id, jobData) => axiosInstance.put(`/jobs/${id}`, jobData),
+  deleteJob: (id) => axiosInstance.delete(`/jobs/${id}`),
+  getJobById: (id) => axiosInstance.get(`/jobs/${id}`),
+  
+  // Search
+  searchJobs: (params) => axiosInstance.get('/jobs/search', { params })
 };
 
-export default axiosInstance; 
+export default api;  // Export the api object instead of axiosInstance
