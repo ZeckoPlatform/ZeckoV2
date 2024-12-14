@@ -171,42 +171,84 @@ const Dashboard = () => {
   const jobsPerPage = 6;
   const [searchTerm, setSearchTerm] = useState('');
   const [searchField, setSearchField] = useState('title');
-  const { searchHistory, addToHistory, clearHistory } = useSearchHistory(
-    JSON.parse(localStorage.getItem('searchHistory') || '[]')
-  );
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showSearchHistory, setShowSearchHistory] = useState(false);
+  const [searchHistory, setSearchHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem('searchHistory');
+      return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+      console.error('Error loading search history:', error);
+      return [];
+    }
+  });
   const [profileData, setProfileData] = useState({
     profilePicture: null,
     username: ''
   });
-  const [showSearchHistory, setShowSearchHistory] = useState(false);
 
   useEffect(() => {
     fetchUserJobs();
     fetchProfileData();
   }, [sortBy, filterStatus]);
 
-  const debouncedSearch = useCallback(
-    debounce((term, field) => {
-      if (term.length >= 2) {
-        fetchUserJobs();
-        addToHistory(term, field);
+  const updateSearchHistory = useCallback((term) => {
+    const newHistory = [
+      { term, timestamp: new Date().toISOString() },
+      ...searchHistory.filter(h => h.term !== term).slice(0, 4)
+    ];
+    setSearchHistory(newHistory);
+    try {
+      localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+    } catch (error) {
+      console.error('Error saving search history:', error);
+    }
+  }, [searchHistory]);
+
+  const handleSearch = useCallback(
+    debounce(async (term) => {
+      if (!term.trim()) return;
+      
+      try {
+        setLoading(true);
+        const response = await api.get('/jobs/search', {
+          params: { term, field: searchField }
+        });
+        setUserJobs(response.data);
+        updateSearchHistory(term);
+      } catch (err) {
+        setError('Failed to search jobs');
+        console.error('Search error:', err);
+      } finally {
+        setLoading(false);
       }
-    }, 500),
-    [searchHistory]
+    }, 300),
+    [searchField, updateSearchHistory]
   );
 
-  const handleSearchChange = (e) => {
-    const newTerm = e.target.value;
-    setSearchTerm(newTerm);
-    debouncedSearch(newTerm, searchField);
-  };
+  const clearHistory = useCallback(() => {
+    setSearchHistory([]);
+    try {
+      localStorage.removeItem('searchHistory');
+    } catch (error) {
+      console.error('Error clearing search history:', error);
+    }
+  }, []);
 
-  const handleHistoryItemClick = (item) => {
-    setSearchTerm(item.term);
-    setSearchField(item.field);
-    fetchUserJobs();
-  };
+  const handleHistoryItemClick = useCallback((term) => {
+    setSearchTerm(term);
+    setShowSearchHistory(false);
+    handleSearch(term);
+  }, [handleSearch]);
+
+  const handleLogout = useCallback(() => {
+    try {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  }, []);
 
   const fetchUserJobs = async () => {
     try {
@@ -261,12 +303,6 @@ const Dashboard = () => {
 
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    // Add any other cleanup needed
-    window.location.href = '/login';
-  };
 
   const fetchProfileData = async () => {
     try {
@@ -330,12 +366,43 @@ const Dashboard = () => {
 
       <ErrorBoundary>
         <Controls>
-          <SearchSection 
-            searchTerm={searchTerm}
-            searchField={searchField}
-            onSearchChange={handleSearchChange}
-            onFieldChange={(e) => setSearchField(e.target.value)}
-          />
+          <SearchContainer>
+            <SearchForm onSubmit={(e) => e.preventDefault()}>
+              <SearchInput
+                type="text"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  handleSearch(e.target.value);
+                }}
+                onFocus={() => setShowSearchHistory(true)}
+                placeholder="Search jobs..."
+              />
+              <SearchButton type="submit">Search</SearchButton>
+            </SearchForm>
+            
+            {showSearchHistory && searchHistory.length > 0 && (
+              <SearchHistoryContainer>
+                <SearchHistoryHeader>
+                  <h4>Recent Searches</h4>
+                  <ClearButton onClick={clearHistory}>Clear All</ClearButton>
+                </SearchHistoryHeader>
+                <SearchHistoryList>
+                  {searchHistory.map((item, index) => (
+                    <SearchHistoryItem
+                      key={index}
+                      onClick={() => handleHistoryItemClick(item.term)}
+                    >
+                      {item.term}
+                      <SearchHistoryMeta>
+                        {new Date(item.timestamp).toLocaleDateString()}
+                      </SearchHistoryMeta>
+                    </SearchHistoryItem>
+                  ))}
+                </SearchHistoryList>
+              </SearchHistoryContainer>
+            )}
+          </SearchContainer>
 
           <Select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
             <option value="createdAt">Sort by Date</option>
@@ -805,7 +872,6 @@ const ThemeToggle = styled.button`
 export default withErrorBoundary(Dashboard, {
   fallback: <div>Dashboard is currently unavailable. Please try again later.</div>,
   onError: (error, errorInfo) => {
-    // Log error to your error tracking service
     console.error('Dashboard Error:', error, errorInfo);
   }
 });
