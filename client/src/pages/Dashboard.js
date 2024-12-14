@@ -58,27 +58,6 @@ const UserIconFallback = ({ size = '32px' }) => (
   </svg>
 );
 
-// Move useHistoryItem outside the component
-const useSearchHistory = (initialHistory = []) => {
-  const [searchHistory, setSearchHistory] = useState(initialHistory);
-
-  const addToHistory = (term, field) => {
-    const newHistory = [
-      { term, field, timestamp: new Date().toISOString() },
-      ...searchHistory
-    ].slice(0, 5);
-    setSearchHistory(newHistory);
-    localStorage.setItem('searchHistory', JSON.stringify(newHistory));
-  };
-
-  const clearHistory = () => {
-    setSearchHistory([]);
-    localStorage.removeItem('searchHistory');
-  };
-
-  return { searchHistory, addToHistory, clearHistory };
-};
-
 const JobsSection = withErrorBoundary(({ jobs, onDelete, onStatusUpdate }) => (
   <JobsGrid>
     {jobs.map(job => (
@@ -172,18 +151,16 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchField, setSearchField] = useState('title');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [pageSize] = useState(10);
-  const [selectedJob, setSelectedJob] = useState(null);
-  const [showJobDetails, setShowJobDetails] = useState(false);
   const [actionLoading, setActionLoading] = useState({});
   const [editingJob, setEditingJob] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [jobToDelete, setJobToDelete] = useState(null);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [showJobDetails, setShowJobDetails] = useState(false);
 
   // Handler functions
   const handleSearch = useCallback(
