@@ -4,6 +4,27 @@ import styled from 'styled-components';
 import api from '../services/api';
 import debounce from 'lodash/debounce';
 
+// Move useHistoryItem outside the component
+const useSearchHistory = (initialHistory = []) => {
+  const [searchHistory, setSearchHistory] = useState(initialHistory);
+
+  const addToHistory = (term, field) => {
+    const newHistory = [
+      { term, field, timestamp: new Date().toISOString() },
+      ...searchHistory
+    ].slice(0, 5);
+    setSearchHistory(newHistory);
+    localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+  };
+
+  const clearHistory = () => {
+    setSearchHistory([]);
+    localStorage.removeItem('searchHistory');
+  };
+
+  return { searchHistory, addToHistory, clearHistory };
+};
+
 const Dashboard = () => {
   const [userJobs, setUserJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,10 +35,9 @@ const Dashboard = () => {
   const jobsPerPage = 6;
   const [searchTerm, setSearchTerm] = useState('');
   const [searchField, setSearchField] = useState('title');
-  const [searchHistory, setSearchHistory] = useState(() => {
-    const saved = localStorage.getItem('searchHistory');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const { searchHistory, addToHistory, clearHistory } = useSearchHistory(
+    JSON.parse(localStorage.getItem('searchHistory') || '[]')
+  );
 
   useEffect(() => {
     fetchUserJobs();
@@ -27,12 +47,7 @@ const Dashboard = () => {
     debounce((term, field) => {
       if (term.length >= 2) {
         fetchUserJobs();
-        const newHistory = [
-          { term, field, timestamp: new Date().toISOString() },
-          ...searchHistory
-        ].slice(0, 5);
-        setSearchHistory(newHistory);
-        localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+        addToHistory(term, field);
       }
     }, 500),
     [searchHistory]
@@ -44,15 +59,10 @@ const Dashboard = () => {
     debouncedSearch(newTerm, searchField);
   };
 
-  const useHistoryItem = (item) => {
+  const handleHistoryItemClick = (item) => {
     setSearchTerm(item.term);
     setSearchField(item.field);
     fetchUserJobs();
-  };
-
-  const clearSearchHistory = () => {
-    setSearchHistory([]);
-    localStorage.removeItem('searchHistory');
   };
 
   const fetchUserJobs = async () => {
@@ -142,7 +152,7 @@ const Dashboard = () => {
             <SearchHistoryContainer>
               <SearchHistoryHeader>
                 <h4>Recent Searches</h4>
-                <ClearButton onClick={clearSearchHistory}>
+                <ClearButton onClick={clearHistory}>
                   Clear History
                 </ClearButton>
               </SearchHistoryHeader>
@@ -150,7 +160,7 @@ const Dashboard = () => {
                 {searchHistory.map((item, index) => (
                   <SearchHistoryItem 
                     key={index}
-                    onClick={() => useHistoryItem(item)}
+                    onClick={() => handleHistoryItemClick(item)}
                   >
                     <span>{item.term}</span>
                     <SearchHistoryMeta>
@@ -500,6 +510,19 @@ const ClearButton = styled.button`
 
   &:hover {
     text-decoration: underline;
+  }
+`;
+
+const StatusButton = styled.button`
+  background: ${({ theme }) => theme.colors.warning.main};
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.warning.dark};
   }
 `;
 
