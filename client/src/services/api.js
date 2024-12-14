@@ -38,7 +38,7 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-export default {
+const api = {
   // Auth
   login: (credentials) => axiosInstance.post('/auth/login', credentials),
   register: (userData) => axiosInstance.post('/auth/register', userData),
@@ -56,5 +56,10 @@ export default {
   getJobById: (id) => axiosInstance.get(`/jobs/${id}`),
   
   // Search
-  searchJobs: (params) => axiosInstance.get('/jobs/search', { params })
+  searchJobs: (params) => axiosInstance.get('/jobs/search', { params }),
+  
+  // Products (if needed)
+  getProducts: (params) => axiosInstance.get('/products', { params }),
 };
+
+export default api;

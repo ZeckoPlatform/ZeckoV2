@@ -1,97 +1,92 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import styled from 'styled-components';
-import { useProducts } from '../contexts/ProductContext';
-import SimpleCarousel from '../components/SimpleCarousel';
-import { HeroSection } from '../components/HeroSection';
+import { Link } from 'react-router-dom';
+import FeaturedCarousel from '../components/FeaturedCarousel';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Home = () => {
-  const { products, loading, error, fetchProducts } = useProducts();
-
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
-  const featuredServices = [
-    {
-      _id: 'service1',
-      title: 'Professional Services',
-      description: 'Expert solutions for your needs',
-    },
-    {
-      _id: 'service2',
-      title: 'Business Solutions',
-      description: 'Grow your business with us',
-    },
-    {
-      _id: 'service3',
-      title: 'Technical Support',
-      description: '24/7 dedicated assistance',
-    }
-  ];
-
-  const featuredProducts = [
-    {
-      _id: 'product1',
-      name: 'Featured Product 1',
-      description: 'High-quality product with amazing features',
-    },
-    {
-      _id: 'product2',
-      name: 'Featured Product 2',
-      description: 'Premium product for your needs',
-    },
-    {
-      _id: 'product3',
-      name: 'Featured Product 3',
-      description: 'Best-selling product in our catalog',
-    }
-  ];
+  const { theme } = useTheme();
 
   return (
-    <>
-      <HeroSection />
-      <Container>
-        <Section>
-          <SectionTitle>Featured Services</SectionTitle>
-          <SimpleCarousel items={featuredServices} type="service" />
-        </Section>
+    <HomeContainer>
+      <HeroSection>
+        <HeroContent>
+          <h1>Find Your Next Opportunity</h1>
+          <p>Discover and apply to jobs that match your skills and aspirations</p>
+          <CallToAction to="/jobs">Browse Jobs</CallToAction>
+        </HeroContent>
+      </HeroSection>
 
-        <Section>
-          <SectionTitle>Featured Products</SectionTitle>
-          <SimpleCarousel items={featuredProducts} type="product" />
-        </Section>
+      <Section>
+        <SectionTitle>Featured Jobs</SectionTitle>
+        <FeaturedCarousel />
+      </Section>
 
-        <Section>
-          <SectionTitle>Latest Products</SectionTitle>
-          {loading ? (
-            <LoadingState>Loading...</LoadingState>
-          ) : error ? (
-            <ErrorState>{error}</ErrorState>
-          ) : (
-            <ProductsGrid>
-              {products.length === 0 ? (
-                <EmptyState>No products available.</EmptyState>
-              ) : (
-                products.map(product => (
-                  <ProductCard key={product._id}>
-                    <h3>{product.name}</h3>
-                    <p>{product.description}</p>
-                    <span>${product.price}</span>
-                  </ProductCard>
-                ))
-              )}
-            </ProductsGrid>
-          )}
-        </Section>
-      </Container>
-    </>
+      <Section>
+        <SectionTitle>Why Choose Us</SectionTitle>
+        <FeaturesGrid>
+          <FeatureCard>
+            <h3>Quality Listings</h3>
+            <p>Curated job postings from verified employers</p>
+          </FeatureCard>
+          <FeatureCard>
+            <h3>Easy Apply</h3>
+            <p>Simple and quick application process</p>
+          </FeatureCard>
+          <FeatureCard>
+            <h3>Career Growth</h3>
+            <p>Opportunities for professional development</p>
+          </FeatureCard>
+        </FeaturesGrid>
+      </Section>
+    </HomeContainer>
   );
 };
 
-const Container = styled.div`
+// Styled Components
+const HomeContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
+`;
+
+const HeroSection = styled.section`
+  background: ${props => props.theme.colors.primary};
+  color: white;
+  padding: 4rem 2rem;
+  border-radius: 8px;
+  margin-bottom: 3rem;
+  text-align: center;
+`;
+
+const HeroContent = styled.div`
+  max-width: 600px;
+  margin: 0 auto;
+  
+  h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+  }
+`;
+
+const CallToAction = styled(Link)`
+  display: inline-block;
+  padding: 1rem 2rem;
+  background: white;
+  color: ${props => props.theme.colors.primary};
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: bold;
+  transition: transform 0.2s;
+  
+  &:hover {
+    transform: translateY(-2px);
+  }
 `;
 
 const Section = styled.section`
@@ -101,59 +96,31 @@ const Section = styled.section`
 const SectionTitle = styled.h2`
   text-align: center;
   margin-bottom: 2rem;
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: ${props => props.theme.colors.text};
 `;
 
-const ProductsGrid = styled.div`
+const FeaturesGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 2rem;
+  padding: 1rem;
 `;
 
-const ProductCard = styled.div`
-  background: white;
-  padding: 1.5rem;
+const FeatureCard = styled.div`
+  background: ${props => props.theme.colors.background};
+  padding: 2rem;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
-
-  &:hover {
-    transform: translateY(-5px);
-  }
-
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-align: center;
+  
   h3 {
-    margin-bottom: 0.5rem;
-    color: ${({ theme }) => theme.colors.text.primary};
-  }
-
-  p {
-    color: ${({ theme }) => theme.colors.text.secondary};
+    color: ${props => props.theme.colors.primary};
     margin-bottom: 1rem;
   }
-
-  span {
-    color: ${({ theme }) => theme.colors.primary.main};
-    font-weight: bold;
+  
+  p {
+    color: ${props => props.theme.colors.text};
   }
-`;
-
-const LoadingState = styled.div`
-  text-align: center;
-  padding: 2rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-`;
-
-const ErrorState = styled.div`
-  text-align: center;
-  padding: 2rem;
-  color: ${({ theme }) => theme.colors.error.main};
-`;
-
-const EmptyState = styled.div`
-  text-align: center;
-  padding: 2rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-  grid-column: 1 / -1;
 `;
 
 export default Home;

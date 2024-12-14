@@ -416,9 +416,14 @@ const Dashboard = () => {
         return;
       }
 
-      const response = await api.getUserJobs({ page, limit: pageSize });
+      const response = await api.getUserJobs({ 
+        page, 
+        limit: pageSize 
+      });
 
-      if (response.data && Array.isArray(response.data.jobs)) {
+      console.log('Jobs response:', response); // Debug log
+
+      if (response && response.data && Array.isArray(response.data.jobs)) {
         setJobs(response.data.jobs);
         setTotalPages(Math.ceil(response.data.total / pageSize));
       } else {
