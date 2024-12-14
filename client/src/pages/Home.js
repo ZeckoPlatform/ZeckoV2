@@ -1,11 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
-import FeaturedCarousel from '../components/FeaturedCarousel';
+import SimpleCarousel from '../components/SimpleCarousel';
 import { useTheme } from '../contexts/ThemeContext';
+import api from '../services/api';
 
 const Home = () => {
   const { theme } = useTheme();
+  const [featuredJobs, setFeaturedJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeaturedJobs = async () => {
+      try {
+        const response = await api.getJobs({ featured: true, limit: 5 });
+        setFeaturedJobs(response.data.jobs);
+      } catch (error) {
+        console.error('Error fetching featured jobs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFeaturedJobs();
+  }, []);
 
   return (
     <HomeContainer>
@@ -19,7 +37,7 @@ const Home = () => {
 
       <Section>
         <SectionTitle>Featured Jobs</SectionTitle>
-        <FeaturedCarousel />
+        <SimpleCarousel items={featuredJobs} type="job" />
       </Section>
 
       <Section>
