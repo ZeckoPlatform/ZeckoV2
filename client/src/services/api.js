@@ -38,4 +38,22 @@ axiosInstance.interceptors.response.use(
   }
 );
 
+const api = {
+  // ... existing methods ...
+  
+  getProfile: async () => {
+    try {
+      const response = await axios.get('/api/users/profile', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      throw error;
+    }
+  }
+};
+
 export default axiosInstance; 

@@ -1,8 +1,57 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import api from '../services/api';
 import debounce from 'lodash/debounce';
+
+// Animation keyframes
+const rotate = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+const pulse = keyframes`
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+`;
+
+// ProfilePicture component
+const ProfilePicture = ({ src, alt, size = '32px' }) => {
+  const [imageError, setImageError] = useState(false);
+
+  return imageError ? (
+    <UserIconFallback size={size} />
+  ) : (
+    <ProfileImage
+      src={src}
+      alt={alt}
+      size={size}
+      onError={() => setImageError(true)}
+    />
+  );
+};
+
+const UserIconFallback = ({ size = '32px' }) => (
+  <svg 
+    width={size}
+    height={size}
+    viewBox="0 0 24 24" 
+    fill="currentColor"
+  >
+    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+  </svg>
+);
 
 // Move useHistoryItem outside the component
 const useSearchHistory = (initialHistory = []) => {
@@ -39,9 +88,14 @@ const Dashboard = () => {
     JSON.parse(localStorage.getItem('searchHistory') || '[]')
   );
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [profileData, setProfileData] = useState({
+    profilePicture: null,
+    username: ''
+  });
 
   useEffect(() => {
     fetchUserJobs();
+    fetchProfileData();
   }, [sortBy, filterStatus]);
 
   const debouncedSearch = useCallback(
@@ -124,6 +178,15 @@ const Dashboard = () => {
     window.location.href = '/login';
   };
 
+  const fetchProfileData = async () => {
+    try {
+      const response = await api.get('/users/profile');
+      setProfileData(response.data);
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -135,11 +198,25 @@ const Dashboard = () => {
         <HeaderRight>
           <PostJobButton to="/post-job">Post New Job</PostJobButton>
           <ProfileMenu>
-            <ProfileButton onClick={() => setShowProfileMenu(!showProfileMenu)}>
-              <UserIcon /> {/* Add your user icon component */}
+            <ProfileButton 
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+              isOpen={showProfileMenu}
+            >
+              <ProfilePicture 
+                src={profileData.profilePicture} 
+                alt={profileData.username}
+              />
             </ProfileButton>
             {showProfileMenu && (
               <ProfileDropdown>
+                <ProfileHeader>
+                  <ProfilePicture 
+                    src={profileData.profilePicture} 
+                    alt={profileData.username}
+                    size="48px"
+                  />
+                  <ProfileName>{profileData.username}</ProfileName>
+                </ProfileHeader>
                 <ProfileLink to="/profile">Profile</ProfileLink>
                 <ProfileLink to="/settings">Settings</ProfileLink>
                 <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
@@ -573,11 +650,39 @@ const ProfileButton = styled.button`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: ${({ theme }) => theme.colors.text.primary};
+  position: relative;
+  transition: all 0.3s ease;
+  
+  ${({ isOpen }) => isOpen && `
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      height: 2px;
+      background: ${({ theme }) => theme.colors.primary.main};
+      animation: ${pulse} 1s ease infinite;
+    }
+  `}
   
   &:hover {
-    color: ${({ theme }) => theme.colors.primary.main};
+    transform: scale(1.05);
   }
+`;
+
+const ProfileHeader = styled.div`
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.main};
+`;
+
+const ProfileName = styled.span`
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const ProfileDropdown = styled.div`
@@ -586,10 +691,20 @@ const ProfileDropdown = styled.div`
   right: 0;
   background: white;
   border: 1px solid ${({ theme }) => theme.colors.border.main};
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  min-width: 150px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  min-width: 200px;
   z-index: 1000;
+  opacity: 0;
+  transform: translateY(-10px);
+  animation: dropdownAppear 0.3s ease forwards;
+  
+  @keyframes dropdownAppear {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 `;
 
 const ProfileLink = styled(Link)`
@@ -614,6 +729,19 @@ const LogoutButton = styled.button`
   
   &:hover {
     background: ${({ theme }) => theme.colors.background.light};
+  }
+`;
+
+const ProfileImage = styled.img`
+  width: ${({ size }) => size};
+  height: ${({ size }) => size};
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid ${({ theme }) => theme.colors.primary.main};
+  transition: all 0.3s ease;
+  
+  &:hover {
+    animation: ${pulse} 1s ease infinite;
   }
 `;
 
