@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { FiChevronLeft, FiChevronRight, FiEye, FiEdit, FiTrash2, FiUser } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiEye, FiEdit, FiTrash2, FiUser, FiRefreshCw } from 'react-icons/fi';
 import api from '../services/api';
 import debounce from 'lodash/debounce';
 import { toast } from 'react-toastify';
@@ -166,6 +166,41 @@ const PageButton = styled.button`
   }
 `;
 
+const OfflineBanner = styled.div`
+  background: ${props => props.theme.colors.warning};
+  color: white;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  
+  small {
+    opacity: 0.8;
+    margin-top: 0.25rem;
+  }
+`;
+
+const RetryButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: ${props => props.theme.colors.primary};
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  
+  &:hover {
+    background: ${props => props.theme.colors.primaryDark};
+  }
+`;
+
+const ErrorContainer = styled.div`
+  margin: 1rem 0;
+`;
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
@@ -177,6 +212,33 @@ const Dashboard = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [pageSize] = useState(10);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [actionLoading, setActionLoading] = useState({});
+  const [lastSuccessfulFetch, setLastSuccessfulFetch] = useState(null);
+  const MAX_RETRIES = 3;
+
+  // Offline detection
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOffline(false);
+      toast.success('Back online! Refreshing data...');
+      fetchJobs(currentPage);
+    };
+
+    const handleOffline = () => {
+      setIsOffline(true);
+      toast.warning('You are offline. Some features may be limited.');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const handleSearch = useCallback(
     debounce(async (term) => {
@@ -238,11 +300,22 @@ const Dashboard = () => {
     }
   };
 
-  const fetchJobs = async (page) => {
+  const fetchJobs = async (page, retryAttempt = 0) => {
     try {
       setLoading(true);
       setError(null);
-      
+
+      // Check offline status
+      if (isOffline) {
+        const cachedJobs = localStorage.getItem('cachedJobs');
+        if (cachedJobs) {
+          setJobs(JSON.parse(cachedJobs));
+          toast.info('Showing cached data (offline mode)');
+          return;
+        }
+        throw new Error('No internet connection');
+      }
+
       const token = localStorage.getItem('token');
       if (!token) {
         navigate('/login');
@@ -250,31 +323,50 @@ const Dashboard = () => {
       }
 
       const response = await api.get('/jobs', {
-        params: {
-          page,
-          limit: pageSize
-        },
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        params: { page, limit: pageSize },
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.data && response.data.jobs) {
         setJobs(response.data.jobs);
         setTotalPages(Math.ceil(response.data.total / pageSize));
-      } else {
-        setJobs([]);
-        setTotalPages(1);
+        // Cache the successful response
+        localStorage.setItem('cachedJobs', JSON.stringify(response.data.jobs));
+        setLastSuccessfulFetch(new Date().toISOString());
+        setRetryCount(0);
       }
     } catch (err) {
       console.error('Fetch error:', err);
+      
       if (err.response?.status === 401) {
         localStorage.removeItem('token');
         navigate('/login');
-      } else {
-        setError('Failed to fetch jobs. Please try again later.');
-        toast.error('Failed to fetch jobs');
+        return;
       }
+
+      // Retry logic
+      if (retryAttempt < MAX_RETRIES) {
+        const delay = Math.pow(2, retryAttempt) * 1000; // Exponential backoff
+        toast.info(`Retrying in ${delay/1000} seconds...`);
+        setTimeout(() => {
+          fetchJobs(page, retryAttempt + 1);
+        }, delay);
+        return;
+      }
+
+      setError({
+        message: 'Failed to fetch jobs',
+        details: err.response?.data?.message || err.message,
+        code: err.response?.status
+      });
+      
+      toast.error(
+        <div>
+          <strong>Error fetching jobs</strong>
+          <p>{err.response?.data?.message || 'Please try again later'}</p>
+          <button onClick={() => fetchJobs(page)}>Retry</button>
+        </div>
+      );
     } finally {
       setLoading(false);
     }
@@ -331,23 +423,65 @@ const Dashboard = () => {
     );
   };
 
+  const handleAction = async (actionType, jobId, action) => {
+    setActionLoading(prev => ({ ...prev, [jobId]: actionType }));
+    try {
+      await action();
+      toast.success(`${actionType} successful`);
+    } catch (err) {
+      console.error(`${actionType} error:`, err);
+      toast.error(
+        <div>
+          <strong>{`${actionType} failed`}</strong>
+          <p>{err.response?.data?.message || 'Please try again'}</p>
+        </div>
+      );
+    } finally {
+      setActionLoading(prev => ({ ...prev, [jobId]: null }));
+    }
+  };
+
   const handleViewJob = (job) => {
-    // Implement view functionality
-    console.log('View job:', job);
+    handleAction('View', job._id, async () => {
+      // View logic here
+    });
   };
 
   const handleEditJob = (job) => {
-    // Implement edit functionality
-    console.log('Edit job:', job);
+    handleAction('Edit', job._id, async () => {
+      // Edit logic here
+    });
   };
 
   const handleDeleteJob = (job) => {
-    // Implement delete functionality
-    console.log('Delete job:', job);
+    handleAction('Delete', job._id, async () => {
+      // Delete logic here
+    });
   };
+
+  // Render loading states in buttons
+  const renderActionButton = (job, type, icon, handler) => (
+    <ActionButton 
+      onClick={() => handler(job)}
+      disabled={actionLoading[job._id]}
+    >
+      {actionLoading[job._id] === type ? (
+        <LoadingSpinner small />
+      ) : icon}
+    </ActionButton>
+  );
 
   return (
     <DashboardContainer>
+      {isOffline && (
+        <OfflineBanner>
+          You are currently offline. Some features may be limited.
+          {lastSuccessfulFetch && (
+            <small>Last updated: {new Date(lastSuccessfulFetch).toLocaleString()}</small>
+          )}
+        </OfflineBanner>
+      )}
+      
       <Header>
         <HeaderLeft>
           <h1>Dashboard</h1>
@@ -379,7 +513,18 @@ const Dashboard = () => {
       </SearchContainer>
 
       {loading && <LoadingSpinner />}
-      {error && <ErrorMessage>{error}</ErrorMessage>}
+      {error && (
+        <ErrorContainer>
+          <ErrorMessage>
+            <h4>{error.message}</h4>
+            <p>{error.details}</p>
+            {error.code && <small>Error code: {error.code}</small>}
+            <RetryButton onClick={() => fetchJobs(currentPage)}>
+              <FiRefreshCw /> Retry
+            </RetryButton>
+          </ErrorMessage>
+        </ErrorContainer>
+      )}
       
       {!loading && !error && jobs.length === 0 && (
         <EmptyState>No jobs found</EmptyState>
@@ -393,15 +538,9 @@ const Dashboard = () => {
                 <JobTitle>{job.title}</JobTitle>
                 <JobCompany>{job.company}</JobCompany>
                 <JobActions>
-                  <ActionButton onClick={() => handleViewJob(job)}>
-                    <FiEye />
-                  </ActionButton>
-                  <ActionButton onClick={() => handleEditJob(job)}>
-                    <FiEdit />
-                  </ActionButton>
-                  <ActionButton onClick={() => handleDeleteJob(job)}>
-                    <FiTrash2 />
-                  </ActionButton>
+                  {renderActionButton(job, 'View', <FiEye />, handleViewJob)}
+                  {renderActionButton(job, 'Edit', <FiEdit />, handleEditJob)}
+                  {renderActionButton(job, 'Delete', <FiTrash2 />, handleDeleteJob)}
                 </JobActions>
               </JobCard>
             ))}
