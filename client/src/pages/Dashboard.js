@@ -6,6 +6,7 @@ import debounce from 'lodash/debounce';
 import { useTheme } from '../contexts/ThemeContext';
 import ErrorBoundary from '../components/error/ErrorBoundary';
 import { withErrorBoundary } from '../components/error/withErrorBoundary';
+import { FiChevronLeft, FiChevronRight, FiEye, FiEdit, FiTrash2 } from 'react-icons/fi';
 
 // Animation keyframes
 const rotate = keyframes`
@@ -161,61 +162,43 @@ const SearchSection = withErrorBoundary(({
 });
 
 const Dashboard = () => {
-  const { theme, mode, setMode } = useTheme();
-  const [userJobs, setUserJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [sortBy, setSortBy] = useState('createdAt');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const jobsPerPage = 6;
+  const { theme, mode } = useTheme();
+  
+  // State declarations
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchField, setSearchField] = useState('title');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [showSearchHistory, setShowSearchHistory] = useState(false);
-  const [searchHistory, setSearchHistory] = useState(() => {
-    try {
-      const saved = localStorage.getItem('searchHistory');
-      return saved ? JSON.parse(saved) : [];
-    } catch (error) {
-      console.error('Error loading search history:', error);
-      return [];
-    }
-  });
-  const [profileData, setProfileData] = useState({
-    profilePicture: null,
-    username: ''
-  });
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [pageSize] = useState(10);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [showJobDetails, setShowJobDetails] = useState(false);
 
-  useEffect(() => {
-    fetchUserJobs();
-    fetchProfileData();
-  }, [sortBy, filterStatus]);
-
-  const updateSearchHistory = useCallback((term) => {
-    const newHistory = [
-      { term, timestamp: new Date().toISOString() },
-      ...searchHistory.filter(h => h.term !== term).slice(0, 4)
-    ];
-    setSearchHistory(newHistory);
-    try {
-      localStorage.setItem('searchHistory', JSON.stringify(newHistory));
-    } catch (error) {
-      console.error('Error saving search history:', error);
-    }
-  }, [searchHistory]);
-
+  // Handler functions
   const handleSearch = useCallback(
     debounce(async (term) => {
-      if (!term.trim()) return;
+      if (!term.trim()) {
+        fetchJobs(1);
+        return;
+      }
       
       try {
         setLoading(true);
         const response = await api.get('/jobs/search', {
-          params: { term, field: searchField }
+          params: { 
+            term, 
+            field: searchField,
+            page: currentPage,
+            limit: pageSize
+          }
         });
-        setUserJobs(response.data);
-        updateSearchHistory(term);
+        setJobs(response.data.jobs);
+        setTotalPages(Math.ceil(response.data.total / pageSize));
       } catch (err) {
         setError('Failed to search jobs');
         console.error('Search error:', err);
@@ -223,23 +206,17 @@ const Dashboard = () => {
         setLoading(false);
       }
     }, 300),
-    [searchField, updateSearchHistory]
+    [searchField, currentPage, pageSize]
   );
 
-  const clearHistory = useCallback(() => {
-    setSearchHistory([]);
-    try {
-      localStorage.removeItem('searchHistory');
-    } catch (error) {
-      console.error('Error clearing search history:', error);
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    if (searchTerm) {
+      handleSearch(searchTerm);
+    } else {
+      fetchJobs(page);
     }
-  }, []);
-
-  const handleHistoryItemClick = useCallback((term) => {
-    setSearchTerm(term);
-    setShowSearchHistory(false);
-    handleSearch(term);
-  }, [handleSearch]);
+  };
 
   const handleLogout = useCallback(() => {
     try {
@@ -250,79 +227,107 @@ const Dashboard = () => {
     }
   }, []);
 
-  const fetchUserJobs = async () => {
+  // Fetch jobs function
+  const fetchJobs = async (page) => {
     try {
       setLoading(true);
       const response = await api.get('/jobs/user', {
         params: {
-          sort: sortBy,
-          status: filterStatus,
-          search: searchTerm,
-          searchField: searchField
+          page,
+          limit: pageSize
         }
       });
-      setUserJobs(response.data);
-      setError('');
+      setJobs(response.data.jobs);
+      setTotalPages(Math.ceil(response.data.total / pageSize));
     } catch (err) {
-      console.error('Error fetching jobs:', err);
-      setError('Failed to load jobs. Please try again later.');
+      setError('Failed to fetch jobs');
+      console.error('Fetch error:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (jobId) => {
-    if (window.confirm('Are you sure you want to delete this job?')) {
-      try {
-        await api.delete(`/jobs/${jobId}`);
-        setUserJobs(userJobs.filter(job => job._id !== jobId));
-      } catch (err) {
-        setError('Failed to delete job');
-        console.error('Error deleting job:', err);
+  // Effects
+  useEffect(() => {
+    fetchJobs(currentPage);
+  }, [currentPage, pageSize]);
+
+  // Handler for job details
+  const handleViewJob = (job) => {
+    setSelectedJob(job);
+    setShowJobDetails(true);
+  };
+
+  // Enhanced pagination handlers
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      handlePageChange(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      handlePageChange(currentPage + 1);
+    }
+  };
+
+  // Enhanced pagination render
+  const renderPagination = () => {
+    const pages = [];
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+
+    if (startPage > 1) {
+      pages.push(<PageButton key={1} onClick={() => handlePageChange(1)}>1</PageButton>);
+      if (startPage > 2) {
+        pages.push(<PaginationEllipsis key="ellipsis1">...</PaginationEllipsis>);
       }
     }
-  };
 
-  const handleStatusUpdate = async (jobId) => {
-    try {
-      const newStatus = prompt('Enter new status (open/in-progress/completed/cancelled):');
-      if (!newStatus) return;
-
-      await api.patch(`/jobs/${jobId}/status`, { status: newStatus });
-      fetchUserJobs();
-    } catch (err) {
-      setError('Failed to update job status');
-      console.error('Error updating status:', err);
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <PageButton
+          key={i}
+          active={i === currentPage}
+          onClick={() => handlePageChange(i)}
+        >
+          {i}
+        </PageButton>
+      );
     }
-  };
 
-  // Get current jobs for pagination
-  const indexOfLastJob = currentPage * jobsPerPage;
-  const indexOfFirstJob = indexOfLastJob - jobsPerPage;
-  const currentJobs = userJobs.slice(indexOfFirstJob, indexOfLastJob);
-
-  // Change page
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-  const fetchProfileData = async () => {
-    try {
-      const response = await api.get('/users/profile');
-      setProfileData(response.data);
-    } catch (err) {
-      console.error('Error fetching profile:', err);
-      // Set default values if profile fetch fails
-      setProfileData({
-        profilePicture: null,
-        username: 'User'
-      });
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        pages.push(<PaginationEllipsis key="ellipsis2">...</PaginationEllipsis>);
+      }
+      pages.push(
+        <PageButton 
+          key={totalPages} 
+          onClick={() => handlePageChange(totalPages)}
+        >
+          {totalPages}
+        </PageButton>
+      );
     }
-  };
 
-  const toggleTheme = () => {
-    setMode(mode === 'light' ? 'dark' : 'light');
+    return (
+      <Pagination>
+        <PageButton 
+          onClick={handlePrevPage} 
+          disabled={currentPage === 1}
+        >
+          <FiChevronLeft />
+        </PageButton>
+        {pages}
+        <PageButton 
+          onClick={handleNextPage} 
+          disabled={currentPage === totalPages}
+        >
+          <FiChevronRight />
+        </PageButton>
+      </Pagination>
+    );
   };
-
-  if (loading) return <div>Loading...</div>;
 
   return (
     <DashboardContainer>
@@ -331,30 +336,13 @@ const Dashboard = () => {
           <h1>Dashboard</h1>
         </HeaderLeft>
         <HeaderRight>
-          <ThemeToggle onClick={toggleTheme}>
-            {mode === 'light' ? '🌙' : '☀️'}
-          </ThemeToggle>
           <PostJobButton to="/post-job">Post New Job</PostJobButton>
           <ProfileMenu>
-            <ProfileButton 
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
-              isOpen={showProfileMenu}
-            >
-              <ProfilePicture 
-                src={profileData.profilePicture} 
-                alt={profileData.username}
-              />
+            <ProfileButton onClick={() => setShowProfileMenu(!showProfileMenu)}>
+              <UserIcon />
             </ProfileButton>
             {showProfileMenu && (
               <ProfileDropdown>
-                <ProfileHeader>
-                  <ProfilePicture 
-                    src={profileData.profilePicture} 
-                    alt={profileData.username}
-                    size="48px"
-                  />
-                  <ProfileName>{profileData.username}</ProfileName>
-                </ProfileHeader>
                 <ProfileLink to="/profile">Profile</ProfileLink>
                 <ProfileLink to="/settings">Settings</ProfileLink>
                 <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
@@ -375,83 +363,107 @@ const Dashboard = () => {
                   setSearchTerm(e.target.value);
                   handleSearch(e.target.value);
                 }}
-                onFocus={() => setShowSearchHistory(true)}
                 placeholder="Search jobs..."
               />
               <SearchButton type="submit">Search</SearchButton>
             </SearchForm>
-            
-            {showSearchHistory && searchHistory.length > 0 && (
-              <SearchHistoryContainer>
-                <SearchHistoryHeader>
-                  <h4>Recent Searches</h4>
-                  <ClearButton onClick={clearHistory}>Clear All</ClearButton>
-                </SearchHistoryHeader>
-                <SearchHistoryList>
-                  {searchHistory.map((item, index) => (
-                    <SearchHistoryItem
-                      key={index}
-                      onClick={() => handleHistoryItemClick(item.term)}
-                    >
-                      {item.term}
-                      <SearchHistoryMeta>
-                        {new Date(item.timestamp).toLocaleDateString()}
-                      </SearchHistoryMeta>
-                    </SearchHistoryItem>
-                  ))}
-                </SearchHistoryList>
-              </SearchHistoryContainer>
-            )}
           </SearchContainer>
-
-          <Select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="createdAt">Sort by Date</option>
-            <option value="budget">Sort by Budget</option>
-            <option value="deadline">Sort by Deadline</option>
-          </Select>
-
-          <Select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-            <option value="all">All Status</option>
-            <option value="open">Open</option>
-            <option value="in-progress">In Progress</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </Select>
         </Controls>
 
-        <Section>
-          <h2>Your Posted Jobs</h2>
-          <JobsSection 
-            jobs={currentJobs}
-            onDelete={handleDelete}
-            onStatusUpdate={handleStatusUpdate}
-          />
-
-          <Pagination>
-            {Array.from({ length: Math.ceil(userJobs.length / jobsPerPage) }).map((_, index) => (
-              <PageButton
-                key={index}
-                active={currentPage === index + 1}
-                onClick={() => paginate(index + 1)}
-              >
-                {index + 1}
-              </PageButton>
-            ))}
-          </Pagination>
-        </Section>
+        {loading && <LoadingSpinner />}
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+        {!loading && !error && jobs.length === 0 && (
+          <EmptyState>No jobs found</EmptyState>
+        )}
+        {!loading && !error && jobs.length > 0 && (
+          <>
+            <JobsList>
+              {jobs.map(job => (
+                <JobCard key={job._id}>
+                  <JobContent>
+                    <JobTitle>{job.title}</JobTitle>
+                    <JobCompany>{job.company}</JobCompany>
+                    <JobLocation>{job.location}</JobLocation>
+                    <StatusIndicator status={job.status}>
+                      {job.status}
+                    </StatusIndicator>
+                  </JobContent>
+                  <JobActions>
+                    <ActionButton onClick={() => handleViewJob(job)}>
+                      <FiEye />
+                    </ActionButton>
+                    <ActionButton onClick={() => handleEditJob(job._id)}>
+                      <FiEdit />
+                    </ActionButton>
+                    <ActionButton onClick={() => handleDeleteJob(job._id)}>
+                      <FiTrash2 />
+                    </ActionButton>
+                  </JobActions>
+                </JobCard>
+              ))}
+            </JobsList>
+            {renderPagination()}
+          </>
+        )}
       </ErrorBoundary>
+
+      {/* Job Details Modal */}
+      {showJobDetails && selectedJob && (
+        <Modal onClose={() => setShowJobDetails(false)}>
+          <ModalContent>
+            <ModalHeader>
+              <h2>{selectedJob.title}</h2>
+              <CloseButton onClick={() => setShowJobDetails(false)}>×</CloseButton>
+            </ModalHeader>
+            <ModalBody>
+              <JobDetailRow>
+                <Label>Company:</Label>
+                <Value>{selectedJob.company}</Value>
+              </JobDetailRow>
+              <JobDetailRow>
+                <Label>Location:</Label>
+                <Value>{selectedJob.location}</Value>
+              </JobDetailRow>
+              <JobDetailRow>
+                <Label>Status:</Label>
+                <StatusIndicator status={selectedJob.status}>
+                  {selectedJob.status}
+                </StatusIndicator>
+              </JobDetailRow>
+              <JobDetailRow>
+                <Label>Description:</Label>
+                <Value>{selectedJob.description}</Value>
+              </JobDetailRow>
+              <JobDetailRow>
+                <Label>Requirements:</Label>
+                <RequirementsList>
+                  {selectedJob.requirements.map((req, index) => (
+                    <RequirementItem key={index}>{req}</RequirementItem>
+                  ))}
+                </RequirementsList>
+              </JobDetailRow>
+            </ModalBody>
+            <ModalFooter>
+              <Button onClick={() => handleEditJob(selectedJob._id)}>
+                Edit Job
+              </Button>
+              <Button secondary onClick={() => setShowJobDetails(false)}>
+                Close
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
     </DashboardContainer>
   );
 };
 
-// Styled Components
+// Styled components
 const DashboardContainer = styled.div`
   padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
 `;
 
-const Header = styled.div`
+const Header = styled.header`
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -626,8 +638,10 @@ const PageButton = styled.button`
   padding: 0.5rem 1rem;
   border: 1px solid ${({ theme }) => theme.colors.border.main};
   border-radius: 4px;
-  background: ${({ active, theme }) => active ? theme.colors.primary.main : 'white'};
-  color: ${({ active, theme }) => active ? 'white' : theme.colors.text.primary};
+  background: ${({ active, theme }) => 
+    active ? theme.colors.primary.main : 'white'};
+  color: ${({ active, theme }) => 
+    active ? 'white' : theme.colors.text.primary};
   cursor: pointer;
 
   &:hover {
@@ -867,6 +881,76 @@ const ThemeToggle = styled.button`
     background: ${({ theme }) => theme.colors.background.paper};
     transform: scale(1.1);
   }
+`;
+
+const Modal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+`;
+
+const ModalHeader = styled.div`
+  padding: 1rem;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.main};
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const ModalBody = styled.div`
+  padding: 1rem;
+`;
+
+const ModalFooter = styled.div`
+  padding: 1rem;
+  border-top: 1px solid ${({ theme }) => theme.colors.border.main};
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+`;
+
+const JobDetailRow = styled.div`
+  margin-bottom: 1rem;
+`;
+
+const Label = styled.div`
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin-bottom: 0.5rem;
+`;
+
+const Value = styled.div`
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const RequirementsList = styled.ul`
+  margin: 0;
+  padding-left: 1.5rem;
+`;
+
+const RequirementItem = styled.li`
+  margin-bottom: 0.5rem;
+`;
+
+const PaginationEllipsis = styled.span`
+  padding: 0.5rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
 export default withErrorBoundary(Dashboard, {
