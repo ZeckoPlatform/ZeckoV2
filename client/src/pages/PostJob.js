@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../services/api';
+import { jobCategories, getAllCategories, getSubcategories } from '../Data/jobCategories';
 
 const PostJob = () => {
   const navigate = useNavigate();
@@ -15,6 +16,8 @@ const PostJob = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedSubcategory, setSelectedSubcategory] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -108,6 +111,41 @@ const PostJob = () => {
               required
             />
           </FormGroup>
+
+          <FormGroup>
+            <Label>Category</Label>
+            <Select
+              value={selectedCategory}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value);
+                setSelectedSubcategory(''); // Reset subcategory when category changes
+              }}
+            >
+              <option value="">Select a Category</option>
+              {getAllCategories().map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </Select>
+          </FormGroup>
+
+          {selectedCategory && (
+            <FormGroup>
+              <Label>Subcategory</Label>
+              <Select
+                value={selectedSubcategory}
+                onChange={(e) => setSelectedSubcategory(e.target.value)}
+              >
+                <option value="">Select a Subcategory</option>
+                {getSubcategories(selectedCategory).map((subcategory) => (
+                  <option key={subcategory} value={subcategory}>
+                    {subcategory}
+                  </option>
+                ))}
+              </Select>
+            </FormGroup>
+          )}
 
           <Button type="submit" disabled={loading}>
             {loading ? 'Posting...' : 'Post Lead'}
