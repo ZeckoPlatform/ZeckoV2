@@ -6,6 +6,165 @@ import api from '../services/api';
 import debounce from 'lodash/debounce';
 import { toast } from 'react-toastify';
 
+// Styled Components
+const DashboardContainer = styled.div`
+  padding: 2rem;
+`;
+
+const Header = styled.header`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+`;
+
+const HeaderLeft = styled.div``;
+
+const HeaderRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`;
+
+const PostJobButton = styled(Link)`
+  padding: 0.5rem 1rem;
+  background: ${({ theme }) => theme.colors.primary};
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+`;
+
+const ProfileButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+`;
+
+const ProfileDropdown = styled.div`
+  position: absolute;
+  right: 2rem;
+  top: 4rem;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 0.5rem;
+`;
+
+const ProfileLink = styled(Link)`
+  display: block;
+  padding: 0.5rem 1rem;
+  color: ${({ theme }) => theme.colors.text};
+  text-decoration: none;
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.background};
+  }
+`;
+
+const LogoutButton = styled.button`
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: ${({ theme }) => theme.colors.danger};
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.background};
+  }
+`;
+
+const SearchContainer = styled.div`
+  margin-bottom: 2rem;
+`;
+
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 4px;
+`;
+
+const LoadingSpinner = styled.div`
+  text-align: center;
+  padding: 2rem;
+`;
+
+const ErrorMessage = styled.div`
+  color: ${({ theme }) => theme.colors.danger};
+  padding: 1rem;
+  text-align: center;
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 2rem;
+  color: ${({ theme }) => theme.colors.textSecondary};
+`;
+
+const JobsList = styled.div`
+  display: grid;
+  gap: 1rem;
+`;
+
+const JobCard = styled.div`
+  padding: 1rem;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const JobTitle = styled.h3`
+  margin: 0;
+`;
+
+const JobCompany = styled.div`
+  color: ${({ theme }) => theme.colors.textSecondary};
+`;
+
+const JobActions = styled.div`
+  display: flex;
+  gap: 0.5rem;
+`;
+
+const ActionButton = styled.button`
+  padding: 0.5rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  
+  &:hover {
+    color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
+const Pagination = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+`;
+
+const PageButton = styled.button`
+  padding: 0.5rem 1rem;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  background: ${({ active }) => active ? theme.colors.primary : 'white'};
+  color: ${({ active }) => active ? 'white' : theme.colors.text};
+  cursor: pointer;
+  border-radius: 4px;
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
 const Dashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -117,6 +276,21 @@ const Dashboard = () => {
     );
   };
 
+  const handleViewJob = (job) => {
+    // Implement view functionality
+    console.log('View job:', job);
+  };
+
+  const handleEditJob = (job) => {
+    // Implement edit functionality
+    console.log('Edit job:', job);
+  };
+
+  const handleDeleteJob = (job) => {
+    // Implement delete functionality
+    console.log('Delete job:', job);
+  };
+
   return (
     <DashboardContainer>
       <Header>
@@ -183,12 +357,5 @@ const Dashboard = () => {
     </DashboardContainer>
   );
 };
-
-// Styled components
-const DashboardContainer = styled.div`
-  padding: 2rem;
-`;
-
-// ... rest of styled components ...
 
 export default Dashboard;
