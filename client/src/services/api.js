@@ -61,7 +61,6 @@ const api = {
   
   // Jobs
   getJobs: (params) => axiosInstance.get('/jobs', { params }),
-  getUserJobs: (params) => axiosInstance.get('/jobs/user', { params }),
   createJob: (jobData) => axiosInstance.post('/jobs', jobData),
   updateJob: (id, jobData) => axiosInstance.put(`/jobs/${id}`, jobData),
   deleteJob: (id) => axiosInstance.delete(`/jobs/${id}`),

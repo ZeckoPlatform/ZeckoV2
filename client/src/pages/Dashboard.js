@@ -409,34 +409,22 @@ const Dashboard = () => {
     try {
       setLoading(true);
       setError(null);
-
-      // Check if user is logged in
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
-      // Use getJobs instead of getUserJobs for now
+      
       const response = await api.getJobs({ 
         page, 
         limit: pageSize,
-        // Add any other necessary filters
+        userId: localStorage.getItem('userId')
       });
 
       if (response.data && Array.isArray(response.data.jobs)) {
         setJobs(response.data.jobs);
         setTotalPages(Math.ceil(response.data.total / pageSize));
-      } else {
-        setJobs([]);
-        setTotalPages(1);
       }
     } catch (err) {
       console.error('Fetch error:', err);
       setError({
         message: 'Failed to load jobs',
-        details: err.response?.data?.message || err.message,
-        code: err.response?.status
+        details: err.response?.data?.message || err.message
       });
     } finally {
       setLoading(false);
