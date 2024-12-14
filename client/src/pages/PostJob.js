@@ -9,6 +9,7 @@ const PostJob = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    company: '',
     budget: '',
     deadline: '',
     requirements: '',
@@ -33,10 +34,21 @@ const PostJob = () => {
     setError('');
 
     try {
-      await api.post('/jobs', formData);
+      const jobData = {
+        ...formData,
+        category: selectedCategory,
+        subcategory: selectedSubcategory,
+        budget: parseFloat(formData.budget),
+        deadline: new Date(formData.deadline).toISOString()
+      };
+
+      console.log('Submitting job data:', jobData);
+
+      await api.post('/jobs', jobData);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to post lead');
+      console.error('Error details:', err.response?.data);
+      setError(err.response?.data?.message || 'Failed to post job');
     } finally {
       setLoading(false);
     }
@@ -144,6 +156,17 @@ const PostJob = () => {
               type="text"
               name="location"
               value={formData.location}
+              onChange={handleChange}
+              required
+            />
+          </FormGroup>
+
+          <FormGroup>
+            <Label>Company *</Label>
+            <Input
+              type="text"
+              name="company"
+              value={formData.company}
               onChange={handleChange}
               required
             />
