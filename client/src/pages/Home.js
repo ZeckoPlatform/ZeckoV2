@@ -8,6 +8,7 @@ const Home = () => {
   const [featuredJobs, setFeaturedJobs] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchFeaturedItems = async () => {
@@ -17,10 +18,11 @@ const Home = () => {
           api.getProducts({ featured: true, limit: 5 })
         ]);
         
-        setFeaturedJobs(jobsResponse.data.jobs);
-        setFeaturedProducts(productsResponse.data.products);
+        setFeaturedJobs(jobsResponse.data.jobs || []);
+        setFeaturedProducts(productsResponse.data.products || []);
       } catch (error) {
         console.error('Error fetching featured items:', error);
+        setError(error);
       } finally {
         setLoading(false);
       }

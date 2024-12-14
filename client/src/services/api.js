@@ -22,13 +22,10 @@ axiosInstance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    // Add timestamp to prevent caching
     config.params = { ...config.params, _t: Date.now() };
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Response interceptor
@@ -40,14 +37,7 @@ axiosInstance.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
-    return Promise.reject(errorHandler.handle(error, toast));
-  }
+  (error) => Promise.reject(errorHandler.handle(error, toast))
 );
 
 const api = {
@@ -66,14 +56,12 @@ const api = {
   deleteJob: (id) => axiosInstance.delete(`/jobs/${id}`),
   getJobById: (id) => axiosInstance.get(`/jobs/${id}`),
   
-  // Search
-  searchJobs: (params) => axiosInstance.get('/jobs/search', { params }),
-  
-  // Contractors
-  getContractors: (params) => axiosInstance.get('/contractors', { params }),
-  
-  // Health check
-  checkHealth: () => axiosInstance.get('/health'),
+  // Products
+  getProducts: (params) => axiosInstance.get('/products', { params }),
+  createProduct: (productData) => axiosInstance.post('/products', productData),
+  updateProduct: (id, productData) => axiosInstance.put(`/products/${id}`, productData),
+  deleteProduct: (id) => axiosInstance.delete(`/products/${id}`),
+  getProductById: (id) => axiosInstance.get(`/products/${id}`)
 };
 
 export default api;
