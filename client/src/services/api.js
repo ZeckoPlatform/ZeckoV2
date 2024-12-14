@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { errorHandler } from './error/ErrorHandler';
+import { toast } from 'react-toastify';
 
 const BASE_URL = process.env.NODE_ENV === 'production' 
   ? 'https://zeckov2-deceb43992ac.herokuapp.com/api'
@@ -8,7 +10,9 @@ const axiosInstance = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-  }
+    'Accept': 'application/json'
+  },
+  timeout: 15000
 });
 
 // Request interceptor
@@ -18,6 +22,8 @@ axiosInstance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Add timestamp to prevent caching
+    config.params = { ...config.params, _t: Date.now() };
     return config;
   },
   (error) => {
@@ -27,14 +33,20 @@ axiosInstance.interceptors.request.use(
 
 // Response interceptor
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const contentType = response.headers['content-type'];
+    if (contentType && contentType.includes('text/html')) {
+      throw new Error('Received HTML response instead of JSON');
+    }
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
-    return Promise.reject(error);
+    return Promise.reject(errorHandler.handle(error, toast));
   }
 );
 
@@ -58,8 +70,11 @@ const api = {
   // Search
   searchJobs: (params) => axiosInstance.get('/jobs/search', { params }),
   
-  // Products (if needed)
-  getProducts: (params) => axiosInstance.get('/products', { params }),
+  // Contractors
+  getContractors: (params) => axiosInstance.get('/contractors', { params }),
+  
+  // Health check
+  checkHealth: () => axiosInstance.get('/health'),
 };
 
 export default api;
