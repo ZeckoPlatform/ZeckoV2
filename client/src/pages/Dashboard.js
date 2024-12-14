@@ -365,6 +365,63 @@ const Dashboard = () => {
     }
   };
 
+  const handleApiError = (err) => {
+    console.error('API Error:', err);
+    
+    if (err.response) {
+      // Server responded with error
+      switch (err.response.status) {
+        case 401:
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          navigate('/login');
+          toast.error('Session expired. Please login again.');
+          break;
+        case 403:
+          toast.error('You do not have permission to perform this action');
+          break;
+        case 404:
+          toast.error('Resource not found');
+          break;
+        case 500:
+          toast.error('Server error. Please try again later');
+          break;
+        default:
+          toast.error('An error occurred. Please try again');
+      }
+
+      setError({
+        message: err.response.data.message || 'An error occurred',
+        details: err.response.data.details || err.message,
+        code: err.response.status
+      });
+    } else if (err.request) {
+      // Request made but no response
+      toast.error('No response from server. Please check your connection');
+      setError({
+        message: 'Network Error',
+        details: 'Unable to connect to the server',
+        code: 'NETWORK_ERROR'
+      });
+    } else {
+      // Something else happened
+      toast.error('An unexpected error occurred');
+      setError({
+        message: 'Error',
+        details: err.message,
+        code: 'UNKNOWN'
+      });
+    }
+
+    // Implement retry logic for 5xx errors
+    if (err.response?.status >= 500 && retryCount < MAX_RETRIES) {
+      setRetryCount(prev => prev + 1);
+      setTimeout(() => {
+        fetchJobs(currentPage);
+      }, Math.pow(2, retryCount) * 1000); // Exponential backoff
+    }
+  };
+
   const fetchJobs = async (page) => {
     try {
       setLoading(true);
