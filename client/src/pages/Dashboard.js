@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { FiChevronLeft, FiChevronRight, FiEye, FiEdit, FiTrash2, FiUser } from 'react-icons/fi';
 import api from '../services/api';
 import debounce from 'lodash/debounce';
 import { toast } from 'react-toastify';
+import { useTheme } from '../contexts/ThemeContext';
 
 // Styled Components
 const DashboardContainer = styled.div`
@@ -166,6 +167,8 @@ const PageButton = styled.button`
 `;
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const { theme } = useTheme();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -184,23 +187,46 @@ const Dashboard = () => {
       
       try {
         setLoading(true);
+        setError(null);
+        
+        const token = localStorage.getItem('token');
+        if (!token) {
+          navigate('/login');
+          return;
+        }
+
         const response = await api.get('/jobs/search', {
           params: { 
             term,
             page: currentPage,
             limit: pageSize
+          },
+          headers: {
+            Authorization: `Bearer ${token}`
           }
         });
-        setJobs(response.data.jobs);
-        setTotalPages(Math.ceil(response.data.total / pageSize));
+
+        if (response.data && response.data.jobs) {
+          setJobs(response.data.jobs);
+          setTotalPages(Math.ceil(response.data.total / pageSize));
+        } else {
+          setJobs([]);
+          setTotalPages(1);
+        }
       } catch (err) {
-        setError('Failed to search jobs');
         console.error('Search error:', err);
+        if (err.response?.status === 401) {
+          localStorage.removeItem('token');
+          navigate('/login');
+        } else {
+          setError('Search failed. Please try again.');
+          toast.error('Search failed');
+        }
       } finally {
         setLoading(false);
       }
     }, 300),
-    [currentPage, pageSize]
+    [currentPage, pageSize, navigate]
   );
 
   const handlePageChange = (page) => {
@@ -215,25 +241,54 @@ const Dashboard = () => {
   const fetchJobs = async (page) => {
     try {
       setLoading(true);
-      const response = await api.get('/jobs/user', {
+      setError(null);
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      const response = await api.get('/jobs', {
         params: {
           page,
           limit: pageSize
+        },
+        headers: {
+          Authorization: `Bearer ${token}`
         }
       });
-      setJobs(response.data.jobs);
-      setTotalPages(Math.ceil(response.data.total / pageSize));
+
+      if (response.data && response.data.jobs) {
+        setJobs(response.data.jobs);
+        setTotalPages(Math.ceil(response.data.total / pageSize));
+      } else {
+        setJobs([]);
+        setTotalPages(1);
+      }
     } catch (err) {
-      setError('Failed to fetch jobs');
       console.error('Fetch error:', err);
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        navigate('/login');
+      } else {
+        setError('Failed to fetch jobs. Please try again later.');
+        toast.error('Failed to fetch jobs');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    window.location.href = '/login';
+    try {
+      localStorage.removeItem('token');
+      navigate('/login');
+      toast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Logout failed');
+    }
   };
 
   useEffect(() => {
