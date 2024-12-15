@@ -31,7 +31,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(morgan('combined'));
 
 // Add this before your routes
-app.use((req, res, next) => {
+app.use('/api', (req, res, next) => {
     res.header('Content-Type', 'application/json');
     next();
 });

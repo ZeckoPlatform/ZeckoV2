@@ -1,32 +1,38 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { FiChevronLeft, FiChevronRight, FiEye, FiEdit, FiTrash2, FiUser, FiRefreshCw } from 'react-icons/fi';
-import api from '../services/api';
-import debounce from 'lodash/debounce';
-import { toast } from 'react-toastify';
+import { FiUser, FiEye, FiEdit, FiTrash2, FiRefreshCw, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'react-toastify';
+import api from '../services/api';
+import { debounce } from 'lodash';
+import LoadingSpinner from '../components/LoadingSpinner';
 
-// Styled Components
 const DashboardContainer = styled.div`
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
 `;
 
-const Header = styled.header`
+const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
 `;
 
-const HeaderLeft = styled.div``;
+const HeaderLeft = styled.div`
+  h1 {
+    margin: 0;
+    color: ${props => props.theme.colors.text};
+  }
+`;
 
 const HeaderRight = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+  position: relative;
 `;
 
 const PostLeadButton = styled(Link)`
@@ -42,48 +48,52 @@ const PostLeadButton = styled(Link)`
 `;
 
 const ProfileButton = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
   padding: 0.5rem;
+  border: none;
+  background: none;
   color: ${props => props.theme.colors.text};
+  cursor: pointer;
+  
+  &:hover {
+    color: ${props => props.theme.colors.primary};
+  }
 `;
 
 const ProfileDropdown = styled.div`
   position: absolute;
-  right: 2rem;
-  top: 4rem;
+  top: 100%;
+  right: 0;
   background: white;
   border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   padding: 0.5rem;
-  z-index: 1000;
+  z-index: 10;
 `;
 
 const ProfileLink = styled(Link)`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem;
   color: ${props => props.theme.colors.text};
   text-decoration: none;
   
   &:hover {
-    background: ${props => props.theme.colors.background};
+    background: ${props => props.theme.colors.backgroundLight};
   }
 `;
 
 const LogoutButton = styled.button`
   width: 100%;
-  padding: 0.5rem 1rem;
+  text-align: left;
+  padding: 0.5rem;
   border: none;
   background: none;
   color: ${props => props.theme.colors.danger};
   cursor: pointer;
-  text-align: left;
   
   &:hover {
-    background: ${props => props.theme.colors.background};
+    background: ${props => props.theme.colors.backgroundLight};
   }
 `;
 
@@ -93,48 +103,20 @@ const SearchContainer = styled.div`
 
 const SearchInput = styled.input`
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.75rem;
   border: 1px solid ${props => props.theme.colors.border};
   border-radius: 4px;
-`;
-
-const LoadingSpinner = styled.div`
-  text-align: center;
-  padding: 2rem;
-`;
-
-const ErrorContainer = styled.div`
-  padding: 1rem;
-  background: ${props => props.theme.colors.danger}10;
-  border-radius: 4px;
-  margin-bottom: 1rem;
-`;
-
-const ErrorMessage = styled.div`
-  color: ${props => props.theme.colors.danger};
-`;
-
-const RetryButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: ${props => props.theme.colors.primary};
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 1rem;
-`;
-
-const EmptyState = styled.div`
-  text-align: center;
-  padding: 2rem;
-  color: ${props => props.theme.colors.textLight};
+  font-size: 1rem;
+  
+  &:focus {
+    outline: none;
+    border-color: ${props => props.theme.colors.primary};
+  }
 `;
 
 const LeadsList = styled.div`
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
 `;
 
@@ -146,6 +128,10 @@ const LeadCard = styled.div`
   background: white;
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
 `;
 
 const LeadContent = styled.div`
@@ -238,7 +224,7 @@ const Dashboard = () => {
       const response = await api.getLeads({ 
         page, 
         limit: pageSize,
-        userId: localStorage.getItem('userId') // Add user filter
+        userId: localStorage.getItem('userId')
       });
       
       if (response.data && Array.isArray(response.data.leads)) {
@@ -301,35 +287,6 @@ const Dashboard = () => {
       }
     }
   };
-
-  const renderActionButton = (lead, label, icon, handler) => (
-    <ActionButton
-      onClick={() => handler(lead._id)}
-      title={label}
-    >
-      {icon}
-    </ActionButton>
-  );
-
-  const renderPagination = () => (
-    <Pagination>
-      <PaginationButton 
-        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-        disabled={currentPage === 1}
-      >
-        <FiChevronLeft />
-      </PaginationButton>
-      <PageInfo>
-        Page {currentPage} of {totalPages}
-      </PageInfo>
-      <PaginationButton 
-        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-        disabled={currentPage === totalPages}
-      >
-        <FiChevronRight />
-      </PaginationButton>
-    </Pagination>
-  );
 
   return (
     <DashboardContainer>
@@ -408,14 +365,45 @@ const Dashboard = () => {
                   </LeadStatus>
                 </LeadContent>
                 <LeadActions>
-                  {renderActionButton(lead, 'View', <FiEye />, handleViewLead)}
-                  {renderActionButton(lead, 'Edit', <FiEdit />, handleEditLead)}
-                  {renderActionButton(lead, 'Delete', <FiTrash2 />, handleDeleteLead)}
+                  <ActionButton
+                    onClick={() => handleViewLead(lead._id)}
+                    title="View"
+                  >
+                    <FiEye />
+                  </ActionButton>
+                  <ActionButton
+                    onClick={() => handleEditLead(lead._id)}
+                    title="Edit"
+                  >
+                    <FiEdit />
+                  </ActionButton>
+                  <ActionButton
+                    onClick={() => handleDeleteLead(lead._id)}
+                    title="Delete"
+                  >
+                    <FiTrash2 />
+                  </ActionButton>
                 </LeadActions>
               </LeadCard>
             ))}
           </LeadsList>
-          {renderPagination()}
+          <Pagination>
+            <PaginationButton 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <FiChevronLeft />
+            </PaginationButton>
+            <PageInfo>
+              Page {currentPage} of {totalPages}
+            </PageInfo>
+            <PaginationButton 
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              <FiChevronRight />
+            </PaginationButton>
+          </Pagination>
         </AnimatePresence>
       )}
     </DashboardContainer>
