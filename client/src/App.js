@@ -2,8 +2,10 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
+import { CssBaseline } from '@mui/material';
 import { AuthProvider } from './contexts/AuthContext';
 import PrivateRoute from './components/routing/PrivateRoute';
+import ErrorBoundary from './components/error/ErrorBoundary';
 
 // Import your pages
 import Dashboard from './pages/Dashboard';
@@ -18,36 +20,21 @@ import Layout from './components/Layout';
 const styledTheme = {
   colors: {
     text: {
-      primary: '#000000',
+      primary: '#333333',
       secondary: '#666666',
     },
     primary: {
-      main: '#1976d2',
-      dark: '#115293',
-      light: '#4791db',
+      main: '#4CAF50',
+      dark: '#388E3C',
+      light: '#81C784',
+      text: '#FFFFFF'
     },
-    error: {
-      main: '#f44336',
-      light: '#e57373',
-    },
-    success: {
-      main: '#4caf50',
-      light: '#81c784',
-    },
-    info: {
-      main: '#2196f3',
-      light: '#64b5f6',
-    },
-    grey: {
-      main: '#9e9e9e',
-      light: '#e0e0e0',
-    },
-    border: {
-      main: '#dddddd',
+    status: {
+      error: '#F44336'
     },
     background: {
-      default: '#f5f5f5',
-      paper: '#ffffff',
+      default: '#F5F5F5',
+      paper: '#FFFFFF'
     }
   },
   borderRadius: {
@@ -57,61 +44,63 @@ const styledTheme = {
 
 const muiTheme = createTheme({
   palette: {
+    mode: 'light',
     primary: {
-      main: '#1976d2',
-      dark: '#115293',
-      light: '#4791db',
+      main: '#4CAF50',
+      dark: '#388E3C',
+      light: '#81C784',
+      contrastText: '#FFFFFF',
     },
     error: {
-      main: '#f44336',
-      light: '#e57373',
-    },
-    success: {
-      main: '#4caf50',
-      light: '#81c784',
-    },
-    info: {
-      main: '#2196f3',
-      light: '#64b5f6',
-    },
-    grey: {
-      500: '#9e9e9e',
-      200: '#e0e0e0',
+      main: '#F44336',
+      light: '#E57373',
     },
     background: {
-      default: '#f5f5f5',
-      paper: '#ffffff',
+      default: '#F5F5F5',
+      paper: '#FFFFFF',
     },
     text: {
-      primary: '#000000',
+      primary: '#333333',
       secondary: '#666666',
     },
   },
   shape: {
     borderRadius: 8,
   },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          backgroundColor: '#F5F5F5',
+        },
+      },
+    },
+  },
 });
 
 function App() {
   return (
-    <MuiThemeProvider theme={muiTheme}>
-      <StyledThemeProvider theme={styledTheme}>
-        <AuthProvider>
-          <Router>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
-                <Route index element={<Dashboard />} />
-                <Route path="/leads/create" element={<PostLead />} />
-                <Route path="/leads/:id" element={<LeadDetail />} />
-                <Route path="/profile" element={<Profile />} />
-              </Route>
-            </Routes>
-          </Router>
-        </AuthProvider>
-      </StyledThemeProvider>
-    </MuiThemeProvider>
+    <ErrorBoundary>
+      <MuiThemeProvider theme={muiTheme}>
+        <CssBaseline />
+        <StyledThemeProvider theme={styledTheme}>
+          <AuthProvider>
+            <Router>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="/leads/create" element={<PostLead />} />
+                  <Route path="/leads/:id" element={<LeadDetail />} />
+                  <Route path="/profile" element={<Profile />} />
+                </Route>
+              </Routes>
+            </Router>
+          </AuthProvider>
+        </StyledThemeProvider>
+      </MuiThemeProvider>
+    </ErrorBoundary>
   );
 }
 
