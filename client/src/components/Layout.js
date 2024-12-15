@@ -1,42 +1,35 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
+import { Box } from '@mui/material';
 import Navigation from './Navigation';
-import styled from 'styled-components';
-import { useTheme } from '../contexts/ThemeContext';
-
-const LayoutContainer = styled.div.attrs(props => ({
-  theme: props.theme || { 
-    colors: { 
-      background: { default: '#FFFFFF' },
-      text: { primary: '#333333' }
-    },
-    mode: 'light'
-  }
-}))`
-  min-height: 100vh;
-  background: ${({ theme }) => {
-    console.log('Theme in styled component:', theme);
-    return theme?.colors?.background?.default || '#FFFFFF';
-  }};
-  color: ${({ theme }) => theme?.colors?.text?.primary || '#333333'};
-`;
-
-const MainContent = styled.main`
-  padding-top: 64px;
-`;
+import { useTheme } from '@mui/material/styles';
 
 const Layout = () => {
-  const { themeMode, theme } = useTheme();
-  console.log('Current theme mode:', themeMode);
-  console.log('Current theme:', theme);
+  const theme = useTheme();
 
   return (
-    <LayoutContainer theme={theme}>
+    <Box 
+      sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        minHeight: '100vh',
+        backgroundColor: theme.palette.background.default,
+        color: theme.palette.text.primary
+      }}
+    >
       <Navigation />
-      <MainContent>
+      <Box 
+        component="main" 
+        sx={{ 
+          flexGrow: 1, 
+          p: 3,
+          mt: 8, // Add margin top to account for fixed navbar
+          backgroundColor: 'inherit'
+        }}
+      >
         <Outlet />
-      </MainContent>
-    </LayoutContainer>
+      </Box>
+    </Box>
   );
 };
 
