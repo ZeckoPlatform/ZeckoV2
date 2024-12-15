@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from 'styled-components';
 import { AuthProvider } from './contexts/AuthContext';
 import PrivateRoute from './components/routing/PrivateRoute';
@@ -11,6 +11,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import LeadDetail from './components/leads/LeadDetail';
 import LeadList from './pages/LeadList';
+import CreateLead from './pages/CreateLead';
+import LeadDetails from './pages/LeadDetails';
+import Layout from './components/Layout';
 
 const theme = {
   colors: {
@@ -41,41 +44,22 @@ function App() {
       <AuthProvider>
         <Router>
           <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route
-              path="/"
-              element={
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="/leads/create" element={
                 <PrivateRoute>
-                  <Dashboard />
+                  <CreateLead />
                 </PrivateRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
+              } />
+              <Route path="/leads/:id" element={<LeadDetails />} />
+              <Route path="/profile" element={
                 <PrivateRoute>
                   <Profile />
                 </PrivateRoute>
-              }
-            />
-            <Route
-              path="/leads"
-              element={
-                <PrivateRoute>
-                  <LeadList />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/leads/:id"
-              element={
-                <PrivateRoute>
-                  <LeadDetail />
-                </PrivateRoute>
-              }
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
+              } />
+            </Route>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
           </Routes>
         </Router>
       </AuthProvider>
