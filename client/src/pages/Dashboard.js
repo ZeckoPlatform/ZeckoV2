@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { FiUser, FiEye, FiEdit, FiTrash2, FiRefreshCw, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -204,6 +204,46 @@ const PaginationButton = styled.button`
 
 const PageInfo = styled.span`
   color: ${props => props.theme.colors.text};
+`;
+
+const ErrorContainer = styled.div`
+  text-align: center;
+  padding: 2rem;
+`;
+
+const ErrorMessage = styled.div`
+  background: ${props => props.theme.colors.error + '10'};
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 500px;
+  margin: 0 auto;
+`;
+
+const RetryButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem auto 0;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: ${props => props.theme.colors.primary};
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  
+  &:hover {
+    background: ${props => props.theme.colors.primaryDark};
+  }
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 2rem;
+  
+  p {
+    margin-bottom: 1rem;
+    color: ${props => props.theme.colors.textLight};
+  }
 `;
 
 const Dashboard = () => {
