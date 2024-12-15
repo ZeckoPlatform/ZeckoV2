@@ -282,4 +282,4 @@ const Select = styled.select`
   }
 `;
 
-export default PostJob; 
+export default PostLead; 
