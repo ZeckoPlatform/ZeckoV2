@@ -12,7 +12,6 @@ import Register from './pages/Register';
 import LeadDetail from './components/leads/LeadDetail';
 import LeadList from './pages/LeadList';
 import PostLead from './pages/PostLead';
-import LeadDetails from './pages/LeadDetails';
 import Layout from './components/Layout';
 
 const theme = {
@@ -49,7 +48,7 @@ function App() {
             <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
               <Route index element={<Dashboard />} />
               <Route path="/leads/create" element={<PostLead />} />
-              <Route path="/leads/:id" element={<LeadDetails />} />
+              <Route path="/leads/:id" element={<LeadDetail />} />
               <Route path="/profile" element={<Profile />} />
             </Route>
           </Routes>
