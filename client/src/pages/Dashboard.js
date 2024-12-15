@@ -212,7 +212,7 @@ const ErrorContainer = styled.div`
 `;
 
 const ErrorMessage = styled.div`
-  background: ${props => props.theme.colors.error + '10'};
+  background: ${props => (props.theme?.colors?.error || '#f44336') + '10'};
   padding: 2rem;
   border-radius: 8px;
   max-width: 500px;
@@ -226,13 +226,13 @@ const RetryButton = styled.button`
   margin: 1rem auto 0;
   padding: 0.5rem 1rem;
   border: none;
-  background: ${props => props.theme.colors.primary};
+  background: ${props => props.theme?.colors?.primary || '#1976d2'};
   color: white;
   border-radius: 4px;
   cursor: pointer;
   
   &:hover {
-    background: ${props => props.theme.colors.primaryDark};
+    background: ${props => props.theme?.colors?.primaryDark || '#115293'};
   }
 `;
 
@@ -242,7 +242,7 @@ const EmptyState = styled.div`
   
   p {
     margin-bottom: 1rem;
-    color: ${props => props.theme.colors.textLight};
+    color: ${props => props.theme?.colors?.textLight || '#666666'};
   }
 `;
 

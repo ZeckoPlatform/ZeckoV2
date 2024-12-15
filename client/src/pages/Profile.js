@@ -160,7 +160,7 @@ const ProfileHeader = styled.div`
   margin-bottom: 2rem;
 
   h1 {
-    color: ${({ theme }) => theme.colors.text.primary};
+    color: ${({ theme }) => theme?.colors?.text?.primary || '#000'};
   }
 `;
 
@@ -180,13 +180,13 @@ const ProfileField = styled.div`
 `;
 
 const Label = styled.div`
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: ${({ theme }) => theme?.colors?.text?.secondary || '#666'};
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
 `;
 
 const Value = styled.div`
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: ${({ theme }) => theme?.colors?.text?.primary || '#000'};
   font-size: 1.1rem;
 `;
 
@@ -204,7 +204,7 @@ const FormGroup = styled.div`
 const Input = styled.input`
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  border: 1px solid ${({ theme }) => theme?.colors?.border || '#ddd'};
   border-radius: 4px;
   font-size: 1rem;
 `;
@@ -212,7 +212,7 @@ const Input = styled.input`
 const Textarea = styled.textarea`
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  border: 1px solid ${({ theme }) => theme?.colors?.border || '#ddd'};
   border-radius: 4px;
   font-size: 1rem;
   min-height: 100px;
@@ -228,29 +228,29 @@ const Button = styled.button`
 
 const EditButton = styled(Button)`
   background: transparent;
-  border: 1px solid ${({ theme }) => theme.colors.primary.main};
-  color: ${({ theme }) => theme.colors.primary.main};
+  border: 1px solid ${({ theme }) => theme?.colors?.primary?.main || '#1976d2'};
+  color: ${({ theme }) => theme?.colors?.primary?.main || '#1976d2'};
 
   &:hover {
-    background: ${({ theme }) => theme.colors.primary.main};
+    background: ${({ theme }) => theme?.colors?.primary?.main || '#1976d2'};
     color: white;
   }
 `;
 
 const SaveButton = styled(Button)`
-  background: ${({ theme }) => theme.colors.primary.main};
+  background: ${({ theme }) => theme?.colors?.primary?.main || '#1976d2'};
   color: white;
   border: none;
 
   &:hover {
-    background: ${({ theme }) => theme.colors.primary.dark};
+    background: ${({ theme }) => theme?.colors?.primary?.dark || '#115293'};
   }
 `;
 
 const ErrorState = styled.div`
   text-align: center;
   padding: 2rem;
-  color: ${({ theme }) => theme.colors.error.main};
+  color: ${({ theme }) => theme?.colors?.error?.main || '#f44336'};
 `;
 
 export default Profile;
