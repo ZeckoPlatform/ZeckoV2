@@ -23,13 +23,30 @@ const theme = {
     primary: {
       main: '#1976d2',
       dark: '#115293',
+      light: '#4791db',
     },
     error: {
       main: '#f44336',
+      light: '#e57373',
     },
-    border: '#dddddd',
+    success: {
+      main: '#4caf50',
+      light: '#81c784',
+    },
+    info: {
+      main: '#2196f3',
+      light: '#64b5f6',
+    },
+    grey: {
+      main: '#9e9e9e',
+      light: '#e0e0e0',
+    },
+    border: {
+      main: '#dddddd',
+    },
     background: {
       default: '#f5f5f5',
+      paper: '#ffffff',
     }
   },
   borderRadius: {

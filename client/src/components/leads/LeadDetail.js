@@ -31,7 +31,7 @@ const Header = styled.div`
 
 const Title = styled.h1`
   margin: 0;
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: ${({ theme }) => theme?.colors?.text?.primary || '#000000'};
 `;
 
 const MetaData = styled.div`
@@ -44,7 +44,7 @@ const MetaItem = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: ${({ theme }) => theme?.colors?.text?.secondary || '#666666'};
 `;
 
 const Section = styled.div`
@@ -52,8 +52,8 @@ const Section = styled.div`
 `;
 
 const RequirementsList = styled(List)`
-  background: ${({ theme }) => theme.colors.background.default};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
+  background: ${({ theme }) => theme?.colors?.background?.default || '#f5f5f5'};
+  border-radius: ${({ theme }) => theme?.borderRadius?.md || '8px'};
 `;
 
 const LeadDetail = () => {
