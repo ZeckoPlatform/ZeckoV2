@@ -11,7 +11,7 @@ import Orders from './pages/Orders';
 import Notifications from './pages/Notifications';
 import Shop from './pages/Shop';
 import Services from './pages/Services';
-import PrivateRoute from './components/PrivateRoute';
+import PrivateRoute from './components/routing/PrivateRoute';
 
 export const router = createBrowserRouter([
   {
