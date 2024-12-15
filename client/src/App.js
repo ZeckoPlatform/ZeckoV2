@@ -44,22 +44,14 @@ function App() {
       <AuthProvider>
         <Router>
           <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="/leads/create" element={
-                <PrivateRoute>
-                  <CreateLead />
-                </PrivateRoute>
-              } />
-              <Route path="/leads/:id" element={<LeadDetails />} />
-              <Route path="/profile" element={
-                <PrivateRoute>
-                  <Profile />
-                </PrivateRoute>
-              } />
-            </Route>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
+              <Route index element={<Dashboard />} />
+              <Route path="/leads/create" element={<CreateLead />} />
+              <Route path="/leads/:id" element={<LeadDetails />} />
+              <Route path="/profile" element={<Profile />} />
+            </Route>
           </Routes>
         </Router>
       </AuthProvider>
