@@ -1,60 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
+import { styled as muiStyled } from '@mui/material/styles';
 import { 
   Button, 
-  CircularProgress, 
   Paper, 
   Divider,
   List,
   ListItem,
   ListItemText,
-  Chip
+  Chip,
+  Box,
+  Typography
 } from '@mui/material';
 import { LocationOn, MonetizationOn, Person, Description } from '@mui/icons-material';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 
-const DetailContainer = styled(Paper)`
-  padding: 2rem;
-  margin: 2rem auto;
-  max-width: 800px;
-`;
+const DetailContainer = muiStyled(Paper)(({ theme }) => ({
+  padding: '2rem',
+  margin: '2rem auto',
+  maxWidth: '800px'
+}));
 
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-`;
+const Header = muiStyled(Box)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'flex-start',
+  marginBottom: '2rem'
+}));
 
-const Title = styled.h1`
-  margin: 0;
-  color: ${({ theme }) => theme?.colors?.text?.primary || '#000000'};
-`;
+const MetaData = muiStyled(Box)(({ theme }) => ({
+  display: 'flex',
+  gap: '2rem',
+  margin: '1.5rem 0'
+}));
 
-const MetaData = styled.div`
-  display: flex;
-  gap: 2rem;
-  margin: 1.5rem 0;
-`;
+const MetaItem = muiStyled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.5rem',
+  color: theme.palette.text.secondary
+}));
 
-const MetaItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: ${({ theme }) => theme?.colors?.text?.secondary || '#666666'};
-`;
+const Section = muiStyled(Box)(({ theme }) => ({
+  margin: '2rem 0'
+}));
 
-const Section = styled.div`
-  margin: 2rem 0;
-`;
-
-const RequirementsList = styled(List)`
-  background: ${({ theme }) => theme?.colors?.background?.default || '#f5f5f5'};
-  border-radius: ${({ theme }) => theme?.borderRadius?.md || '8px'};
-`;
+const RequirementsList = muiStyled(List)(({ theme }) => ({
+  background: theme.palette.background.default,
+  borderRadius: theme.shape.borderRadius
+}));
 
 const LeadDetail = () => {
   const { id } = useParams();
@@ -80,19 +76,19 @@ const LeadDetail = () => {
   };
 
   if (loading) return <LoadingSpinner />;
-  if (error) return <div>Error: {error}</div>;
-  if (!lead) return <div>Lead not found</div>;
+  if (error) return <Typography color="error">Error: {error}</Typography>;
+  if (!lead) return <Typography>Lead not found</Typography>;
 
   return (
     <DetailContainer>
       <Header>
-        <div>
-          <Title>{lead.title}</Title>
+        <Box>
+          <Typography variant="h4" component="h1">{lead.title}</Typography>
           <Chip 
             label={lead.category.name} 
-            style={{ marginTop: '1rem' }}
+            sx={{ marginTop: 1 }}
           />
-        </div>
+        </Box>
         <Button 
           variant="contained" 
           color="primary"
@@ -105,27 +101,27 @@ const LeadDetail = () => {
       <MetaData>
         <MetaItem>
           <LocationOn />
-          {lead.location.city}, {lead.location.state}
+          <Typography>{lead.location.city}, {lead.location.state}</Typography>
         </MetaItem>
         <MetaItem>
           <MonetizationOn />
-          ${lead.budget.min.toLocaleString()} - ${lead.budget.max.toLocaleString()}
+          <Typography>${lead.budget.min.toLocaleString()} - ${lead.budget.max.toLocaleString()}</Typography>
         </MetaItem>
         <MetaItem>
           <Person />
-          {lead.proposals.length} proposals
+          <Typography>{lead.proposals.length} proposals</Typography>
         </MetaItem>
       </MetaData>
 
       <Divider />
 
       <Section>
-        <h3>Description</h3>
-        <Description>{lead.description}</Description>
+        <Typography variant="h6">Description</Typography>
+        <Typography>{lead.description}</Typography>
       </Section>
 
       <Section>
-        <h3>Requirements</h3>
+        <Typography variant="h6">Requirements</Typography>
         <RequirementsList>
           {lead.requirements.map((req, index) => (
             <ListItem key={index}>
@@ -138,9 +134,9 @@ const LeadDetail = () => {
         </RequirementsList>
       </Section>
 
-      {lead.attachments.length > 0 && (
+      {lead.attachments?.length > 0 && (
         <Section>
-          <h3>Attachments</h3>
+          <Typography variant="h6">Attachments</Typography>
           <List>
             {lead.attachments.map((attachment, index) => (
               <ListItem 
