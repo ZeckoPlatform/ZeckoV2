@@ -1,8 +1,8 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
-import { CssBaseline } from '@mui/material';
+import { CssBaseline, Container } from '@mui/material';
 import { AuthProvider } from './contexts/AuthContext';
 import PrivateRoute from './components/routing/PrivateRoute';
 import ErrorBoundary from './components/error/ErrorBoundary';
@@ -86,16 +86,42 @@ function App() {
         <StyledThemeProvider theme={styledTheme}>
           <AuthProvider>
             <Router>
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
-                  <Route index element={<Dashboard />} />
-                  <Route path="/leads/create" element={<PostLead />} />
-                  <Route path="/leads/:id" element={<LeadDetail />} />
-                  <Route path="/profile" element={<Profile />} />
-                </Route>
-              </Routes>
+              <Container maxWidth={false} disableGutters>
+                <Routes>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/" element={<Layout />}>
+                    <Route index element={
+                      <PrivateRoute>
+                        <Dashboard />
+                      </PrivateRoute>
+                    } />
+                    <Route path="leads">
+                      <Route index element={
+                        <PrivateRoute>
+                          <LeadList />
+                        </PrivateRoute>
+                      } />
+                      <Route path="create" element={
+                        <PrivateRoute>
+                          <PostLead />
+                        </PrivateRoute>
+                      } />
+                      <Route path=":id" element={
+                        <PrivateRoute>
+                          <LeadDetail />
+                        </PrivateRoute>
+                      } />
+                    </Route>
+                    <Route path="profile" element={
+                      <PrivateRoute>
+                        <Profile />
+                      </PrivateRoute>
+                    } />
+                  </Route>
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Container>
             </Router>
           </AuthProvider>
         </StyledThemeProvider>
