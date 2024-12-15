@@ -30,6 +30,12 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(morgan('combined'));
 
+// Add this before your routes
+app.use((req, res, next) => {
+    res.header('Content-Type', 'application/json');
+    next();
+});
+
 // Mount routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -44,14 +50,19 @@ if (process.env.NODE_ENV === 'production') {
     });
 }
 
-// Error handling middleware
+// Add this after your routes
 app.use((err, req, res, next) => {
-    console.error('Error:', err);
-    res.status(500).json({ 
+    console.error(err.stack);
+    res.status(500).json({
         error: process.env.NODE_ENV === 'production' 
-            ? 'Internal server error' 
-            : err.message 
+            ? 'Internal Server Error' 
+            : err.message
     });
+});
+
+// Handle 404
+app.use((req, res) => {
+    res.status(404).json({ message: 'Route not found' });
 });
 
 // MongoDB connection
