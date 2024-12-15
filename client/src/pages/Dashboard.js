@@ -221,7 +221,7 @@ const Dashboard = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.getLeads({ 
+      const response = await api.getUserLeads({ 
         page, 
         limit: pageSize,
         userId: localStorage.getItem('userId')

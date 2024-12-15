@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { Search, FilterList } from '@mui/icons-material';
 import LeadCard from '../components/leads/LeadCard';
-import { api } from '../services/api';
+import api from '../services/api';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const Container = styled.div`
@@ -52,7 +52,7 @@ const LeadsList = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await api.get('/categories');
+      const response = await api.getCategories();
       setCategories(response.data);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -62,15 +62,15 @@ const LeadsList = () => {
   const fetchLeads = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
+      const params = {
         page: filters.page,
         limit: 10,
         ...(filters.search && { search: filters.search }),
         ...(filters.category !== 'all' && { category: filters.category }),
         sortBy: filters.sortBy
-      });
+      };
 
-      const response = await api.get(`/leads?${params}`);
+      const response = await api.getLeads(params);
       setLeads(response.data.leads);
       setTotalPages(response.data.totalPages);
     } catch (error) {

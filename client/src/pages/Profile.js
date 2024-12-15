@@ -21,14 +21,14 @@ const Profile = () => {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const userData = await getCurrentUser();
-        setProfileData(userData);
+        const userData = await api.getProfile();
+        setProfileData(userData.data);
         setFormData({
-          username: userData.username || '',
-          email: userData.email || '',
-          bio: userData.bio || '',
-          location: userData.location || '',
-          skills: userData.skills || []
+          username: userData.data.username || '',
+          email: userData.data.email || '',
+          bio: userData.data.bio || '',
+          location: userData.data.location || '',
+          skills: userData.data.skills || []
         });
         setLoading(false);
       } catch (err) {
@@ -51,7 +51,7 @@ const Profile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.put('/users/profile', formData);
+      const response = await api.updateProfile(formData);
       setProfileData(response.data);
       setEditing(false);
     } catch (err) {

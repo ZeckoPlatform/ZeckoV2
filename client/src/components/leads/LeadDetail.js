@@ -12,7 +12,7 @@ import {
   Chip
 } from '@mui/material';
 import { LocationOn, MonetizationOn, Person, Description } from '@mui/icons-material';
-import { api } from '../../services/api';
+import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 
@@ -70,7 +70,7 @@ const LeadDetail = () => {
 
   const fetchLeadDetail = async () => {
     try {
-      const response = await api.get(`/leads/${id}`);
+      const response = await api.getLeadById(id);
       setLead(response.data);
     } catch (error) {
       setError(error.message);
