@@ -86,42 +86,25 @@ function App() {
         <StyledThemeProvider theme={styledTheme}>
           <AuthProvider>
             <Router>
-              <Container maxWidth={false} disableGutters>
-                <Routes>
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/" element={<Layout />}>
-                    <Route index element={
-                      <PrivateRoute>
-                        <Dashboard />
-                      </PrivateRoute>
-                    } />
-                    <Route path="leads">
-                      <Route index element={
-                        <PrivateRoute>
-                          <LeadList />
-                        </PrivateRoute>
-                      } />
-                      <Route path="create" element={
-                        <PrivateRoute>
-                          <PostLead />
-                        </PrivateRoute>
-                      } />
-                      <Route path=":id" element={
-                        <PrivateRoute>
-                          <LeadDetail />
-                        </PrivateRoute>
-                      } />
-                    </Route>
-                    <Route path="profile" element={
-                      <PrivateRoute>
-                        <Profile />
-                      </PrivateRoute>
-                    } />
-                  </Route>
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </Container>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route
+                  path="/"
+                  element={
+                    <PrivateRoute>
+                      <Layout />
+                    </PrivateRoute>
+                  }
+                >
+                  <Route index element={<Dashboard />} />
+                  <Route path="leads" element={<LeadList />} />
+                  <Route path="leads/create" element={<PostLead />} />
+                  <Route path="leads/:id" element={<LeadDetail />} />
+                  <Route path="profile" element={<Profile />} />
+                </Route>
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
             </Router>
           </AuthProvider>
         </StyledThemeProvider>
