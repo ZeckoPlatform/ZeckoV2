@@ -10,46 +10,18 @@ import {
   ListItemText,
   Chip,
   Box,
-  Typography
+  Typography,
+  Container
 } from '@mui/material';
-import { LocationOn, MonetizationOn, Person, Description } from '@mui/icons-material';
+import { LocationOn, MonetizationOn, Person } from '@mui/icons-material';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 
 const DetailContainer = muiStyled(Paper)(({ theme }) => ({
-  padding: '2rem',
-  margin: '2rem auto',
+  padding: theme.spacing(3),
+  margin: `${theme.spacing(3)} auto`,
   maxWidth: '800px'
-}));
-
-const Header = muiStyled(Box)(({ theme }) => ({
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'flex-start',
-  marginBottom: '2rem'
-}));
-
-const MetaData = muiStyled(Box)(({ theme }) => ({
-  display: 'flex',
-  gap: '2rem',
-  margin: '1.5rem 0'
-}));
-
-const MetaItem = muiStyled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.5rem',
-  color: theme.palette.text.secondary
-}));
-
-const Section = muiStyled(Box)(({ theme }) => ({
-  margin: '2rem 0'
-}));
-
-const RequirementsList = muiStyled(List)(({ theme }) => ({
-  background: theme.palette.background.default,
-  borderRadius: theme.shape.borderRadius
 }));
 
 const LeadDetail = () => {
@@ -61,100 +33,162 @@ const LeadDetail = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchLeadDetail();
+    const fetchLeadDetail = async () => {
+      try {
+        const response = await api.getLeadById(id);
+        if (response?.data) {
+          setLead(response.data);
+        } else {
+          setError('No data received');
+        }
+      } catch (err) {
+        console.error('Error fetching lead:', err);
+        setError(err?.message || 'Failed to load lead details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchLeadDetail();
+    }
   }, [id]);
 
-  const fetchLeadDetail = async () => {
-    try {
-      const response = await api.getLeadById(id);
-      setLead(response.data);
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (loading) {
+    return (
+      <Container>
+        <LoadingSpinner />
+      </Container>
+    );
+  }
 
-  if (loading) return <LoadingSpinner />;
-  if (error) return <Typography color="error">Error: {error}</Typography>;
-  if (!lead) return <Typography>Lead not found</Typography>;
+  if (error) {
+    return (
+      <Container>
+        <Typography color="error" align="center">
+          Error: {error}
+        </Typography>
+      </Container>
+    );
+  }
+
+  if (!lead) {
+    return (
+      <Container>
+        <Typography align="center">
+          Lead not found
+        </Typography>
+      </Container>
+    );
+  }
 
   return (
-    <DetailContainer>
-      <Header>
-        <Box>
-          <Typography variant="h4" component="h1">{lead.title}</Typography>
-          <Chip 
-            label={lead.category.name} 
-            sx={{ marginTop: 1 }}
-          />
-        </Box>
-        <Button 
-          variant="contained" 
-          color="primary"
-          onClick={() => navigate(`/leads/${id}/propose`)}
-        >
-          Submit Proposal
-        </Button>
-      </Header>
-
-      <MetaData>
-        <MetaItem>
-          <LocationOn />
-          <Typography>{lead.location.city}, {lead.location.state}</Typography>
-        </MetaItem>
-        <MetaItem>
-          <MonetizationOn />
-          <Typography>${lead.budget.min.toLocaleString()} - ${lead.budget.max.toLocaleString()}</Typography>
-        </MetaItem>
-        <MetaItem>
-          <Person />
-          <Typography>{lead.proposals.length} proposals</Typography>
-        </MetaItem>
-      </MetaData>
-
-      <Divider />
-
-      <Section>
-        <Typography variant="h6">Description</Typography>
-        <Typography>{lead.description}</Typography>
-      </Section>
-
-      <Section>
-        <Typography variant="h6">Requirements</Typography>
-        <RequirementsList>
-          {lead.requirements.map((req, index) => (
-            <ListItem key={index}>
-              <ListItemText 
-                primary={req.question}
-                secondary={req.answer}
+    <DetailContainer elevation={2}>
+      <Box sx={{ p: 3 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={3}>
+          <Box>
+            <Typography variant="h4" component="h1" gutterBottom>
+              {lead.title || 'Untitled Lead'}
+            </Typography>
+            {lead.category?.name && (
+              <Chip 
+                label={lead.category.name} 
+                color="primary" 
+                variant="outlined"
+                sx={{ mt: 1 }}
               />
-            </ListItem>
-          ))}
-        </RequirementsList>
-      </Section>
+            )}
+          </Box>
+          <Button 
+            variant="contained" 
+            color="primary"
+            onClick={() => navigate(`/leads/${id}/propose`)}
+          >
+            Submit Proposal
+          </Button>
+        </Box>
 
-      {lead.attachments?.length > 0 && (
-        <Section>
-          <Typography variant="h6">Attachments</Typography>
-          <List>
-            {lead.attachments.map((attachment, index) => (
-              <ListItem 
-                key={index}
-                button 
-                component="a" 
-                href={attachment.url}
-                target="_blank"
-              >
-                <ListItemText 
-                  primary={attachment.name}
-                  secondary={attachment.type}
-                />
-              </ListItem>
-            ))}
-          </List>
-        </Section>
-      )}
+        <Box display="flex" gap={3} mb={3}>
+          {lead.location && (
+            <Box display="flex" alignItems="center" gap={1}>
+              <LocationOn color="action" />
+              <Typography>
+                {[lead.location.city, lead.location.state].filter(Boolean).join(', ') || 'Location not specified'}
+              </Typography>
+            </Box>
+          )}
+          
+          {lead.budget && (
+            <Box display="flex" alignItems="center" gap={1}>
+              <MonetizationOn color="action" />
+              <Typography>
+                ${lead.budget.min?.toLocaleString()} - ${lead.budget.max?.toLocaleString()}
+              </Typography>
+            </Box>
+          )}
+          
+          <Box display="flex" alignItems="center" gap={1}>
+            <Person color="action" />
+            <Typography>
+              {lead.proposals?.length || 0} proposals
+            </Typography>
+          </Box>
+        </Box>
+
+        <Divider />
+
+        <Box my={3}>
+          <Typography variant="h6" gutterBottom>
+            Description
+          </Typography>
+          <Typography>
+            {lead.description || 'No description provided'}
+          </Typography>
+        </Box>
+
+        {lead.requirements?.length > 0 && (
+          <Box my={3}>
+            <Typography variant="h6" gutterBottom>
+              Requirements
+            </Typography>
+            <List>
+              {lead.requirements.map((req, index) => (
+                <ListItem key={index}>
+                  <ListItemText 
+                    primary={req.question || 'Requirement'}
+                    secondary={req.answer || 'No answer provided'}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        )}
+
+        {lead.attachments?.length > 0 && (
+          <Box my={3}>
+            <Typography variant="h6" gutterBottom>
+              Attachments
+            </Typography>
+            <List>
+              {lead.attachments.map((attachment, index) => (
+                <ListItem 
+                  key={index}
+                  button 
+                  component="a" 
+                  href={attachment.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ListItemText 
+                    primary={attachment.name || 'Unnamed attachment'}
+                    secondary={attachment.type || 'Unknown type'}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        )}
+      </Box>
     </DetailContainer>
   );
 };
