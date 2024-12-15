@@ -11,7 +11,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import LeadDetail from './components/leads/LeadDetail';
 import LeadList from './pages/LeadList';
-import CreateLead from './pages/CreateLead';
+import PostLead from './pages/PostLead';
 import LeadDetails from './pages/LeadDetails';
 import Layout from './components/Layout';
 
@@ -48,7 +48,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
               <Route index element={<Dashboard />} />
-              <Route path="/leads/create" element={<CreateLead />} />
+              <Route path="/leads/create" element={<PostLead />} />
               <Route path="/leads/:id" element={<LeadDetails />} />
               <Route path="/profile" element={<Profile />} />
             </Route>
