@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const Profile = () => {
   const { user, getCurrentUser } = useAuth();
@@ -58,7 +59,7 @@ const Profile = () => {
     }
   };
 
-  if (loading) return <LoadingState>Loading...</LoadingState>;
+  if (loading) return <LoadingSpinner />;
   if (error) return <ErrorState>{error}</ErrorState>;
   if (!user) return <ErrorState>No user data available</ErrorState>;
 
@@ -244,11 +245,6 @@ const SaveButton = styled(Button)`
   &:hover {
     background: ${({ theme }) => theme.colors.primary.dark};
   }
-`;
-
-const LoadingState = styled.div`
-  text-align: center;
-  padding: 2rem;
 `;
 
 const ErrorState = styled.div`

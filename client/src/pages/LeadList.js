@@ -13,6 +13,7 @@ import {
 import { Search, FilterList } from '@mui/icons-material';
 import LeadCard from '../components/leads/LeadCard';
 import { api } from '../services/api';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const Container = styled.div`
   padding: 2rem;
@@ -141,11 +142,7 @@ const LeadsList = () => {
         </FormControl>
       </FiltersContainer>
 
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <CircularProgress />
-        </div>
-      ) : (
+      {loading ? <LoadingSpinner /> : (
         <>
           {leads.map((lead) => (
             <LeadCard key={lead._id} lead={lead} />

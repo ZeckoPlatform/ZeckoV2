@@ -12,8 +12,9 @@ import {
   Chip
 } from '@mui/material';
 import { LocationOn, MonetizationOn, Person, Description } from '@mui/icons-material';
-import { api } from '../services/api';
+import { api } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
 
 const DetailContainer = styled(Paper)`
   padding: 2rem;
@@ -78,7 +79,7 @@ const LeadDetail = () => {
     }
   };
 
-  if (loading) return <CircularProgress />;
+  if (loading) return <LoadingSpinner />;
   if (error) return <div>Error: {error}</div>;
   if (!lead) return <div>Lead not found</div>;
 
