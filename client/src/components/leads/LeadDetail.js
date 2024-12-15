@@ -12,7 +12,7 @@ import {
   Chip
 } from '@mui/material';
 import { LocationOn, MonetizationOn, Person, Description } from '@mui/icons-material';
-import { api } from '../../services/api';
+import { api } from '../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 const DetailContainer = styled(Paper)`
@@ -64,10 +64,10 @@ const LeadDetail = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchLeadDetails();
+    fetchLeadDetail();
   }, [id]);
 
-  const fetchLeadDetails = async () => {
+  const fetchLeadDetail = async () => {
     try {
       const response = await api.get(`/leads/${id}`);
       setLead(response.data);

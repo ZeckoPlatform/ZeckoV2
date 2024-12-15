@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import LeadList from './pages/LeadList';
-import LeadDetail from './pages/LeadDetail';
+import LeadDetail from './components/leads/LeadDetail';
 import Profile from './pages/Profile';
 import Layout from './components/Layout';
 import PrivateRoute from './components/PrivateRoute';

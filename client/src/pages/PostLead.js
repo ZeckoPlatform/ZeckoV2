@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import api from '../services/api';
 import { jobCategories, getAllCategories, getSubcategories } from '../Data/leadCategories';
 
-const PostJob = () => {
+const PostLead = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
