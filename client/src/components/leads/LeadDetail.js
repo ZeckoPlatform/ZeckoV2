@@ -12,7 +12,8 @@ import {
   Box,
   Typography,
   Container,
-  CircularProgress
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import { LocationOn, MonetizationOn, Person } from '@mui/icons-material';
 import api from '../../services/api';
@@ -33,25 +34,42 @@ const LeadDetail = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchLeadDetail = async () => {
       try {
+        setLoading(true);
         const response = await api.getLeadById(id);
+        
+        if (!isMounted) return;
+
         if (response?.data) {
           setLead(response.data);
+          setError(null);
         } else {
           setError('No data received');
+          setLead(null);
         }
       } catch (err) {
         console.error('Error fetching lead:', err);
-        setError(err?.message || 'Failed to load lead details');
+        if (isMounted) {
+          setError(err?.response?.data?.message || err?.message || 'Failed to load lead details');
+          setLead(null);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     if (id) {
       fetchLeadDetail();
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
   if (loading) {
@@ -65,9 +83,9 @@ const LeadDetail = () => {
   if (error) {
     return (
       <Container>
-        <Typography color="error" align="center">
-          Error: {error}
-        </Typography>
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {error}
+        </Alert>
       </Container>
     );
   }
@@ -75,12 +93,21 @@ const LeadDetail = () => {
   if (!lead) {
     return (
       <Container>
-        <Typography align="center">
+        <Alert severity="info" sx={{ mt: 2 }}>
           Lead not found
-        </Typography>
+        </Alert>
       </Container>
     );
   }
+
+  const handleProposalClick = () => {
+    try {
+      navigate(`/lead/${id}/propose`);
+    } catch (err) {
+      console.error('Navigation error:', err);
+      setError('Failed to navigate to proposal page');
+    }
+  };
 
   return (
     <DetailContainer elevation={2}>
@@ -102,7 +129,7 @@ const LeadDetail = () => {
           <Button 
             variant="contained" 
             color="primary"
-            onClick={() => navigate(`/leads/${id}/propose`)}
+            onClick={handleProposalClick}
           >
             Submit Proposal
           </Button>
