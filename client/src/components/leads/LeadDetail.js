@@ -11,12 +11,12 @@ import {
   Chip,
   Box,
   Typography,
-  Container
+  Container,
+  CircularProgress
 } from '@mui/material';
 import { LocationOn, MonetizationOn, Person } from '@mui/icons-material';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
 
 const DetailContainer = muiStyled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -56,8 +56,8 @@ const LeadDetail = () => {
 
   if (loading) {
     return (
-      <Container>
-        <LoadingSpinner />
+      <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+        <CircularProgress />
       </Container>
     );
   }
