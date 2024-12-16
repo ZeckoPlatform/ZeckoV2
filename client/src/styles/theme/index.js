@@ -1,12 +1,19 @@
 import { createTheme } from '@mui/material/styles';
 
-// Define theme variables
+// Base theme object for styled-components
 export const theme = {
   colors: {
     primary: {
       main: '#1976d2',
       light: '#42a5f5',
       dark: '#1565c0',
+      contrastText: '#ffffff',
+    },
+    secondary: {
+      main: '#9c27b0',
+      light: '#ba68c8',
+      dark: '#7b1fa2',
+      contrastText: '#ffffff',
     },
     background: {
       default: '#ffffff',
@@ -23,34 +30,80 @@ export const theme = {
     },
     error: {
       main: '#d32f2f',
+      light: '#ef5350',
+      dark: '#c62828',
     },
     warning: {
       main: '#ed6c02',
+      light: '#ff9800',
       dark: '#e65100',
     },
+    success: {
+      main: '#2e7d32',
+      light: '#4caf50',
+      dark: '#1b5e20',
+    }
+  },
+  spacing: (factor) => `${8 * factor}px`,
+  breakpoints: {
+    xs: '0px',
+    sm: '600px',
+    md: '900px',
+    lg: '1200px',
+    xl: '1536px',
+  },
+  typography: {
+    fontFamily: "'Roboto', 'Arial', sans-serif",
+    fontSize: {
+      xs: '0.75rem',
+      sm: '0.875rem',
+      md: '1rem',
+      lg: '1.125rem',
+      xl: '1.25rem',
+    },
+    fontWeight: {
+      light: 300,
+      regular: 400,
+      medium: 500,
+      bold: 700,
+    },
+  },
+  shadows: {
+    sm: '0 1px 3px rgba(0,0,0,0.12)',
+    md: '0 2px 4px rgba(0,0,0,0.1)',
+    lg: '0 4px 6px rgba(0,0,0,0.1)',
+  },
+  zIndex: {
+    modal: 1000,
+    dropdown: 100,
+    tooltip: 1500,
   },
 };
 
 // Create MUI theme
 export const muiTheme = createTheme({
   palette: {
-    mode: 'light',
     primary: {
       main: theme.colors.primary.main,
-      dark: theme.colors.primary.dark,
       light: theme.colors.primary.light,
+      dark: theme.colors.primary.dark,
+      contrastText: theme.colors.primary.contrastText,
     },
-    background: {
-      default: theme.colors.background.default,
-      paper: theme.colors.background.paper,
+    secondary: {
+      main: theme.colors.secondary.main,
+      light: theme.colors.secondary.light,
+      dark: theme.colors.secondary.dark,
+      contrastText: theme.colors.secondary.contrastText,
     },
-    text: {
-      primary: theme.colors.text.primary,
-      secondary: theme.colors.text.secondary,
-    },
+    background: theme.colors.background,
+    text: theme.colors.text,
+    error: theme.colors.error,
+    warning: theme.colors.warning,
+    success: theme.colors.success,
   },
   typography: {
-    fontFamily: "'Roboto', 'Arial', sans-serif",
+    fontFamily: theme.typography.fontFamily,
+    fontSize: 16,
     h1: { fontSize: '2.5rem', fontWeight: 500 },
     h2: { fontSize: '2rem', fontWeight: 500 },
     h3: { fontSize: '1.75rem', fontWeight: 500 },

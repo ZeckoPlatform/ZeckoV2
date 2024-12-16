@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import CssBaseline from '@mui/material/CssBaseline';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { muiTheme } from './styles/theme';
+import { theme, muiTheme } from './styles/theme';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ProductProvider } from './contexts/ProductContext';
@@ -17,7 +17,7 @@ import 'react-toastify/dist/ReactToastify.css';
 ReactDOM.render(
   <React.StrictMode>
     <ErrorBoundary>
-      <ThemeProvider>
+      <StyledThemeProvider theme={theme}>
         <MuiThemeProvider theme={muiTheme}>
           <CssBaseline />
           <GlobalStyles />
@@ -32,7 +32,7 @@ ReactDOM.render(
             </AuthProvider>
           </NotificationProvider>
         </MuiThemeProvider>
-      </ThemeProvider>
+      </StyledThemeProvider>
     </ErrorBoundary>
   </React.StrictMode>,
   document.getElementById('root')

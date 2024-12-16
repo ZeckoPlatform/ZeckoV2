@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { toast } from 'react-toastify';
 
 const Container = styled.div`
-  padding: 20px;
+  padding: ${({ theme }) => theme.spacing(2.5)};
   max-width: 800px;
   margin: 0 auto;
 `;
@@ -12,33 +12,34 @@ const Container = styled.div`
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  background: white;
-  padding: 30px;
+  gap: ${({ theme }) => theme.spacing(2.5)};
+  background: ${({ theme }) => theme.colors.background.paper};
+  padding: ${({ theme }) => theme.spacing(3.75)};
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: ${({ theme }) => theme.shadows.md};
 `;
 
 const FormGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: ${({ theme }) => theme.spacing(1)};
 `;
 
 const Label = styled.label`
-  font-weight: 500;
-  color: #333;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const Input = styled.input`
-  padding: 8px 12px;
-  border: 1px solid #ddd;
+  padding: ${({ theme }) => `${theme.spacing(1)} ${theme.spacing(1.5)}`};
+  border: 1px solid ${({ theme }) => theme.colors.border.main};
   border-radius: 4px;
-  font-size: 16px;
+  font-size: ${({ theme }) => theme.typography.fontSize.md};
 
   &:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: ${({ theme }) => theme.colors.primary.main};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary.light}33;
   }
 `;
 
