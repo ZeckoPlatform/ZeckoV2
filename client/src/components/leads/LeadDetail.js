@@ -1,34 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { styled as muiStyled } from '@mui/material/styles';
 import { 
-  Button, 
-  Paper, 
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  Chip,
-  Box,
-  Typography,
   Container,
   CircularProgress,
-  Alert
+  Alert,
+  Box,
+  Typography,
+  Chip
 } from '@mui/material';
-import { LocationOn, MonetizationOn, Person } from '@mui/icons-material';
 import api from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
-
-const DetailContainer = muiStyled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  margin: `${theme.spacing(3)} auto`,
-  maxWidth: '800px'
-}));
 
 const LeadDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [lead, setLead] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -38,22 +22,20 @@ const LeadDetail = () => {
 
     const fetchLeadDetail = async () => {
       try {
-        setLoading(true);
-        const response = await api.getLeadById(id);
-        
-        if (!isMounted) return;
+        if (!id) {
+          throw new Error('Lead ID is required');
+        }
 
-        if (response?.data) {
+        const response = await api.get(`/api/leads/${id}`);
+        
+        if (isMounted && response?.data) {
           setLead(response.data);
           setError(null);
-        } else {
-          setError('No data received');
-          setLead(null);
         }
       } catch (err) {
         console.error('Error fetching lead:', err);
         if (isMounted) {
-          setError(err?.response?.data?.message || err?.message || 'Failed to load lead details');
+          setError(err?.response?.data?.message || 'Failed to load lead details');
           setLead(null);
         }
       } finally {
@@ -63,9 +45,7 @@ const LeadDetail = () => {
       }
     };
 
-    if (id) {
-      fetchLeadDetail();
-    }
+    fetchLeadDetail();
 
     return () => {
       isMounted = false;
@@ -74,8 +54,10 @@ const LeadDetail = () => {
 
   if (loading) {
     return (
-      <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
-        <CircularProgress />
+      <Container>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+          <CircularProgress />
+        </Box>
       </Container>
     );
   }
@@ -100,17 +82,8 @@ const LeadDetail = () => {
     );
   }
 
-  const handleProposalClick = () => {
-    try {
-      navigate(`/lead/${id}/propose`);
-    } catch (err) {
-      console.error('Navigation error:', err);
-      setError('Failed to navigate to proposal page');
-    }
-  };
-
   return (
-    <DetailContainer elevation={2}>
+    <Container>
       <Box sx={{ p: 3 }}>
         <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={3}>
           <Box>
@@ -126,97 +99,10 @@ const LeadDetail = () => {
               />
             )}
           </Box>
-          <Button 
-            variant="contained" 
-            color="primary"
-            onClick={handleProposalClick}
-          >
-            Submit Proposal
-          </Button>
         </Box>
-
-        <Box display="flex" gap={3} mb={3}>
-          {lead.location && (
-            <Box display="flex" alignItems="center" gap={1}>
-              <LocationOn color="action" />
-              <Typography>
-                {[lead.location.city, lead.location.state].filter(Boolean).join(', ') || 'Location not specified'}
-              </Typography>
-            </Box>
-          )}
-          
-          {lead.budget && (
-            <Box display="flex" alignItems="center" gap={1}>
-              <MonetizationOn color="action" />
-              <Typography>
-                ${lead.budget.min?.toLocaleString()} - ${lead.budget.max?.toLocaleString()}
-              </Typography>
-            </Box>
-          )}
-          
-          <Box display="flex" alignItems="center" gap={1}>
-            <Person color="action" />
-            <Typography>
-              {lead.proposals?.length || 0} proposals
-            </Typography>
-          </Box>
-        </Box>
-
-        <Divider />
-
-        <Box my={3}>
-          <Typography variant="h6" gutterBottom>
-            Description
-          </Typography>
-          <Typography>
-            {lead.description || 'No description provided'}
-          </Typography>
-        </Box>
-
-        {lead.requirements?.length > 0 && (
-          <Box my={3}>
-            <Typography variant="h6" gutterBottom>
-              Requirements
-            </Typography>
-            <List>
-              {lead.requirements.map((req, index) => (
-                <ListItem key={index}>
-                  <ListItemText 
-                    primary={req.question || 'Requirement'}
-                    secondary={req.answer || 'No answer provided'}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Box>
-        )}
-
-        {lead.attachments?.length > 0 && (
-          <Box my={3}>
-            <Typography variant="h6" gutterBottom>
-              Attachments
-            </Typography>
-            <List>
-              {lead.attachments.map((attachment, index) => (
-                <ListItem 
-                  key={index}
-                  button 
-                  component="a" 
-                  href={attachment.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ListItemText 
-                    primary={attachment.name || 'Unnamed attachment'}
-                    secondary={attachment.type || 'Unknown type'}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Box>
-        )}
+        {/* Rest of your render logic */}
       </Box>
-    </DetailContainer>
+    </Container>
   );
 };
 
