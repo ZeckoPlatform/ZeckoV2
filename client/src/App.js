@@ -17,31 +17,6 @@ import LeadList from './pages/Lead';
 import PostLead from './pages/PostLead';
 import Layout from './components/Layout';
 
-const styledTheme = {
-  colors: {
-    text: {
-      primary: '#333333',
-      secondary: '#666666',
-    },
-    primary: {
-      main: '#4CAF50',
-      dark: '#388E3C',
-      light: '#81C784',
-      text: '#FFFFFF'
-    },
-    status: {
-      error: '#F44336'
-    },
-    background: {
-      default: '#F5F5F5',
-      paper: '#FFFFFF'
-    }
-  },
-  borderRadius: {
-    md: '8px',
-  }
-};
-
 const muiTheme = createTheme({
   palette: {
     mode: 'light',
@@ -78,12 +53,38 @@ const muiTheme = createTheme({
   },
 });
 
+// Convert MUI theme to styled-components theme
+const styledTheme = {
+  colors: {
+    text: {
+      primary: muiTheme.palette.text.primary,
+      secondary: muiTheme.palette.text.secondary,
+    },
+    primary: {
+      main: muiTheme.palette.primary.main,
+      dark: muiTheme.palette.primary.dark,
+      light: muiTheme.palette.primary.light,
+      text: muiTheme.palette.primary.contrastText
+    },
+    status: {
+      error: muiTheme.palette.error.main
+    },
+    background: {
+      default: muiTheme.palette.background.default,
+      paper: muiTheme.palette.background.paper
+    }
+  },
+  borderRadius: {
+    md: `${muiTheme.shape.borderRadius}px`,
+  }
+};
+
 function App() {
   return (
     <ErrorBoundary>
       <MuiThemeProvider theme={muiTheme}>
-        <CssBaseline />
         <StyledThemeProvider theme={styledTheme}>
+          <CssBaseline />
           <AuthProvider>
             <Router>
               <Routes>
