@@ -12,7 +12,7 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import LeadDetail from './components/lead/LeadDetail';
+import LeadDetail from './pages/LeadDetail';
 import LeadList from './pages/Lead';
 import PostLead from './pages/PostLead';
 import Layout from './components/Layout';
