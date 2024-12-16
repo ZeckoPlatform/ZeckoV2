@@ -1,14 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  Container,
-  CircularProgress,
-  Alert,
+  Button, 
+  Paper, 
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
+  Chip,
   Box,
   Typography,
-  Chip
+  Container,
+  CircularProgress,
+  Alert
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { LocationOn, MonetizationOn, Person } from '@mui/icons-material';
 import api from '../../services/api';
+
+const DetailContainer = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  margin: `${theme.spacing(3)} auto`,
+  maxWidth: '800px'
+}));
 
 const LeadDetail = () => {
   const { id } = useParams();
@@ -18,91 +32,117 @@ const LeadDetail = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchLeadDetail = async () => {
+    const fetchLead = async () => {
       try {
-        if (!id) {
-          throw new Error('Lead ID is required');
-        }
-
+        setLoading(true);
         const response = await api.get(`/api/leads/${id}`);
-        
-        if (isMounted && response?.data) {
+        if (response?.data) {
           setLead(response.data);
-          setError(null);
         }
       } catch (err) {
-        console.error('Error fetching lead:', err);
-        if (isMounted) {
-          setError(err?.response?.data?.message || 'Failed to load lead details');
-          setLead(null);
-        }
+        setError(err?.message || 'Failed to load lead details');
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
-    fetchLeadDetail();
+    if (id) {
+      fetchLead();
+    }
 
     return () => {
-      isMounted = false;
+      // Cleanup if needed
     };
   }, [id]);
 
   if (loading) {
     return (
-      <Container>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-          <CircularProgress />
-        </Box>
-      </Container>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <Container>
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
-      </Container>
+      <Box p={3}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
     );
   }
 
   if (!lead) {
     return (
-      <Container>
-        <Alert severity="info" sx={{ mt: 2 }}>
-          Lead not found
-        </Alert>
-      </Container>
+      <Box p={3}>
+        <Alert severity="info">Lead not found</Alert>
+      </Box>
     );
   }
 
   return (
-    <Container>
-      <Box sx={{ p: 3 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={3}>
-          <Box>
-            <Typography variant="h4" component="h1" gutterBottom>
-              {lead.title || 'Untitled Lead'}
-            </Typography>
-            {lead.category?.name && (
-              <Chip 
-                label={lead.category.name} 
-                color="primary" 
-                variant="outlined"
-                sx={{ mt: 1 }}
-              />
-            )}
-          </Box>
+    <DetailContainer>
+      <Box p={2}>
+        <Typography variant="h4" gutterBottom>
+          {lead.title}
+        </Typography>
+        
+        <Box my={2}>
+          <Typography variant="body1">{lead.description}</Typography>
         </Box>
-        {/* Rest of your render logic */}
+
+        <Box my={2}>
+          {lead.budget && (
+            <Chip
+              icon={<MonetizationOn />}
+              label={`Budget: ${lead.budget}`}
+              sx={{ mr: 1, mb: 1 }}
+            />
+          )}
+          {lead.location && (
+            <Chip
+              icon={<LocationOn />}
+              label={lead.location}
+              sx={{ mr: 1, mb: 1 }}
+            />
+          )}
+        </Box>
+
+        {lead.attachments?.length > 0 && (
+          <Box my={2}>
+            <Typography variant="h6" gutterBottom>
+              Attachments
+            </Typography>
+            <List>
+              {lead.attachments.map((attachment, index) => (
+                <ListItem 
+                  key={index}
+                  button 
+                  component="a" 
+                  href={attachment.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ListItemText 
+                    primary={attachment.name || 'Unnamed attachment'}
+                    secondary={attachment.type || 'Unknown type'}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        )}
+
+        <Box mt={3}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate(-1)}
+          >
+            Back
+          </Button>
+        </Box>
       </Box>
-    </Container>
+    </DetailContainer>
   );
 };
 
