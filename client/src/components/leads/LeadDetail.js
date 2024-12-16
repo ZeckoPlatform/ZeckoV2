@@ -10,9 +10,16 @@ const LeadDetail = () => {
 
   useEffect(() => {
     const fetchLead = async () => {
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+      
       try {
         const response = await api.get(`/api/leads/${id}`);
-        setLead(response.data);
+        if (response && response.data) {
+          setLead(response.data);
+        }
       } catch (error) {
         console.error('Error fetching lead:', error);
       } finally {
@@ -43,10 +50,10 @@ const LeadDetail = () => {
     <Box sx={{ p: 3 }}>
       <Typography variant="h6">Lead Details</Typography>
       <Box sx={{ mt: 2 }}>
-        <Typography>Name: {lead.name}</Typography>
-        <Typography>Email: {lead.email}</Typography>
-        <Typography>Phone: {lead.phone}</Typography>
-        <Typography>Status: {lead.status}</Typography>
+        <Typography>Name: {lead.name || 'N/A'}</Typography>
+        <Typography>Email: {lead.email || 'N/A'}</Typography>
+        <Typography>Phone: {lead.phone || 'N/A'}</Typography>
+        <Typography>Status: {lead.status || 'N/A'}</Typography>
       </Box>
     </Box>
   );
