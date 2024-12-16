@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
-import { CssBaseline, Container } from '@mui/material';
+import { CssBaseline } from '@mui/material';
 import { AuthProvider } from './contexts/AuthContext';
 import PrivateRoute from './components/routing/PrivateRoute';
 import ErrorBoundary from './components/error/ErrorBoundary';
@@ -12,8 +12,8 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import LeadDetail from './components/leads/LeadDetail';
-import LeadList from './pages/LeadList';
+import LeadDetail from './components/lead/LeadDetail';
+import LeadList from './pages/Lead';
 import PostLead from './pages/PostLead';
 import Layout from './components/Layout';
 
@@ -98,9 +98,9 @@ function App() {
                   }
                 >
                   <Route index element={<Dashboard />} />
-                  <Route path="leads" element={<LeadList />} />
-                  <Route path="leads/create" element={<PostLead />} />
-                  <Route path="leads/:id" element={<LeadDetail />} />
+                  <Route path="lead" element={<LeadList />} />
+                  <Route path="lead/create" element={<PostLead />} />
+                  <Route path="lead/:id" element={<LeadDetail />} />
                   <Route path="profile" element={<Profile />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
