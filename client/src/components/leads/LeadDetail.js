@@ -1,58 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  Button, 
-  Paper, 
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  Chip,
-  Box,
+  Box, 
+  CircularProgress, 
+  Alert,
   Typography,
-  Container,
-  CircularProgress,
-  Alert
+  Paper
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { LocationOn, MonetizationOn, Person } from '@mui/icons-material';
 import api from '../../services/api';
 
-const DetailContainer = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  margin: `${theme.spacing(3)} auto`,
-  maxWidth: '800px'
-}));
-
 const LeadDetail = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
   const [lead, setLead] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { id } = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchLead = async () => {
       try {
         setLoading(true);
         const response = await api.get(`/api/leads/${id}`);
-        if (response?.data) {
-          setLead(response.data);
-        }
+        setLead(response.data);
+        setError(null);
       } catch (err) {
-        setError(err?.message || 'Failed to load lead details');
+        setError(err.message || 'Error loading lead details');
+        setLead(null);
       } finally {
         setLoading(false);
       }
     };
 
-    if (id) {
-      fetchLead();
-    }
-
-    return () => {
-      // Cleanup if needed
-    };
+    fetchLead();
   }, [id]);
 
   if (loading) {
@@ -80,69 +59,19 @@ const LeadDetail = () => {
   }
 
   return (
-    <DetailContainer>
-      <Box p={2}>
-        <Typography variant="h4" gutterBottom>
-          {lead.title}
+    <Box p={3}>
+      <Paper elevation={3} sx={{ p: 3 }}>
+        <Typography variant="h5" gutterBottom>
+          Lead Details
         </Typography>
-        
-        <Box my={2}>
-          <Typography variant="body1">{lead.description}</Typography>
+        <Box mt={2}>
+          <Typography><strong>Name:</strong> {lead.name}</Typography>
+          <Typography><strong>Email:</strong> {lead.email}</Typography>
+          <Typography><strong>Phone:</strong> {lead.phone}</Typography>
+          <Typography><strong>Status:</strong> {lead.status}</Typography>
         </Box>
-
-        <Box my={2}>
-          {lead.budget && (
-            <Chip
-              icon={<MonetizationOn />}
-              label={`Budget: ${lead.budget}`}
-              sx={{ mr: 1, mb: 1 }}
-            />
-          )}
-          {lead.location && (
-            <Chip
-              icon={<LocationOn />}
-              label={lead.location}
-              sx={{ mr: 1, mb: 1 }}
-            />
-          )}
-        </Box>
-
-        {lead.attachments?.length > 0 && (
-          <Box my={2}>
-            <Typography variant="h6" gutterBottom>
-              Attachments
-            </Typography>
-            <List>
-              {lead.attachments.map((attachment, index) => (
-                <ListItem 
-                  key={index}
-                  button 
-                  component="a" 
-                  href={attachment.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ListItemText 
-                    primary={attachment.name || 'Unnamed attachment'}
-                    secondary={attachment.type || 'Unknown type'}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Box>
-        )}
-
-        <Box mt={3}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => navigate(-1)}
-          >
-            Back
-          </Button>
-        </Box>
-      </Box>
-    </DetailContainer>
+      </Paper>
+    </Box>
   );
 };
 
