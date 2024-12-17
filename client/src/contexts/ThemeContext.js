@@ -63,6 +63,13 @@ const createStyledTheme = (muiTheme) => ({
       main: muiTheme.palette.background.paper,
     },
   },
+  input: {
+    theme: {
+      main: muiTheme.palette.primary.main,
+      light: muiTheme.palette.primary.light,
+      dark: muiTheme.palette.primary.dark,
+    }
+  },
   spacing: {
     xs: '4px',
     sm: '8px',
