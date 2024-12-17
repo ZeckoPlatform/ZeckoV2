@@ -1,128 +1,205 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import {
+    Grid,
+    Paper,
+    Typography,
+    Box,
+    Card,
+    CardContent,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
+    Button,
+    IconButton,
+    Menu,
+    MenuItem
+} from '@mui/material';
+import {
+    MoreVert as MoreIcon,
+    TrendingUp,
+    People,
+    Store,
+    Assignment
+} from '@mui/icons-material';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import styled from 'styled-components';
-import { useAuth } from '../../contexts/AuthContext';
-import { useNotification } from '../../contexts/NotificationContext';
-import { 
-  Users, 
-  Package, 
-  ShoppingBag, 
-  BarChart2, 
-  Settings 
-} from 'react-feather';
-import { useNavigate, Link, Outlet, useLocation } from 'react-router-dom';
-import { 
-  getSocket, 
-  subscribeToActivityUpdates, 
-  unsubscribeFromActivityUpdates 
-} from '../../utils/socket.io';
-import { activityLogService } from '../../services/activityLogService';
 
-const DashboardContainer = styled.div`
-  display: flex;
-  min-height: 100vh;
+const StyledPaper = styled(Paper)`
+    padding: 24px;
+    height: 100%;
 `;
 
-const Sidebar = styled.div`
-  width: 250px;
-  background: #1a1a1a;
-  color: white;
-  padding: 20px;
-`;
-
-const MainContent = styled.div`
-  flex: 1;
-  padding: 20px;
-  background: #f5f5f5;
-  overflow-y: auto;
-`;
-
-const MenuItem = styled(Link)`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
-  cursor: pointer;
-  border-radius: 6px;
-  margin-bottom: 5px;
-  text-decoration: none;
-  color: inherit;
-  
-  ${({ $active }) => $active ? `
-    background: var(--primary-color);
+const StatCard = styled(Card)`
+    background: ${props => props.bgcolor || props.theme.palette.primary.main};
     color: white;
-  ` : `
-    &:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-  `}
 `;
 
-const AdminHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #ddd;
-`;
+const AdminDashboard = () => {
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [timeRange, setTimeRange] = useState('week');
+    const [stats, setStats] = useState({
+        users: 0,
+        vendors: 0,
+        orders: 0,
+        revenue: 0
+    });
 
-function AdminDashboard() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
+    useEffect(() => {
+        // Fetch dashboard stats
+        fetchDashboardStats();
+    }, [timeRange]);
 
-  const handleActivityUpdate = useCallback((activity) => {
-    activityLogService.addActivity(activity);
-  }, []);
+    const fetchDashboardStats = async () => {
+        try {
+            const response = await fetch(`/api/admin/stats?range=${timeRange}`);
+            const data = await response.json();
+            setStats(data);
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+        }
+    };
 
-  useEffect(() => {
-    const socket = getSocket();
-    
-    if (socket && user?.role === 'admin') {
-      subscribeToActivityUpdates(socket, handleActivityUpdate);
-      
-      return () => {
-        unsubscribeFromActivityUpdates(socket, handleActivityUpdate);
-      };
-    }
-  }, [user, handleActivityUpdate]);
+    const handleMenuOpen = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
 
-  const getCurrentSection = useCallback(() => {
-    const path = location.pathname.split('/');
-    return path[2] || 'dashboard';
-  }, [location.pathname]);
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
 
-  const menuItems = [
-    { to: '/admin/dashboard', icon: <BarChart2 />, label: 'Dashboard' },
-    { to: '/admin/users', icon: <Users />, label: 'Users' },
-    { to: '/admin/products', icon: <Package />, label: 'Products' },
-    { to: '/admin/orders', icon: <ShoppingBag />, label: 'Orders' },
-    { to: '/admin/settings', icon: <Settings />, label: 'Settings' }
-  ];
+    const handleTimeRangeChange = (range) => {
+        setTimeRange(range);
+        handleMenuClose();
+    };
 
-  return (
-    <DashboardContainer>
-      <Sidebar>
-        {menuItems.map(({ to, icon, label }) => (
-          <MenuItem 
-            key={to} 
-            to={to} 
-            $active={getCurrentSection() === to.split('/')[2]}
-          >
-            {icon}
-            {label}
-          </MenuItem>
-        ))}
-      </Sidebar>
+    return (
+        <Grid container spacing={3}>
+            <Grid item xs={12}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                    <Typography variant="h4">Admin Dashboard</Typography>
+                    <Box>
+                        <Button
+                            variant="outlined"
+                            endIcon={<MoreIcon />}
+                            onClick={handleMenuOpen}
+                        >
+                            {timeRange.charAt(0).toUpperCase() + timeRange.slice(1)}
+                        </Button>
+                        <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl)}
+                            onClose={handleMenuClose}
+                        >
+                            <MenuItem onClick={() => handleTimeRangeChange('day')}>Today</MenuItem>
+                            <MenuItem onClick={() => handleTimeRangeChange('week')}>This Week</MenuItem>
+                            <MenuItem onClick={() => handleTimeRangeChange('month')}>This Month</MenuItem>
+                            <MenuItem onClick={() => handleTimeRangeChange('year')}>This Year</MenuItem>
+                        </Menu>
+                    </Box>
+                </Box>
+            </Grid>
 
-      <MainContent>
-        <AdminHeader>
-          <h1>{getCurrentSection().charAt(0).toUpperCase() + getCurrentSection().slice(1)}</h1>
-        </AdminHeader>
-        <Outlet />
-      </MainContent>
-    </DashboardContainer>
-  );
-}
+            {/* Stats Cards */}
+            <Grid item xs={12} sm={6} md={3}>
+                <StatCard>
+                    <CardContent>
+                        <Box display="flex" alignItems="center" mb={2}>
+                            <People />
+                            <Typography variant="subtitle1" ml={1}>Users</Typography>
+                        </Box>
+                        <Typography variant="h4">{stats.users}</Typography>
+                        <Typography variant="body2">Total registered users</Typography>
+                    </CardContent>
+                </StatCard>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+                <StatCard bgcolor="#2196f3">
+                    <CardContent>
+                        <Box display="flex" alignItems="center" mb={2}>
+                            <Store />
+                            <Typography variant="subtitle1" ml={1}>Vendors</Typography>
+                        </Box>
+                        <Typography variant="h4">{stats.vendors}</Typography>
+                        <Typography variant="body2">Active vendors</Typography>
+                    </CardContent>
+                </StatCard>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+                <StatCard bgcolor="#4caf50">
+                    <CardContent>
+                        <Box display="flex" alignItems="center" mb={2}>
+                            <Assignment />
+                            <Typography variant="subtitle1" ml={1}>Orders</Typography>
+                        </Box>
+                        <Typography variant="h4">{stats.orders}</Typography>
+                        <Typography variant="body2">Total orders</Typography>
+                    </CardContent>
+                </StatCard>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+                <StatCard bgcolor="#ff9800">
+                    <CardContent>
+                        <Box display="flex" alignItems="center" mb={2}>
+                            <TrendingUp />
+                            <Typography variant="subtitle1" ml={1}>Revenue</Typography>
+                        </Box>
+                        <Typography variant="h4">£{stats.revenue.toLocaleString()}</Typography>
+                        <Typography variant="body2">Total revenue</Typography>
+                    </CardContent>
+                </StatCard>
+            </Grid>
+
+            {/* Charts */}
+            <Grid item xs={12}>
+                <StyledPaper>
+                    <Typography variant="h6" gutterBottom>Revenue Overview</Typography>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={stats.revenueChart}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="date" />
+                            <YAxis />
+                            <Tooltip />
+                            <Line type="monotone" dataKey="amount" stroke="#8884d8" />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </StyledPaper>
+            </Grid>
+
+            {/* Recent Activity */}
+            <Grid item xs={12}>
+                <StyledPaper>
+                    <Typography variant="h6" gutterBottom>Recent Activity</Typography>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Action</TableCell>
+                                <TableCell>User</TableCell>
+                                <TableCell>Details</TableCell>
+                                <TableCell>Date</TableCell>
+                                <TableCell>Status</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {stats.recentActivity?.map((activity) => (
+                                <TableRow key={activity._id}>
+                                    <TableCell>{activity.action}</TableCell>
+                                    <TableCell>{activity.user}</TableCell>
+                                    <TableCell>{activity.details}</TableCell>
+                                    <TableCell>{new Date(activity.date).toLocaleString()}</TableCell>
+                                    <TableCell>{activity.status}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </StyledPaper>
+            </Grid>
+        </Grid>
+    );
+};
 
 export default AdminDashboard; 

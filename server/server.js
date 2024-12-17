@@ -15,6 +15,8 @@ const userRoutes = require('./routes/userRoutes');
 const leadRoutes = require('./routes/api/lead');
 const productRoutes = require('./routes/productRoutes');
 const serviceCategoryRoutes = require('./routes/serviceCategoryRoutes');
+const serviceRequestRoutes = require('./routes/serviceRequestRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 
 // Initialize Express and create server
 const app = express();
@@ -43,6 +45,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api', serviceCategoryRoutes);
+app.use('/api', serviceRequestRoutes);
+app.use('/api', messageRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {

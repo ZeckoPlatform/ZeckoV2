@@ -3,7 +3,7 @@ console.log('Loading adminController.js - START');
 const User = require('../models/userModel');
 const Product = require('../models/productModel');
 const Order = require('../models/orderModel');
-const { startOfMonth, subMonths, startOfDay, subDays } = require('date-fns');
+const { startOfMonth, subMonths, startOfDay, subDays, startOfWeek, endOfWeek, startOfYear, endOfYear } = require('date-fns');
 
 const getAdminStats = async (req, res) => {
     try {
@@ -217,9 +217,106 @@ const getAdminStats = async (req, res) => {
     }
 };
 
+exports.getDashboardStats = async (req, res) => {
+    try {
+        const { range = 'week' } = req.query;
+        let startDate, endDate;
+
+        // Set date range
+        switch (range) {
+            case 'day':
+                startDate = startOfDay(new Date());
+                endDate = endOfDay(new Date());
+                break;
+            case 'week':
+                startDate = startOfWeek(new Date());
+                endDate = endOfWeek(new Date());
+                break;
+            case 'month':
+                startDate = startOfMonth(new Date());
+                endDate = endOfMonth(new Date());
+                break;
+            case 'year':
+                startDate = startOfYear(new Date());
+                endDate = endOfYear(new Date());
+                break;
+            default:
+                startDate = startOfWeek(new Date());
+                endDate = endOfWeek(new Date());
+        }
+
+        // Get stats
+        const [users, vendors, orders, revenue, recentActivity] = await Promise.all([
+            User.countDocuments({ createdAt: { $gte: startDate, $lte: endDate } }),
+            User.countDocuments({ role: 'vendor' }),
+            Order.countDocuments({ createdAt: { $gte: startDate, $lte: endDate } }),
+            Order.aggregate([
+                {
+                    $match: {
+                        createdAt: { $gte: startDate, $lte: endDate },
+                        'payment.status': 'completed'
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        total: { $sum: '$total' }
+                    }
+                }
+            ]),
+            Order.find()
+                .sort('-createdAt')
+                .limit(10)
+                .populate('customer', 'name')
+                .populate('vendor', 'name')
+        ]);
+
+        // Get revenue chart data
+        const revenueChart = await Order.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: startDate, $lte: endDate },
+                    'payment.status': 'completed'
+                }
+            },
+            {
+                $group: {
+                    _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+                    amount: { $sum: '$total' }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        res.json({
+            users,
+            vendors,
+            orders,
+            revenue: revenue[0]?.total || 0,
+            revenueChart: revenueChart.map(item => ({
+                date: item._id,
+                amount: item.amount
+            })),
+            recentActivity: recentActivity.map(order => ({
+                _id: order._id,
+                action: 'New Order',
+                user: order.customer.name,
+                details: `Order #${order.orderNumber}`,
+                date: order.createdAt,
+                status: order.status
+            }))
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 // Create the controller object
 const controller = {
-    getAdminStats
+    getAdminStats,
+    getDashboardStats
 };
 
 console.log('adminController methods:', Object.keys(controller));

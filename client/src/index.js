@@ -8,11 +8,13 @@ import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ProductProvider } from './contexts/ProductContext';
 import { CartProvider } from './contexts/CartContext';
+import { ServiceCategoryProvider } from './contexts/ServiceCategoryContext';
 import ErrorBoundary from './components/error/ErrorBoundary';
 import App from './App';
 import { ToastContainer } from 'react-toastify';
 import GlobalStyles from './styles/GlobalStyles';
 import 'react-toastify/dist/ReactToastify.css';
+import { ServiceProvider } from './contexts/ServiceContext';
 
 ReactDOM.render(
   <React.StrictMode>
@@ -23,12 +25,10 @@ ReactDOM.render(
           <GlobalStyles />
           <NotificationProvider>
             <AuthProvider>
-              <ProductProvider>
-                <CartProvider>
-                  <App />
-                  <ToastContainer />
-                </CartProvider>
-              </ProductProvider>
+              <ServiceProvider>
+                <App />
+                <ToastContainer />
+              </ServiceProvider>
             </AuthProvider>
           </NotificationProvider>
         </MuiThemeProvider>

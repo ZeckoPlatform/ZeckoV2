@@ -1,108 +1,120 @@
 const Product = require('../models/productModel');
-const Business = require('../models/Business');
-const cache = require('memory-cache');
+const { validateRequest } = require('../utils/validator');
 
-const productController = {
-  // Create new product
-  createProduct: async (req, res) => {
+exports.createProduct = async (req, res) => {
     try {
-      const { name, description, price, category, imageUrl, stock } = req.body;
-      const business = await Business.findOne({ owner: req.user.id });
-      
-      if (!business) {
-        return res.status(400).json({ 
-          message: 'You must have a business profile to list products' 
+        const { error } = validateRequest(req.body, {
+            name: 'required|string',
+            description: 'required|string',
+            shortDescription: 'required|string',
+            price: 'required|object',
+            'price.regular': 'required|numeric',
+            category: 'required|mongoId'
         });
-      }
 
-      const newProduct = new Product({
-        name,
-        description,
-        price,
-        category,
-        imageUrl,
-        stock,
-        seller: business._id
-      });
+        if (error) {
+            return res.status(400).json({ error: error.message });
+        }
 
-      const savedProduct = await newProduct.save();
-      res.json(savedProduct);
-    } catch (error) {
-      res.status(500).json({ 
-        message: 'Error listing product', 
-        error: error.message 
-      });
-    }
-  },
-
-  // Get all products
-  getAllProducts: async (req, res) => {
-    try {
-      const products = await Product.find()
-        .sort({ createdAt: -1 });
-      res.json(products);
-    } catch (error) {
-      res.status(500).json({ 
-        message: 'Error fetching products', 
-        error: error.message 
-      });
-    }
-  },
-
-  // Search products
-  searchProducts: async (req, res) => {
-    try {
-      const { query } = req.query;
-      const products = await Product.find({
-        $or: [
-          { name: { $regex: query, $options: 'i' } },
-          { description: { $regex: query, $options: 'i' } },
-          { category: { $regex: query, $options: 'i' } }
-        ]
-      }).sort({ createdAt: -1 });
-      res.json(products);
-    } catch (error) {
-      res.status(500).json({ 
-        message: 'Error searching products', 
-        error: error.message 
-      });
-    }
-  },
-
-  // Get featured products
-  getFeaturedProducts: async (req, res) => {
-    try {
-      const cachedProducts = cache.get('featured_products');
-      if (cachedProducts) {
-        return res.json(cachedProducts);
-      }
-
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Database timeout')), 5000);
-      });
-
-      const queryPromise = Product.find({ featured: true })
-        .select('title description price images featured')
-        .limit(6)
-        .lean()
-        .exec();
-
-      const products = await Promise.race([queryPromise, timeoutPromise]);
-      cache.put('featured_products', products, 5 * 60 * 1000);
-
-      res.json(products);
-    } catch (error) {
-      console.error('Featured products error:', error);
-      if (error.message === 'Database timeout') {
-        return res.status(503).json({ 
-          message: 'Service temporarily unavailable' 
+        const product = new Product({
+            ...req.body,
+            vendor: req.user.id
         });
-      }
-      res.status(500).json({ 
-        message: 'Error fetching featured products' 
-      });
+
+        await product.save();
+        res.status(201).json(product);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-  }
 };
 
-module.exports = productController; 
+exports.getProducts = async (req, res) => {
+    try {
+        const {
+            page = 1,
+            limit = 10,
+            category,
+            vendor,
+            status = 'published',
+            sort = '-createdAt'
+        } = req.query;
+
+        const query = { status };
+        if (category) query.category = category;
+        if (vendor) query.vendor = vendor;
+
+        const products = await Product.find(query)
+            .populate('vendor', 'name profile.avatar')
+            .populate('category', 'name')
+            .sort(sort)
+            .skip((page - 1) * limit)
+            .limit(parseInt(limit));
+
+        const total = await Product.countDocuments(query);
+
+        res.json({
+            products,
+            total,
+            pages: Math.ceil(total / limit),
+            currentPage: parseInt(page)
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getProduct = async (req, res) => {
+    try {
+        const product = await Product.findOne({
+            slug: req.params.slug,
+            status: 'published'
+        })
+        .populate('vendor', 'name profile.avatar businessProfile')
+        .populate('category', 'name');
+
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
+        res.json(product);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.updateProduct = async (req, res) => {
+    try {
+        const product = await Product.findOne({
+            _id: req.params.id,
+            vendor: req.user.id
+        });
+
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
+        Object.assign(product, req.body);
+        await product.save();
+
+        res.json(product);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.deleteProduct = async (req, res) => {
+    try {
+        const product = await Product.findOneAndDelete({
+            _id: req.params.id,
+            vendor: req.user.id
+        });
+
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
+        res.json({ message: 'Product deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}; 

@@ -1,12 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const { createCategory, getCategories } = require('../controllers/serviceCategoryController');
-const { auth, adminOnly } = require('../middleware/auth');
+const { auth, isAdmin } = require('../middleware/auth');
+const {
+    createCategory,
+    getCategories,
+    getCategoryById,
+    updateCategory
+} = require('../controllers/serviceCategoryController');
 
-// Public route to get all categories
+// Public routes
 router.get('/categories', getCategories);
+router.get('/categories/:id', getCategoryById);
 
-// Protected route - only admins can create categories
-router.post('/categories', auth, adminOnly, createCategory);
+// Protected admin routes
+router.post('/categories', auth, isAdmin, createCategory);
+router.put('/categories/:id', auth, isAdmin, updateCategory);
 
 module.exports = router; 

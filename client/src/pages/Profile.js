@@ -1,256 +1,215 @@
-import React, { useEffect, useState } from 'react';
-import styled from 'styled-components';
+import React, { useState } from 'react';
+import {
+    Container,
+    Grid,
+    Paper,
+    Typography,
+    Box,
+    TextField,
+    Button,
+    Tabs,
+    Tab,
+    FormControlLabel,
+    Switch,
+    Chip
+} from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
-import api from '../services/api';
-import LoadingSpinner from '../components/common/LoadingSpinner';
+import { useService } from '../contexts/ServiceContext';
+import styled from 'styled-components';
+
+const StyledPaper = styled(Paper)`
+    padding: 24px;
+    margin-bottom: 24px;
+`;
+
+const TabPanel = ({ children, value, index, ...other }) => (
+    <div
+        role="tabpanel"
+        hidden={value !== index}
+        {...other}
+    >
+        {value === index && <Box p={3}>{children}</Box>}
+    </div>
+);
 
 const Profile = () => {
-  const { user, getCurrentUser } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [profileData, setProfileData] = useState(null);
-  const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    bio: '',
-    location: '',
-    skills: []
-  });
+    const { user, updateUser } = useAuth();
+    const { categories } = useService();
+    const [tabValue, setTabValue] = useState(0);
+    const [formData, setFormData] = useState({
+        ...user,
+        businessProfile: user.businessProfile || {
+            companyName: '',
+            businessType: '',
+            services: [],
+            coverage: {
+                radius: 0,
+                locations: []
+            }
+        }
+    });
 
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const userData = await api.getProfile();
-        setProfileData(userData.data);
-        setFormData({
-          username: userData.data.username || '',
-          email: userData.data.email || '',
-          bio: userData.data.bio || '',
-          location: userData.data.location || '',
-          skills: userData.data.skills || []
-        });
-        setLoading(false);
-      } catch (err) {
-        setError('Error loading profile data');
-        setLoading(false);
-      }
+    const handleTabChange = (event, newValue) => {
+        setTabValue(newValue);
     };
 
-    loadProfile();
-  }, [getCurrentUser]);
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+    const handleBusinessProfileChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            businessProfile: {
+                ...prev.businessProfile,
+                [name]: value
+            }
+        }));
+    };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await api.updateProfile(formData);
-      setProfileData(response.data);
-      setEditing(false);
-    } catch (err) {
-      setError('Error updating profile');
-    }
-  };
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await updateUser(formData);
+            // Show success message
+        } catch (error) {
+            // Show error message
+        }
+    };
 
-  if (loading) return <LoadingSpinner />;
-  if (error) return <ErrorState>{error}</ErrorState>;
-  if (!user) return <ErrorState>No user data available</ErrorState>;
+    return (
+        <Container>
+            <Box py={4}>
+                <Typography variant="h4" gutterBottom>Profile Settings</Typography>
+                
+                <Tabs value={tabValue} onChange={handleTabChange}>
+                    <Tab label="Basic Information" />
+                    {user.role === 'vendor' && <Tab label="Business Profile" />}
+                    <Tab label="Preferences" />
+                </Tabs>
 
-  return (
-    <ProfileContainer>
-      <ProfileHeader>
-        <h1>Profile</h1>
-        <EditButton onClick={() => setEditing(!editing)}>
-          {editing ? 'Cancel' : 'Edit Profile'}
-        </EditButton>
-      </ProfileHeader>
+                <form onSubmit={handleSubmit}>
+                    <TabPanel value={tabValue} index={0}>
+                        <StyledPaper>
+                            <Grid container spacing={3}>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        fullWidth
+                                        label="Name"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleInputChange}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        fullWidth
+                                        label="Email"
+                                        name="email"
+                                        value={formData.email}
+                                        disabled
+                                    />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        fullWidth
+                                        label="Phone"
+                                        name="profile.phone"
+                                        value={formData.profile?.phone || ''}
+                                        onChange={handleInputChange}
+                                    />
+                                </Grid>
+                            </Grid>
+                        </StyledPaper>
+                    </TabPanel>
 
-      {editing ? (
-        <ProfileForm onSubmit={handleSubmit}>
-          <FormGroup>
-            <Label>Username</Label>
-            <Input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleInputChange}
-            />
-          </FormGroup>
+                    {user.role === 'vendor' && (
+                        <TabPanel value={tabValue} index={1}>
+                            <StyledPaper>
+                                <Grid container spacing={3}>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            fullWidth
+                                            label="Company Name"
+                                            name="companyName"
+                                            value={formData.businessProfile.companyName}
+                                            onChange={handleBusinessProfileChange}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            fullWidth
+                                            label="Business Type"
+                                            name="businessType"
+                                            value={formData.businessProfile.businessType}
+                                            onChange={handleBusinessProfileChange}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <Typography variant="h6" gutterBottom>
+                                            Service Categories
+                                        </Typography>
+                                        <Box display="flex" flexWrap="wrap" gap={1}>
+                                            {categories.map(category => (
+                                                <Chip
+                                                    key={category._id}
+                                                    label={category.name}
+                                                    onClick={() => {/* Handle category selection */}}
+                                                    color={formData.businessProfile.services.includes(category._id) ? "primary" : "default"}
+                                                />
+                                            ))}
+                                        </Box>
+                                    </Grid>
+                                </Grid>
+                            </StyledPaper>
+                        </TabPanel>
+                    )}
 
-          <FormGroup>
-            <Label>Email</Label>
-            <Input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-            />
-          </FormGroup>
+                    <TabPanel value={tabValue} index={user.role === 'vendor' ? 2 : 1}>
+                        <StyledPaper>
+                            <Grid container spacing={3}>
+                                <Grid item xs={12}>
+                                    <FormControlLabel
+                                        control={
+                                            <Switch
+                                                checked={formData.preferences?.emailNotifications}
+                                                onChange={(e) => {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        preferences: {
+                                                            ...prev.preferences,
+                                                            emailNotifications: e.target.checked
+                                                        }
+                                                    }));
+                                                }}
+                                            />
+                                        }
+                                        label="Email Notifications"
+                                    />
+                                </Grid>
+                            </Grid>
+                        </StyledPaper>
+                    </TabPanel>
 
-          <FormGroup>
-            <Label>Bio</Label>
-            <Textarea
-              name="bio"
-              value={formData.bio}
-              onChange={handleInputChange}
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>Location</Label>
-            <Input
-              type="text"
-              name="location"
-              value={formData.location}
-              onChange={handleInputChange}
-            />
-          </FormGroup>
-
-          <SaveButton type="submit">Save Changes</SaveButton>
-        </ProfileForm>
-      ) : (
-        <ProfileSection>
-          <ProfileField>
-            <Label>Username</Label>
-            <Value>{profileData?.username}</Value>
-          </ProfileField>
-
-          <ProfileField>
-            <Label>Email</Label>
-            <Value>{profileData?.email}</Value>
-          </ProfileField>
-
-          <ProfileField>
-            <Label>Bio</Label>
-            <Value>{profileData?.bio || 'No bio provided'}</Value>
-          </ProfileField>
-
-          <ProfileField>
-            <Label>Location</Label>
-            <Value>{profileData?.location || 'No location provided'}</Value>
-          </ProfileField>
-
-          <ProfileField>
-            <Label>Role</Label>
-            <Value>{profileData?.role}</Value>
-          </ProfileField>
-        </ProfileSection>
-      )}
-    </ProfileContainer>
-  );
+                    <Box display="flex" justifyContent="flex-end" mt={3}>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            color="primary"
+                            size="large"
+                        >
+                            Save Changes
+                        </Button>
+                    </Box>
+                </form>
+            </Box>
+        </Container>
+    );
 };
-
-const ProfileContainer = styled.div`
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
-`;
-
-const ProfileHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-
-  h1 {
-    color: ${({ theme }) => theme?.colors?.text?.primary || '#000'};
-  }
-`;
-
-const ProfileSection = styled.section`
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-`;
-
-const ProfileField = styled.div`
-  margin-bottom: 1.5rem;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-const Label = styled.div`
-  color: ${({ theme }) => theme?.colors?.text?.secondary || '#666'};
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-`;
-
-const Value = styled.div`
-  color: ${({ theme }) => theme?.colors?.text?.primary || '#000'};
-  font-size: 1.1rem;
-`;
-
-const ProfileForm = styled.form`
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-`;
-
-const FormGroup = styled.div`
-  margin-bottom: 1.5rem;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid ${({ theme }) => theme?.colors?.border || '#ddd'};
-  border-radius: 4px;
-  font-size: 1rem;
-`;
-
-const Textarea = styled.textarea`
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid ${({ theme }) => theme?.colors?.border || '#ddd'};
-  border-radius: 4px;
-  font-size: 1rem;
-  min-height: 100px;
-`;
-
-const Button = styled.button`
-  padding: 0.75rem 1.5rem;
-  border-radius: 4px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-`;
-
-const EditButton = styled(Button)`
-  background: transparent;
-  border: 1px solid ${({ theme }) => theme?.colors?.primary?.main || '#1976d2'};
-  color: ${({ theme }) => theme?.colors?.primary?.main || '#1976d2'};
-
-  &:hover {
-    background: ${({ theme }) => theme?.colors?.primary?.main || '#1976d2'};
-    color: white;
-  }
-`;
-
-const SaveButton = styled(Button)`
-  background: ${({ theme }) => theme?.colors?.primary?.main || '#1976d2'};
-  color: white;
-  border: none;
-
-  &:hover {
-    background: ${({ theme }) => theme?.colors?.primary?.dark || '#115293'};
-  }
-`;
-
-const ErrorState = styled.div`
-  text-align: center;
-  padding: 2rem;
-  color: ${({ theme }) => theme?.colors?.error?.main || '#f44336'};
-`;
 
 export default Profile;

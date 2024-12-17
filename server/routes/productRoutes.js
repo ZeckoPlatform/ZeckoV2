@@ -1,32 +1,21 @@
 const express = require('express');
 const router = express.Router();
-const Product = require('../models/productModel');
+const { auth, isVendor } = require('../middleware/auth');
+const {
+    createProduct,
+    getProducts,
+    getProduct,
+    updateProduct,
+    deleteProduct
+} = require('../controllers/productController');
 
-// GET /api/products
-router.get('/', async (req, res) => {
-    try {
-        console.log('Fetching products with query:', req.query);
-        const query = {};
-        
-        // Add featured filter if specified
-        if (req.query.featured) {
-            query.featured = req.query.featured === 'true';
-        }
-        
-        const products = await Product.find(query)
-            .lean()
-            .select('-__v')
-            .limit(50);
-            
-        console.log(`Found ${products.length} products`);
-        res.json(products);
-    } catch (error) {
-        console.error('Product route error:', error);
-        res.status(500).json({
-            message: 'Error fetching products',
-            error: process.env.NODE_ENV === 'production' ? null : error.message
-        });
-    }
-});
+// Public routes
+router.get('/products', getProducts);
+router.get('/products/:slug', getProduct);
+
+// Protected vendor routes
+router.post('/products', auth, isVendor, createProduct);
+router.put('/products/:id', auth, isVendor, updateProduct);
+router.delete('/products/:id', auth, isVendor, deleteProduct);
 
 module.exports = router;

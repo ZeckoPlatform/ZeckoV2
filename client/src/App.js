@@ -16,6 +16,8 @@ import LeadDetail from './components/leads/LeadDetail';
 import LeadList from './pages/Lead';
 import PostLead from './pages/PostLead';
 import Layout from './components/Layout';
+import Categories from './pages/services/Categories';
+import ServiceRequest from './pages/services/ServiceRequest';
 
 const muiTheme = createTheme({
   palette: {
@@ -103,6 +105,9 @@ function App() {
                   <Route path="lead/create" element={<PostLead />} />
                   <Route path="lead/:id" element={<LeadDetail />} />
                   <Route path="profile" element={<Profile />} />
+                  <Route path="/categories" element={<Categories />} />
+                  <Route path="/services" element={<Categories />} />
+                  <Route path="/service-request/:categoryId" element={<ServiceRequest />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

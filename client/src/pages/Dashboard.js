@@ -1,453 +1,187 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React from 'react';
+import {
+    Container,
+    Grid,
+    Paper,
+    Typography,
+    Box,
+    Button,
+    Card,
+    CardContent,
+    LinearProgress
+} from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { useService } from '../contexts/ServiceContext';
 import styled from 'styled-components';
-import { FiUser, FiEye, FiEdit, FiTrash2, FiRefreshCw, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
-import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'react-toastify';
-import api from '../services/api';
-import { debounce } from 'lodash';
-import LoadingSpinner from '../components/common/LoadingSpinner';
 
-const DashboardContainer = styled.div`
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+const StyledCard = styled(Card)`
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 `;
 
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-`;
-
-const HeaderLeft = styled.div`
-  h1 {
-    margin: 0;
-    color: ${props => props.theme.colors.text};
-  }
-`;
-
-const HeaderRight = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  position: relative;
-`;
-
-const PostLeadButton = styled(Link)`
-  padding: 0.5rem 1rem;
-  background: ${props => props.theme.colors.primary};
-  color: white;
-  border-radius: 4px;
-  text-decoration: none;
-  
-  &:hover {
-    background: ${props => props.theme.colors.primaryDark};
-  }
-`;
-
-const ProfileButton = styled.button`
-  padding: 0.5rem;
-  border: none;
-  background: none;
-  color: ${props => props.theme.colors.text};
-  cursor: pointer;
-  
-  &:hover {
-    color: ${props => props.theme.colors.primary};
-  }
-`;
-
-const ProfileDropdown = styled.div`
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  padding: 0.5rem;
-  z-index: 10;
-`;
-
-const ProfileLink = styled(Link)`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  color: ${props => props.theme.colors.text};
-  text-decoration: none;
-  
-  &:hover {
-    background: ${props => props.theme.colors.backgroundLight};
-  }
-`;
-
-const LogoutButton = styled.button`
-  width: 100%;
-  text-align: left;
-  padding: 0.5rem;
-  border: none;
-  background: none;
-  color: ${props => props.theme.colors.danger};
-  cursor: pointer;
-  
-  &:hover {
-    background: ${props => props.theme.colors.backgroundLight};
-  }
-`;
-
-const SearchContainer = styled.div`
-  margin-bottom: 2rem;
-`;
-
-const SearchInput = styled.input`
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid ${props => props.theme.colors.border};
-  border-radius: 4px;
-  font-size: 1rem;
-  
-  &:focus {
-    outline: none;
-    border-color: ${props => props.theme.colors.primary};
-  }
-`;
-
-const LeadsList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-const LeadCard = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  
-  &:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
-`;
-
-const LeadContent = styled.div`
-  flex: 1;
-`;
-
-const LeadTitle = styled.h3`
-  margin: 0;
-  color: ${props => props.theme.colors.text};
-`;
-
-const LeadCompany = styled.p`
-  margin: 0.5rem 0;
-  color: ${props => props.theme.colors.textLight};
-`;
-
-const LeadStatus = styled.span`
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.875rem;
-  background: ${props => 
-    props.status === 'active' ? props.theme.colors.success + '20' :
-    props.status === 'closed' ? props.theme.colors.danger + '20' :
-    props.theme.colors.warning + '20'
-  };
-  color: ${props => 
-    props.status === 'active' ? props.theme.colors.success :
-    props.status === 'closed' ? props.theme.colors.danger :
-    props.theme.colors.warning
-  };
-`;
-
-const LeadActions = styled.div`
-  display: flex;
-  gap: 0.5rem;
-`;
-
-const ActionButton = styled.button`
-  padding: 0.5rem;
-  border: none;
-  background: none;
-  color: ${props => props.theme.colors.text};
-  cursor: pointer;
-  
-  &:hover {
-    color: ${props => props.theme.colors.primary};
-  }
-`;
-
-const Pagination = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 2rem;
-`;
-
-const PaginationButton = styled.button`
-  padding: 0.5rem;
-  border: none;
-  background: none;
-  color: ${props => props.theme.colors.text};
-  cursor: pointer;
-  
-  &:disabled {
-    color: ${props => props.theme.colors.textLight};
-    cursor: not-allowed;
-  }
-`;
-
-const PageInfo = styled.span`
-  color: ${props => props.theme.colors.text};
-`;
-
-const ErrorContainer = styled.div`
-  text-align: center;
-  padding: 2rem;
-`;
-
-const ErrorMessage = styled.div`
-  background: ${props => (props.theme?.colors?.error || '#f44336') + '10'};
-  padding: 2rem;
-  border-radius: 8px;
-  max-width: 500px;
-  margin: 0 auto;
-`;
-
-const RetryButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 1rem auto 0;
-  padding: 0.5rem 1rem;
-  border: none;
-  background: ${props => props.theme?.colors?.primary || '#1976d2'};
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  
-  &:hover {
-    background: ${props => props.theme?.colors?.primaryDark || '#115293'};
-  }
-`;
-
-const EmptyState = styled.div`
-  text-align: center;
-  padding: 2rem;
-  
-  p {
-    margin-bottom: 1rem;
-    color: ${props => props.theme?.colors?.textLight || '#666666'};
-  }
+const StatNumber = styled(Typography)`
+    font-size: 2rem;
+    font-weight: bold;
+    color: ${props => props.theme.palette.primary.main};
 `;
 
 const Dashboard = () => {
-  const [leads, setLeads] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const pageSize = 10;
-  const navigate = useNavigate();
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const { requests } = useService();
 
-  const fetchLeads = async (page) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await api.getUserLeads({ 
-        page, 
-        limit: pageSize,
-        userId: localStorage.getItem('userId')
-      });
-      
-      if (response.data && Array.isArray(response.data.leads)) {
-        setLeads(response.data.leads);
-        setTotalPages(Math.ceil(response.data.total / pageSize));
-      }
-    } catch (err) {
-      console.error('Fetch error:', err);
-      setError({
-        message: 'Failed to load leads',
-        details: err.response?.data?.message || err.message
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchLeads(currentPage);
-  }, [currentPage]);
-
-  const handleSearch = useCallback(
-    debounce(async (term) => {
-      if (term) {
-        try {
-          const response = await api.searchLeads({ term });
-          setLeads(response.data.leads);
-        } catch (err) {
-          console.error('Search error:', err);
+    const getStats = () => {
+        if (user.role === 'vendor') {
+            return {
+                totalLeads: requests.length,
+                activeQuotes: requests.filter(r => 
+                    r.quotes.some(q => q.provider.toString() === user._id && q.status === 'pending')
+                ).length,
+                wonJobs: requests.filter(r => 
+                    r.selectedProvider?.toString() === user._id
+                ).length,
+                responseRate: Math.round(
+                    (requests.filter(r => 
+                        r.quotes.some(q => q.provider.toString() === user._id)
+                    ).length / requests.length) * 100
+                )
+            };
         }
-      } else {
-        fetchLeads(currentPage);
-      }
-    }, 500),
-    []
-  );
+        return {
+            activeRequests: requests.filter(r => r.status === 'active').length,
+            receivedQuotes: requests.reduce((acc, r) => acc + r.quotes.length, 0),
+            completedJobs: requests.filter(r => r.status === 'completed').length
+        };
+    };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userId');
-    navigate('/login');
-  };
+    const stats = getStats();
 
-  const handleViewLead = (leadId) => {
-    navigate(`/leads/${leadId}`);
-  };
+    const renderClientDashboard = () => (
+        <>
+            <Grid container spacing={3}>
+                <Grid item xs={12} md={4}>
+                    <StyledCard>
+                        <CardContent>
+                            <Typography color="textSecondary" gutterBottom>
+                                Active Requests
+                            </Typography>
+                            <StatNumber>{stats.activeRequests}</StatNumber>
+                        </CardContent>
+                    </StyledCard>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                    <StyledCard>
+                        <CardContent>
+                            <Typography color="textSecondary" gutterBottom>
+                                Received Quotes
+                            </Typography>
+                            <StatNumber>{stats.receivedQuotes}</StatNumber>
+                        </CardContent>
+                    </StyledCard>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                    <StyledCard>
+                        <CardContent>
+                            <Typography color="textSecondary" gutterBottom>
+                                Completed Jobs
+                            </Typography>
+                            <StatNumber>{stats.completedJobs}</StatNumber>
+                        </CardContent>
+                    </StyledCard>
+                </Grid>
+            </Grid>
 
-  const handleEditLead = (leadId) => {
-    navigate(`/leads/edit/${leadId}`);
-  };
+            <Box mt={4}>
+                <Button 
+                    variant="contained" 
+                    color="primary" 
+                    size="large"
+                    onClick={() => navigate('/services')}
+                >
+                    Post New Request
+                </Button>
+            </Box>
+        </>
+    );
 
-  const handleDeleteLead = async (leadId) => {
-    if (window.confirm('Are you sure you want to delete this lead?')) {
-      try {
-        await api.deleteLead(leadId);
-        toast.success('Lead deleted successfully');
-        fetchLeads(currentPage);
-      } catch (err) {
-        toast.error('Failed to delete lead');
-      }
-    }
-  };
+    const renderProviderDashboard = () => (
+        <>
+            <Grid container spacing={3}>
+                <Grid item xs={12} md={3}>
+                    <StyledCard>
+                        <CardContent>
+                            <Typography color="textSecondary" gutterBottom>
+                                Available Leads
+                            </Typography>
+                            <StatNumber>{stats.totalLeads}</StatNumber>
+                        </CardContent>
+                    </StyledCard>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                    <StyledCard>
+                        <CardContent>
+                            <Typography color="textSecondary" gutterBottom>
+                                Active Quotes
+                            </Typography>
+                            <StatNumber>{stats.activeQuotes}</StatNumber>
+                        </CardContent>
+                    </StyledCard>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                    <StyledCard>
+                        <CardContent>
+                            <Typography color="textSecondary" gutterBottom>
+                                Won Jobs
+                            </Typography>
+                            <StatNumber>{stats.wonJobs}</StatNumber>
+                        </CardContent>
+                    </StyledCard>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                    <StyledCard>
+                        <CardContent>
+                            <Typography color="textSecondary" gutterBottom>
+                                Response Rate
+                            </Typography>
+                            <Box display="flex" alignItems="center">
+                                <StatNumber>{stats.responseRate}%</StatNumber>
+                                <LinearProgress 
+                                    variant="determinate" 
+                                    value={stats.responseRate} 
+                                    sx={{ ml: 2, flexGrow: 1 }}
+                                />
+                            </Box>
+                        </CardContent>
+                    </StyledCard>
+                </Grid>
+            </Grid>
 
-  return (
-    <DashboardContainer>
-      <Header>
-        <HeaderLeft>
-          <h1>Dashboard</h1>
-        </HeaderLeft>
-        <HeaderRight>
-          <PostLeadButton to="/leads/new">Post New Lead</PostLeadButton>
-          <ProfileButton onClick={() => setShowProfileMenu(!showProfileMenu)}>
-            <FiUser />
-          </ProfileButton>
-          {showProfileMenu && (
-            <ProfileDropdown>
-              <ProfileLink to="/profile">
-                <FiUser /> Profile
-              </ProfileLink>
-              <LogoutButton onClick={handleLogout}>
-                Logout
-              </LogoutButton>
-            </ProfileDropdown>
-          )}
-        </HeaderRight>
-      </Header>
+            <Box mt={4}>
+                <Button 
+                    variant="contained" 
+                    color="primary" 
+                    size="large"
+                    onClick={() => navigate('/lead')}
+                >
+                    View Available Leads
+                </Button>
+            </Box>
+        </>
+    );
 
-      <SearchContainer>
-        <SearchInput
-          type="text"
-          placeholder="Search leads..."
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            handleSearch(e.target.value);
-          }}
-          value={searchTerm}
-        />
-      </SearchContainer>
-
-      {loading && <LoadingSpinner />}
-      
-      {error && (
-        <ErrorContainer>
-          <ErrorMessage>
-            <h4>{error.message}</h4>
-            <p>{error.details}</p>
-            <RetryButton onClick={() => fetchLeads(currentPage)}>
-              <FiRefreshCw /> Retry
-            </RetryButton>
-          </ErrorMessage>
-        </ErrorContainer>
-      )}
-      
-      {!loading && !error && leads.length === 0 && (
-        <EmptyState>
-          <p>No leads found. Create your first lead!</p>
-          <PostLeadButton to="/leads/new">Create Lead</PostLeadButton>
-        </EmptyState>
-      )}
-      
-      {!loading && !error && leads.length > 0 && (
-        <AnimatePresence>
-          <LeadsList>
-            {leads.map(lead => (
-              <LeadCard
-                key={lead._id}
-                as={motion.div}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                <LeadContent>
-                  <LeadTitle>{lead.title}</LeadTitle>
-                  <LeadCompany>{lead.company}</LeadCompany>
-                  <LeadStatus status={lead.status}>
-                    {lead.status || 'Active'}
-                  </LeadStatus>
-                </LeadContent>
-                <LeadActions>
-                  <ActionButton
-                    onClick={() => handleViewLead(lead._id)}
-                    title="View"
-                  >
-                    <FiEye />
-                  </ActionButton>
-                  <ActionButton
-                    onClick={() => handleEditLead(lead._id)}
-                    title="Edit"
-                  >
-                    <FiEdit />
-                  </ActionButton>
-                  <ActionButton
-                    onClick={() => handleDeleteLead(lead._id)}
-                    title="Delete"
-                  >
-                    <FiTrash2 />
-                  </ActionButton>
-                </LeadActions>
-              </LeadCard>
-            ))}
-          </LeadsList>
-          <Pagination>
-            <PaginationButton 
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              <FiChevronLeft />
-            </PaginationButton>
-            <PageInfo>
-              Page {currentPage} of {totalPages}
-            </PageInfo>
-            <PaginationButton 
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-            >
-              <FiChevronRight />
-            </PaginationButton>
-          </Pagination>
-        </AnimatePresence>
-      )}
-    </DashboardContainer>
-  );
+    return (
+        <Container>
+            <Box py={4}>
+                <Typography variant="h4" gutterBottom>
+                    Welcome back, {user.name}!
+                </Typography>
+                
+                {user.role === 'vendor' ? renderProviderDashboard() : renderClientDashboard()}
+            </Box>
+        </Container>
+    );
 };
 
 export default Dashboard;

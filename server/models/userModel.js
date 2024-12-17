@@ -90,12 +90,16 @@ const userSchema = new mongoose.Schema({
   subscription: {
     plan: {
       type: String,
-      enum: ['free', 'basic', 'pro', 'enterprise'],
+      enum: ['free', 'basic', 'premium', 'professional'],
       default: 'free'
     },
     startDate: Date,
     endDate: Date,
-    autoRenew: { type: Boolean, default: false }
+    status: {
+      type: String,
+      enum: ['active', 'expired', 'cancelled'],
+      default: 'active'
+    }
   },
   credits: { type: Number, default: 0 },
   billing: {
@@ -114,38 +118,107 @@ const userSchema = new mongoose.Schema({
     registrationNumber: String,
     vatNumber: String,
     services: [{
-      category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
+      category: { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceCategory' },
       subcategories: [String],
       pricing: {
         hourlyRate: Number,
         minimumCharge: Number,
-        currency: { type: String, default: 'USD' }
+        currency: { type: String, default: 'GBP' }
+      },
+      coverage: {
+        radius: Number,
+        locations: [{
+          postcode: String,
+          city: String
+        }]
       }
     }],
     portfolio: [{
       title: String,
       description: String,
       images: [String],
-      completionDate: Date
+      completionDate: Date,
+      clientFeedback: String
     }],
     reviews: [{
       client: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      serviceRequest: { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceRequest' },
       rating: Number,
       comment: String,
-      date: { type: Date, default: Date.now }
+      date: { type: Date, default: Date.now },
+      response: {
+        text: String,
+        date: Date
+      }
     }],
-    averageRating: { type: Number, default: 0 }
+    averageRating: { type: Number, default: 0 },
+    responseRate: { type: Number, default: 0 },
+    responseTime: { type: Number, default: 0 },
+    verification: {
+      identityVerified: { type: Boolean, default: false },
+      addressVerified: { type: Boolean, default: false },
+      insuranceVerified: { type: Boolean, default: false },
+      qualificationsVerified: { type: Boolean, default: false }
+    }
   },
-  leads: [{
-    lead: { type: mongoose.Schema.Types.ObjectId, ref: 'Lead' },
+  serviceRequests: [{
+    request: { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceRequest' },
     status: {
       type: String,
-      enum: ['viewed', 'contacted', 'hired', 'completed', 'declined'],
-      default: 'viewed'
+      enum: ['new', 'viewed', 'quoted', 'hired', 'completed', 'declined'],
+      default: 'new'
     },
     viewedAt: Date,
+    quotedAt: Date,
+    quote: {
+      amount: Number,
+      description: String,
+      validUntil: Date
+    },
     creditsUsed: Number
-  }]
+  }],
+  accountType: {
+    type: String,
+    enum: ['subscription', 'contractor', 'vendor'],
+    required: true,
+    default: 'subscription'
+  },
+  contractor: {
+    services: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ServiceCategory'
+    }],
+    qualifications: [{
+      title: String,
+      issuer: String,
+      date: Date,
+      verified: {
+        type: Boolean,
+        default: false
+      }
+    }],
+    availability: {
+      type: String,
+      enum: ['full-time', 'part-time', 'weekends'],
+      default: 'full-time'
+    }
+  },
+  vendor: {
+    businessName: String,
+    registrationNumber: String,
+    vatNumber: String,
+    businessAddress: {
+      street: String,
+      city: String,
+      postcode: String,
+      country: String
+    },
+    businessType: String,
+    verified: {
+      type: Boolean,
+      default: false
+    }
+  }
 }, {
   timestamps: true
 });
