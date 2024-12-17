@@ -61,23 +61,30 @@ const styledTheme = {
     text: {
       primary: muiTheme.palette.text.primary,
       secondary: muiTheme.palette.text.secondary,
+      disabled: muiTheme.palette.text.disabled,
     },
     primary: {
       main: muiTheme.palette.primary.main,
       dark: muiTheme.palette.primary.dark,
       light: muiTheme.palette.primary.light,
-      text: muiTheme.palette.primary.contrastText
+      contrastText: muiTheme.palette.primary.contrastText
     },
     status: {
       error: muiTheme.palette.error.main
     },
     background: {
       default: muiTheme.palette.background.default,
-      paper: muiTheme.palette.background.paper
+      paper: muiTheme.palette.background.paper,
+      main: muiTheme.palette.background.paper
     }
   },
   borderRadius: {
     md: `${muiTheme.shape.borderRadius}px`,
+  },
+  input: {
+    theme: {
+      main: muiTheme.palette.primary.main
+    }
   }
 };
 
