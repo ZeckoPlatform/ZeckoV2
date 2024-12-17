@@ -33,6 +33,11 @@ const baseTheme = {
     theme: {
       main: '#4CAF50'
     }
+  },
+  palette: {
+    primary: {
+      main: '#4CAF50'
+    }
   }
 };
 
@@ -89,9 +94,16 @@ export const ThemeProvider = ({ children }) => {
         main: mode === 'dark' ? '#1E1E1E' : baseTheme.colors.background.main,
       },
       text: {
+        ...baseTheme.colors.text,
         primary: mode === 'dark' ? '#FFFFFF' : baseTheme.colors.text.primary,
         secondary: mode === 'dark' ? '#AAAAAA' : baseTheme.colors.text.secondary,
         disabled: mode === 'dark' ? '#666666' : baseTheme.colors.text.disabled,
+      }
+    },
+    input: {
+      ...baseTheme.input,
+      theme: {
+        main: mode === 'dark' ? '#81C784' : baseTheme.input.theme.main
       }
     }
   };
