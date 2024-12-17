@@ -1,36 +1,23 @@
 import React from 'react';
 import styled from 'styled-components';
-import { useLocation } from 'react-router-dom';
-import Header from './Header';
-import Footer from './Footer';
-import Sidebar from './Sidebar';
-import { useAuth } from '../../contexts/AuthContext';
+import Navbar from '../Navbar';
 
 const LayoutWrapper = styled.div`
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  background-color: ${({ theme }) => theme.colors.background.default};
 `;
 
 const MainContent = styled.main`
-  flex: 1;
-  padding: ${({ theme }) => theme.spacing.lg};
-  margin-left: ${({ isDashboard }) => isDashboard ? '280px' : '0'};
+  padding-top: 64px; // Adjust based on your navbar height
 `;
 
 const Layout = ({ children }) => {
-  const location = useLocation();
-  const { isAuthenticated } = useAuth();
-  const isDashboard = location.pathname.startsWith('/dashboard');
-
   return (
     <LayoutWrapper>
-      <Header />
-      {isDashboard && isAuthenticated && <Sidebar />}
-      <MainContent isDashboard={isDashboard}>
+      <Navbar />
+      <MainContent>
         {children}
       </MainContent>
-      <Footer />
     </LayoutWrapper>
   );
 };
