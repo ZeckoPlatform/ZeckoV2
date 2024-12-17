@@ -54,6 +54,8 @@ const createStyledTheme = (muiTheme) => ({
     },
     status: {
       error: muiTheme.palette.error.main,
+      warning: '#ff9800',
+      success: '#4caf50',
     },
     background: {
       default: muiTheme.palette.background.default,
@@ -61,14 +63,30 @@ const createStyledTheme = (muiTheme) => ({
       main: muiTheme.palette.background.paper,
     },
   },
+  spacing: {
+    xs: '4px',
+    sm: '8px',
+    md: '16px',
+    lg: '24px',
+    xl: '32px',
+  },
   borderRadius: {
+    sm: '4px',
     md: `${muiTheme.shape.borderRadius}px`,
+    lg: '12px',
   },
-  input: {
-    theme: {
-      main: muiTheme.palette.primary.main,
-    },
+  typography: {
+    size: {
+      sm: '12px',
+      md: '14px',
+      lg: '16px',
+    }
   },
+  transitions: {
+    short: '0.15s ease',
+    medium: '0.25s ease',
+    long: '0.35s ease',
+  }
 });
 
 const ThemeContext = createContext();
