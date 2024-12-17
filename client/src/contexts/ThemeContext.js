@@ -1,7 +1,76 @@
 import React, { createContext, useContext, useState } from 'react';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
-import { theme as baseTheme, muiTheme } from '../styles/theme';
 import { createTheme } from '@mui/material/styles';
+
+// Define base theme
+const baseTheme = {
+  colors: {
+    primary: {
+      main: '#4CAF50',
+      dark: '#388E3C',
+      light: '#81C784',
+      contrastText: '#FFFFFF',
+    },
+    error: {
+      main: '#F44336',
+      light: '#E57373',
+    },
+    background: {
+      default: '#F5F5F5',
+      paper: '#FFFFFF',
+      main: '#FFFFFF',
+    },
+    text: {
+      primary: '#333333',
+      secondary: '#666666',
+      disabled: '#999999',
+    }
+  },
+  borderRadius: {
+    md: '8px',
+  },
+  input: {
+    theme: {
+      main: '#4CAF50'
+    }
+  }
+};
+
+export const muiTheme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: {
+      main: baseTheme.colors.primary.main,
+      dark: baseTheme.colors.primary.dark,
+      light: baseTheme.colors.primary.light,
+      contrastText: baseTheme.colors.primary.contrastText,
+    },
+    error: {
+      main: baseTheme.colors.error.main,
+      light: baseTheme.colors.error.light,
+    },
+    background: {
+      default: baseTheme.colors.background.default,
+      paper: baseTheme.colors.background.paper,
+    },
+    text: {
+      primary: baseTheme.colors.text.primary,
+      secondary: baseTheme.colors.text.secondary,
+    },
+  },
+  shape: {
+    borderRadius: 8,
+  },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          backgroundColor: baseTheme.colors.background.default,
+        },
+      },
+    },
+  },
+});
 
 const ThemeContext = createContext();
 
@@ -26,16 +95,6 @@ export const ThemeProvider = ({ children }) => {
       }
     }
   };
-
-  const currentMuiTheme = createTheme({
-    ...muiTheme,
-    palette: {
-      ...muiTheme.palette,
-      mode,
-      background: theme.colors.background,
-      text: theme.colors.text
-    }
-  });
 
   return (
     <ThemeContext.Provider value={{ mode, setMode, theme }}>
