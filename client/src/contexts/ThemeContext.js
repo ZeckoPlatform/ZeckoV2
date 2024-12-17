@@ -54,13 +54,12 @@ const createStyledTheme = (muiTheme) => ({
     },
     status: {
       error: muiTheme.palette.error.main,
-      warning: '#ff9800',
-      success: '#4caf50',
+      warning: '#FFA726',
+      success: '#66BB6A',
     },
     background: {
       default: muiTheme.palette.background.default,
       paper: muiTheme.palette.background.paper,
-      main: muiTheme.palette.background.paper,
     },
   },
   input: {
@@ -79,7 +78,7 @@ const createStyledTheme = (muiTheme) => ({
   },
   borderRadius: {
     sm: '4px',
-    md: `${muiTheme.shape.borderRadius}px`,
+    md: '8px',
     lg: '12px',
   },
   typography: {
@@ -87,6 +86,7 @@ const createStyledTheme = (muiTheme) => ({
       sm: '12px',
       md: '14px',
       lg: '16px',
+      h2: '24px',
     }
   },
   transitions: {
