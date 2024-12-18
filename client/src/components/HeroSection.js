@@ -151,7 +151,7 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          Choose the perfect plan for your business
+          "Powering Trade Services: Where Professionals Connect, Products Flow, and Business Grows"
         </HeroSubtitle>
 
         <SubscriptionTiers>
