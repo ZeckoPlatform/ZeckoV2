@@ -5,7 +5,6 @@ import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import CssBaseline from '@mui/material/CssBaseline';
 import Layout from './components/Layout';
-import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 // Direct imports for pages
 import Home from './pages/Home';
@@ -24,17 +23,17 @@ function AppContent() {
       <StyledThemeProvider theme={theme}>
         <CssBaseline />
         <Router>
-          <Layout>
-            <Routes>
+          <Routes>
+            <Route element={<Layout />}>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/product/:id" element={<ProductDetails />} />
-              <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
-              <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            </Routes>
-          </Layout>
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/profile" element={<Profile />} />
+            </Route>
+          </Routes>
         </Router>
       </StyledThemeProvider>
     </MuiThemeProvider>
