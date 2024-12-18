@@ -4,10 +4,17 @@ import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import CssBaseline from '@mui/material/CssBaseline';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Home from './pages/Home';
 import Layout from './components/Layout';
+import { PrivateRoute } from './components/Auth';
+import { 
+  Home,
+  Login,
+  Register,
+  Profile,
+  ProductDetails,
+  Cart,
+  Checkout
+} from './pages';
 
 function AppContent() {
   const { muiTheme, theme } = useTheme();
@@ -22,6 +29,10 @@ function AppContent() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/product/:id" element={<ProductDetails />} />
+              <Route path="/cart" element={<PrivateRoute><Cart /></PrivateRoute>} />
+              <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
+              <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
             </Routes>
           </Layout>
         </Router>
