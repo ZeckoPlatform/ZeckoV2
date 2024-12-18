@@ -1,10 +1,12 @@
+import { offlineStorage } from '../storage/OfflineStorage';
+
 class RequestQueueManager {
   constructor() {
     this.queue = [];
     this.isProcessing = false;
     this.maxRetries = 3;
     this.retryDelay = 1000;
-    this.offlineStorage = new OfflineStorage();
+    this.offlineStorage = offlineStorage;
   }
 
   async addToQueue(request) {
