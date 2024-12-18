@@ -13,13 +13,22 @@ const Home = () => {
   useEffect(() => {
     const fetchFeaturedItems = async () => {
       try {
+        console.log('Fetching featured items...');
         const [jobsResponse, productsResponse] = await Promise.all([
           api.getJobs({ featured: true, limit: 5 }),
           api.getProducts({ featured: true, limit: 5 })
         ]);
         
+        console.log('Jobs response:', jobsResponse);
+        console.log('Products response:', productsResponse);
+        
         setFeaturedJobs(jobsResponse.data.jobs || []);
         setFeaturedProducts(productsResponse.data.products || []);
+        
+        console.log('State updated with:', {
+          jobs: jobsResponse.data.jobs,
+          products: productsResponse.data.products
+        });
       } catch (error) {
         console.error('Error fetching featured items:', error);
         setError(error);
@@ -35,15 +44,23 @@ const Home = () => {
     <>
       <HeroSection />
       <MainContent>
-        <Section>
-          <SectionTitle>Featured Jobs</SectionTitle>
-          <SimpleCarousel items={featuredJobs} type="job" />
-        </Section>
+        {loading ? (
+          <div>Loading...</div>
+        ) : error ? (
+          <div>Error: {error.message}</div>
+        ) : (
+          <>
+            <Section>
+              <SectionTitle>Featured Jobs</SectionTitle>
+              <SimpleCarousel items={featuredJobs} type="job" />
+            </Section>
 
-        <Section>
-          <SectionTitle>Featured Products</SectionTitle>
-          <SimpleCarousel items={featuredProducts} type="product" />
-        </Section>
+            <Section>
+              <SectionTitle>Featured Products</SectionTitle>
+              <SimpleCarousel items={featuredProducts} type="product" />
+            </Section>
+          </>
+        )}
       </MainContent>
     </>
   );
