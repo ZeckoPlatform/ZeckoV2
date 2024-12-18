@@ -6,15 +6,15 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import CssBaseline from '@mui/material/CssBaseline';
 import Layout from './components/Layout';
 import { PrivateRoute } from './components/Auth';
-import { 
-  Home,
-  Login,
-  Register,
-  Profile,
-  ProductDetails,
-  Cart,
-  Checkout
-} from './pages';
+
+// Direct imports for pages
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Profile from './pages/Profile';
+import ProductDetails from './pages/ProductDetails';
+import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
 
 function AppContent() {
   const { muiTheme, theme } = useTheme();
