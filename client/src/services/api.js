@@ -21,25 +21,30 @@ api.interceptors.request.use(
   }
 );
 
-// Add to api.js
-const handleApiError = (error) => {
-  if (error.response?.status === 401) {
-    localStorage.removeItem('token');
-    window.location.href = '/login';
-    return Promise.reject(new Error('Authentication required'));
-  }
-
-  const errorMessage = error.response?.data?.message 
-    || error.message 
-    || 'An unexpected error occurred';
-
-  return Promise.reject(new Error(errorMessage));
+// API endpoints
+const auth = {
+  login: (credentials) => api.post('/auth/login', credentials),
+  register: (userData) => api.post('/auth/register', userData),
+  logout: () => api.post('/auth/logout'),
+  verify: () => api.get('/auth/verify')
 };
 
 // Add response interceptor
 api.interceptors.response.use(
   response => response,
-  error => handleApiError(error)
+  error => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+      return Promise.reject(new Error('Authentication required'));
+    }
+
+    const errorMessage = error.response?.data?.message 
+      || error.message 
+      || 'An unexpected error occurred';
+
+    return Promise.reject(new Error(errorMessage));
+  }
 );
 
-export default api;
+export default { ...auth };

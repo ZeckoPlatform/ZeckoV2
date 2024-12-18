@@ -34,12 +34,13 @@ const Register = () => {
     setError('');
 
     try {
-      const response = await api.post('/auth/register', formData);
-      if (response.data.success) {
+      const response = await api.register(formData);
+      if (response?.data?.token) {
         navigate('/login');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed');
+      console.error('Registration error:', err);
+      setError(err.message || 'Registration failed');
     } finally {
       setIsLoading(false);
     }

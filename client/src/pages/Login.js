@@ -102,11 +102,14 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await login(formData);
+      const response = await api.login(formData);
       console.log('Login response:', response);
       
-      if (response?.token && response?.user) {
-        const path = response.user.role === 'admin' ? '/admin' : '/dashboard';
+      if (response?.data?.token && response?.data?.user) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        
+        const path = response.data.user.role === 'admin' ? '/admin' : '/dashboard';
         console.log('Navigation path:', path);
         navigate(path);
       } else {
@@ -115,8 +118,7 @@ const Login = () => {
       }
     } catch (err) {
       console.error('Login error:', err);
-      const errorMessage = err.response?.data?.error || err.message || 'An error occurred during login';
-      setError(errorMessage);
+      setError(err.message || 'An error occurred during login');
     } finally {
       setIsLoading(false);
     }
