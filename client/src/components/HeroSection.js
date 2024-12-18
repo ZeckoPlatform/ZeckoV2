@@ -4,161 +4,216 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const HeroContainer = styled.section`
-  background: linear-gradient(
-    135deg,
-    #006400 25%,
-    #228B22 50%,
-    #32CD32 100%
-  );
+  background: linear-gradient(135deg, #006400 25%, #228B22 50%, #32CD32 100%);
   position: relative;
   color: white;
-  padding: 180px 20px;
+  padding: 100px 20px;
   text-align: center;
-  margin-top: -60px;
   overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-      radial-gradient(circle at 20% 150%, rgba(50, 205, 50, 0.15) 0%, transparent 50%),
-      radial-gradient(circle at 80% -50%, rgba(255, 255, 255, 0.13) 0%, transparent 50%);
-    z-index: 1;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    opacity: 0.1;
-    z-index: 1;
-  }
 `;
 
-const HeroContent = styled(motion.div)`
-  position: relative;
-  max-width: 900px;
+const HeroContent = styled.div`
+  max-width: 1200px;
   margin: 0 auto;
+  position: relative;
   z-index: 2;
 `;
 
 const HeroTitle = styled(motion.h1)`
-  font-size: 4em;
-  font-weight: 800;
-  margin-bottom: 20px;
-  background: linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: bold;
+  
   @media (max-width: 768px) {
-    font-size: 2.5em;
+    font-size: 2.5rem;
   }
 `;
 
 const HeroSubtitle = styled(motion.p)`
-  font-size: 1.5em;
-  margin-bottom: 40px;
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  line-height: 1.6;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+  opacity: 0.9;
+  
   @media (max-width: 768px) {
-    font-size: 1.2em;
+    font-size: 1.2rem;
   }
 `;
 
-const CTAButton = styled(motion(Link))`
-  display: inline-block;
-  padding: 18px 48px;
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 1) 0%,
-    rgba(255, 255, 255, 0.9) 100%
-  );
+const SubscriptionTiers = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 50px;
+  flex-wrap: wrap;
+  
+  @media (max-width: 1200px) {
+    gap: 20px;
+  }
+`;
+
+const TierCard = styled(motion.div)`
+  background: rgba(255, 255, 255, 0.95);
+  padding: 30px;
+  border-radius: 15px;
+  width: 300px;
   color: #006400;
-  text-decoration: none;
-  border-radius: 50px;
-  font-weight: bold;
-  font-size: 1.2em;
-  transition: transform 0.3s, box-shadow 0.3s;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-  }
-
-  @media (max-width: 768px) {
-    padding: 15px 35px;
-    font-size: 1.1em;
+    transform: translateY(-5px);
   }
 `;
 
-const HighlightSpan = styled.span`
-  color: #90EE90;
+const TierHeader = styled.div`
+  text-align: center;
+  margin-bottom: 20px;
+`;
+
+const TierTitle = styled.h3`
+  font-size: 1.8rem;
+  color: #006400;
+  margin-bottom: 10px;
+`;
+
+const TierPrice = styled.div`
+  font-size: 2.5rem;
   font-weight: bold;
+  color: #228B22;
+  
+  span {
+    font-size: 1rem;
+    opacity: 0.8;
+  }
 `;
 
-const FloatingShapes = styled(motion.div)`
+const TierFeatures = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+  text-align: left;
+
+  li {
+    padding: 8px 0;
+    color: #333;
+    display: flex;
+    align-items: center;
+    
+    &:before {
+      content: "✓";
+      color: #228B22;
+      margin-right: 10px;
+      font-weight: bold;
+    }
+  }
+`;
+
+const TierButton = styled(Link)`
+  display: inline-block;
+  padding: 12px 24px;
+  background: #006400;
+  color: white;
+  text-decoration: none;
+  border-radius: 25px;
+  font-weight: bold;
+  transition: background 0.3s ease;
+
+  &:hover {
+    background: #008000;
+  }
+`;
+
+const PopularBadge = styled.div`
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  pointer-events: none;
+  top: -15px;
+  right: -15px;
+  background: #ff4757;
+  color: white;
+  padding: 8px 15px;
+  border-radius: 15px;
+  font-size: 0.9rem;
+  font-weight: bold;
 `;
 
 export function HeroSection() {
   return (
     <HeroContainer>
-      <FloatingShapes
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1 }}
-      />
-      <HeroContent
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-      >
+      <HeroContent>
         <HeroTitle
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          Welcome to Zecko
+        </HeroTitle>
+        <HeroSubtitle
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          Connect with Top Professionals
-        </HeroTitle>
-        <HeroSubtitle
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-        >
-          Find and collaborate with <HighlightSpan>skilled experts</HighlightSpan> who can help grow your business
+          Choose the perfect plan for your business
         </HeroSubtitle>
-        <CTAButton
-          to="/register"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-        >
-          Get Started
-        </CTAButton>
+
+        <SubscriptionTiers>
+          <TierCard
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <TierHeader>
+              <TierTitle>Basic</TierTitle>
+              <TierPrice>$9.99<span>/month</span></TierPrice>
+            </TierHeader>
+            <TierFeatures>
+              <li>5 Job Postings</li>
+              <li>Basic Analytics</li>
+              <li>Email Support</li>
+              <li>Profile Customization</li>
+            </TierFeatures>
+            <TierButton to="/register?plan=basic">Get Started</TierButton>
+          </TierCard>
+
+          <TierCard
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            style={{ position: 'relative' }}
+          >
+            <PopularBadge>Most Popular</PopularBadge>
+            <TierHeader>
+              <TierTitle>Professional</TierTitle>
+              <TierPrice>$24.99<span>/month</span></TierPrice>
+            </TierHeader>
+            <TierFeatures>
+              <li>20 Job Postings</li>
+              <li>Advanced Analytics</li>
+              <li>Priority Support</li>
+              <li>Featured Listings</li>
+              <li>API Access</li>
+            </TierFeatures>
+            <TierButton to="/register?plan=professional">Choose Pro</TierButton>
+          </TierCard>
+
+          <TierCard
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <TierHeader>
+              <TierTitle>Enterprise</TierTitle>
+              <TierPrice>$49.99<span>/month</span></TierPrice>
+            </TierHeader>
+            <TierFeatures>
+              <li>Unlimited Job Postings</li>
+              <li>Custom Analytics</li>
+              <li>24/7 Premium Support</li>
+              <li>Featured Listings</li>
+              <li>API Access</li>
+              <li>Custom Integration</li>
+            </TierFeatures>
+            <TierButton to="/register?plan=enterprise">Go Enterprise</TierButton>
+          </TierCard>
+        </SubscriptionTiers>
       </HeroContent>
     </HeroContainer>
   );
