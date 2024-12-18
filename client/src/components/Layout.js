@@ -23,8 +23,10 @@ const Layout = () => {
         sx={{ 
           flexGrow: 1, 
           p: 3,
-          mt: 8, // Add margin top to account for fixed navbar
-          backgroundColor: 'inherit'
+          mt: 8,
+          backgroundColor: 'inherit',
+          position: 'relative',
+          zIndex: 1
         }}
       >
         <Outlet />

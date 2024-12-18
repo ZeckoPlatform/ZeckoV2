@@ -11,7 +11,7 @@ const LoginContainer = styled.div`
   align-items: center;
   min-height: 100vh;
   padding: 20px;
-  background: ${({ theme }) => theme.colors.background.light};
+  background: ${({ theme }) => theme.colors.background};
 `;
 
 const LoginCard = styled.div`
@@ -37,24 +37,24 @@ const FormGroup = styled.div`
 
 const Label = styled.label`
   font-weight: 500;
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: ${({ theme }) => theme.colors.text};
 `;
 
 const Input = styled.input`
   padding: 0.75rem;
-  border: 1px solid ${({ theme }) => theme.colors.border.main};
+  border: 1px solid #e0e0e0;
   border-radius: 4px;
   font-size: 1rem;
 
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme.colors.primary.main};
+    border-color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
 const Button = styled.button`
   padding: 0.75rem;
-  background: ${({ theme }) => theme.colors.primary.main};
+  background: ${({ theme }) => theme.colors.primary};
   color: white;
   border: none;
   border-radius: 4px;
@@ -63,17 +63,17 @@ const Button = styled.button`
   transition: background 0.2s;
 
   &:hover {
-    background: ${({ theme }) => theme.colors.primary.dark};
+    background: ${({ theme }) => theme.main.colors.primary};
   }
 
   &:disabled {
-    background: ${({ theme }) => theme.colors.primary.light};
+    opacity: 0.7;
     cursor: not-allowed;
   }
 `;
 
 const ErrorMessage = styled.div`
-  color: ${({ theme }) => theme.colors.error.main};
+  color: #ff0000;
   font-size: 0.875rem;
   margin-top: 0.5rem;
 `;

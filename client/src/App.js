@@ -1,8 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
-import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import CssBaseline from '@mui/material/CssBaseline';
 import Layout from './components/Layout';
 
@@ -15,12 +14,36 @@ import ProductDetails from './pages/ProductDetails';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 
-function AppContent() {
-  const { muiTheme, theme } = useTheme();
-  
+// Define your MUI theme
+const muiTheme = createTheme({
+  palette: {
+    primary: {
+      main: '#006400',
+    },
+    background: {
+      default: '#ffffff',
+    },
+  },
+});
+
+// Define your styled-components theme
+const styledTheme = {
+  colors: {
+    primary: '#006400',
+    text: '#000000',
+    background: '#ffffff',
+  },
+  main: {
+    colors: {
+      primary: '#006400',
+    },
+  },
+};
+
+function App() {
   return (
     <MuiThemeProvider theme={muiTheme}>
-      <StyledThemeProvider theme={theme}>
+      <StyledThemeProvider theme={styledTheme}>
         <CssBaseline />
         <Router>
           <Routes>
@@ -37,14 +60,6 @@ function AppContent() {
         </Router>
       </StyledThemeProvider>
     </MuiThemeProvider>
-  );
-}
-
-function App() {
-  return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
   );
 }
 
