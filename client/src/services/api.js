@@ -2,8 +2,8 @@ import axios from 'axios';
 
 // Define the base URL based on environment
 const baseURL = process.env.NODE_ENV === 'production'
-  ? 'https://zeckov2-deceb43992ac.herokuapp.com/api'
-  : 'http://localhost:5000/api';
+  ? 'https://zeckov2-deceb43992ac.herokuapp.com'
+  : 'http://localhost:5000';
 
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || baseURL,
@@ -19,7 +19,8 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    // Log the request URL for debugging
+    // Prepend /api to all requests
+    config.url = `/api${config.url}`;
     console.log('Making request to:', config.baseURL + config.url);
     return config;
   },
@@ -44,7 +45,8 @@ api.interceptors.response.use(
       url: error.config?.url,
       method: error.config?.method,
       status: error.response?.status,
-      data: error.response?.data
+      data: error.response?.data,
+      baseURL: error.config?.baseURL
     });
 
     if (error.response?.status === 401) {
