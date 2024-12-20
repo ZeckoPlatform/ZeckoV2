@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
-import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import { CssBaseline } from '@mui/material';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
@@ -33,52 +32,50 @@ const AdminRoute = ({ children }) => {
 };
 
 function AppContent() {
-    const { theme, muiTheme } = useTheme();
+    const { muiTheme } = useTheme();
 
     return (
         <MuiThemeProvider theme={muiTheme}>
-            <StyledThemeProvider theme={theme}>
-                <CssBaseline />
-                <Router>
-                    <AuthProvider>
-                        <ServiceProvider>
-                            <Routes>
-                                {/* Public routes */}
-                                <Route path="/login" element={<Login />} />
-                                <Route path="/register" element={<Register />} />
+            <CssBaseline />
+            <Router>
+                <AuthProvider>
+                    <ServiceProvider>
+                        <Routes>
+                            {/* Public routes */}
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/register" element={<Register />} />
 
-                                {/* Protected routes */}
-                                <Route path="/dashboard" element={
-                                    <PrivateRoute>
-                                        <Layout>
-                                            <Dashboard />
-                                        </Layout>
-                                    </PrivateRoute>
-                                } />
+                            {/* Protected routes */}
+                            <Route path="/dashboard" element={
+                                <PrivateRoute>
+                                    <Layout>
+                                        <Dashboard />
+                                    </Layout>
+                                </PrivateRoute>
+                            } />
 
-                                {/* Admin routes */}
-                                <Route path="/admin" element={
-                                    <AdminRoute>
-                                        <Layout>
-                                            <AdminDashboard />
-                                        </Layout>
-                                    </AdminRoute>
-                                } />
+                            {/* Admin routes */}
+                            <Route path="/admin" element={
+                                <AdminRoute>
+                                    <Layout>
+                                        <AdminDashboard />
+                                    </Layout>
+                                </AdminRoute>
+                            } />
 
-                                {/* Root redirect */}
-                                <Route path="/" element={
-                                    <PrivateRoute>
-                                        <Navigate to="/dashboard" replace />
-                                    </PrivateRoute>
-                                } />
+                            {/* Root redirect */}
+                            <Route path="/" element={
+                                <PrivateRoute>
+                                    <Navigate to="/dashboard" replace />
+                                </PrivateRoute>
+                            } />
 
-                                {/* Catch all route */}
-                                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                            </Routes>
-                        </ServiceProvider>
-                    </AuthProvider>
-                </Router>
-            </StyledThemeProvider>
+                            {/* Catch all route */}
+                            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                        </Routes>
+                    </ServiceProvider>
+                </AuthProvider>
+            </Router>
         </MuiThemeProvider>
     );
 }

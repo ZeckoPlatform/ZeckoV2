@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
 import { createTheme } from '@mui/material/styles';
+import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 
 const ThemeContext = createContext();
 
@@ -39,23 +40,18 @@ const defaultTheme = {
 const createMuiTheme = (mode) => createTheme({
   palette: {
     mode,
-    primary: {
-      main: '#4CAF50',
-      dark: '#388E3C',
-      light: '#81C784',
-      contrastText: '#FFFFFF',
-    },
+    primary: defaultTheme.palette.primary,
     error: {
-      main: '#F44336',
+      main: defaultTheme.colors.error,
       light: '#E57373',
     },
     background: {
-      default: mode === 'dark' ? '#121212' : '#F5F5F5',
-      paper: mode === 'dark' ? '#1E1E1E' : '#FFFFFF',
+      default: mode === 'dark' ? '#121212' : defaultTheme.palette.background.default,
+      paper: mode === 'dark' ? '#1E1E1E' : defaultTheme.palette.background.paper,
     },
     text: {
-      primary: mode === 'dark' ? '#FFFFFF' : '#333333',
-      secondary: mode === 'dark' ? '#AAAAAA' : '#666666',
+      primary: mode === 'dark' ? '#FFFFFF' : defaultTheme.palette.text.primary,
+      secondary: mode === 'dark' ? '#AAAAAA' : defaultTheme.palette.text.secondary,
       disabled: mode === 'dark' ? '#666666' : '#999999',
     },
   }
@@ -78,16 +74,11 @@ export const ThemeProvider = ({ children }) => {
   const muiTheme = useMemo(() => createMuiTheme(mode), [mode]);
   const theme = useMemo(() => createStyledTheme(muiTheme), [muiTheme]);
 
-  const value = useMemo(() => ({
-    mode,
-    setMode,
-    theme: theme || defaultTheme,
-    muiTheme
-  }), [mode, theme, muiTheme]);
-
   return (
-    <ThemeContext.Provider value={value}>
-      {children}
+    <ThemeContext.Provider value={{ mode, setMode, theme, muiTheme }}>
+      <StyledThemeProvider theme={theme}>
+        {children}
+      </StyledThemeProvider>
     </ThemeContext.Provider>
   );
 };
@@ -95,7 +86,7 @@ export const ThemeProvider = ({ children }) => {
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context) {
-    return { theme: defaultTheme, muiTheme: createMuiTheme('light') };
+    throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
 };
