@@ -1,7 +1,6 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
 import { Box } from '@mui/material';
-import Navigation from './Navigation';
+import Navbar from './Navbar';
 import { useTheme } from '@mui/material/styles';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -19,7 +18,7 @@ const Layout = ({ children }) => {
         color: theme.palette.text.primary
       }}
     >
-      <Navigation isAuthenticated={isAuthenticated} user={user} />
+      <Navbar />
       <Box 
         component="main" 
         sx={{ 
