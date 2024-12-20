@@ -7,7 +7,7 @@ const HeroContainer = styled.section`
   background: linear-gradient(135deg, #006400 25%, #228B22 50%, #32CD32 100%);
   position: relative;
   color: white;
-  padding: 100px 20px;
+  padding: 160px 20px 100px;
   text-align: center;
   overflow: hidden;
 `;
