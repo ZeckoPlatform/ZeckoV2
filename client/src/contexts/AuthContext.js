@@ -13,10 +13,12 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           const response = await api.get('/auth/verify');
           setUser(response.data.user);
         } catch (error) {
           localStorage.removeItem('token');
+          delete api.defaults.headers.common['Authorization'];
           setUser(null);
         }
       }
@@ -26,26 +28,26 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
-  const login = async (userData) => {
+  const login = async (credentials) => {
     try {
-      const response = await api.post('/auth/login', userData);
+      const response = await api.post('/auth/login', credentials);
       const { token, user } = response.data;
       
       localStorage.setItem('token', token);
-      setUser(user);
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      setUser(user);
       
-      return response.data;
+      return { user, token };
     } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+      const errorMessage = error.response?.data?.message || 'Login failed';
+      throw new Error(errorMessage);
     }
   };
 
-  const logout = async () => {
+  const logout = () => {
     localStorage.removeItem('token');
-    setUser(null);
     delete api.defaults.headers.common['Authorization'];
+    setUser(null);
   };
 
   const value = {
@@ -58,7 +60,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import MenuIcon from '@mui/icons-material/Menu';
 
 const NavContainer = styled.nav`
   background: linear-gradient(135deg, #006400 25%, #228B22 50%, #32CD32 100%);
@@ -37,6 +38,23 @@ const NavLinks = styled.div`
   display: flex;
   gap: 2rem;
   align-items: center;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const MobileMenuButton = styled.button`
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 8px;
+
+  @media (max-width: 768px) {
+    display: block;
+  }
 `;
 
 const NavLink = styled(Link)`
@@ -65,43 +83,142 @@ const LogoutButton = styled.button`
   }
 `;
 
+// Mobile Drawer
+const Drawer = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 240px;
+  background: white;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+  transform: translateX(${props => props.open ? '0' : '-100%'});
+  transition: transform 0.3s ease-in-out;
+  z-index: 1001;
+`;
+
+const DrawerOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: ${props => props.open ? 'block' : 'none'};
+  z-index: 1000;
+`;
+
+const DrawerList = styled.div`
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const DrawerLink = styled(Link)`
+  color: #006400;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.5rem;
+  border-radius: 4px;
+
+  &:hover {
+    background: rgba(0,100,0,0.1);
+  }
+`;
+
+const DrawerButton = styled.button`
+  color: #006400;
+  background: none;
+  border: none;
+  font-weight: 500;
+  padding: 0.5rem;
+  text-align: left;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(0,100,0,0.1);
+  }
+`;
+
 const Navbar = () => {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
 
   const handleLogout = async () => {
     try {
       await logout();
       navigate('/');
+      setMobileOpen(false);
     } catch (error) {
       console.error('Logout failed:', error);
     }
   };
 
-  return (
-    <NavContainer>
-      <NavContent>
-        <Logo to="/">
-          <LogoText>Zecko</LogoText>
-        </Logo>
+  const menuItems = user ? [
+    { text: 'Home', path: '/' },
+    { text: 'Services', path: '/services' },
+    { text: 'Dashboard', path: '/dashboard' }
+  ] : [
+    { text: 'Home', path: '/' },
+    { text: 'Services', path: '/services' },
+    { text: 'Login', path: '/login' },
+    { text: 'Register', path: '/register' }
+  ];
 
-        <NavLinks>
-          <NavLink to="/">Home</NavLink>
-          <NavLink to="/services">Services</NavLink>
-          {user ? (
-            <>
-              <NavLink to="/dashboard">Dashboard</NavLink>
-              <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
-            </>
-          ) : (
-            <>
-              <NavLink to="/login">Login</NavLink>
-              <NavLink to="/register">Register</NavLink>
-            </>
+  return (
+    <>
+      <NavContainer>
+        <NavContent>
+          <Logo to="/">
+            <LogoText>Zecko</LogoText>
+          </Logo>
+
+          <MobileMenuButton onClick={handleDrawerToggle}>
+            <MenuIcon />
+          </MobileMenuButton>
+
+          <NavLinks>
+            {menuItems.map((item) => (
+              <NavLink key={item.text} to={item.path}>
+                {item.text}
+              </NavLink>
+            ))}
+            {user && (
+              <LogoutButton onClick={handleLogout}>
+                Logout
+              </LogoutButton>
+            )}
+          </NavLinks>
+        </NavContent>
+      </NavContainer>
+
+      <DrawerOverlay open={mobileOpen} onClick={handleDrawerToggle} />
+      <Drawer open={mobileOpen}>
+        <DrawerList>
+          {menuItems.map((item) => (
+            <DrawerLink
+              key={item.text}
+              to={item.path}
+              onClick={handleDrawerToggle}
+            >
+              {item.text}
+            </DrawerLink>
+          ))}
+          {user && (
+            <DrawerButton onClick={handleLogout}>
+              Logout
+            </DrawerButton>
           )}
-        </NavLinks>
-      </NavContent>
-    </NavContainer>
+        </DrawerList>
+      </Drawer>
+    </>
   );
 };
 

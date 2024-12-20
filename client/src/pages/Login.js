@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../contexts/AuthContext';
-import api from '../services/api';
 
 // Styled Components
 const LoginContainer = styled.div`
@@ -102,19 +101,11 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await api.login(formData);
-      console.log('Login response:', response);
+      const response = await login(formData);
       
-      if (response?.data?.token && response?.data?.user) {
-        localStorage.setItem('token', response.data.token);
-        await login(response.data.user);
-        
-        const path = response.data.user.accountType === 'admin' ? '/admin' : '/dashboard';
-        console.log('Navigation path:', path);
+      if (response?.user) {
+        const path = response.user.accountType === 'admin' ? '/admin' : '/dashboard';
         navigate(path);
-      } else {
-        console.error('Invalid response structure:', response);
-        setError('Login failed. Please try again.');
       }
     } catch (err) {
       console.error('Login error:', err);
