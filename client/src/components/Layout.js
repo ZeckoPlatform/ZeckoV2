@@ -3,9 +3,11 @@ import { Outlet } from 'react-router-dom';
 import { Box } from '@mui/material';
 import Navigation from './Navigation';
 import { useTheme } from '@mui/material/styles';
+import { useAuth } from '../contexts/AuthContext';
 
-const Layout = () => {
+const Layout = ({ children }) => {
   const theme = useTheme();
+  const { user, isAuthenticated } = useAuth();
 
   return (
     <Box 
@@ -17,7 +19,7 @@ const Layout = () => {
         color: theme.palette.text.primary
       }}
     >
-      <Navigation />
+      <Navigation isAuthenticated={isAuthenticated} user={user} />
       <Box 
         component="main" 
         sx={{ 
@@ -29,7 +31,7 @@ const Layout = () => {
           zIndex: 1
         }}
       >
-        <Outlet />
+        {children}
       </Box>
     </Box>
   );

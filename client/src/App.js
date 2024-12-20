@@ -54,13 +54,29 @@ function AppContent() {
             <Router>
                 <ServiceProvider>
                     <Routes>
-                        {/* Public routes */}
-                        <Route path="/" element={<Home />} />
+                        {/* Public routes with Layout */}
+                        <Route path="/" element={
+                            <Layout>
+                                <Home />
+                            </Layout>
+                        } />
                         <Route path="/login" element={
-                            user ? <Navigate to="/dashboard" replace /> : <Login />
+                            user ? (
+                                <Navigate to="/dashboard" replace />
+                            ) : (
+                                <Layout>
+                                    <Login />
+                                </Layout>
+                            )
                         } />
                         <Route path="/register" element={
-                            user ? <Navigate to="/dashboard" replace /> : <Register />
+                            user ? (
+                                <Navigate to="/dashboard" replace />
+                            ) : (
+                                <Layout>
+                                    <Register />
+                                </Layout>
+                            )
                         } />
 
                         {/* Protected routes */}
