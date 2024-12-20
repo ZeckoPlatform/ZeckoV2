@@ -4,10 +4,8 @@ import api from '../services/api';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const login = useCallback(async (credentials) => {
     try {
@@ -29,12 +27,16 @@ export const AuthProvider = ({ children }) => {
 
   const logout = useCallback(async () => {
     try {
+      // Clear local storage first
       localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      delete api.defaults.headers.common['Authorization'];
       setUser(null);
+      
+      // Attempt to call logout endpoint, but don't wait for it
+      await api.logout().catch(console.error);
     } catch (error) {
       console.error('Logout error:', error);
+      // Even if the API call fails, we still want to clear local state
+      setUser(null);
     }
   }, []);
 
@@ -70,7 +72,8 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     getCurrentUser,
-    isAuthenticated: !!user
+    isAuthenticated: !!user,
+    loading
   };
 
   return (

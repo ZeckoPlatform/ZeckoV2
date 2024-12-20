@@ -35,9 +35,21 @@ const AdminRoute = ({ children }) => {
 function AppContent() {
     const { theme, muiTheme } = useTheme();
 
+    // Ensure theme has all required properties
+    const styledTheme = {
+        ...theme,
+        palette: muiTheme.palette,
+        colors: {
+            primary: muiTheme.palette.primary.main,
+            text: muiTheme.palette.text.primary,
+            background: muiTheme.palette.background.default,
+            ...theme.colors
+        }
+    };
+
     return (
         <MuiThemeProvider theme={muiTheme}>
-            <StyledThemeProvider theme={theme}>
+            <StyledThemeProvider theme={styledTheme}>
                 <CssBaseline />
                 <AuthProvider>
                     <ServiceProvider>

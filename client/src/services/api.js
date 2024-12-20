@@ -1,66 +1,37 @@
 import axios from 'axios';
 
-// Define the base URL based on environment
-const baseURL = process.env.NODE_ENV === 'production'
-  ? 'https://zeckov2-deceb43992ac.herokuapp.com'
-  : 'http://localhost:5000';
-
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || baseURL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
+    baseURL: process.env.REACT_APP_API_URL || '/api',
+    headers: {
+        'Content-Type': 'application/json'
+    }
 });
 
-// Add request interceptor
+// Add request interceptor to add token
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers = config.headers || {};
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
     }
-    // Prepend /api to all requests
-    config.url = `/api${config.url}`;
-    console.log('Making request to:', config.baseURL + config.url);
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
 );
 
-// API endpoints
-const auth = {
-  login: (credentials) => api.post('/auth/login', credentials),
-  register: (userData) => api.post('/auth/register', userData),
-  logout: () => api.post('/auth/logout'),
-  verify: () => api.get('/auth/verify')
-};
-
-// Add response interceptor with better error logging
+// Add response interceptor to handle errors
 api.interceptors.response.use(
-  response => response,
-  error => {
-    console.error('API Error:', {
-      url: error.config?.url,
-      method: error.config?.method,
-      status: error.response?.status,
-      data: error.response?.data,
-      baseURL: error.config?.baseURL
-    });
-
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
-      return Promise.reject(new Error('Authentication required'));
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+        return Promise.reject(error);
     }
-
-    const errorMessage = error.response?.data?.message 
-      || error.message 
-      || 'An unexpected error occurred';
-
-    return Promise.reject(new Error(errorMessage));
-  }
 );
 
-export default { ...auth };
+export default api;
