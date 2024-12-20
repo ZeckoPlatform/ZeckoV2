@@ -1,66 +1,84 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import CssBaseline from '@mui/material/CssBaseline';
-import Layout from './components/Layout';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ServiceProvider } from './contexts/ServiceContext';
 
-// Direct imports for pages
-import Home from './pages/Home';
+// Import components
+import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Profile from './pages/Profile';
-import ProductDetails from './pages/ProductDetails';
-import Cart from './pages/Cart';
-import Checkout from './pages/Checkout';
+import Dashboard from './pages/Dashboard';
+import AdminDashboard from './pages/AdminDashboard';
 
-// Define your MUI theme
-const muiTheme = createTheme({
-  palette: {
-    primary: {
-      main: '#006400',
-    },
-    background: {
-      default: '#ffffff',
-    },
-  },
-});
+// Your theme configurations
+const muiTheme = createTheme({/* your theme config */});
+const styledTheme = {/* your theme config */};
 
-// Define your styled-components theme
-const styledTheme = {
-  colors: {
-    primary: '#006400',
-    text: '#000000',
-    background: '#ffffff',
-  },
-  main: {
-    colors: {
-      primary: '#006400',
-    },
-  },
+// PrivateRoute component
+const PrivateRoute = ({ children }) => {
+    const { user } = useAuth();
+    if (!user) {
+        return <Navigate to="/login" replace />;
+    }
+    return children;
+};
+
+// AdminRoute component
+const AdminRoute = ({ children }) => {
+    const { user } = useAuth();
+    if (!user || user.accountType !== 'admin') {
+        return <Navigate to="/dashboard" replace />;
+    }
+    return children;
 };
 
 function App() {
-  return (
-    <MuiThemeProvider theme={muiTheme}>
-      <StyledThemeProvider theme={styledTheme}>
-        <CssBaseline />
-        <Router>
-          <Routes>
-            <Route element={<Layout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/product/:id" element={<ProductDetails />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/profile" element={<Profile />} />
-            </Route>
-          </Routes>
-        </Router>
-      </StyledThemeProvider>
-    </MuiThemeProvider>
-  );
+    return (
+        <AuthProvider>
+            <ServiceProvider>
+                <MuiThemeProvider theme={muiTheme}>
+                    <StyledThemeProvider theme={styledTheme}>
+                        <CssBaseline />
+                        <Router>
+                            <Routes>
+                                {/* Public routes */}
+                                <Route path="/login" element={<Login />} />
+                                <Route path="/register" element={<Register />} />
+
+                                {/* Protected routes */}
+                                <Route path="/dashboard" element={
+                                    <PrivateRoute>
+                                        <Layout>
+                                            <Dashboard />
+                                        </Layout>
+                                    </PrivateRoute>
+                                } />
+
+                                {/* Admin routes */}
+                                <Route path="/admin" element={
+                                    <AdminRoute>
+                                        <Layout>
+                                            <AdminDashboard />
+                                        </Layout>
+                                    </AdminRoute>
+                                } />
+
+                                {/* Root redirect */}
+                                <Route path="/" element={
+                                    <PrivateRoute>
+                                        <Navigate to="/dashboard" replace />
+                                    </PrivateRoute>
+                                } />
+                            </Routes>
+                        </Router>
+                    </StyledThemeProvider>
+                </MuiThemeProvider>
+            </ServiceProvider>
+        </AuthProvider>
+    );
 }
 
 export default App;

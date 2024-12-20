@@ -8,6 +8,7 @@ const compression = require('compression');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
+const { Server } = require('socket.io');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -21,6 +22,27 @@ const messageRoutes = require('./routes/messageRoutes');
 // Initialize Express and create server
 const app = express();
 const server = http.createServer(app);
+
+// Initialize Socket.IO with CORS
+const io = new Server(server, {
+  cors: {
+    origin: process.env.NODE_ENV === 'production' 
+      ? 'https://zeckov2-deceb43992ac.herokuapp.com'
+      : 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+    credentials: true
+  },
+  path: '/socket.io'
+});
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
 
 // Middleware
 app.use(helmet({

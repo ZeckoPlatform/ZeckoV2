@@ -35,8 +35,17 @@ const Register = () => {
 
     try {
       const response = await api.register(formData);
-      if (response?.data?.token) {
-        navigate('/login');
+      console.log('Registration response:', response);
+
+      if (response?.data?.success) {
+        navigate('/login', { 
+          state: { 
+            message: 'Registration successful! Please login to continue.',
+            email: formData.email // Pass email for auto-fill if desired
+          }
+        });
+      } else {
+        setError('Registration failed. Please try again.');
       }
     } catch (err) {
       console.error('Registration error:', err);
@@ -50,6 +59,9 @@ const Register = () => {
     <RegisterContainer>
       <RegisterCard>
         <h1>Register</h1>
+        {location.state?.message && (
+          <SuccessMessage>{location.state.message}</SuccessMessage>
+        )}
         <Form onSubmit={handleSubmit}>
           <FormGroup>
             <Label>Account Type</Label>
@@ -265,6 +277,11 @@ const Button = styled.button`
 
 const ErrorMessage = styled.div`
   color: #ff0000;
+  font-size: 0.875rem;
+`;
+
+const SuccessMessage = styled.div`
+  color: #008000;
   font-size: 0.875rem;
 `;
 

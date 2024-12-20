@@ -107,9 +107,9 @@ const Login = () => {
       
       if (response?.data?.token && response?.data?.user) {
         localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        await login(response.data.user);
         
-        const path = response.data.user.role === 'admin' ? '/admin' : '/dashboard';
+        const path = response.data.user.accountType === 'admin' ? '/admin' : '/dashboard';
         console.log('Navigation path:', path);
         navigate(path);
       } else {
