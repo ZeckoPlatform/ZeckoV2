@@ -63,7 +63,7 @@ const Button = styled.button`
   transition: background 0.2s;
 
   &:hover {
-    background: ${({ theme }) => theme.main.colors.primary};
+    background: ${({ theme }) => theme.colors.primary};
   }
 
   &:disabled {

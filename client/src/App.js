@@ -37,9 +37,9 @@ function AppContent() {
     return (
         <MuiThemeProvider theme={muiTheme}>
             <CssBaseline />
-            <Router>
-                <AuthProvider>
-                    <ServiceProvider>
+            <AuthProvider>
+                <ServiceProvider>
+                    <Router>
                         <Routes>
                             {/* Public routes */}
                             <Route path="/login" element={<Login />} />
@@ -73,9 +73,9 @@ function AppContent() {
                             {/* Catch all route */}
                             <Route path="*" element={<Navigate to="/dashboard" replace />} />
                         </Routes>
-                    </ServiceProvider>
-                </AuthProvider>
-            </Router>
+                    </Router>
+                </ServiceProvider>
+            </AuthProvider>
         </MuiThemeProvider>
     );
 }
