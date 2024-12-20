@@ -58,11 +58,15 @@ app.use(morgan('combined'));
 // Add this before your routes
 app.use('/api', (req, res, next) => {
     res.header('Content-Type', 'application/json');
+    console.log(`${req.method} ${req.path}`, req.body);
     next();
 });
 
 // Mount routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', (req, res, next) => {
+    console.log('Auth route hit:', req.path);
+    next();
+}, authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/products', productRoutes);
