@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
-import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import { createTheme } from '@mui/material/styles';
 
-const createMuiTheme = (mode) => ({
+const ThemeContext = createContext();
+
+const createMuiTheme = (mode) => createTheme({
   palette: {
     mode,
     primary: {
@@ -24,90 +25,34 @@ const createMuiTheme = (mode) => ({
       secondary: mode === 'dark' ? '#AAAAAA' : '#666666',
       disabled: mode === 'dark' ? '#666666' : '#999999',
     },
-  },
-  shape: {
-    borderRadius: 8,
-  },
-  components: {
-    MuiCssBaseline: {
-      styleOverrides: {
-        body: {
-          backgroundColor: mode === 'dark' ? '#121212' : '#F5F5F5',
-        },
-      },
-    },
-  },
+  }
 });
 
 const createStyledTheme = (muiTheme) => ({
   colors: {
-    text: {
-      primary: muiTheme.palette.text.primary,
-      secondary: muiTheme.palette.text.secondary,
-      disabled: muiTheme.palette.text.disabled,
-    },
-    primary: {
-      main: muiTheme.palette.primary.main,
-      dark: muiTheme.palette.primary.dark,
-      light: muiTheme.palette.primary.light,
-      contrastText: muiTheme.palette.primary.contrastText,
-    },
-    status: {
-      error: muiTheme.palette.error.main,
-      warning: '#FFA726',
-      success: '#66BB6A',
-    },
-    background: {
-      default: muiTheme.palette.background.default,
-      paper: muiTheme.palette.background.paper,
-    },
+    primary: muiTheme.palette.primary.main,
+    text: muiTheme.palette.text.primary,
+    background: muiTheme.palette.background.default,
+    error: muiTheme.palette.error.main,
   },
-  input: {
-    theme: {
-      main: muiTheme.palette.primary.main,
-      light: muiTheme.palette.primary.light,
-      dark: muiTheme.palette.primary.dark,
-    }
-  },
+  palette: muiTheme.palette,
   spacing: {
     xs: '4px',
     sm: '8px',
     md: '16px',
     lg: '24px',
     xl: '32px',
-  },
-  borderRadius: {
-    sm: '4px',
-    md: '8px',
-    lg: '12px',
-  },
-  typography: {
-    size: {
-      sm: '12px',
-      md: '14px',
-      lg: '16px',
-      h2: '24px',
-    }
-  },
-  transitions: {
-    short: '0.15s ease',
-    medium: '0.25s ease',
-    long: '0.35s ease',
   }
 });
 
-const ThemeContext = createContext();
-
 export const ThemeProvider = ({ children }) => {
   const [mode, setMode] = useState('light');
-  const muiTheme = useMemo(() => createTheme(createMuiTheme(mode)), [mode]);
+  const muiTheme = useMemo(() => createMuiTheme(mode), [mode]);
   const theme = useMemo(() => createStyledTheme(muiTheme), [muiTheme]);
 
   return (
     <ThemeContext.Provider value={{ mode, setMode, theme, muiTheme }}>
-      <StyledThemeProvider theme={theme}>
-        {children}
-      </StyledThemeProvider>
+      {children}
     </ThemeContext.Provider>
   );
 };

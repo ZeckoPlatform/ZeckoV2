@@ -192,7 +192,7 @@ const RegisterContainer = styled.div`
 `;
 
 const RegisterCard = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.palette.background.paper};
   padding: 2rem;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -219,7 +219,7 @@ const Label = styled.label`
 
 const Input = styled.input`
   padding: 0.75rem;
-  border: 1px solid #e0e0e0;
+  border: 1px solid ${({ theme }) => theme.palette.divider};
   border-radius: 4px;
   font-size: 1rem;
 
@@ -259,7 +259,7 @@ const Textarea = styled.textarea`
 const Button = styled.button`
   padding: 0.75rem;
   background: ${({ theme }) => theme.colors.primary};
-  color: white;
+  color: ${({ theme }) => theme.palette.primary.contrastText};
   border: none;
   border-radius: 4px;
   font-size: 1rem;
@@ -267,7 +267,7 @@ const Button = styled.button`
   transition: background 0.2s;
 
   &:hover {
-    background: ${({ theme }) => theme.main.colors.primary};
+    background: ${({ theme }) => theme.palette.primary.dark};
   }
 
   &:disabled {
