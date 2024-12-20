@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
 import { createTheme } from '@mui/material/styles';
+import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 
 const ThemeContext = createContext();
 
-// Default theme values
+// Default theme values - this ensures we always have a fallback
 const defaultTheme = {
   colors: {
     primary: '#4CAF50',
@@ -12,6 +13,7 @@ const defaultTheme = {
     error: '#F44336',
   },
   palette: {
+    mode: 'light',
     primary: {
       main: '#4CAF50',
       dark: '#388E3C',
@@ -26,68 +28,50 @@ const defaultTheme = {
       primary: '#333333',
       secondary: '#666666',
     },
-  },
-  spacing: {
-    xs: '4px',
-    sm: '8px',
-    md: '16px',
-    lg: '24px',
-    xl: '32px',
   }
 };
 
 const createMuiTheme = (mode) => createTheme({
   palette: {
     mode,
-    primary: {
-      main: '#4CAF50',
-      dark: '#388E3C',
-      light: '#81C784',
-      contrastText: '#FFFFFF',
-    },
-    error: {
-      main: '#F44336',
-      light: '#E57373',
-    },
+    primary: defaultTheme.palette.primary,
     background: {
-      default: mode === 'dark' ? '#121212' : '#F5F5F5',
-      paper: mode === 'dark' ? '#1E1E1E' : '#FFFFFF',
+      default: mode === 'dark' ? '#121212' : defaultTheme.palette.background.default,
+      paper: mode === 'dark' ? '#1E1E1E' : defaultTheme.palette.background.paper,
     },
     text: {
-      primary: mode === 'dark' ? '#FFFFFF' : '#333333',
-      secondary: mode === 'dark' ? '#AAAAAA' : '#666666',
-      disabled: mode === 'dark' ? '#666666' : '#999999',
+      primary: mode === 'dark' ? '#FFFFFF' : defaultTheme.palette.text.primary,
+      secondary: mode === 'dark' ? '#AAAAAA' : defaultTheme.palette.text.secondary,
     },
   }
-});
-
-const createStyledTheme = (muiTheme) => ({
-  ...defaultTheme,
-  colors: {
-    ...defaultTheme.colors,
-    primary: muiTheme.palette.primary.main,
-    text: muiTheme.palette.text.primary,
-    background: muiTheme.palette.background.default,
-    error: muiTheme.palette.error.main,
-  },
-  palette: muiTheme.palette,
 });
 
 export const ThemeProvider = ({ children }) => {
   const [mode, setMode] = useState('light');
   const muiTheme = useMemo(() => createMuiTheme(mode), [mode]);
-  const theme = useMemo(() => createStyledTheme(muiTheme), [muiTheme]);
+  const theme = useMemo(() => ({
+    ...defaultTheme,
+    colors: {
+      ...defaultTheme.colors,
+      primary: muiTheme.palette.primary.main,
+      text: muiTheme.palette.text.primary,
+      background: muiTheme.palette.background.default,
+    },
+    palette: muiTheme.palette
+  }), [muiTheme]);
 
   const value = useMemo(() => ({
     mode,
     setMode,
-    theme: theme || defaultTheme,
+    theme,
     muiTheme
   }), [mode, theme, muiTheme]);
 
   return (
     <ThemeContext.Provider value={value}>
-      {children}
+      <StyledThemeProvider theme={theme}>
+        {children}
+      </StyledThemeProvider>
     </ThemeContext.Provider>
   );
 };
