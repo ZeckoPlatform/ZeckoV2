@@ -36,12 +36,12 @@ function AppContent() {
     const { theme, muiTheme } = useTheme();
 
     return (
-        <MuiThemeProvider theme={muiTheme}>
-            <StyledThemeProvider theme={theme}>
-                <CssBaseline />
-                <AuthProvider>
-                    <ServiceProvider>
-                        <Router>
+        <Router>
+            <MuiThemeProvider theme={muiTheme}>
+                <StyledThemeProvider theme={theme}>
+                    <CssBaseline />
+                    <AuthProvider>
+                        <ServiceProvider>
                             <Routes>
                                 {/* Public routes */}
                                 <Route path="/login" element={<Login />} />
@@ -75,11 +75,11 @@ function AppContent() {
                                 {/* Catch all route */}
                                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
                             </Routes>
-                        </Router>
-                    </ServiceProvider>
-                </AuthProvider>
-            </StyledThemeProvider>
-        </MuiThemeProvider>
+                        </ServiceProvider>
+                    </AuthProvider>
+                </StyledThemeProvider>
+            </MuiThemeProvider>
+        </Router>
     );
 }
 
