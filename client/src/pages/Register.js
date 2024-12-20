@@ -188,11 +188,11 @@ const RegisterContainer = styled.div`
   align-items: center;
   min-height: 100vh;
   padding: 20px;
-  background: ${({ theme }) => theme.colors.background};
+  background: ${({ theme }) => theme?.colors?.background || '#F5F5F5'};
 `;
 
 const RegisterCard = styled.div`
-  background: ${({ theme }) => theme.palette.background.paper};
+  background: ${({ theme }) => theme?.palette?.background?.paper || '#FFFFFF'};
   padding: 2rem;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -214,18 +214,18 @@ const FormGroup = styled.div`
 
 const Label = styled.label`
   font-weight: 500;
-  color: ${({ theme }) => theme.colors.text};
+  color: ${({ theme }) => theme?.colors?.text || '#333333'};
 `;
 
 const Input = styled.input`
   padding: 0.75rem;
-  border: 1px solid ${({ theme }) => theme.palette.divider};
+  border: 1px solid ${({ theme }) => theme?.palette?.divider || '#e0e0e0'};
   border-radius: 4px;
   font-size: 1rem;
 
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
+    border-color: ${({ theme }) => theme?.colors?.primary || '#4CAF50'};
   }
 `;
 
@@ -238,7 +238,7 @@ const Select = styled.select`
 
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
+    border-color: ${({ theme }) => theme?.colors?.primary || '#4CAF50'};
   }
 `;
 
@@ -252,14 +252,14 @@ const Textarea = styled.textarea`
 
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
+    border-color: ${({ theme }) => theme?.colors?.primary || '#4CAF50'};
   }
 `;
 
 const Button = styled.button`
   padding: 0.75rem;
-  background: ${({ theme }) => theme.colors.primary};
-  color: ${({ theme }) => theme.palette.primary.contrastText};
+  background: ${({ theme }) => theme?.colors?.primary || '#4CAF50'};
+  color: ${({ theme }) => theme?.palette?.primary?.contrastText || '#FFFFFF'};
   border: none;
   border-radius: 4px;
   font-size: 1rem;
@@ -267,7 +267,7 @@ const Button = styled.button`
   transition: background 0.2s;
 
   &:hover {
-    background: ${({ theme }) => theme.palette.primary.dark};
+    background: ${({ theme }) => theme?.palette?.primary?.dark || '#388E3C'};
   }
 
   &:disabled {

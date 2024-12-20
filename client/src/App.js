@@ -36,10 +36,10 @@ function AppContent() {
     const { theme, muiTheme } = useTheme();
 
     return (
-        <Router>
-            <MuiThemeProvider theme={muiTheme}>
-                <StyledThemeProvider theme={theme}>
-                    <CssBaseline />
+        <MuiThemeProvider theme={muiTheme}>
+            <StyledThemeProvider theme={theme}>
+                <CssBaseline />
+                <Router>
                     <AuthProvider>
                         <ServiceProvider>
                             <Routes>
@@ -77,9 +77,9 @@ function AppContent() {
                             </Routes>
                         </ServiceProvider>
                     </AuthProvider>
-                </StyledThemeProvider>
-            </MuiThemeProvider>
-        </Router>
+                </Router>
+            </StyledThemeProvider>
+        </MuiThemeProvider>
     );
 }
 
