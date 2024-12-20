@@ -1,9 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
-import CssBaseline from '@mui/material/CssBaseline';
+import { CssBaseline } from '@mui/material';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { ServiceProvider } from './contexts/ServiceContext';
 
 // Import components
@@ -12,31 +13,6 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './components/admin/AdminDashboard';
-
-// Your theme configurations
-const muiTheme = createTheme({
-    palette: {
-        primary: {
-            main: '#006400',
-        },
-        background: {
-            default: '#ffffff',
-        },
-    },
-});
-
-const styledTheme = {
-    colors: {
-        primary: '#006400',
-        text: '#000000',
-        background: '#ffffff',
-    },
-    main: {
-        colors: {
-            primary: '#006400',
-        },
-    },
-};
 
 // PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -56,13 +32,15 @@ const AdminRoute = ({ children }) => {
     return children;
 };
 
-function App() {
+function AppContent() {
+    const { theme, muiTheme } = useTheme();
+
     return (
-        <AuthProvider>
-            <ServiceProvider>
-                <MuiThemeProvider theme={muiTheme}>
-                    <StyledThemeProvider theme={styledTheme}>
-                        <CssBaseline />
+        <MuiThemeProvider theme={muiTheme}>
+            <StyledThemeProvider theme={theme}>
+                <CssBaseline />
+                <AuthProvider>
+                    <ServiceProvider>
                         <Router>
                             <Routes>
                                 {/* Public routes */}
@@ -98,10 +76,18 @@ function App() {
                                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
                             </Routes>
                         </Router>
-                    </StyledThemeProvider>
-                </MuiThemeProvider>
-            </ServiceProvider>
-        </AuthProvider>
+                    </ServiceProvider>
+                </AuthProvider>
+            </StyledThemeProvider>
+        </MuiThemeProvider>
+    );
+}
+
+function App() {
+    return (
+        <ThemeProvider>
+            <AppContent />
+        </ThemeProvider>
     );
 }
 
