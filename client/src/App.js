@@ -11,11 +11,32 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import AdminDashboard from './pages/AdminDashboard';
+import AdminDashboard from './components/admin/AdminDashboard';
 
 // Your theme configurations
-const muiTheme = createTheme({/* your theme config */});
-const styledTheme = {/* your theme config */};
+const muiTheme = createTheme({
+    palette: {
+        primary: {
+            main: '#006400',
+        },
+        background: {
+            default: '#ffffff',
+        },
+    },
+});
+
+const styledTheme = {
+    colors: {
+        primary: '#006400',
+        text: '#000000',
+        background: '#ffffff',
+    },
+    main: {
+        colors: {
+            primary: '#006400',
+        },
+    },
+};
 
 // PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -72,6 +93,9 @@ function App() {
                                         <Navigate to="/dashboard" replace />
                                     </PrivateRoute>
                                 } />
+
+                                {/* Catch all route */}
+                                <Route path="*" element={<Navigate to="/dashboard" replace />} />
                             </Routes>
                         </Router>
                     </StyledThemeProvider>
