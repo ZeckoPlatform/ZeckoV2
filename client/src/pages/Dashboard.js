@@ -38,24 +38,36 @@ const Dashboard = () => {
         return <Navigate to="/login" replace />;
     }
 
-    const stats = getStats();
-
     const getStats = () => {
+        if (!requests || !Array.isArray(requests)) {
+            return {
+                totalLeads: 0,
+                activeQuotes: 0,
+                wonJobs: 0,
+                responseRate: 0,
+                activeRequests: 0,
+                receivedQuotes: 0,
+                completedJobs: 0,
+                totalSpent: 0
+            };
+        }
+
         switch (user.accountType) {
             case 'vendor':
+                const totalLeads = requests.length;
+                const quotedLeads = requests.filter(r => 
+                    r.quotes.some(q => q.provider.toString() === user._id)
+                ).length;
+                
                 return {
-                    totalLeads: requests.length,
+                    totalLeads,
                     activeQuotes: requests.filter(r => 
                         r.quotes.some(q => q.provider.toString() === user._id && q.status === 'pending')
                     ).length,
                     wonJobs: requests.filter(r => 
                         r.selectedProvider?.toString() === user._id
                     ).length,
-                    responseRate: Math.round(
-                        (requests.filter(r => 
-                            r.quotes.some(q => q.provider.toString() === user._id)
-                        ).length / requests.length) * 100
-                    )
+                    responseRate: totalLeads > 0 ? Math.round((quotedLeads / totalLeads) * 100) : 0
                 };
             case 'business':
                 return {
@@ -76,6 +88,8 @@ const Dashboard = () => {
                 return {};
         }
     };
+
+    const stats = getStats();
 
     const renderVendorDashboard = () => (
         <>
