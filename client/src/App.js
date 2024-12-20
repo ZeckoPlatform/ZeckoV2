@@ -12,70 +12,80 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './components/admin/AdminDashboard';
+import Home from './pages/Home';
 
 // PrivateRoute component
 const PrivateRoute = ({ children }) => {
-    const { user } = useAuth();
-    if (!user) {
-        return <Navigate to="/login" replace />;
+    const { user, loading } = useAuth();
+    
+    if (loading) {
+        return <div>Loading...</div>;
     }
+    
+    if (!user) {
+        return <Navigate to="/" replace />;
+    }
+    
     return children;
 };
 
 // AdminRoute component
 const AdminRoute = ({ children }) => {
-    const { user } = useAuth();
+    const { user, loading } = useAuth();
+    
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+    
     if (!user || user.accountType !== 'admin') {
         return <Navigate to="/dashboard" replace />;
     }
+    
     return children;
 };
 
 function AppContent() {
     const { muiTheme } = useTheme();
+    const { user } = useAuth();
 
     return (
         <MuiThemeProvider theme={muiTheme}>
             <CssBaseline />
-            <AuthProvider>
+            <Router>
                 <ServiceProvider>
-                    <Router>
-                        <Routes>
-                            {/* Public routes */}
-                            <Route path="/login" element={<Login />} />
-                            <Route path="/register" element={<Register />} />
+                    <Routes>
+                        {/* Public routes */}
+                        <Route path="/" element={<Home />} />
+                        <Route path="/login" element={
+                            user ? <Navigate to="/dashboard" replace /> : <Login />
+                        } />
+                        <Route path="/register" element={
+                            user ? <Navigate to="/dashboard" replace /> : <Register />
+                        } />
 
-                            {/* Protected routes */}
-                            <Route path="/dashboard" element={
-                                <PrivateRoute>
-                                    <Layout>
-                                        <Dashboard />
-                                    </Layout>
-                                </PrivateRoute>
-                            } />
+                        {/* Protected routes */}
+                        <Route path="/dashboard" element={
+                            <PrivateRoute>
+                                <Layout>
+                                    <Dashboard />
+                                </Layout>
+                            </PrivateRoute>
+                        } />
 
-                            {/* Admin routes */}
-                            <Route path="/admin" element={
-                                <AdminRoute>
-                                    <Layout>
-                                        <AdminDashboard />
-                                    </Layout>
-                                </AdminRoute>
-                            } />
+                        {/* Admin routes */}
+                        <Route path="/admin" element={
+                            <AdminRoute>
+                                <Layout>
+                                    <AdminDashboard />
+                                </Layout>
+                            </AdminRoute>
+                        } />
 
-                            {/* Root redirect */}
-                            <Route path="/" element={
-                                <PrivateRoute>
-                                    <Navigate to="/dashboard" replace />
-                                </PrivateRoute>
-                            } />
-
-                            {/* Catch all route */}
-                            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                        </Routes>
-                    </Router>
+                        {/* Catch all route */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
                 </ServiceProvider>
-            </AuthProvider>
+            </Router>
         </MuiThemeProvider>
     );
 }
@@ -83,7 +93,9 @@ function AppContent() {
 function App() {
     return (
         <ThemeProvider>
-            <AppContent />
+            <AuthProvider>
+                <AppContent />
+            </AuthProvider>
         </ThemeProvider>
     );
 }
