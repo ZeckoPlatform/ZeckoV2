@@ -25,7 +25,31 @@ const businessUserSchema = new mongoose.Schema({
     },
     businessType: {
         type: String,
+        required: true,
+        enum: ['plumbing', 'electrical', 'construction', 'landscaping', 'cleaning', 'maintenance', 'other']
+    },
+    serviceCategories: [{
+        type: String,
         required: true
+    }],
+    availability: {
+        workingHours: {
+            monday: { start: String, end: String },
+            tuesday: { start: String, end: String },
+            wednesday: { start: String, end: String },
+            thursday: { start: String, end: String },
+            friday: { start: String, end: String },
+            saturday: { start: String, end: String },
+            sunday: { start: String, end: String }
+        },
+        customAvailability: [{
+            date: Date,
+            available: Boolean
+        }]
+    },
+    serviceArea: {
+        radius: Number,
+        zipCodes: [String]
     },
     description: {
         type: String,
@@ -51,6 +75,10 @@ const businessUserSchema = new mongoose.Schema({
         }
     }],
     role: {
+        type: String,
+        default: 'contractor'
+    },
+    accountType: {
         type: String,
         default: 'business'
     },

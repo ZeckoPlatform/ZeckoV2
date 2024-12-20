@@ -14,7 +14,8 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true
+    required: true,
+    select: false
   },
   name: {
     type: String,
@@ -179,9 +180,8 @@ const userSchema = new mongoose.Schema({
   }],
   accountType: {
     type: String,
-    enum: ['subscription', 'contractor', 'vendor'],
-    required: true,
-    default: 'subscription'
+    enum: ['regular', 'business'],
+    default: 'regular'
   },
   contractor: {
     services: [{

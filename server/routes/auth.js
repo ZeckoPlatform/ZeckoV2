@@ -1,6 +1,7 @@
 const express = require('express');
 const User = require('../models/userModel');
 const BusinessUser = require('../models/businessUserModel');
+const VendorUser = require('../models/vendorUserModel');
 const { authenticateToken } = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -18,31 +19,50 @@ router.get('/verify', authenticateToken, async (req, res) => {
   try {
     console.log('Verify endpoint called with user:', req.user);
     
-    // Find the full user data
+    // Find the full user data based on account type
     let user;
-    if (req.user.accountType === 'business') {
-      user = await BusinessUser.findById(req.user.id).select('-password').lean();
-    } else {
-      user = await User.findById(req.user.id).select('-password').lean();
+    switch(req.user.accountType) {
+      case 'business':
+        user = await BusinessUser.findById(req.user.userId).select('-password').lean();
+        break;
+      case 'vendor':
+        user = await VendorUser.findById(req.user.userId).select('-password').lean();
+        break;
+      default:
+        user = await User.findById(req.user.userId).select('-password').lean();
     }
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({ 
-      user: {
-        id: user._id,
-        email: user.email,
-        username: user.username,
-        accountType: req.user.accountType,
-        role: user.role,
-        businessName: user.businessName,
-        // Add any other needed user fields
-        createdAt: user.createdAt
-      },
-      verified: true 
-    });
+    // Return type-specific user data
+    const userData = {
+      id: user._id,
+      email: user.email,
+      username: user.username,
+      accountType: req.user.accountType,
+      role: user.role,
+      createdAt: user.createdAt
+    };
+
+    // Add business-specific fields
+    if (req.user.accountType === 'business') {
+      userData.businessName = user.businessName;
+      userData.businessType = user.businessType;
+      userData.serviceCategories = user.serviceCategories;
+      userData.serviceArea = user.serviceArea;
+    }
+
+    // Add vendor-specific fields
+    if (req.user.accountType === 'vendor') {
+      userData.businessName = user.businessName;
+      userData.vendorCategory = user.vendorCategory;
+      userData.storeSettings = user.storeSettings;
+      userData.ratings = user.ratings;
+    }
+
+    res.json({ user: userData, verified: true });
   } catch (error) {
     console.error('Verification error:', error);
     res.status(500).json({ message: 'Server error during verification' });
@@ -51,45 +71,32 @@ router.get('/verify', authenticateToken, async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
-    console.log('Login endpoint hit at:', new Date().toISOString());
-    console.log('Request body:', req.body);
-    
     const { email, password } = req.body;
     
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    console.log('Attempting database query for:', email);
+    let user = null;
+    let accountType = 'regular';
+
+    // Try each user type in order
+    user = await User.findOne({ email }).select('+password');
     
-    // Increase timeout for database operations
-    const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Database timeout')), 45000)  // Increased from 20000
-    );
-
-    let user;
-    try {
-      user = await Promise.race([
-          User.findOne({ email }).select('+password'),
-          timeoutPromise
-      ]);
-
-      if (!user) {
-        console.log('User not found in regular users, checking business users');
-        user = await BusinessUser.findOne({ email }).select('+password');
+    if (!user) {
+      user = await BusinessUser.findOne({ email }).select('+password');
+      if (user) {
+        accountType = 'business';
       }
-    } catch (dbError) {
-      console.error('Database query error:', dbError);
-      throw dbError;
     }
-
-    let isBusinessUser = false;
 
     if (!user) {
-      user = await BusinessUser.findOne({ email });
-      isBusinessUser = true;
+      user = await VendorUser.findOne({ email }).select('+password');
+      if (user) {
+        accountType = 'vendor';
+      }
     }
-    
+
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -102,14 +109,12 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
       { 
         userId: user._id,
-        accountType: isBusinessUser ? 'business' : 'user',
+        accountType,
         role: user.role
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
-
-    console.log('Login successful for:', email);
 
     res.json({
       token,
@@ -117,46 +122,77 @@ router.post('/login', async (req, res) => {
         id: user._id,
         email: user.email,
         username: user.username,
-        accountType: isBusinessUser ? 'business' : 'user',
+        accountType,
         role: user.role,
-        businessName: isBusinessUser ? user.businessName : undefined
+        businessName: ['business', 'vendor'].includes(accountType) ? user.businessName : undefined,
+        vendorCategory: accountType === 'vendor' ? user.vendorCategory : undefined
       }
     });
   } catch (error) {
     console.error('Login error:', error);
-    if (error.message === 'Database timeout') {
-        return res.status(503).json({ message: 'Service temporarily unavailable' });
-    }
     res.status(500).json({ message: 'Server error during login' });
   }
 });
 
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, username, accountType, businessName, businessType } = req.body;
+    const { 
+      email, 
+      password, 
+      username, 
+      accountType, 
+      businessName, 
+      businessType,
+      vendorCategory,
+      serviceCategories,
+      serviceArea,
+      storeSettings
+    } = req.body;
 
-    const existingUser = await User.findOne({ email }) || await BusinessUser.findOne({ email });
+    // Check for existing user across all models
+    const existingUser = await User.findOne({ email }) 
+      || await BusinessUser.findOne({ email })
+      || await VendorUser.findOne({ email });
+
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
     let user;
-    if (accountType === 'business') {
-      user = new BusinessUser({
-        email,
-        password,
-        username,
-        businessName,
-        businessType,
-        role: 'vendor'
-      });
-    } else {
-      user = new User({
-        email,
-        password,
-        username,
-        role: 'user'
-      });
+    switch(accountType) {
+      case 'business':
+        user = new BusinessUser({
+          email,
+          password,
+          username,
+          businessName,
+          businessType,
+          serviceCategories,
+          serviceArea,
+          role: 'contractor'
+        });
+        break;
+      
+      case 'vendor':
+        user = new VendorUser({
+          email,
+          password,
+          username,
+          businessName,
+          businessType,
+          vendorCategory,
+          storeSettings,
+          role: 'vendor'
+        });
+        break;
+      
+      default:
+        user = new User({
+          email,
+          password,
+          username,
+          role: 'user'
+        });
     }
 
     await user.save();
@@ -171,17 +207,31 @@ router.post('/register', async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    // Return type-specific response
+    const userData = {
+      id: user._id,
+      email: user.email,
+      username: user.username,
+      accountType,
+      role: user.role
+    };
+
+    if (accountType === 'business') {
+      userData.businessName = user.businessName;
+      userData.businessType = user.businessType;
+      userData.serviceCategories = user.serviceCategories;
+    }
+
+    if (accountType === 'vendor') {
+      userData.businessName = user.businessName;
+      userData.vendorCategory = user.vendorCategory;
+      userData.storeSettings = user.storeSettings;
+    }
+
     res.status(201).json({
       message: 'Registration successful',
       token,
-      user: {
-        id: user._id,
-        email: user.email,
-        username: user.username,
-        accountType,
-        role: user.role,
-        businessName: accountType === 'business' ? user.businessName : undefined
-      }
+      user: userData
     });
   } catch (error) {
     console.error('Registration error:', error);
