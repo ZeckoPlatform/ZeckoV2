@@ -9,6 +9,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const { Server } = require('socket.io');
+const fs = require('fs');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -72,6 +73,12 @@ app.use('/api/products', productRoutes);
 app.use('/api', serviceCategoryRoutes);
 app.use('/api', serviceRequestRoutes);
 app.use('/api', messageRoutes);
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads/avatars');
+if (!fs.existsSync(uploadsDir)){
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {

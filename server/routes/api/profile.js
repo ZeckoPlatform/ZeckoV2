@@ -1,67 +1,71 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../../middleware/auth');
-const User = require('../../models/userModel');
 const multer = require('multer');
 const path = require('path');
+const { authenticateToken } = require('../../middleware/auth');
+const User = require('../../models/userModel');
+const BusinessUser = require('../../models/businessUserModel');
+const VendorUser = require('../../models/vendorUserModel');
 
-// Configure multer for file upload
+// Configure multer for file uploads
 const storage = multer.diskStorage({
-  destination: 'uploads/avatars/',
-  filename: function (req, file, cb) {
-    cb(null, `${Date.now()}-${file.originalname}`);
+  destination: 'uploads/avatars',
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'avatar-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
 
-const upload = multer({ 
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only JPEG, PNG and GIF are allowed.'));
-    }
-  }
-});
-
-// Get profile
-router.get('/', authenticateToken, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select('-password');
-    res.json(user);
-  } catch (error) {
-    console.error('Error fetching profile:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+const upload = multer({ storage });
 
 // Update profile
-router.patch('/', authenticateToken, async (req, res) => {
+router.put('/', authenticateToken, async (req, res) => {
   try {
-    const { currentPassword, newPassword, ...updateData } = req.body;
+    const { username, address, phone, businessName } = req.body;
+    let Model;
 
-    // If trying to change password, verify current password
-    if (newPassword) {
-      const user = await User.findById(req.user.id);
-      const isMatch = await user.comparePassword(currentPassword);
-      if (!isMatch) {
-        return res.status(400).json({ message: 'Current password is incorrect' });
-      }
-      updateData.password = newPassword;
+    // Determine which model to use based on account type
+    switch(req.user.accountType) {
+      case 'business':
+        Model = BusinessUser;
+        break;
+      case 'vendor':
+        Model = VendorUser;
+        break;
+      default:
+        Model = User;
     }
 
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      { $set: updateData },
-      { new: true }
-    ).select('-password');
+    const user = await Model.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
-    res.json(user);
+    // Update fields
+    if (username) user.username = username;
+    if (address) user.address = address;
+    if (phone) user.phone = phone;
+    if (businessName && ['business', 'vendor'].includes(req.user.accountType)) {
+      user.businessName = businessName;
+    }
+
+    await user.save();
+
+    // Return updated user data
+    const userData = {
+      id: user._id,
+      email: user.email,
+      username: user.username,
+      address: user.address,
+      phone: user.phone,
+      accountType: req.user.accountType,
+      businessName: user.businessName
+    };
+
+    res.json(userData);
   } catch (error) {
-    console.error('Error updating profile:', error);
-    res.status(400).json({ message: error.message });
+    console.error('Profile update error:', error);
+    res.status(500).json({ message: 'Error updating profile' });
   }
 });
 
@@ -72,33 +76,32 @@ router.post('/avatar', authenticateToken, upload.single('avatar'), async (req, r
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
+    let Model;
+    switch(req.user.accountType) {
+      case 'business':
+        Model = BusinessUser;
+        break;
+      case 'vendor':
+        Model = VendorUser;
+        break;
+      default:
+        Model = User;
+    }
+
+    const user = await Model.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update avatar URL
     const avatarUrl = `/uploads/avatars/${req.file.filename}`;
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      { $set: { avatar: avatarUrl } },
-      { new: true }
-    ).select('-password');
+    user.avatarUrl = avatarUrl;
+    await user.save();
 
-    res.json({ avatarUrl, user });
+    res.json({ avatarUrl });
   } catch (error) {
-    console.error('Error uploading avatar:', error);
-    res.status(400).json({ message: error.message });
-  }
-});
-
-// Delete avatar
-router.delete('/avatar', authenticateToken, async (req, res) => {
-  try {
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      { $unset: { avatar: 1 } },
-      { new: true }
-    ).select('-password');
-
-    res.json(user);
-  } catch (error) {
-    console.error('Error deleting avatar:', error);
-    res.status(400).json({ message: error.message });
+    console.error('Avatar upload error:', error);
+    res.status(500).json({ message: 'Error uploading avatar' });
   }
 });
 
