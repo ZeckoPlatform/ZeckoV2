@@ -130,7 +130,7 @@ router.post('/avatar', authenticateToken, upload.single('avatar'), async (req, r
   }
 });
 
-// Add this route to your existing profile.js
+// Change password endpoint
 router.post('/change-password', authenticateToken, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;

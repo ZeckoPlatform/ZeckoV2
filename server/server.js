@@ -14,8 +14,8 @@ const fs = require('fs');
 // Import routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/userRoutes');
-const leadRoutes = require('./routes/api/lead');
 const profileRoutes = require('./routes/api/profile');
+const leadRoutes = require('./routes/api/lead');
 const productRoutes = require('./routes/productRoutes');
 const serviceCategoryRoutes = require('./routes/serviceCategoryRoutes');
 const serviceRequestRoutes = require('./routes/serviceRequestRoutes');
@@ -67,8 +67,8 @@ app.use('/api', (req, res, next) => {
 // Mount routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/leads', leadRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/leads', leadRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api', serviceCategoryRoutes);
 app.use('/api', serviceRequestRoutes);
