@@ -10,6 +10,7 @@ const defaultTheme = {
     text: '#333333',
     background: '#F5F5F5',
     error: '#F44336',
+    border: '#E0E0E0',
   },
   palette: {
     mode: 'light',
@@ -27,6 +28,34 @@ const defaultTheme = {
       primary: '#333333',
       secondary: '#666666',
     },
+  },
+  spacing: {
+    xs: '4px',
+    sm: '8px',
+    md: '16px',
+    lg: '24px',
+    xl: '32px'
+  },
+  borderRadius: {
+    sm: '4px',
+    md: '8px',
+    lg: '16px',
+    xl: '24px'
+  },
+  shadows: {
+    card: '0 2px 4px rgba(0,0,0,0.1)',
+    dropdown: '0 4px 8px rgba(0,0,0,0.1)',
+    modal: '0 8px 16px rgba(0,0,0,0.1)'
+  },
+  typography: {
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    fontSize: {
+      xs: '12px',
+      sm: '14px',
+      md: '16px',
+      lg: '18px',
+      xl: '20px'
+    }
   }
 };
 
@@ -55,9 +84,14 @@ export const ThemeProvider = ({ children }) => {
       primary: muiTheme.palette.primary.main,
       text: muiTheme.palette.text.primary,
       background: muiTheme.palette.background.default,
+      border: mode === 'dark' ? '#333333' : '#E0E0E0',
     },
-    palette: muiTheme.palette
-  }), [muiTheme]);
+    palette: muiTheme.palette,
+    spacing: defaultTheme.spacing,
+    borderRadius: defaultTheme.borderRadius,
+    shadows: defaultTheme.shadows,
+    typography: defaultTheme.typography
+  }), [muiTheme, mode]);
 
   const contextValue = useMemo(() => ({
     mode,
