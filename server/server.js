@@ -64,6 +64,18 @@ app.use('/api', (req, res, next) => {
     next();
 });
 
+// Add this before your route mounting
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`, req.body);
+  next();
+});
+
+// Mount routes with debug
+app.use('/api/profile', (req, res, next) => {
+  console.log('Profile route hit:', req.path);
+  profileRoutes(req, res, next);
+});
+
 // Mount routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
