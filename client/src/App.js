@@ -14,6 +14,7 @@ import Dashboard from './pages/Dashboard';
 import AdminDashboard from './components/admin/AdminDashboard';
 import Home from './pages/Home';
 import Profile from './components/Dashboard/Profile';
+import UserProfile from './pages/UserProfile';
 
 // PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -83,9 +84,7 @@ function AppContent() {
                         {/* Protected routes */}
                         <Route path="/dashboard" element={
                             <PrivateRoute>
-                                <Layout>
-                                    <Dashboard />
-                                </Layout>
+                                <UserProfile />
                             </PrivateRoute>
                         } />
 
