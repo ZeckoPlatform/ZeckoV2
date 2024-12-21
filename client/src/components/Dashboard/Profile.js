@@ -5,7 +5,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import DashboardCard from './common/DashboardCard';
 import { FiCamera, FiLock, FiMail, FiPhone, FiUser } from 'react-icons/fi';
 import { toast } from 'react-toastify';
-import { ErrorMessage } from '../common/ErrorMessage';
+import { withErrorBoundary } from '../error/withErrorBoundary';
+import { errorHandler } from '../../services/error/ErrorHandler';
+import { Box, Alert } from '@mui/material';
 
 const ProfileContainer = styled.div`
   display: grid;
@@ -157,6 +159,10 @@ const ButtonGroup = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `;
 
+const StyledAlert = styled(Alert)`
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+`;
+
 const Profile = () => {
   const { user, updateProfile } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -229,13 +235,13 @@ const Profile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     setError('');
 
     if (!validateForm()) {
       return;
     }
 
-    setLoading(true);
     try {
       const updateData = {
         firstName: formData.firstName,
@@ -261,9 +267,8 @@ const Profile = () => {
         confirmPassword: ''
       }));
     } catch (error) {
-      console.error('Error updating profile:', error);
+      errorHandler.handle(error);
       setError(error.response?.data?.message || 'Failed to update profile');
-      toast.error('Failed to update profile');
     } finally {
       setLoading(false);
     }
@@ -271,6 +276,11 @@ const Profile = () => {
 
   return (
     <ProfileContainer>
+      {error && (
+        <StyledAlert severity="error">
+          {error}
+        </StyledAlert>
+      )}
       <ProfileHeader>
         <AvatarContainer>
           <Avatar>
@@ -292,8 +302,6 @@ const Profile = () => {
       </ProfileHeader>
 
       <Form onSubmit={handleSubmit}>
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-        
         <FormSection>
           <SectionTitle>
             <FiUser /> Personal Information
@@ -418,4 +426,4 @@ const Profile = () => {
   );
 };
 
-export default Profile; 
+export default withErrorBoundary(Profile); 
