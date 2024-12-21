@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import api from '../../services/api';
 import {
   Avatar,
   Button,
-  Paper,
+  TextField,
   Typography,
   Box,
   CircularProgress,
-  Container
+  Container,
+  Grid,
+  Alert
 } from '@mui/material';
 import styled from 'styled-components';
 import DashboardCard from './common/DashboardCard';
@@ -74,36 +77,68 @@ const UserInfo = styled.div`
 
 const Profile = () => {
   const { user, updateUser } = useAuth();
-  const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [formData, setFormData] = useState({
+    username: user?.username || '',
+    email: user?.email || '',
+    address: user?.address || '',
+    phone: user?.phone || '',
+    businessName: user?.businessName || ''
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleAvatarChange = async (event) => {
     try {
       setLoading(true);
+      setError('');
       const file = event.target.files[0];
       if (!file) return;
 
       const formData = new FormData();
       formData.append('avatar', file);
 
-      const response = await fetch('/api/profile/avatar', {
-        method: 'POST',
+      const response = await api.post('/profile/avatar', formData, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Content-Type': 'multipart/form-data',
         },
-        body: formData
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to upload avatar');
-      }
-
-      const data = await response.json();
-      if (data.avatarUrl) {
-        await updateUser({ ...user, avatar: data.avatarUrl });
+      if (response.data.avatarUrl) {
+        updateUser({ ...user, avatarUrl: response.data.avatarUrl });
+        setSuccess('Avatar updated successfully!');
       }
     } catch (error) {
       console.error('Error uploading avatar:', error);
+      setError('Failed to upload avatar');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      setError('');
+      
+      const response = await api.put('/profile', formData);
+      
+      if (response.data) {
+        updateUser({ ...user, ...response.data });
+        setSuccess('Profile updated successfully!');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setError('Failed to update profile');
     } finally {
       setLoading(false);
     }
@@ -113,14 +148,11 @@ const Profile = () => {
     <ProfileContainer>
       <ProfileHeader>
         <AvatarContainer>
-          <StyledAvatar
-            src={user?.avatar || '/default-avatar.png'}
-            alt="Profile"
-          />
+          <StyledAvatar src={user?.avatarUrl} alt={user?.username} />
           <AvatarUpload>
             <input
-              accept="image/*"
               type="file"
+              accept="image/*"
               onChange={handleAvatarChange}
               disabled={loading}
             />
@@ -139,30 +171,76 @@ const Profile = () => {
           <Typography color="textSecondary">
             {user?.accountType} Account
           </Typography>
-          <Typography color="textSecondary">
-            Role: {user?.role}
-          </Typography>
         </UserInfo>
       </ProfileHeader>
 
       <DashboardCard>
-        <Typography variant="h6" gutterBottom>
-          Account Information
-        </Typography>
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="body1" paragraph>
-            Email: {user?.email}
-          </Typography>
-          <Typography variant="body1" paragraph>
-            Username: {user?.username}
-          </Typography>
-          <Typography variant="body1" paragraph>
-            Account Type: {user?.accountType}
-          </Typography>
-          <Typography variant="body1">
-            Role: {user?.role}
-          </Typography>
-        </Box>
+        <form onSubmit={handleSubmit}>
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+          
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Username"
+                name="username"
+                value={formData.username}
+                onChange={handleInputChange}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Email"
+                name="email"
+                value={formData.email}
+                disabled
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Address"
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                multiline
+                rows={2}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+              />
+            </Grid>
+            {user?.accountType !== 'regular' && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Business Name"
+                  name="businessName"
+                  value={formData.businessName}
+                  onChange={handleInputChange}
+                />
+              </Grid>
+            )}
+            <Grid item xs={12}>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={loading}
+              >
+                {loading ? <CircularProgress size={24} /> : 'Save Changes'}
+              </Button>
+            </Grid>
+          </Grid>
+        </form>
       </DashboardCard>
     </ProfileContainer>
   );
