@@ -164,7 +164,8 @@ const Navbar = () => {
   const menuItems = user ? [
     { text: 'Home', path: '/' },
     { text: 'Services', path: '/services' },
-    { text: 'Dashboard', path: '/dashboard' }
+    { text: 'Dashboard', path: '/dashboard' },
+    { text: 'Profile', path: '/profile' }
   ] : [
     { text: 'Home', path: '/' },
     { text: 'Services', path: '/services' },

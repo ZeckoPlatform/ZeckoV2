@@ -84,7 +84,9 @@ function AppContent() {
                         {/* Protected routes */}
                         <Route path="/dashboard" element={
                             <PrivateRoute>
-                                <UserProfile />
+                                <Layout>
+                                    <Dashboard />
+                                </Layout>
                             </PrivateRoute>
                         } />
 
@@ -100,7 +102,9 @@ function AppContent() {
                         {/* Profile route */}
                         <Route path="/profile" element={
                             <PrivateRoute>
-                                <Profile />
+                                <Layout>
+                                    <Profile />
+                                </Layout>
                             </PrivateRoute>
                         } />
 

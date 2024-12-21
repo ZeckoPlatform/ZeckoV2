@@ -1,17 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import {
+  Avatar,
+  Button,
+  Paper,
+  Typography,
+  Box,
+  CircularProgress,
+  Container
+} from '@mui/material';
+import styled from 'styled-components';
 import DashboardCard from './common/DashboardCard';
-import { FiCamera, FiLock, FiMail, FiPhone, FiUser } from 'react-icons/fi';
-import { toast } from 'react-toastify';
-import { withErrorBoundary } from '../error/withErrorBoundary';
-import { errorHandler } from '../../services/error/ErrorHandler';
-import { Box, Alert } from '@mui/material';
 
 const ProfileContainer = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.xl};
+  gap: ${({ theme }) => theme.spacing.xl || '24px'};
   max-width: 800px;
   margin: 0 auto;
 `;
@@ -19,8 +23,8 @@ const ProfileContainer = styled.div`
 const ProfileHeader = styled(DashboardCard)`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.xl};
-  padding: ${({ theme }) => theme.spacing.xl};
+  gap: ${({ theme }) => theme.spacing.xl || '24px'};
+  padding: ${({ theme }) => theme.spacing.xl || '24px'};
 
   @media (max-width: 768px) {
     flex-direction: column;
@@ -34,26 +38,17 @@ const AvatarContainer = styled.div`
   height: 120px;
 `;
 
-const Avatar = styled.div`
+const StyledAvatar = styled(Avatar)`
   width: 100%;
   height: 100%;
-  border-radius: 50%;
-  overflow: hidden;
-  background: ${({ theme }) => theme.colors.background.main};
-  border: 4px solid ${({ theme }) => theme.colors.primary.main};
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+  border: 4px solid ${({ theme }) => theme.colors?.primary?.main || '#4CAF50'};
 `;
 
 const AvatarUpload = styled.label`
   position: absolute;
   bottom: 0;
   right: 0;
-  background: ${({ theme }) => theme.colors.primary.main};
+  background: ${({ theme }) => theme.colors?.primary?.main || '#4CAF50'};
   color: white;
   width: 36px;
   height: 36px;
@@ -77,198 +72,38 @@ const UserInfo = styled.div`
   flex: 1;
 `;
 
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.lg};
-`;
-
-const FormSection = styled(DashboardCard)`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.lg};
-`;
-
-const SectionTitle = styled.h3`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin-bottom: ${({ theme }) => theme.spacing.md};
-`;
-
-const FormRow = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: ${({ theme }) => theme.spacing.lg};
-`;
-
-const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const Label = styled.label`
-  color: ${({ theme }) => theme.colors.text.secondary};
-  font-size: 0.9rem;
-`;
-
-const Input = styled.input`
-  padding: ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${({ theme }) => theme.colors.text.disabled}40;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  background: ${({ theme }) => theme.colors.background.main};
-  color: ${({ theme }) => theme.colors.text.primary};
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary.main};
-    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary.light}20;
-  }
-`;
-
-const Button = styled(motion.button)`
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-  background: ${({ theme, variant }) =>
-    variant === 'outlined'
-      ? 'transparent'
-      : theme.colors.primary.gradient};
-  color: ${({ theme, variant }) =>
-    variant === 'outlined'
-      ? theme.colors.primary.main
-      : theme.colors.primary.text};
-  border: ${({ theme, variant }) =>
-    variant === 'outlined'
-      ? `1px solid ${theme.colors.primary.main}`
-      : 'none'};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s ease;
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: ${({ theme }) => theme.spacing.md};
-`;
-
-const StyledAlert = styled(Alert)`
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-`;
-
 const Profile = () => {
-  const { user, updateProfile } = useAuth();
+  const { user, updateUser } = useAuth();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [formData, setFormData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
 
-  const handleChange = (e) => {
-    setError('');
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      try {
-        const formData = new FormData();
-        formData.append('avatar', file);
-        
-        const response = await fetch('/api/profile/avatar', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          },
-          body: formData
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to upload avatar');
-        }
-
-        const data = await response.json();
-        // Update user avatar in context
-        updateProfile({ ...user, avatar: data.avatarUrl });
-        toast.success('Profile picture updated successfully!');
-      } catch (error) {
-        console.error('Error uploading avatar:', error);
-        toast.error('Failed to update profile picture');
-      }
-    }
-  };
-
-  const validateForm = () => {
-    if (formData.newPassword || formData.confirmPassword) {
-      if (!formData.currentPassword) {
-        setError('Current password is required to change password');
-        return false;
-      }
-      if (formData.newPassword !== formData.confirmPassword) {
-        setError('New passwords do not match');
-        return false;
-      }
-      if (formData.newPassword.length < 6) {
-        setError('New password must be at least 6 characters');
-        return false;
-      }
-    }
-    return true;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    if (!validateForm()) {
-      return;
-    }
-
+  const handleAvatarChange = async (event) => {
     try {
-      const updateData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone
-      };
+      setLoading(true);
+      const file = event.target.files[0];
+      if (!file) return;
 
-      // Only include password data if changing password
-      if (formData.newPassword) {
-        updateData.currentPassword = formData.currentPassword;
-        updateData.newPassword = formData.newPassword;
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const response = await fetch('/api/profile/avatar', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload avatar');
       }
 
-      await updateProfile(updateData);
-      toast.success('Profile updated successfully!');
-      
-      // Clear password fields
-      setFormData(prev => ({
-        ...prev,
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      }));
+      const data = await response.json();
+      if (data.avatarUrl) {
+        await updateUser({ ...user, avatar: data.avatarUrl });
+      }
     } catch (error) {
-      errorHandler.handle(error);
-      setError(error.response?.data?.message || 'Failed to update profile');
+      console.error('Error uploading avatar:', error);
     } finally {
       setLoading(false);
     }
@@ -276,154 +111,61 @@ const Profile = () => {
 
   return (
     <ProfileContainer>
-      {error && (
-        <StyledAlert severity="error">
-          {error}
-        </StyledAlert>
-      )}
       <ProfileHeader>
         <AvatarContainer>
-          <Avatar>
-            <img src={user?.avatar || '/default-avatar.png'} alt="Profile" />
-          </Avatar>
+          <StyledAvatar
+            src={user?.avatar || '/default-avatar.png'}
+            alt="Profile"
+          />
           <AvatarUpload>
             <input
-              type="file"
               accept="image/*"
+              type="file"
               onChange={handleAvatarChange}
+              disabled={loading}
             />
-            <FiCamera />
+            {loading ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              <i className="fas fa-camera" />
+            )}
           </AvatarUpload>
         </AvatarContainer>
+
         <UserInfo>
-          <h2>{`${user?.firstName} ${user?.lastName}`}</h2>
-          <p>{user?.email}</p>
+          <Typography variant="h5" gutterBottom>
+            {user?.username || user?.email}
+          </Typography>
+          <Typography color="textSecondary">
+            {user?.accountType} Account
+          </Typography>
+          <Typography color="textSecondary">
+            Role: {user?.role}
+          </Typography>
         </UserInfo>
       </ProfileHeader>
 
-      <Form onSubmit={handleSubmit}>
-        <FormSection>
-          <SectionTitle>
-            <FiUser /> Personal Information
-          </SectionTitle>
-          <FormRow>
-            <FormGroup>
-              <Label>First Name</Label>
-              <Input
-                type="text"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label>Last Name</Label>
-              <Input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-              />
-            </FormGroup>
-          </FormRow>
-        </FormSection>
-
-        <FormSection>
-          <SectionTitle>
-            <FiMail /> Contact Information
-          </SectionTitle>
-          <FormRow>
-            <FormGroup>
-              <Label>Email</Label>
-              <Input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label>Phone</Label>
-              <Input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-              />
-            </FormGroup>
-          </FormRow>
-        </FormSection>
-
-        <FormSection>
-          <SectionTitle>
-            <FiLock /> Change Password
-          </SectionTitle>
-          <FormRow>
-            <FormGroup>
-              <Label>Current Password</Label>
-              <Input
-                type="password"
-                name="currentPassword"
-                value={formData.currentPassword}
-                onChange={handleChange}
-              />
-            </FormGroup>
-          </FormRow>
-          <FormRow>
-            <FormGroup>
-              <Label>New Password</Label>
-              <Input
-                type="password"
-                name="newPassword"
-                value={formData.newPassword}
-                onChange={handleChange}
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label>Confirm New Password</Label>
-              <Input
-                type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-              />
-            </FormGroup>
-          </FormRow>
-        </FormSection>
-
-        <ButtonGroup>
-          <Button
-            type="button"
-            variant="outlined"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setFormData({
-                firstName: user?.firstName || '',
-                lastName: user?.lastName || '',
-                email: user?.email || '',
-                phone: user?.phone || '',
-                currentPassword: '',
-                newPassword: '',
-                confirmPassword: ''
-              });
-              setError('');
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={loading}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            {loading ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </ButtonGroup>
-      </Form>
+      <DashboardCard>
+        <Typography variant="h6" gutterBottom>
+          Account Information
+        </Typography>
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="body1" paragraph>
+            Email: {user?.email}
+          </Typography>
+          <Typography variant="body1" paragraph>
+            Username: {user?.username}
+          </Typography>
+          <Typography variant="body1" paragraph>
+            Account Type: {user?.accountType}
+          </Typography>
+          <Typography variant="body1">
+            Role: {user?.role}
+          </Typography>
+        </Box>
+      </DashboardCard>
     </ProfileContainer>
   );
 };
 
-export default withErrorBoundary(Profile); 
+export default Profile; 
