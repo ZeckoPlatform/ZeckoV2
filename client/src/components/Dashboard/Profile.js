@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import DashboardCard from './common/DashboardCard';
 import { FiCamera, FiLock, FiMail, FiPhone, FiUser } from 'react-icons/fi';
+import { toast } from 'react-toastify';
+import { ErrorMessage } from '../common/ErrorMessage';
 
 const ProfileContainer = styled.div`
   display: grid;
@@ -158,6 +160,7 @@ const ButtonGroup = styled.div`
 const Profile = () => {
   const { user, updateProfile } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
@@ -169,6 +172,7 @@ const Profile = () => {
   });
 
   const handleChange = (e) => {
+    setError('');
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
@@ -181,27 +185,85 @@ const Profile = () => {
       try {
         const formData = new FormData();
         formData.append('avatar', file);
-        // Replace with your actual API call
-        await fetch('/api/profile/avatar', {
+        
+        const response = await fetch('/api/profile/avatar', {
           method: 'POST',
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          },
           body: formData
         });
+
+        if (!response.ok) {
+          throw new Error('Failed to upload avatar');
+        }
+
+        const data = await response.json();
         // Update user avatar in context
+        updateProfile({ ...user, avatar: data.avatarUrl });
+        toast.success('Profile picture updated successfully!');
       } catch (error) {
         console.error('Error uploading avatar:', error);
+        toast.error('Failed to update profile picture');
       }
     }
   };
 
+  const validateForm = () => {
+    if (formData.newPassword || formData.confirmPassword) {
+      if (!formData.currentPassword) {
+        setError('Current password is required to change password');
+        return false;
+      }
+      if (formData.newPassword !== formData.confirmPassword) {
+        setError('New passwords do not match');
+        return false;
+      }
+      if (formData.newPassword.length < 6) {
+        setError('New password must be at least 6 characters');
+        return false;
+      }
+    }
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
     try {
-      await updateProfile(formData);
-      // Show success message
+      const updateData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone
+      };
+
+      // Only include password data if changing password
+      if (formData.newPassword) {
+        updateData.currentPassword = formData.currentPassword;
+        updateData.newPassword = formData.newPassword;
+      }
+
+      await updateProfile(updateData);
+      toast.success('Profile updated successfully!');
+      
+      // Clear password fields
+      setFormData(prev => ({
+        ...prev,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }));
     } catch (error) {
       console.error('Error updating profile:', error);
-      // Show error message
+      setError(error.response?.data?.message || 'Failed to update profile');
+      toast.error('Failed to update profile');
     } finally {
       setLoading(false);
     }
@@ -230,6 +292,8 @@ const Profile = () => {
       </ProfileHeader>
 
       <Form onSubmit={handleSubmit}>
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+        
         <FormSection>
           <SectionTitle>
             <FiUser /> Personal Information
@@ -325,6 +389,18 @@ const Profile = () => {
             variant="outlined"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              setFormData({
+                firstName: user?.firstName || '',
+                lastName: user?.lastName || '',
+                email: user?.email || '',
+                phone: user?.phone || '',
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: ''
+              });
+              setError('');
+            }}
           >
             Cancel
           </Button>

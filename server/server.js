@@ -14,6 +14,7 @@ const { Server } = require('socket.io');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/userRoutes');
 const leadRoutes = require('./routes/api/lead');
+const profileRoutes = require('./routes/api/profile');
 const productRoutes = require('./routes/productRoutes');
 const serviceCategoryRoutes = require('./routes/serviceCategoryRoutes');
 const serviceRequestRoutes = require('./routes/serviceRequestRoutes');
@@ -69,6 +70,7 @@ app.use('/api/auth', (req, res, next) => {
 }, authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/leads', leadRoutes);
+app.use('/api/profile', profileRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api', serviceCategoryRoutes);
 app.use('/api', serviceRequestRoutes);
@@ -81,6 +83,9 @@ if (process.env.NODE_ENV === 'production') {
         res.sendFile(path.join(__dirname, '../client/build/index.html'));
     });
 }
+
+// Serve uploaded files
+app.use('/uploads', express.static('uploads'));
 
 // Add this after your routes
 app.use((err, req, res, next) => {

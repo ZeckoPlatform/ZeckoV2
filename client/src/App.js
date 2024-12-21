@@ -13,6 +13,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './components/admin/AdminDashboard';
 import Home from './pages/Home';
+import Profile from './components/Dashboard/Profile';
 
 // PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -95,6 +96,13 @@ function AppContent() {
                                     <AdminDashboard />
                                 </Layout>
                             </AdminRoute>
+                        } />
+
+                        {/* Profile route */}
+                        <Route path="/profile" element={
+                            <PrivateRoute>
+                                <Profile />
+                            </PrivateRoute>
                         } />
 
                         {/* Catch all route */}
