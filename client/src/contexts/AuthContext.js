@@ -8,15 +8,23 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing token on mount
     const checkAuth = async () => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           const response = await api.get('/auth/verify');
-          setUser(response.data.user);
+          
+          // Ensure user data is properly structured
+          const userData = {
+            ...response.data.user,
+            accountType: response.data.user.accountType || 'regular'
+          };
+          
+          console.log('Auth check user data:', userData);
+          setUser(userData);
         } catch (error) {
+          console.error('Auth check error:', error);
           localStorage.removeItem('token');
           delete api.defaults.headers.common['Authorization'];
           setUser(null);
@@ -32,19 +40,30 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('Attempting login with:', credentials);
       const response = await api.post('/auth/login', credentials);
-      const { token, user } = response.data;
+      console.log('Login response:', response.data);
       
-      if (token && user) {
-        localStorage.setItem('token', token);
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        setUser(user);
-        return { user, token };
-      } else {
-        throw new Error('Invalid response from server');
+      const { token, user: userData } = response.data;
+
+      // Ensure user data is properly structured
+      const normalizedUser = {
+        ...userData,
+        accountType: userData.accountType || 'regular',
+        role: userData.role || 'user'
+      };
+
+      if (!normalizedUser) {
+        throw new Error('Invalid user data received');
       }
+
+      localStorage.setItem('token', token);
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      setUser(normalizedUser);
+      
+      console.log('User set in context:', normalizedUser);
+      return { user: normalizedUser, token };
     } catch (error) {
-      console.error('Login error:', error.response || error);
-      throw new Error(error.response?.data?.message || 'Login failed');
+      console.error('Login error:', error);
+      throw error;
     }
   };
 

@@ -1,289 +1,86 @@
 import React from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import {
     Container,
-    Grid,
-    Paper,
     Typography,
     Box,
-    Button,
-    Card,
-    CardContent,
-    LinearProgress
+    Grid,
+    Paper
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
-import { useService } from '../contexts/ServiceContext';
-import styled from 'styled-components';
-import api from '../services/api';
-
-const StyledCard = styled(Card)`
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-`;
-
-const StatNumber = styled(Typography)`
-    font-size: 2rem;
-    font-weight: bold;
-    color: ${props => props.theme.palette.primary.main};
-`;
 
 const Dashboard = () => {
-    const navigate = useNavigate();
     const { user } = useAuth();
-    const { requests } = useService();
+
+    console.log('Dashboard user:', user); // Debug log
 
     if (!user) {
         return <Navigate to="/login" replace />;
     }
 
-    const getStats = () => {
-        if (!requests || !Array.isArray(requests)) {
-            return {
-                totalLeads: 0,
-                activeQuotes: 0,
-                wonJobs: 0,
-                responseRate: 0,
-                activeRequests: 0,
-                receivedQuotes: 0,
-                completedJobs: 0,
-                totalSpent: 0
-            };
-        }
-
-        switch (user.accountType) {
-            case 'vendor':
-                const totalLeads = requests.length;
-                const quotedLeads = requests.filter(r => 
-                    r.quotes.some(q => q.provider.toString() === user._id)
-                ).length;
-                
-                return {
-                    totalLeads,
-                    activeQuotes: requests.filter(r => 
-                        r.quotes.some(q => q.provider.toString() === user._id && q.status === 'pending')
-                    ).length,
-                    wonJobs: requests.filter(r => 
-                        r.selectedProvider?.toString() === user._id
-                    ).length,
-                    responseRate: totalLeads > 0 ? Math.round((quotedLeads / totalLeads) * 100) : 0
-                };
-            case 'business':
-                return {
-                    activeRequests: requests.filter(r => r.status === 'active').length,
-                    receivedQuotes: requests.reduce((acc, r) => acc + r.quotes.length, 0),
-                    completedJobs: requests.filter(r => r.status === 'completed').length,
-                    totalSpent: requests
-                        .filter(r => r.status === 'completed')
-                        .reduce((acc, r) => acc + (r.finalPrice || 0), 0)
-                };
-            case 'personal':
-                return {
-                    activeRequests: requests.filter(r => r.status === 'active').length,
-                    receivedQuotes: requests.reduce((acc, r) => acc + r.quotes.length, 0),
-                    completedJobs: requests.filter(r => r.status === 'completed').length
-                };
-            default:
-                return {};
-        }
-    };
-
-    const stats = getStats();
-
-    const renderVendorDashboard = () => (
-        <>
+    const renderRegularDashboard = () => (
+        <Box>
+            <Typography variant="h4" gutterBottom>
+                Welcome back, {user.username}!
+            </Typography>
+            <Typography variant="subtitle1" gutterBottom>
+                Regular Account
+            </Typography>
             <Grid container spacing={3}>
-                <Grid item xs={12} md={3}>
-                    <StyledCard>
-                        <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
-                                Available Leads
-                            </Typography>
-                            <StatNumber>{stats.totalLeads}</StatNumber>
-                        </CardContent>
-                    </StyledCard>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                    <StyledCard>
-                        <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
-                                Active Quotes
-                            </Typography>
-                            <StatNumber>{stats.activeQuotes}</StatNumber>
-                        </CardContent>
-                    </StyledCard>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                    <StyledCard>
-                        <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
-                                Won Jobs
-                            </Typography>
-                            <StatNumber>{stats.wonJobs}</StatNumber>
-                        </CardContent>
-                    </StyledCard>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                    <StyledCard>
-                        <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
-                                Response Rate
-                            </Typography>
-                            <Box display="flex" alignItems="center">
-                                <StatNumber>{stats.responseRate}%</StatNumber>
-                                <LinearProgress 
-                                    variant="determinate" 
-                                    value={stats.responseRate} 
-                                    sx={{ ml: 2, flexGrow: 1 }}
-                                />
-                            </Box>
-                        </CardContent>
-                    </StyledCard>
-                </Grid>
+                {/* Regular user dashboard content */}
             </Grid>
-
-            <Box mt={4}>
-                <Button 
-                    variant="contained" 
-                    color="primary" 
-                    size="large"
-                    onClick={() => navigate('/lead')}
-                >
-                    View Available Leads
-                </Button>
-            </Box>
-        </>
+        </Box>
     );
 
     const renderBusinessDashboard = () => (
-        <>
+        <Box>
+            <Typography variant="h4" gutterBottom>
+                Welcome back, {user.username}!
+            </Typography>
+            <Typography variant="subtitle1" gutterBottom>
+                Business Account
+            </Typography>
             <Grid container spacing={3}>
-                <Grid item xs={12} md={3}>
-                    <StyledCard>
-                        <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
-                                Active Requests
-                            </Typography>
-                            <StatNumber>{stats.activeRequests}</StatNumber>
-                        </CardContent>
-                    </StyledCard>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                    <StyledCard>
-                        <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
-                                Received Quotes
-                            </Typography>
-                            <StatNumber>{stats.receivedQuotes}</StatNumber>
-                        </CardContent>
-                    </StyledCard>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                    <StyledCard>
-                        <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
-                                Completed Jobs
-                            </Typography>
-                            <StatNumber>{stats.completedJobs}</StatNumber>
-                        </CardContent>
-                    </StyledCard>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                    <StyledCard>
-                        <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
-                                Total Spent
-                            </Typography>
-                            <StatNumber>${stats.totalSpent.toFixed(2)}</StatNumber>
-                        </CardContent>
-                    </StyledCard>
-                </Grid>
+                {/* Business dashboard content */}
             </Grid>
-
-            <Box mt={4} display="flex" gap={2}>
-                <Button 
-                    variant="contained" 
-                    color="primary" 
-                    size="large"
-                    onClick={() => navigate('/services')}
-                >
-                    Post New Request
-                </Button>
-                <Button 
-                    variant="outlined" 
-                    color="primary" 
-                    size="large"
-                    onClick={() => navigate('/business/analytics')}
-                >
-                    View Analytics
-                </Button>
-            </Box>
-        </>
+        </Box>
     );
 
-    const renderPersonalDashboard = () => (
-        <>
+    const renderVendorDashboard = () => (
+        <Box>
+            <Typography variant="h4" gutterBottom>
+                Welcome back, {user.username}!
+            </Typography>
+            <Typography variant="subtitle1" gutterBottom>
+                Vendor Account
+            </Typography>
             <Grid container spacing={3}>
-                <Grid item xs={12} md={4}>
-                    <StyledCard>
-                        <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
-                                Active Requests
-                            </Typography>
-                            <StatNumber>{stats.activeRequests}</StatNumber>
-                        </CardContent>
-                    </StyledCard>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                    <StyledCard>
-                        <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
-                                Received Quotes
-                            </Typography>
-                            <StatNumber>{stats.receivedQuotes}</StatNumber>
-                        </CardContent>
-                    </StyledCard>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                    <StyledCard>
-                        <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
-                                Completed Jobs
-                            </Typography>
-                            <StatNumber>{stats.completedJobs}</StatNumber>
-                        </CardContent>
-                    </StyledCard>
-                </Grid>
+                {/* Vendor dashboard content */}
             </Grid>
-
-            <Box mt={4}>
-                <Button 
-                    variant="contained" 
-                    color="primary" 
-                    size="large"
-                    onClick={() => navigate('/services')}
-                >
-                    Post New Request
-                </Button>
-            </Box>
-        </>
+        </Box>
     );
 
-    const getDashboardByAccountType = () => {
+    const getDashboardContent = () => {
+        console.log('Account type:', user.accountType); // Debug log
+
         switch (user.accountType) {
-            case 'vendor':
-                return renderVendorDashboard();
+            case 'regular':
+                return renderRegularDashboard();
             case 'business':
                 return renderBusinessDashboard();
-            case 'personal':
-                return renderPersonalDashboard();
-            case 'admin':
-                return <Navigate to="/admin" replace />;
+            case 'vendor':
+                return renderVendorDashboard();
             default:
+                console.error('Unknown account type:', user.accountType);
                 return (
-                    <Typography color="error">
-                        Account type not recognized: {user.accountType}
-                    </Typography>
+                    <Box>
+                        <Typography variant="h4" gutterBottom>
+                            Welcome back, {user.username}!
+                        </Typography>
+                        <Typography variant="subtitle1" color="error">
+                            Account type not recognized: {user.accountType}
+                        </Typography>
+                    </Box>
                 );
         }
     };
@@ -291,14 +88,7 @@ const Dashboard = () => {
     return (
         <Container>
             <Box py={4}>
-                <Typography variant="h4" gutterBottom>
-                    Welcome back, {user.name}!
-                </Typography>
-                <Typography variant="subtitle1" color="textSecondary" gutterBottom>
-                    {user.accountType.charAt(0).toUpperCase() + user.accountType.slice(1)} Account
-                </Typography>
-                
-                {getDashboardByAccountType()}
+                {getDashboardContent()}
             </Box>
         </Container>
     );
