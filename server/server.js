@@ -64,10 +64,7 @@ app.use('/api', (req, res, next) => {
 });
 
 // Mount routes
-app.use('/api/auth', (req, res, next) => {
-    console.log('Auth route hit:', req.path);
-    next();
-}, authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/profile', profileRoutes);
