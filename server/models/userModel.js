@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'admin', 'vendor'],
+    enum: ['user', 'admin', 'contractor', 'vendor'],
     default: 'user'
   },
   status: {
@@ -180,7 +180,7 @@ const userSchema = new mongoose.Schema({
   }],
   accountType: {
     type: String,
-    enum: ['regular', 'business'],
+    enum: ['regular', 'business', 'vendor'],
     default: 'regular'
   },
   contractor: {

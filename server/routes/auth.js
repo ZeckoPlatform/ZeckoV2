@@ -19,24 +19,30 @@ router.get('/verify', authenticateToken, async (req, res) => {
   try {
     console.log('Verify endpoint called with user:', req.user);
     
-    // Find the full user data based on account type
     let user;
+    let Model;
+
+    // Determine which model to use based on account type
     switch(req.user.accountType) {
       case 'business':
-        user = await BusinessUser.findById(req.user.userId).select('-password').lean();
+        Model = BusinessUser;
         break;
       case 'vendor':
-        user = await VendorUser.findById(req.user.userId).select('-password').lean();
+        Model = VendorUser;
         break;
       default:
-        user = await User.findById(req.user.userId).select('-password').lean();
+        Model = User;
     }
+
+    user = await Model.findById(req.user.userId)
+      .select('-password')
+      .lean();
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Return type-specific user data
+    // Build response object with common fields
     const userData = {
       id: user._id,
       email: user.email,
@@ -46,23 +52,29 @@ router.get('/verify', authenticateToken, async (req, res) => {
       createdAt: user.createdAt
     };
 
-    // Add business-specific fields
+    // Add type-specific fields
     if (req.user.accountType === 'business') {
-      userData.businessName = user.businessName;
-      userData.businessType = user.businessType;
-      userData.serviceCategories = user.serviceCategories;
-      userData.serviceArea = user.serviceArea;
+      Object.assign(userData, {
+        businessName: user.businessName,
+        businessType: user.businessType,
+        serviceCategories: user.serviceCategories,
+        serviceArea: user.serviceArea
+      });
+    } else if (req.user.accountType === 'vendor') {
+      Object.assign(userData, {
+        businessName: user.businessName,
+        vendorCategory: user.vendorCategory,
+        storeSettings: user.storeSettings,
+        ratings: user.ratings
+      });
     }
 
-    // Add vendor-specific fields
-    if (req.user.accountType === 'vendor') {
-      userData.businessName = user.businessName;
-      userData.vendorCategory = user.vendorCategory;
-      userData.storeSettings = user.storeSettings;
-      userData.ratings = user.ratings;
-    }
+    console.log('Verify response:', userData);
 
-    res.json({ user: userData, verified: true });
+    res.json({ 
+      user: userData, 
+      verified: true 
+    });
   } catch (error) {
     console.error('Verification error:', error);
     res.status(500).json({ message: 'Server error during verification' });
@@ -78,15 +90,21 @@ router.post('/login', async (req, res) => {
     }
 
     let user = null;
-    let accountType = 'regular';
+    let accountType = null;
+    let userModel = null;
 
-    // Try each user type in order
+    // Try each user type in order and set the correct model
     user = await User.findOne({ email }).select('+password');
+    if (user) {
+      accountType = 'regular';
+      userModel = User;
+    }
     
     if (!user) {
       user = await BusinessUser.findOne({ email }).select('+password');
       if (user) {
         accountType = 'business';
+        userModel = BusinessUser;
       }
     }
 
@@ -94,6 +112,7 @@ router.post('/login', async (req, res) => {
       user = await VendorUser.findOne({ email }).select('+password');
       if (user) {
         accountType = 'vendor';
+        userModel = VendorUser;
       }
     }
 
@@ -106,6 +125,12 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    // Update last login
+    user.activity = user.activity || {};
+    user.activity.lastLogin = new Date();
+    user.activity.loginCount = (user.activity.loginCount || 0) + 1;
+    await user.save();
+
     const token = jwt.sign(
       { 
         userId: user._id,
@@ -116,6 +141,13 @@ router.post('/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    // Log the response data for debugging
+    console.log('Login successful:', {
+      userId: user._id,
+      accountType,
+      role: user.role
+    });
+
     res.json({
       token,
       user: {
@@ -125,7 +157,8 @@ router.post('/login', async (req, res) => {
         accountType,
         role: user.role,
         businessName: ['business', 'vendor'].includes(accountType) ? user.businessName : undefined,
-        vendorCategory: accountType === 'vendor' ? user.vendorCategory : undefined
+        vendorCategory: accountType === 'vendor' ? user.vendorCategory : undefined,
+        serviceCategories: accountType === 'business' ? user.serviceCategories : undefined
       }
     });
   } catch (error) {
