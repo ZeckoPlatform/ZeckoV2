@@ -11,7 +11,11 @@ import {
   CircularProgress,
   Container,
   Grid,
-  Alert
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import styled from 'styled-components';
 import DashboardCard from './common/DashboardCard';
@@ -80,6 +84,12 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [openPasswordDialog, setOpenPasswordDialog] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
   const [formData, setFormData] = useState({
     username: user?.username || '',
     email: user?.email || '',
@@ -96,20 +106,60 @@ const Profile = () => {
     }));
   };
 
-  const handleAvatarChange = async (event) => {
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setError('New passwords do not match');
+      return;
+    }
+
     try {
       setLoading(true);
       setError('');
+      
+      await api.post('/profile/change-password', {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      });
+
+      setSuccess('Password updated successfully');
+      setOpenPasswordDialog(false);
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    } catch (error) {
+      console.error('Error changing password:', error);
+      setError(error.response?.data?.message || 'Failed to change password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAvatarChange = async (event) => {
+    try {
       const file = event.target.files[0];
       if (!file) return;
+
+      setLoading(true);
+      setError('');
 
       const formData = new FormData();
       formData.append('avatar', file);
 
       const response = await api.post('/profile/avatar', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+          'Content-Type': 'multipart/form-data'
+        }
       });
 
       if (response.data.avatarUrl) {
@@ -118,7 +168,7 @@ const Profile = () => {
       }
     } catch (error) {
       console.error('Error uploading avatar:', error);
-      setError('Failed to upload avatar');
+      setError(error.response?.data?.message || 'Failed to upload avatar');
     } finally {
       setLoading(false);
     }
@@ -146,39 +196,35 @@ const Profile = () => {
 
   return (
     <ProfileContainer>
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+      
       <ProfileHeader>
         <AvatarContainer>
-          <StyledAvatar src={user?.avatarUrl} alt={user?.username} />
+          <StyledAvatar 
+            src={user?.avatarUrl ? `${process.env.REACT_APP_API_URL}${user.avatarUrl}` : undefined} 
+            alt={user?.username || 'User avatar'} 
+          />
           <AvatarUpload>
             <input
               type="file"
               accept="image/*"
               onChange={handleAvatarChange}
-              disabled={loading}
+              id="avatar-upload"
             />
-            {loading ? (
-              <CircularProgress size={24} color="inherit" />
-            ) : (
-              <i className="fas fa-camera" />
-            )}
+            <label htmlFor="avatar-upload">+</label>
           </AvatarUpload>
         </AvatarContainer>
-
         <UserInfo>
-          <Typography variant="h5" gutterBottom>
-            {user?.username || user?.email}
-          </Typography>
-          <Typography color="textSecondary">
-            {user?.accountType} Account
+          <Typography variant="h5">{user?.username}</Typography>
+          <Typography variant="body1" color="textSecondary">
+            {user?.email}
           </Typography>
         </UserInfo>
       </ProfileHeader>
 
       <DashboardCard>
         <form onSubmit={handleSubmit}>
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-          {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
-          
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
               <TextField
@@ -231,6 +277,14 @@ const Profile = () => {
             )}
             <Grid item xs={12}>
               <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => setOpenPasswordDialog(true)}
+                sx={{ mr: 2 }}
+              >
+                Change Password
+              </Button>
+              <Button
                 type="submit"
                 variant="contained"
                 color="primary"
@@ -242,6 +296,55 @@ const Profile = () => {
           </Grid>
         </form>
       </DashboardCard>
+
+      <Dialog open={openPasswordDialog} onClose={() => setOpenPasswordDialog(false)}>
+        <DialogTitle>Change Password</DialogTitle>
+        <DialogContent>
+          <Box component="form" onSubmit={handlePasswordSubmit} sx={{ mt: 2 }}>
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Current Password"
+              type="password"
+              name="currentPassword"
+              value={passwordData.currentPassword}
+              onChange={handlePasswordChange}
+              required
+            />
+            <TextField
+              fullWidth
+              margin="normal"
+              label="New Password"
+              type="password"
+              name="newPassword"
+              value={passwordData.newPassword}
+              onChange={handlePasswordChange}
+              required
+            />
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Confirm New Password"
+              type="password"
+              name="confirmPassword"
+              value={passwordData.confirmPassword}
+              onChange={handlePasswordChange}
+              required
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenPasswordDialog(false)}>Cancel</Button>
+          <Button 
+            onClick={handlePasswordSubmit}
+            variant="contained" 
+            color="primary"
+            disabled={loading}
+          >
+            {loading ? <CircularProgress size={24} /> : 'Change Password'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </ProfileContainer>
   );
 };
