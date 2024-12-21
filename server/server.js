@@ -80,6 +80,9 @@ if (!fs.existsSync(uploadsDir)){
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+// Point to the root-level uploads directory
+const uploadsPath = path.join(__dirname, '../uploads');
+
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '../client/build')));
@@ -89,7 +92,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Serve uploaded files
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(uploadsPath));
 
 // Add this after your routes
 app.use((err, req, res, next) => {

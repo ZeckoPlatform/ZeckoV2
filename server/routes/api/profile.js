@@ -2,16 +2,23 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { authenticateToken } = require('../../middleware/auth');
 const User = require('../../models/userModel');
 const BusinessUser = require('../../models/businessUserModel');
 const VendorUser = require('../../models/vendorUserModel');
 const bcrypt = require('bcrypt');
 
+// Define base upload path - now pointing to root directory
+const uploadPath = path.join(__dirname, '../../../uploads/avatars');
+
+// Create directory if it doesn't exist
+fs.mkdirSync(uploadPath, { recursive: true });
+
 // Configure multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/avatars');  // Make sure this directory exists
+    cb(null, uploadPath);  // Using the root-level uploads directory
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
