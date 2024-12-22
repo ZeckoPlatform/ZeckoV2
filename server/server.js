@@ -78,6 +78,22 @@ app.use('/api', serviceCategoryRoutes);
 app.use('/api', serviceRequestRoutes);
 app.use('/api', messageRoutes);
 
+// Serve static files from the React app in production
+if (process.env.NODE_ENV === 'production') {
+  // Serve static files from the React app
+  app.use(express.static(path.join(__dirname, '../client/build')));
+
+  // Handle React routing, return all requests to React app
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+  });
+}
+
+// Handle 404 for API routes only
+app.use('/api/*', (req, res) => {
+    res.status(404).json({ message: 'Route not found' });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
