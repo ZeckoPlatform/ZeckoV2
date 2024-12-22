@@ -3,14 +3,16 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const { authenticateToken } = require('../../middleware/auth');
 const User = require('../../models/userModel');
 const BusinessUser = require('../../models/businessUserModel');
 const VendorUser = require('../../models/vendorUserModel');
 const bcrypt = require('bcrypt');
+const cloudinary = require('cloudinary').v2;
 
 // Define base upload path - pointing to root directory
-const uploadPath = path.join(__dirname, '../../../../uploads/avatars');
+const uploadPath = path.join(os.tmpdir(), 'uploads/avatars');
 console.log('Upload path:', uploadPath); // Debug log
 
 // Create directory if it doesn't exist
@@ -45,6 +47,13 @@ const upload = multer({
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
   }
+});
+
+// Configure Cloudinary
+cloudinary.config({ 
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 // Update profile
@@ -99,56 +108,29 @@ router.put('/', authenticateToken, async (req, res) => {
 });
 
 // Avatar upload endpoint
-router.post('/avatar', authenticateToken, (req, res, next) => {
-  console.log('Avatar upload endpoint hit');
-  console.log('User from token:', req.user);
-  
-  upload.single('avatar')(req, res, async (err) => {
-    if (err) {
-      console.error('Multer error:', err);
-      return res.status(400).json({ message: err.message });
+router.post('/avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    try {
-      if (!req.file) {
-        console.log('No file received');
-        return res.status(400).json({ message: 'No file uploaded' });
-      }
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'avatars',
+      width: 200,
+      crop: "fill"
+    });
 
-      let Model;
-      console.log('Account type:', req.user.accountType);
-      
-      switch(req.user.accountType) {
-        case 'business':
-          Model = BusinessUser;
-          break;
-        case 'vendor':
-          Model = VendorUser;
-          break;
-        default:
-          Model = User;
-      }
+    // Update user's avatar URL in database
+    await User.findByIdAndUpdate(req.user.userId, {
+      avatarUrl: result.secure_url
+    });
 
-      console.log('Looking for user with ID:', req.user.userId);
-      const user = await Model.findById(req.user.userId);
-      
-      if (!user) {
-        console.log('User not found in database');
-        return res.status(404).json({ message: 'User not found' });
-      }
-
-      // Update avatar URL (remove leading slash since it's relative to uploads directory)
-      const avatarUrl = `uploads/avatars/${req.file.filename}`;
-      console.log('Setting avatar URL:', avatarUrl);
-      user.avatarUrl = avatarUrl;
-      await user.save();
-
-      res.json({ avatarUrl });
-    } catch (error) {
-      console.error('Avatar upload error:', error);
-      res.status(500).json({ message: 'Error uploading avatar', error: error.message });
-    }
-  });
+    res.json({ avatarUrl: result.secure_url });
+  } catch (error) {
+    console.error('Avatar upload error:', error);
+    res.status(500).json({ message: 'Error uploading avatar' });
+  }
 });
 
 // Change password endpoint

@@ -10,6 +10,7 @@ const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const { Server } = require('socket.io');
 const fs = require('fs');
+const os = require('os');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -58,8 +59,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(morgan('combined'));
 
 // Set up static file serving for uploads
-const uploadsPath = path.join(__dirname, '../uploads');
-fs.mkdirSync(uploadsPath, { recursive: true });
+const uploadsPath = path.join(os.tmpdir(), 'uploads');
 app.use('/uploads', express.static(uploadsPath));
 
 // Debug middleware
