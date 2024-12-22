@@ -31,49 +31,26 @@ const Dashboard = () => {
                 <Typography variant="h4" gutterBottom>
                     Welcome back, {user.username}!
                 </Typography>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<AddIcon />}
-                    onClick={() => navigate('/leads/new')}
-                >
-                    Add New Lead
-                </Button>
+                <Box display="flex" gap={2}>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<AddIcon />}
+                        onClick={() => navigate('/leads/new')}
+                    >
+                        Post Lead
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        startIcon={<ViewIcon />}
+                        onClick={() => navigate('/leads')}
+                    >
+                        View Leads
+                    </Button>
+                </Box>
             </Box>
 
             <Grid container spacing={3}>
-                {/* Quick Actions */}
-                <Grid item xs={12}>
-                    <Paper sx={{ p: 3, mb: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Quick Actions
-                        </Typography>
-                        <Box display="flex" gap={2}>
-                            <Button
-                                variant="outlined"
-                                startIcon={<AddIcon />}
-                                onClick={() => navigate('/leads/new')}
-                            >
-                                Post Lead
-                            </Button>
-                            <Button
-                                variant="outlined"
-                                startIcon={<ViewIcon />}
-                                onClick={() => navigate('/leads')}
-                            >
-                                View Leads
-                            </Button>
-                            <Button
-                                variant="outlined"
-                                startIcon={<EditIcon />}
-                                onClick={() => navigate('/profile')}
-                            >
-                                Edit Profile
-                            </Button>
-                        </Box>
-                    </Paper>
-                </Grid>
-
                 {/* Recent Leads */}
                 <Grid item xs={12} md={8}>
                     <Paper sx={{ p: 3 }}>

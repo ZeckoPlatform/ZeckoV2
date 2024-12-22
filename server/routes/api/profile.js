@@ -95,39 +95,48 @@ router.put('/', authenticateToken, async (req, res) => {
 });
 
 // Avatar upload endpoint
-router.post('/avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
+router.post('/avatar', authenticateToken, (req, res, next) => {
+  console.log('Avatar upload endpoint hit');
+  upload.single('avatar')(req, res, async (err) => {
+    if (err) {
+      console.error('Multer error:', err);
+      return res.status(400).json({ message: err.message });
     }
 
-    let Model;
-    switch(req.user.accountType) {
-      case 'business':
-        Model = BusinessUser;
-        break;
-      case 'vendor':
-        Model = VendorUser;
-        break;
-      default:
-        Model = User;
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+
+      let Model;
+      switch(req.user.accountType) {
+        case 'business':
+          Model = BusinessUser;
+          break;
+        case 'vendor':
+          Model = VendorUser;
+          break;
+        default:
+          Model = User;
+      }
+
+      const user = await Model.findById(req.user.userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Update avatar URL with absolute path
+      const avatarUrl = `uploads/avatars/${req.file.filename}`;
+      console.log('Avatar URL:', avatarUrl);
+      user.avatarUrl = avatarUrl;
+      await user.save();
+
+      res.json({ avatarUrl });
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      res.status(500).json({ message: 'Error uploading avatar' });
     }
-
-    const user = await Model.findById(req.user.userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Update avatar URL
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
-    user.avatarUrl = avatarUrl;
-    await user.save();
-
-    res.json({ avatarUrl });
-  } catch (error) {
-    console.error('Avatar upload error:', error);
-    res.status(500).json({ message: 'Error uploading avatar' });
-  }
+  });
 });
 
 // Change password endpoint
