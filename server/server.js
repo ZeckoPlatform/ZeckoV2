@@ -57,63 +57,31 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(morgan('combined'));
 
-// Add this before your routes
-app.use('/api', (req, res, next) => {
-    res.header('Content-Type', 'application/json');
-    console.log(`${req.method} ${req.path}`, req.body);
-    next();
-});
+// Set up static file serving for uploads
+const uploadsPath = path.join(__dirname, '../uploads');
+fs.mkdirSync(uploadsPath, { recursive: true });
+app.use('/uploads', express.static(uploadsPath));
 
-// Add this before your route mounting
+// Debug middleware
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.path}`, req.body);
   next();
 });
 
-// Mount routes with debug
-app.use('/api/profile', (req, res, next) => {
-  console.log('Profile route hit:', req.path);
-  profileRoutes(req, res, next);
-});
-
 // Mount routes
+app.use('/api/profile', profileRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/profile', profileRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api', serviceCategoryRoutes);
 app.use('/api', serviceRequestRoutes);
 app.use('/api', messageRoutes);
 
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, 'uploads/avatars');
-if (!fs.existsSync(uploadsDir)){
-    fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Point to the root-level uploads directory
-const uploadsPath = path.join(__dirname, '../uploads');
-
-// Serve static files in production
-if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, '../client/build')));
-    app.get('*', (req, res) => {
-        res.sendFile(path.join(__dirname, '../client/build/index.html'));
-    });
-}
-
-// Serve uploaded files
-app.use('/uploads', express.static(uploadsPath));
-
-// Add this after your routes
+// Error handling middleware
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({
-        error: process.env.NODE_ENV === 'production' 
-            ? 'Internal Server Error' 
-            : err.message
-    });
+  console.error('Error:', err);
+  res.status(500).json({ message: err.message });
 });
 
 // Handle 404

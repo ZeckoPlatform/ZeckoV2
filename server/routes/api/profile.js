@@ -9,8 +9,9 @@ const BusinessUser = require('../../models/businessUserModel');
 const VendorUser = require('../../models/vendorUserModel');
 const bcrypt = require('bcrypt');
 
-// Define base upload path - now pointing to root directory
-const uploadPath = path.join(__dirname, '../../../uploads/avatars');
+// Define base upload path - pointing to root directory
+const uploadPath = path.join(__dirname, '../../../../uploads/avatars');
+console.log('Upload path:', uploadPath); // Debug log
 
 // Create directory if it doesn't exist
 fs.mkdirSync(uploadPath, { recursive: true });
@@ -18,11 +19,14 @@ fs.mkdirSync(uploadPath, { recursive: true });
 // Configure multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadPath);  // Using the root-level uploads directory
+    console.log('Saving file to:', uploadPath); // Debug log
+    cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'avatar-' + uniqueSuffix + path.extname(file.originalname));
+    const filename = 'avatar-' + uniqueSuffix + path.extname(file.originalname);
+    console.log('Generated filename:', filename); // Debug log
+    cb(null, filename);
   }
 });
 
@@ -97,6 +101,8 @@ router.put('/', authenticateToken, async (req, res) => {
 // Avatar upload endpoint
 router.post('/avatar', authenticateToken, (req, res, next) => {
   console.log('Avatar upload endpoint hit');
+  console.log('User from token:', req.user);
+  
   upload.single('avatar')(req, res, async (err) => {
     if (err) {
       console.error('Multer error:', err);
@@ -105,10 +111,13 @@ router.post('/avatar', authenticateToken, (req, res, next) => {
 
     try {
       if (!req.file) {
+        console.log('No file received');
         return res.status(400).json({ message: 'No file uploaded' });
       }
 
       let Model;
+      console.log('Account type:', req.user.accountType);
+      
       switch(req.user.accountType) {
         case 'business':
           Model = BusinessUser;
@@ -120,21 +129,24 @@ router.post('/avatar', authenticateToken, (req, res, next) => {
           Model = User;
       }
 
+      console.log('Looking for user with ID:', req.user.userId);
       const user = await Model.findById(req.user.userId);
+      
       if (!user) {
+        console.log('User not found in database');
         return res.status(404).json({ message: 'User not found' });
       }
 
-      // Update avatar URL with absolute path
+      // Update avatar URL (remove leading slash since it's relative to uploads directory)
       const avatarUrl = `uploads/avatars/${req.file.filename}`;
-      console.log('Avatar URL:', avatarUrl);
+      console.log('Setting avatar URL:', avatarUrl);
       user.avatarUrl = avatarUrl;
       await user.save();
 
       res.json({ avatarUrl });
     } catch (error) {
       console.error('Avatar upload error:', error);
-      res.status(500).json({ message: 'Error uploading avatar' });
+      res.status(500).json({ message: 'Error uploading avatar', error: error.message });
     }
   });
 });
