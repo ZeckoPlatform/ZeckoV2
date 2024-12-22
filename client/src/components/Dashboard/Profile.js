@@ -158,8 +158,9 @@ const Profile = () => {
 
       const response = await api.post('/profile/avatar', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+          'Content-Type': 'multipart/form-data',
+        },
+        transformRequest: [(data) => data],
       });
 
       if (response.data.avatarUrl) {
@@ -202,7 +203,7 @@ const Profile = () => {
       <ProfileHeader>
         <AvatarContainer>
           <StyledAvatar 
-            src={user?.avatarUrl ? `${process.env.REACT_APP_API_URL}${user.avatarUrl}` : undefined} 
+            src={user?.avatarUrl || undefined} 
             alt={user?.username || 'User avatar'} 
           />
           <AvatarUpload>
