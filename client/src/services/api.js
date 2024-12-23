@@ -3,24 +3,26 @@ import axios from 'axios';
 const api = axios.create({
     baseURL: process.env.NODE_ENV === 'production' 
         ? 'https://zeckov2-deceb43992ac.herokuapp.com/api'
-        : '/api',
-    headers: {
-        'Content-Type': 'application/json'
-    }
+        : '/api'
 });
 
-// Add request interceptor to add token and handle FormData
+// Add request interceptor
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
         if (token) {
-            config.headers = config.headers || {};
-            config.headers.Authorization = `Bearer ${token}`;
+            config.headers = {
+                ...config.headers,
+                Authorization: `Bearer ${token}`
+            };
         }
 
-        // Don't modify FormData content-type
-        if (config.data instanceof FormData) {
-            config.headers['Content-Type'] = 'multipart/form-data';
+        // Only set Content-Type if it's not FormData
+        if (!(config.data instanceof FormData)) {
+            config.headers = {
+                ...config.headers,
+                'Content-Type': 'application/json'
+            };
         }
 
         return config;

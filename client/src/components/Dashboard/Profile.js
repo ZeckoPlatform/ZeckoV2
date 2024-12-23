@@ -145,48 +145,55 @@ const Profile = () => {
     }
   };
 
-  const handleAvatarChange = (event) => {
-    const fileInput = event.target;
-    const file = fileInput.files?.[0];
-    
-    if (!file) return;
+  const handleAvatarChange = async (event) => {
+    try {
+      const file = event.target.files?.[0];
+      if (!file) {
+        console.log('No file selected');
+        return;
+      }
 
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File size must be less than 5MB');
-      fileInput.value = '';
-      return;
-    }
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('File size must be less than 5MB');
+        return;
+      }
 
-    // Check file type
-    if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
-      setError('File must be an image (JPEG, PNG, or GIF)');
-      fileInput.value = '';
-      return;
-    }
+      // Check file type
+      if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
+        setError('File must be an image (JPEG, PNG, or GIF)');
+        return;
+      }
 
-    setLoading(true);
-    setError('');
+      setLoading(true);
+      setError('');
 
-    const formData = new FormData();
-    formData.append('avatar', file);
+      const formData = new FormData();
+      formData.append('avatar', file);
 
-    api.post('/profile/avatar', formData)
-      .then(response => {
-        console.log('Upload response:', response.data); // Debug log
-        if (response.data.avatarUrl) {
-          updateUser({ ...user, avatarUrl: response.data.avatarUrl });
-          setSuccess('Avatar updated successfully!');
+      // Important: Set the correct headers
+      const config = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
-      })
-      .catch(error => {
-        console.error('Error uploading avatar:', error);
-        setError(error.response?.data?.message || 'Failed to upload avatar');
-      })
-      .finally(() => {
-        setLoading(false);
-        fileInput.value = '';
-      });
+      };
+
+      const response = await api.post('/profile/avatar', formData, config);
+      console.log('Upload response:', response.data);
+
+      if (response.data.avatarUrl) {
+        updateUser({ ...user, avatarUrl: response.data.avatarUrl });
+        setSuccess('Avatar updated successfully!');
+      }
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      setError(error.response?.data?.message || 'Failed to upload avatar');
+    } finally {
+      setLoading(false);
+      // Reset the file input
+      event.target.value = '';
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -227,9 +234,20 @@ const Profile = () => {
               onChange={handleAvatarChange}
               id="avatar-upload"
               disabled={loading}
+              style={{ display: 'none' }}
             />
-            <label htmlFor="avatar-upload">
-              {loading ? '...' : '+'}
+            <label 
+              htmlFor="avatar-upload"
+              style={{ 
+                cursor: 'pointer',
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              {loading ? <CircularProgress size={20} color="inherit" /> : '+'}
             </label>
           </AvatarUpload>
         </AvatarContainer>
