@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import styled from 'styled-components';
 import DashboardCard from './common/DashboardCard';
+import axios from 'axios';
 
 const ProfileContainer = styled.div`
   display: grid;
@@ -145,55 +146,41 @@ const Profile = () => {
     }
   };
 
-  const handleAvatarChange = async (event) => {
-    try {
-      const file = event.target.files?.[0];
-      if (!file) {
-        console.log('No file selected');
-        return;
-      }
-
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setError('File size must be less than 5MB');
-        return;
-      }
-
-      // Check file type
-      if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
-        setError('File must be an image (JPEG, PNG, or GIF)');
-        return;
-      }
-
-      setLoading(true);
-      setError('');
-
-      const formData = new FormData();
-      formData.append('avatar', file);
-
-      // Important: Set the correct headers
-      const config = {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      };
-
-      const response = await api.post('/profile/avatar', formData, config);
-      console.log('Upload response:', response.data);
-
-      if (response.data.avatarUrl) {
-        updateUser({ ...user, avatarUrl: response.data.avatarUrl });
-        setSuccess('Avatar updated successfully!');
-      }
-    } catch (error) {
-      console.error('Error uploading avatar:', error);
-      setError(error.response?.data?.message || 'Failed to upload avatar');
-    } finally {
-      setLoading(false);
-      // Reset the file input
-      event.target.value = '';
+  const handleAvatarChange = function(event) {
+    event.preventDefault();
+    
+    const file = event.target?.files?.[0];
+    console.log('File selected:', file);
+    
+    if (!file) {
+      console.log('No file selected');
+      return;
     }
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    setLoading(true);
+    setError('');
+
+    api.post('/profile/avatar', formData)
+      .then(response => {
+        console.log('Upload response:', response);
+        if (response.data.avatarUrl) {
+          updateUser({ ...user, avatarUrl: response.data.avatarUrl });
+          setSuccess('Avatar updated successfully!');
+        }
+      })
+      .catch(error => {
+        console.error('Upload error:', error);
+        setError('Failed to upload avatar');
+      })
+      .finally(() => {
+        setLoading(false);
+        if (event.target) {
+          event.target.value = '';
+        }
+      });
   };
 
   const handleSubmit = async (e) => {
@@ -230,11 +217,10 @@ const Profile = () => {
           <AvatarUpload>
             <input
               type="file"
-              accept="image/jpeg,image/png,image/gif"
+              accept="image/*"
               onChange={handleAvatarChange}
               id="avatar-upload"
               disabled={loading}
-              style={{ display: 'none' }}
             />
             <label 
               htmlFor="avatar-upload"
