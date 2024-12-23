@@ -146,8 +146,24 @@ const Profile = () => {
   };
 
   const handleAvatarChange = (event) => {
-    const file = event.target.files?.[0];
+    const fileInput = event.target;
+    const file = fileInput.files?.[0];
+    
     if (!file) return;
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File size must be less than 5MB');
+      fileInput.value = '';
+      return;
+    }
+
+    // Check file type
+    if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
+      setError('File must be an image (JPEG, PNG, or GIF)');
+      fileInput.value = '';
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -155,12 +171,9 @@ const Profile = () => {
     const formData = new FormData();
     formData.append('avatar', file);
 
-    api.post('/profile/avatar', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      }
-    })
+    api.post('/profile/avatar', formData)
       .then(response => {
+        console.log('Upload response:', response.data); // Debug log
         if (response.data.avatarUrl) {
           updateUser({ ...user, avatarUrl: response.data.avatarUrl });
           setSuccess('Avatar updated successfully!');
@@ -172,6 +185,7 @@ const Profile = () => {
       })
       .finally(() => {
         setLoading(false);
+        fileInput.value = '';
       });
   };
 
@@ -203,17 +217,20 @@ const Profile = () => {
       <ProfileHeader>
         <AvatarContainer>
           <StyledAvatar 
-            src={user?.avatarUrl || undefined} 
+            src={user?.avatarUrl} 
             alt={user?.username || 'User avatar'} 
           />
           <AvatarUpload>
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/gif"
               onChange={handleAvatarChange}
               id="avatar-upload"
+              disabled={loading}
             />
-            <label htmlFor="avatar-upload">+</label>
+            <label htmlFor="avatar-upload">
+              {loading ? '...' : '+'}
+            </label>
           </AvatarUpload>
         </AvatarContainer>
         <UserInfo>

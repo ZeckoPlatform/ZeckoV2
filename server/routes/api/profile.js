@@ -1,59 +1,36 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 const { authenticateToken } = require('../../middleware/auth');
 const User = require('../../models/userModel');
 const BusinessUser = require('../../models/businessUserModel');
 const VendorUser = require('../../models/vendorUserModel');
 const bcrypt = require('bcrypt');
-const cloudinary = require('cloudinary').v2;
-
-// Define base upload path - pointing to root directory
-const uploadPath = path.join(os.tmpdir(), 'uploads/avatars');
-console.log('Upload path:', uploadPath); // Debug log
-
-// Create directory if it doesn't exist
-fs.mkdirSync(uploadPath, { recursive: true });
-
-// Configure multer storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    console.log('Saving file to:', uploadPath); // Debug log
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const filename = 'avatar-' + uniqueSuffix + path.extname(file.originalname);
-    console.log('Generated filename:', filename); // Debug log
-    cb(null, filename);
-  }
-});
-
-// File filter
-const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image/')) {
-    cb(null, true);
-  } else {
-    cb(new Error('Not an image! Please upload an image file.'), false);
-  }
-};
-
-const upload = multer({ 
-  storage: storage,
-  fileFilter: fileFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
-  }
-});
 
 // Configure Cloudinary
 cloudinary.config({ 
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Configure Cloudinary storage
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'avatars',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
+    transformation: [{ width: 200, height: 200, crop: 'fill' }]
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
 });
 
 // Update profile
@@ -109,24 +86,36 @@ router.put('/', authenticateToken, async (req, res) => {
 
 // Avatar upload endpoint
 router.post('/avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
+  console.log('Avatar upload endpoint hit');
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    // Upload to Cloudinary
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: 'avatars',
-      width: 200,
-      crop: "fill"
+    console.log('File uploaded to Cloudinary:', req.file); // Debug log
+
+    let Model;
+    switch(req.user.accountType) {
+      case 'business':
+        Model = BusinessUser;
+        break;
+      case 'vendor':
+        Model = VendorUser;
+        break;
+      default:
+        Model = User;
+    }
+
+    // The URL is now in req.file.path
+    const avatarUrl = req.file.path;
+
+    await Model.findByIdAndUpdate(req.user.userId, { avatarUrl });
+
+    res.json({ 
+      message: 'Avatar uploaded successfully',
+      avatarUrl: avatarUrl 
     });
 
-    // Update user's avatar URL in database
-    await User.findByIdAndUpdate(req.user.userId, {
-      avatarUrl: result.secure_url
-    });
-
-    res.json({ avatarUrl: result.secure_url });
   } catch (error) {
     console.error('Avatar upload error:', error);
     res.status(500).json({ message: 'Error uploading avatar' });
