@@ -101,11 +101,10 @@ const AvatarDisplay = () => {
   };
 
   return (
-    <Avatar
+    <StyledAvatar
       src={(!imgError && user?.avatarUrl) ? user.avatarUrl : defaultAvatar}
       alt={user?.username || 'User avatar'}
       onError={handleImageError}
-      sx={{ width: 120, height: 120 }}
     />
   );
 };
@@ -129,6 +128,17 @@ const Profile = () => {
     phone: user?.phone || '',
     businessName: user?.businessName || ''
   });
+
+  useEffect(() => {
+    // Update form data when user data changes
+    setFormData({
+      username: user?.username || '',
+      email: user?.email || '',
+      address: user?.address || '',
+      phone: user?.phone || '',
+      businessName: user?.businessName || ''
+    });
+  }, [user]); // Only run when user object changes
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

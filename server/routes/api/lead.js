@@ -138,4 +138,25 @@ router.post('/:id/proposals', authenticateToken, async (req, res) => {
     }
 });
 
+// Get latest leads for carousel
+router.get('/latest', async (req, res) => {
+    try {
+        const latestLeads = await Lead.find({
+            status: 'active',
+            visibility: 'public'
+        })
+        .populate('category')
+        .populate('client', 'username businessName')
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .select('title description budget location createdAt category client')
+        .lean();
+
+        res.json(latestLeads);
+    } catch (err) {
+        console.error('Error fetching latest leads:', err);
+        res.status(500).json({ message: 'Error fetching latest leads' });
+    }
+});
+
 module.exports = router;

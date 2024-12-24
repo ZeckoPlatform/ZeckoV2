@@ -15,6 +15,10 @@ router.use((req, res, next) => {
     if (!req.timedout) next();
 });
 
+const formatAccountType = (type) => {
+  return type.charAt(0).toUpperCase() + type.slice(1);
+};
+
 router.get('/verify', authenticateToken, async (req, res) => {
   try {
     console.log('Verify endpoint called with user:', req.user);
@@ -39,17 +43,21 @@ router.get('/verify', authenticateToken, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Build response object with common fields
+    // Build response object with ALL fields
     const userData = {
       id: user._id,
       userId: user._id,
       email: user.email,
       username: user.username || user.email,
-      accountType: req.user.accountType,
+      accountType: formatAccountType(req.user.accountType),
       role: user.role,
       createdAt: user.createdAt,
-      avatarUrl: user.avatarUrl || null,  // Ensure avatarUrl is included
-      // ... other fields ...
+      avatarUrl: user.avatarUrl || null,
+      address: user.address || '',
+      phone: user.phone || '',
+      businessName: ['business', 'vendor'].includes(req.user.accountType) ? user.businessName : '',
+      vendorCategory: req.user.accountType === 'vendor' ? user.vendorCategory : undefined,
+      serviceCategories: req.user.accountType === 'business' ? user.serviceCategories : undefined
     };
 
     console.log('Verify response:', userData);
@@ -110,6 +118,9 @@ router.post('/login', async (req, res) => {
     user.activity.loginCount = (user.activity.loginCount || 0) + 1;
     await user.save();
 
+    // Get fresh user data without password
+    const freshUser = await userModel.findById(user._id).select('-password');
+
     const token = jwt.sign(
       { 
         userId: user._id,
@@ -120,7 +131,6 @@ router.post('/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    // Log the response data for debugging
     console.log('Login successful:', {
       userId: user._id,
       accountType,
@@ -130,14 +140,17 @@ router.post('/login', async (req, res) => {
     res.json({
       token,
       user: {
-        id: user._id,
-        email: user.email,
-        username: user.username,
-        accountType,
-        role: user.role,
-        businessName: ['business', 'vendor'].includes(accountType) ? user.businessName : undefined,
-        vendorCategory: accountType === 'vendor' ? user.vendorCategory : undefined,
-        serviceCategories: accountType === 'business' ? user.serviceCategories : undefined
+        id: freshUser._id,
+        email: freshUser.email,
+        username: freshUser.username,
+        accountType: formatAccountType(accountType),
+        role: freshUser.role,
+        avatarUrl: freshUser.avatarUrl,
+        address: freshUser.address || '',
+        phone: freshUser.phone || '',
+        businessName: ['business', 'vendor'].includes(accountType) ? freshUser.businessName : '',
+        vendorCategory: accountType === 'vendor' ? freshUser.vendorCategory : undefined,
+        serviceCategories: accountType === 'business' ? freshUser.serviceCategories : undefined
       }
     });
   } catch (error) {

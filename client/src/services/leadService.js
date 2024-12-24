@@ -1,13 +1,13 @@
 import { api } from '../contexts/AuthContext';
 
-export const getUserJobs = async (userId) => {
+export const getUserLeads = async (userId) => {
   try {
-    const response = await api.get(`/jobs/user/${userId}`);
+    const response = await api.get(`/leads/user/${userId}`);
     return response.data;
   } catch (error) {
     if (error.isTimeout) {
-      console.error('Job fetch timeout:', error);
-      return { jobs: [], error: 'Request timed out. Please try again.' };
+      console.error('Lead fetch timeout:', error);
+      return { leads: [], error: 'Request timed out. Please try again.' };
     }
     throw error;
   }

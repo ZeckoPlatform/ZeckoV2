@@ -4,6 +4,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { fetchData, endpoints } from '../../services/api';
 import styled from 'styled-components';
+import { Avatar, Typography, Box } from '@mui/material';
+import LeadCard from '../LeadCard';
 
 const DashboardContainer = styled.div`
   padding: 20px;
@@ -95,15 +97,58 @@ const ProductCard = styled.div`
   background: white;
 `;
 
+const ProfileSummarySection = styled(Section)`
+  padding: 20px;
+  margin-bottom: 20px;
+`;
+
+const ProfileSummary = () => {
+  const { user } = useAuth();
+  const [imgError, setImgError] = useState(false);
+  const defaultAvatar = '/default-avatar.png';
+
+  return (
+    <ProfileSummarySection>
+      <div className="section-header">
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+          <Avatar
+            src={(!imgError && user?.avatarUrl) ? user.avatarUrl : defaultAvatar}
+            onError={() => setImgError(true)}
+            sx={{ 
+              width: 50, 
+              height: 50,
+              border: '2px solid #f0f0f0'
+            }}
+          />
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="h6" sx={{ mb: 0.5 }}>
+              {user?.username || 'User'}
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              Account Type: {user?.accountType || 'Regular'}
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              {user?.email}
+            </Typography>
+          </Box>
+        </Box>
+      </div>
+    </ProfileSummarySection>
+  );
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { showNotification } = useNotification();
   const [data, setData] = useState({
     jobs: [],
     products: [],
     orders: [],
     business: null,
     addresses: [],
-    cart: null
+    cart: null,
+    leads: []
   });
   const [loading, setLoading] = useState({
     jobs: true,
@@ -111,10 +156,9 @@ const Dashboard = () => {
     orders: true,
     business: true,
     addresses: true,
-    cart: true
+    cart: true,
+    leads: true
   });
-  const { user } = useAuth();
-  const { showNotification } = useNotification();
 
   const loadData = useCallback(async (key, endpoint) => {
     setLoading(prev => ({ ...prev, [key]: true }));
@@ -134,6 +178,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (user?._id) {
+      loadData('leads', endpoints.leads.list);
       loadData('jobs', endpoints.jobs.user(user._id));
       loadData('products', endpoints.products.list({}));
       loadData('orders', endpoints.orders.user);
@@ -153,6 +198,29 @@ const Dashboard = () => {
 
   return (
     <DashboardContainer>
+      <ProfileSummary />
+      <ActionButton onClick={() => navigate('/post-lead')}>
+        Post a Lead
+      </ActionButton>
+
+      {/* Recent Leads Section */}
+      <Section>
+        <div className="section-header">
+          <h2>Recent Leads</h2>
+        </div>
+        {loading.leads ? (
+          <p>Loading leads...</p>
+        ) : data.leads?.length > 0 ? (
+          <JobsList>
+            {data.leads.map(lead => (
+              <LeadCard key={lead._id} lead={lead} />
+            ))}
+          </JobsList>
+        ) : (
+          <p>No leads found</p>
+        )}
+      </Section>
+
       {/* Jobs Section */}
       <Section>
         <div className="section-header">

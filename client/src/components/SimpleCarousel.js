@@ -1,130 +1,142 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Paper, Button, MobileStepper } from '@mui/material';
+import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
+import SwipeableViews from 'react-swipeable-views';
+import { autoPlay } from 'react-swipeable-views-utils';
 import styled from 'styled-components';
-import { ChevronLeft, ChevronRight } from 'react-feather';
-import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { fetchData, endpoints } from '../services/api';
 
-const CarouselContainer = styled.div`
+const AutoPlaySwipeableViews = autoPlay(SwipeableViews);
+
+const CarouselContainer = styled(Paper)`
+  max-width: 800px;
+  margin: 0 auto;
   position: relative;
-  padding: 20px;
-  background: white;
+  overflow: hidden;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 `;
 
-const ItemCard = styled(motion.div)`
-  background: white;
+const SlideContent = styled.div`
   padding: 20px;
-  border-radius: 8px;
-  text-decoration: none;
-  color: inherit;
-`;
-
-const StyledLink = styled(Link)`
-  text-decoration: none;
-  color: inherit;
-`;
-
-const Title = styled.h3`
-  color: ${({ theme }) => theme.colors.primary};
-  margin-bottom: 10px;
-`;
-
-const Description = styled.p`
-  color: #666;
-`;
-
-const Button = styled.button`
-  background: ${({ theme }) => theme.colors.primary};
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  margin: 0 5px;
-  transition: all 0.2s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-  }
-`;
-
-const Navigation = styled.div`
+  min-height: 200px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: space-between;
+`;
+
+const LeadTitle = styled.h3`
+  margin: 0 0 10px;
+  color: ${({ theme }) => theme.colors?.primary?.main || '#2962ff'};
+`;
+
+const LeadDescription = styled.p`
+  margin: 0 0 15px;
+  color: ${({ theme }) => theme.colors?.text?.secondary || '#666'};
+`;
+
+const LeadMeta = styled.div`
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  margin-top: 20px;
+  color: ${({ theme }) => theme.colors?.text?.secondary || '#666'};
+  font-size: 0.9em;
 `;
 
-const PageIndicator = styled.div`
-  margin: 10px 0;
-  text-align: center;
-  color: ${({ theme }) => theme.colors.text};
-`;
+const SimpleCarousel = () => {
+  const [activeStep, setActiveStep] = useState(0);
+  const [leads, setLeads] = useState([]);
+  const navigate = useNavigate();
 
-const SimpleCarousel = ({ items = [], type = 'item' }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // Fetch the latest leads
+  useEffect(() => {
+    const fetchLatestLeads = async () => {
+      try {
+        const response = await fetchData(endpoints.leads.latest);
+        setLeads(response.data);
+      } catch (error) {
+        console.error('Error fetching latest leads:', error);
+      }
+    };
 
-  if (!items?.length) {
-    return (
-      <CarouselContainer>
-        <Description>No {type}s available at the moment.</Description>
-      </CarouselContainer>
-    );
-  }
-
-  const currentItem = items[currentIndex];
-
-  const handlePrevious = () => {
-    setCurrentIndex(current => 
-      current > 0 ? current - 1 : items.length - 1
-    );
-  };
+    fetchLatestLeads();
+    // Refresh leads every 5 minutes
+    const interval = setInterval(fetchLatestLeads, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleNext = () => {
-    setCurrentIndex(current => 
-      current < items.length - 1 ? current + 1 : 0
-    );
+    setActiveStep((prevStep) => (prevStep + 1) % leads.length);
   };
 
+  const handleBack = () => {
+    setActiveStep((prevStep) => (prevStep - 1 + leads.length) % leads.length);
+  };
+
+  const handleStepChange = (step) => {
+    setActiveStep(step);
+  };
+
+  const handleViewLead = (leadId) => {
+    navigate(`/leads/${leadId}`);
+  };
+
+  if (leads.length === 0) {
+    return null; // Or a loading state
+  }
+
   return (
-    <CarouselContainer>
-      <AnimatePresence mode='wait'>
-        <ItemCard
-          key={currentIndex}
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -50 }}
-          transition={{ duration: 0.3 }}
-        >
-          <StyledLink to={`/${type}s/${currentItem._id}`}>
-            <Title>{currentItem.name || currentItem.title}</Title>
-            <Description>
-              {currentItem.description || `${type} details`}
-            </Description>
-          </StyledLink>
-        </ItemCard>
-      </AnimatePresence>
-
-      <Navigation>
-        <Button onClick={handlePrevious} disabled={items.length <= 1}>
-          <ChevronLeft size={16} />
-        </Button>
-        <Button onClick={handleNext} disabled={items.length <= 1}>
-          <ChevronRight size={16} />
-        </Button>
-      </Navigation>
-
-      <PageIndicator>
-        {currentIndex + 1} / {items.length}
-      </PageIndicator>
+    <CarouselContainer elevation={3}>
+      <AutoPlaySwipeableViews
+        axis="x"
+        index={activeStep}
+        onChangeIndex={handleStepChange}
+        enableMouseEvents
+        interval={6000}
+      >
+        {leads.map((lead, index) => (
+          <div key={lead._id}>
+            {Math.abs(activeStep - index) <= 2 ? (
+              <SlideContent>
+                <div>
+                  <LeadTitle>{lead.title}</LeadTitle>
+                  <LeadDescription>
+                    {lead.description.substring(0, 150)}
+                    {lead.description.length > 150 ? '...' : ''}
+                  </LeadDescription>
+                  <LeadMeta>
+                    <span>Budget: ${lead.budget}</span>
+                    <span>Posted: {new Date(lead.createdAt).toLocaleDateString()}</span>
+                  </LeadMeta>
+                </div>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => handleViewLead(lead._id)}
+                  sx={{ alignSelf: 'flex-end', mt: 2 }}
+                >
+                  View Details
+                </Button>
+              </SlideContent>
+            ) : null}
+          </div>
+        ))}
+      </AutoPlaySwipeableViews>
+      <MobileStepper
+        steps={leads.length}
+        position="static"
+        activeStep={activeStep}
+        nextButton={
+          <Button size="small" onClick={handleNext}>
+            Next <KeyboardArrowRight />
+          </Button>
+        }
+        backButton={
+          <Button size="small" onClick={handleBack}>
+            <KeyboardArrowLeft /> Back
+          </Button>
+        }
+      />
     </CarouselContainer>
   );
 };
