@@ -107,6 +107,22 @@ const ProfileSummary = () => {
   const [imgError, setImgError] = useState(false);
   const defaultAvatar = '/default-avatar.png';
 
+  // Normalize account type
+  const normalizeAccountType = (type) => {
+    if (!type) return 'Regular';
+    // Convert to lowercase for consistent comparison
+    const normalizedType = type.toLowerCase();
+    switch (normalizedType) {
+      case 'regular':
+      case 'vendor':
+      case 'admin':
+        // Capitalize first letter
+        return normalizedType.charAt(0).toUpperCase() + normalizedType.slice(1);
+      default:
+        return 'Regular';
+    }
+  };
+
   return (
     <ProfileSummarySection>
       <div className="section-header">
@@ -122,10 +138,10 @@ const ProfileSummary = () => {
           />
           <Box sx={{ flex: 1 }}>
             <Typography variant="h6" sx={{ mb: 0.5 }}>
-              {user?.username || 'User'}
+              {user?.name || user?.username?.split('@')[0] || 'User'}
             </Typography>
             <Typography variant="body2" color="textSecondary">
-              Account Type: {user?.accountType || 'Regular'}
+              Account Type: {normalizeAccountType(user?.accountType)}
             </Typography>
             <Typography variant="body2" color="textSecondary">
               {user?.email}

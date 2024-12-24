@@ -49,9 +49,20 @@ const StatInfo = styled.div`
 const UserDashboard = () => {
   const { user } = useAuth();
 
+  // Format display name
+  const getDisplayName = () => {
+    if (user?.name) return user.name;
+    if (user?.username) {
+      // Remove email domain if username is an email
+      return user.username.split('@')[0];
+    }
+    if (user?.firstName) return user.firstName;
+    return 'User';
+  };
+
   return (
     <DashboardContainer>
-      <h1>Welcome, {user?.firstName || 'User'}!</h1>
+      <h1>Welcome back, {getDisplayName()}!</h1>
       
       <DashboardGrid>
         <StatsCard

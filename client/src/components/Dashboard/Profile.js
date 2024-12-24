@@ -50,6 +50,14 @@ const StyledAvatar = styled(Avatar)`
   width: 100%;
   height: 100%;
   border: 4px solid ${({ theme }) => theme.colors?.primary?.main || '#4CAF50'};
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
 `;
 
 const AvatarUpload = styled.div`
@@ -87,24 +95,18 @@ const AvatarDisplay = () => {
   const [imgError, setImgError] = useState(false);
   const defaultAvatar = '/default-avatar.png';
 
-  useEffect(() => {
-    // Reset error state when user or avatarUrl changes
-    if (user?.avatarUrl) {
-      setImgError(false);
-    }
-  }, [user?.avatarUrl]);
-
-  const handleImageError = (e) => {
-    console.log('Avatar failed to load:', user?.avatarUrl);
-    setImgError(true);
-    e.currentTarget.src = defaultAvatar;
-  };
-
   return (
     <StyledAvatar
       src={(!imgError && user?.avatarUrl) ? user.avatarUrl : defaultAvatar}
-      alt={user?.username || 'User avatar'}
-      onError={handleImageError}
+      onError={() => setImgError(true)}
+      sx={{ 
+        width: 120,
+        height: 120,
+        border: '4px solid',
+        borderColor: 'primary.main',
+        borderRadius: '50%',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+      }}
     />
   );
 };
