@@ -56,7 +56,8 @@ const AvatarUpload = styled.div`
   position: absolute;
   bottom: 0;
   right: 0;
-  background: ${({ theme }) => theme.colors?.primary?.main || '#4CAF50'};
+  background: ${({ theme, disabled }) => 
+    disabled ? theme.colors?.grey?.main || '#9e9e9e' : theme.colors?.primary?.main || '#4CAF50'};
   color: white;
   width: 36px;
   height: 36px;
@@ -64,11 +65,12 @@ const AvatarUpload = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: ${({ disabled }) => disabled ? 'not-allowed' : 'pointer'};
   transition: all 0.2s ease;
+  opacity: ${({ disabled }) => disabled ? 0.7 : 1};
 
   &:hover {
-    transform: scale(1.1);
+    transform: ${({ disabled }) => disabled ? 'none' : 'scale(1.1)'};
   }
 
   input {
@@ -146,39 +148,38 @@ const Profile = () => {
     }
   };
 
-  const handleAvatarChange = (event) => {
+  const handleAvatarChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setLoading(true);
-    setError('');
+    try {
+      setLoading(true);
+      setError('');
 
-    const formData = new FormData();
-    formData.append('avatar', file);
+      const formData = new FormData();
+      formData.append('avatar', file);
 
-    api.post('/profile/avatar', formData)
-      .then(response => {
-        console.log('Server response:', response.data);
-        if (response.data.avatarUrl) {
-          updateUser({
-            ...user,
-            avatarUrl: response.data.avatarUrl
-          });
-          setSuccess('Avatar updated successfully!');
-        } else {
-          throw new Error('No avatar URL in response');
-        }
-      })
-      .catch(error => {
-        console.error('Avatar upload error:', error);
-        setError(error.response?.data?.message || 'Failed to upload avatar');
-      })
-      .finally(() => {
-        setLoading(false);
-        if (event.target) {
-          event.target.value = '';
-        }
-      });
+      const response = await api.post('/profile/avatar', formData);
+      console.log('Server response:', response.data);
+
+      if (response.data.avatarUrl) {
+        updateUser(prevUser => ({
+          ...prevUser,
+          avatarUrl: response.data.avatarUrl
+        }));
+        setSuccess('Avatar updated successfully!');
+      } else {
+        throw new Error('No avatar URL in response');
+      }
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      setError(error.response?.data?.message || 'Failed to upload avatar');
+    } finally {
+      setLoading(false);
+      if (event.target) {
+        event.target.value = '';
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -190,12 +191,15 @@ const Profile = () => {
       const response = await api.put('/profile', formData);
       
       if (response.data) {
-        updateUser({ ...user, ...response.data });
+        updateUser(prevUser => ({
+          ...prevUser,
+          ...response.data
+        }));
         setSuccess('Profile updated successfully!');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      setError('Failed to update profile');
+      setError(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setLoading(false);
     }
@@ -209,12 +213,12 @@ const Profile = () => {
       <ProfileHeader>
         <AvatarContainer>
           <StyledAvatar 
-            src={user?.avatarUrl || ''}
+            src={user?.avatarUrl || '/default-avatar.png'}
             alt={user?.username || 'User avatar'}
             imgProps={{
               onError: (e) => {
                 console.error('Avatar load error:', e);
-                e.target.src = ''; // Clear the source on error
+                e.target.src = '/default-avatar.png';
               }
             }}
           />
