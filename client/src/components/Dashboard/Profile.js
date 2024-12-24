@@ -87,6 +87,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [avatarError, setAvatarError] = useState(false);
   const [openPasswordDialog, setOpenPasswordDialog] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -155,12 +156,13 @@ const Profile = () => {
     try {
       setLoading(true);
       setError('');
+      setAvatarError(false); // Reset avatar error state
 
       const formData = new FormData();
       formData.append('avatar', file);
 
       const response = await api.post('/profile/avatar', formData);
-      console.log('Server response:', response.data);
+      console.log('Avatar upload response:', response.data);
 
       if (response.data.avatarUrl) {
         updateUser(prevUser => ({
@@ -173,7 +175,8 @@ const Profile = () => {
       }
     } catch (error) {
       console.error('Avatar upload error:', error);
-      setError(error.response?.data?.message || 'Failed to upload avatar');
+      setError('Failed to upload avatar');
+      setAvatarError(true);
     } finally {
       setLoading(false);
       if (event.target) {
@@ -213,19 +216,18 @@ const Profile = () => {
       <ProfileHeader>
         <AvatarContainer>
           <StyledAvatar 
-            src={user?.avatarUrl || '/default-avatar.png'}
-            alt={user?.username || 'User avatar'}
-            imgProps={{
-              onError: (e) => {
-                console.error('Avatar load error:', e);
-                e.target.src = '/default-avatar.png';
-              }
+            src={!avatarError && user?.avatarUrl ? user.avatarUrl : '/default-avatar.png'}
+            alt={user?.username || 'User'}
+            onError={(e) => {
+              console.log('Avatar failed to load, falling back to default');
+              setAvatarError(true);
+              e.currentTarget.src = '/default-avatar.png';
             }}
           />
-          <AvatarUpload>
+          <AvatarUpload disabled={loading}>
             <input
               type="file"
-              accept="image/jpeg,image/png,image/gif"
+              accept="image/*"
               onChange={handleAvatarChange}
               id="avatar-upload"
               disabled={loading}
