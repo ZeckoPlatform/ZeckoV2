@@ -110,16 +110,27 @@ const ProfileSummary = () => {
   // Normalize account type
   const normalizeAccountType = (type) => {
     if (!type) return 'Regular';
-    // Convert to lowercase for consistent comparison
-    const normalizedType = type.toLowerCase();
+    
+    // Define valid account types
+    const ACCOUNT_TYPES = {
+      REGULAR: 'Regular',
+      VENDOR: 'Vendor',
+      ADMIN: 'Admin'
+    };
+
+    // Convert to uppercase for consistent comparison
+    const normalizedType = type.toUpperCase();
+    
     switch (normalizedType) {
-      case 'regular':
-      case 'vendor':
-      case 'admin':
-        // Capitalize first letter
-        return normalizedType.charAt(0).toUpperCase() + normalizedType.slice(1);
+      case 'REGULAR':
+        return ACCOUNT_TYPES.REGULAR;
+      case 'VENDOR':
+        return ACCOUNT_TYPES.VENDOR;
+      case 'ADMIN':
+        return ACCOUNT_TYPES.ADMIN;
       default:
-        return 'Regular';
+        console.warn(`Unknown account type: ${type}, defaulting to Regular`);
+        return ACCOUNT_TYPES.REGULAR;
     }
   };
 
