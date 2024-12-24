@@ -147,33 +147,31 @@ const Profile = () => {
   };
 
   const handleAvatarChange = function(event) {
-    event.preventDefault();
-    
-    const file = event.target?.files?.[0];
-    console.log('File selected:', file);
-    
-    if (!file) {
-      console.log('No file selected');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('avatar', file);
+    const file = event.target.files?.[0];
+    if (!file) return;
 
     setLoading(true);
     setError('');
 
+    const formData = new FormData();
+    formData.append('avatar', file);
+
     api.post('/profile/avatar', formData)
       .then(response => {
-        console.log('Upload response:', response);
+        console.log('Server response:', response.data);
         if (response.data.avatarUrl) {
-          updateUser({ ...user, avatarUrl: response.data.avatarUrl });
+          updateUser(prevUser => ({
+            ...prevUser,
+            avatarUrl: response.data.avatarUrl
+          }));
           setSuccess('Avatar updated successfully!');
+        } else {
+          throw new Error('No avatar URL in response');
         }
       })
       .catch(error => {
-        console.error('Upload error:', error);
-        setError('Failed to upload avatar');
+        console.error('Full error:', error);
+        setError(error.response?.data?.message || 'Failed to upload avatar');
       })
       .finally(() => {
         setLoading(false);
@@ -211,21 +209,22 @@ const Profile = () => {
       <ProfileHeader>
         <AvatarContainer>
           <StyledAvatar 
-            src={user?.avatarUrl} 
+            src={user?.avatarUrl || ''}
             alt={user?.username || 'User avatar'} 
           />
           <AvatarUpload>
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/gif"
               onChange={handleAvatarChange}
               id="avatar-upload"
               disabled={loading}
+              style={{ display: 'none' }}
             />
             <label 
               htmlFor="avatar-upload"
               style={{ 
-                cursor: 'pointer',
+                cursor: loading ? 'wait' : 'pointer',
                 width: '100%',
                 height: '100%',
                 display: 'flex',
@@ -233,7 +232,11 @@ const Profile = () => {
                 justifyContent: 'center'
               }}
             >
-              {loading ? <CircularProgress size={20} color="inherit" /> : '+'}
+              {loading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                '+'
+              )}
             </label>
           </AvatarUpload>
         </AvatarContainer>
