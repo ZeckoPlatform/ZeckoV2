@@ -82,6 +82,23 @@ const UserInfo = styled.div`
   flex: 1;
 `;
 
+const AvatarDisplay = () => {
+  const { user } = useAuth();
+  const [imgError, setImgError] = useState(false);
+
+  return (
+    <StyledAvatar 
+      src={!imgError && user?.avatarUrl ? user.avatarUrl : '/default-avatar.png'}
+      alt={user?.username || 'User avatar'}
+      onError={(e) => {
+        console.log('Avatar failed to load, falling back to default');
+        setImgError(true);
+        e.currentTarget.src = '/default-avatar.png';
+      }}
+    />
+  );
+};
+
 const Profile = () => {
   const { user, updateUser } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -153,29 +170,58 @@ const Profile = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      setError('Please upload a valid image file (JPEG, PNG, or GIF)');
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File size must be less than 5MB');
+      return;
+    }
+
     try {
       setLoading(true);
       setError('');
-      setAvatarError(false); // Reset avatar error state
+      setAvatarError(false);
 
       const formData = new FormData();
       formData.append('avatar', file);
 
-      const response = await api.post('/profile/avatar', formData);
+      const response = await api.post('/profile/avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
+      });
+
       console.log('Avatar upload response:', response.data);
 
       if (response.data.avatarUrl) {
-        updateUser(prevUser => ({
-          ...prevUser,
-          avatarUrl: response.data.avatarUrl
-        }));
-        setSuccess('Avatar updated successfully!');
+        // Pre-load the image
+        const img = new Image();
+        img.onload = () => {
+          updateUser(prevUser => ({
+            ...prevUser,
+            avatarUrl: response.data.avatarUrl
+          }));
+          setSuccess('Avatar updated successfully!');
+          setAvatarError(false);
+        };
+        img.onerror = () => {
+          console.error('Failed to load the uploaded image');
+          setAvatarError(true);
+          setError('Failed to load the uploaded image');
+        };
+        img.src = response.data.avatarUrl;
       } else {
         throw new Error('No avatar URL in response');
       }
     } catch (error) {
       console.error('Avatar upload error:', error);
-      setError('Failed to upload avatar');
+      setError(error.response?.data?.message || 'Failed to upload avatar');
       setAvatarError(true);
     } finally {
       setLoading(false);
@@ -215,15 +261,7 @@ const Profile = () => {
       
       <ProfileHeader>
         <AvatarContainer>
-          <StyledAvatar 
-            src={!avatarError && user?.avatarUrl ? user.avatarUrl : '/default-avatar.png'}
-            alt={user?.username || 'User'}
-            onError={(e) => {
-              console.log('Avatar failed to load, falling back to default');
-              setAvatarError(true);
-              e.currentTarget.src = '/default-avatar.png';
-            }}
-          />
+          <AvatarDisplay />
           <AvatarUpload disabled={loading}>
             <input
               type="file"

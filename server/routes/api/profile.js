@@ -13,7 +13,8 @@ const bcrypt = require('bcrypt');
 cloudinary.config({ 
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true  // Force HTTPS
 });
 
 // Configure Cloudinary storage
@@ -22,7 +23,9 @@ const storage = new CloudinaryStorage({
   params: {
     folder: 'avatars',
     allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
-    transformation: [{ width: 200, height: 200, crop: 'fill' }]
+    transformation: [{ width: 200, height: 200, crop: 'fill' }],
+    format: 'jpg',  // Force consistent format
+    resource_type: 'auto'
   }
 });
 
@@ -86,13 +89,17 @@ router.put('/', authenticateToken, async (req, res) => {
 
 // Avatar upload endpoint
 router.post('/avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
-  console.log('Avatar upload endpoint hit');
   try {
+    console.log('Avatar upload endpoint hit');
+    
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    console.log('File uploaded to Cloudinary:', req.file); // Debug log
+    console.log('File uploaded to Cloudinary:', req.file);
+
+    // Ensure HTTPS URL
+    const avatarUrl = req.file.path.replace('http://', 'https://');
 
     let Model;
     switch(req.user.accountType) {
@@ -106,19 +113,33 @@ router.post('/avatar', authenticateToken, upload.single('avatar'), async (req, r
         Model = User;
     }
 
-    // The URL is now in req.file.path
-    const avatarUrl = req.file.path;
+    // Update user with new avatar URL
+    const updatedUser = await Model.findByIdAndUpdate(
+      req.user.userId, 
+      { avatarUrl },
+      { new: true }  // Return updated document
+    );
 
-    await Model.findByIdAndUpdate(req.user.userId, { avatarUrl });
+    if (!updatedUser) {
+      throw new Error('User not found after update');
+    }
 
+    // Return the secure URL
     res.json({ 
       message: 'Avatar uploaded successfully',
-      avatarUrl: avatarUrl 
+      avatarUrl: avatarUrl,
+      user: {
+        ...updatedUser.toObject(),
+        accountType: req.user.accountType
+      }
     });
 
   } catch (error) {
     console.error('Avatar upload error:', error);
-    res.status(500).json({ message: 'Error uploading avatar' });
+    res.status(500).json({ 
+      message: 'Error uploading avatar',
+      error: error.message 
+    });
   }
 });
 
