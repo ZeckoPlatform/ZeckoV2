@@ -5,7 +5,7 @@ import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import SwipeableViews from 'react-swipeable-views';
 import { autoPlay } from 'react-swipeable-views-utils';
 import styled from 'styled-components';
-import { fetchData, endpoints } from '../services/api';
+import api, { endpoints } from '../services/api';
 
 const AutoPlaySwipeableViews = autoPlay(SwipeableViews);
 
@@ -52,7 +52,7 @@ const SimpleCarousel = () => {
   useEffect(() => {
     const fetchLatestLeads = async () => {
       try {
-        const response = await fetchData(endpoints.leads.latest);
+        const response = await api.get(endpoints.leads.latest);
         setLeads(response.data);
       } catch (error) {
         console.error('Error fetching latest leads:', error);

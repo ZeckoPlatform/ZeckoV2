@@ -47,10 +47,10 @@ api.interceptors.response.use(
 export const endpoints = {
   // ... existing endpoints
   leads: {
-    latest: '/api/lead/latest',  // Match your backend route
-    list: '/api/lead',
-    create: '/api/lead',
-    getById: (id) => `/api/lead/${id}`,
+    latest: '/lead/latest',  // Remove /api prefix
+    list: '/lead',
+    create: '/lead',
+    getById: (id) => `/lead/${id}`,
   }
 };
 
