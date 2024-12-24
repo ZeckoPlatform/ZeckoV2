@@ -15,14 +15,12 @@ export const AuthProvider = ({ children }) => {
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           const response = await api.get('/auth/verify');
           
-          // Ensure user data is properly structured
-          const userData = {
-            ...response.data.user,
-            accountType: response.data.user.accountType || 'regular'
-          };
-          
-          console.log('Auth check user data:', userData);
-          setUser(userData);
+          if (response.data.user) {
+            console.log('Auth check successful:', response.data.user);
+            setUser(response.data.user);
+          } else {
+            throw new Error('No user data in response');
+          }
         } catch (error) {
           console.error('Auth check error:', error);
           localStorage.removeItem('token');

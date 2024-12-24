@@ -56,6 +56,7 @@ const auth = async (req, res, next) => {
 
         const userData = {
             id: user._id,
+            userId: user._id,
             email: user.email,
             role: decoded.accountType || user.role,
             accountType: decoded.accountType,

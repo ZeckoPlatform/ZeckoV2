@@ -91,6 +91,7 @@ if (process.env.NODE_ENV === 'production') {
 
 // Handle 404 for API routes only
 app.use('/api/*', (req, res) => {
+    console.log('404 for API route:', req.originalUrl);
     res.status(404).json({ message: 'Route not found' });
 });
 

@@ -34,7 +34,8 @@ router.get('/verify', authenticateToken, async (req, res) => {
         Model = User;
     }
 
-    user = await Model.findById(req.user.userId)
+    // Use req.user.id or req.user.userId
+    user = await Model.findById(req.user.id || req.user.userId)
       .select('-password')
       .lean();
 
@@ -45,11 +46,13 @@ router.get('/verify', authenticateToken, async (req, res) => {
     // Build response object with common fields
     const userData = {
       id: user._id,
+      userId: user._id,
       email: user.email,
       username: user.username,
       accountType: req.user.accountType,
       role: user.role,
-      createdAt: user.createdAt
+      createdAt: user.createdAt,
+      avatarUrl: user.avatarUrl // Make sure this is included
     };
 
     // Add type-specific fields
