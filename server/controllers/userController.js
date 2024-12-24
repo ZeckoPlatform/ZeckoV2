@@ -121,21 +121,51 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
     try {
-        const { username, email } = req.body;
-        const user = await User.findByIdAndUpdate(
+        const { username, email, address, phone, businessName } = req.body;
+        
+        // Create update object with only the fields that are present
+        const updateFields = {};
+        if (username) updateFields.username = username;
+        if (email) updateFields.email = email;
+        if (address) updateFields['profile.address'] = address;
+        if (phone) updateFields['profile.phone'] = phone;
+        
+        // Only add businessName if user is not Regular account type
+        const user = await User.findById(req.user.userId);
+        if (user.accountType !== 'Regular' && businessName) {
+            updateFields['vendor.businessName'] = businessName;
+        }
+
+        // Update the user with the new fields
+        const updatedUser = await User.findByIdAndUpdate(
             req.user.userId,
-            { $set: { name: username, email } },
+            { $set: updateFields },
             { new: true }
         ).select('-password');
         
-        if (!user) {
+        if (!updatedUser) {
             return res.status(404).json({ error: 'User not found' });
         }
         
-        res.json(user);
+        // Format the response
+        const response = {
+            id: updatedUser._id,
+            email: updatedUser.email,
+            username: updatedUser.username,
+            accountType: updatedUser.accountType,
+            profile: {
+                address: updatedUser.profile?.address,
+                phone: updatedUser.profile?.phone
+            },
+            ...(updatedUser.accountType !== 'Regular' && {
+                businessName: updatedUser.vendor?.businessName
+            })
+        };
+        
+        res.json(response);
     } catch (error) {
         console.error('Profile update error:', error);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Server error', details: error.message });
     }
 };
 
