@@ -53,11 +53,18 @@ const UserDashboard = () => {
   const getDisplayName = () => {
     if (user?.name) return user.name;
     if (user?.username) {
-      // Remove email domain if username is an email
-      return user.username.split('@')[0];
+      const username = user.username.split('@')[0];
+      // Capitalize first letter
+      return username.charAt(0).toUpperCase() + username.slice(1);
     }
     if (user?.firstName) return user.firstName;
     return 'User';
+  };
+
+  // Get account type
+  const getAccountType = () => {
+    const type = user?.accountType || user?.role || 'regular';
+    return type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
   };
 
   return (

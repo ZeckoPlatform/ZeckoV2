@@ -109,30 +109,26 @@ const ProfileSummary = () => {
 
   // Normalize account type
   const normalizeAccountType = (type) => {
+    // If no type is provided, return default
     if (!type) return 'Regular';
-    
-    // Define valid account types
-    const ACCOUNT_TYPES = {
-      REGULAR: 'Regular',
-      VENDOR: 'Vendor',
-      ADMIN: 'Admin'
+
+    // Convert to uppercase for comparison
+    const typeUpper = type.toUpperCase();
+
+    // Map of valid account types
+    const accountTypes = {
+      'REGULAR': 'Regular',
+      'VENDOR': 'Vendor',
+      'ADMIN': 'Admin',
+      'USER': 'Regular'  // Map 'user' role to 'Regular' account type
     };
 
-    // Convert to uppercase for consistent comparison
-    const normalizedType = type.toUpperCase();
-    
-    switch (normalizedType) {
-      case 'REGULAR':
-        return ACCOUNT_TYPES.REGULAR;
-      case 'VENDOR':
-        return ACCOUNT_TYPES.VENDOR;
-      case 'ADMIN':
-        return ACCOUNT_TYPES.ADMIN;
-      default:
-        console.warn(`Unknown account type: ${type}, defaulting to Regular`);
-        return ACCOUNT_TYPES.REGULAR;
-    }
+    // Return mapped type or default
+    return accountTypes[typeUpper] || 'Regular';
   };
+
+  // Get account type from either accountType or role
+  const accountType = user?.accountType || user?.role || 'Regular';
 
   return (
     <ProfileSummarySection>
@@ -152,7 +148,7 @@ const ProfileSummary = () => {
               {user?.name || user?.username?.split('@')[0] || 'User'}
             </Typography>
             <Typography variant="body2" color="textSecondary">
-              Account Type: {normalizeAccountType(user?.accountType)}
+              Account Type: {normalizeAccountType(accountType)}
             </Typography>
             <Typography variant="body2" color="textSecondary">
               {user?.email}
