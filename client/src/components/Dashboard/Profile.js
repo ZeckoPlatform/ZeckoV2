@@ -146,7 +146,7 @@ const Profile = () => {
     }
   };
 
-  const handleAvatarChange = function(event) {
+  const handleAvatarChange = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -160,17 +160,17 @@ const Profile = () => {
       .then(response => {
         console.log('Server response:', response.data);
         if (response.data.avatarUrl) {
-          updateUser(prevUser => ({
-            ...prevUser,
+          updateUser({
+            ...user,
             avatarUrl: response.data.avatarUrl
-          }));
+          });
           setSuccess('Avatar updated successfully!');
         } else {
           throw new Error('No avatar URL in response');
         }
       })
       .catch(error => {
-        console.error('Full error:', error);
+        console.error('Avatar upload error:', error);
         setError(error.response?.data?.message || 'Failed to upload avatar');
       })
       .finally(() => {
@@ -210,7 +210,13 @@ const Profile = () => {
         <AvatarContainer>
           <StyledAvatar 
             src={user?.avatarUrl || ''}
-            alt={user?.username || 'User avatar'} 
+            alt={user?.username || 'User avatar'}
+            imgProps={{
+              onError: (e) => {
+                console.error('Avatar load error:', e);
+                e.target.src = ''; // Clear the source on error
+              }
+            }}
           />
           <AvatarUpload>
             <input
