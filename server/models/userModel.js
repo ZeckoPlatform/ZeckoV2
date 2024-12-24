@@ -184,8 +184,8 @@ const userSchema = new mongoose.Schema({
   }],
   accountType: {
     type: String,
-    enum: ['regular', 'business', 'vendor'],
-    default: 'regular'
+    enum: ['Regular', 'Business', 'Vendor'],
+    default: 'Regular'
   },
   contractor: {
     services: [{

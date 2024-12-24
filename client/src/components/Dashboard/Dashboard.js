@@ -107,28 +107,8 @@ const ProfileSummary = () => {
   const [imgError, setImgError] = useState(false);
   const defaultAvatar = '/default-avatar.png';
 
-  // Normalize account type
-  const normalizeAccountType = (type) => {
-    // If no type is provided, return default
-    if (!type) return 'Regular';
-
-    // Convert to uppercase for comparison
-    const typeUpper = type.toUpperCase();
-
-    // Map of valid account types
-    const accountTypes = {
-      'REGULAR': 'Regular',
-      'VENDOR': 'Vendor',
-      'ADMIN': 'Admin',
-      'USER': 'Regular'  // Map 'user' role to 'Regular' account type
-    };
-
-    // Return mapped type or default
-    return accountTypes[typeUpper] || 'Regular';
-  };
-
-  // Get account type from either accountType or role
-  const accountType = user?.accountType || user?.role || 'Regular';
+  // Simple account type display - no complex logic
+  const displayAccountType = user?.accountType || 'Regular';
 
   return (
     <ProfileSummarySection>
@@ -148,7 +128,7 @@ const ProfileSummary = () => {
               {user?.name || user?.username?.split('@')[0] || 'User'}
             </Typography>
             <Typography variant="body2" color="textSecondary">
-              Account Type: {normalizeAccountType(accountType)}
+              Account Type: {displayAccountType}
             </Typography>
             <Typography variant="body2" color="textSecondary">
               {user?.email}

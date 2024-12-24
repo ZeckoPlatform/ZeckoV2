@@ -59,7 +59,7 @@ const auth = async (req, res, next) => {
             userId: user._id,
             email: user.email,
             role: decoded.accountType || user.role,
-            accountType: decoded.accountType,
+            accountType: user.accountType.charAt(0).toUpperCase() + user.accountType.slice(1).toLowerCase(),
             businessName: user.businessName
         };
 

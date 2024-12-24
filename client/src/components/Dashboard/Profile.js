@@ -117,6 +117,7 @@ const Profile = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [avatarError, setAvatarError] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [openPasswordDialog, setOpenPasswordDialog] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -128,19 +129,18 @@ const Profile = () => {
     email: user?.email || '',
     address: user?.address || '',
     phone: user?.phone || '',
-    businessName: user?.businessName || ''
+    ...(user?.accountType !== 'Regular' && { businessName: user?.businessName || '' })
   });
 
   useEffect(() => {
-    // Update form data when user data changes
     setFormData({
       username: user?.username || '',
       email: user?.email || '',
       address: user?.address || '',
       phone: user?.phone || '',
-      businessName: user?.businessName || ''
+      ...(user?.accountType !== 'Regular' && { businessName: user?.businessName || '' })
     });
-  }, [user]); // Only run when user object changes
+  }, [user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -256,21 +256,16 @@ const Profile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
     try {
-      setLoading(true);
-      setError('');
-      
-      const response = await api.put('/profile', formData);
-      
-      if (response.data) {
-        updateUser(prevUser => ({
-          ...prevUser,
-          ...response.data
-        }));
-        setSuccess('Profile updated successfully!');
-      }
+      await api.put('/profile', formData);
+      updateUser(prev => ({ ...prev, ...formData }));
+      setSuccess('Profile updated successfully!');
+      setIsEditing(false);
     } catch (error) {
-      console.error('Error updating profile:', error);
       setError(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setLoading(false);
@@ -279,9 +274,6 @@ const Profile = () => {
 
   return (
     <ProfileContainer>
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
-      
       <ProfileHeader>
         <AvatarContainer>
           <AvatarDisplay />
@@ -290,156 +282,178 @@ const Profile = () => {
               type="file"
               accept="image/*"
               onChange={handleAvatarChange}
-              id="avatar-upload"
               disabled={loading}
-              style={{ display: 'none' }}
             />
-            <label 
-              htmlFor="avatar-upload"
-              style={{ 
-                cursor: loading ? 'wait' : 'pointer',
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              {loading ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : (
-                '+'
-              )}
-            </label>
           </AvatarUpload>
         </AvatarContainer>
+        
         <UserInfo>
-          <Typography variant="h5">{user?.username}</Typography>
-          <Typography variant="body1" color="textSecondary">
-            {user?.email}
-          </Typography>
+          <Typography variant="h5">Profile Information</Typography>
+          <Box sx={{ mt: 2 }}>
+            {!isEditing ? (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => setIsEditing(true)}
+              >
+                Edit Profile
+              </Button>
+            ) : null}
+          </Box>
         </UserInfo>
       </ProfileHeader>
 
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+
       <DashboardCard>
-        <form onSubmit={handleSubmit}>
+        {!isEditing ? (
+          // View Mode
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Username"
-                name="username"
-                value={formData.username}
-                onChange={handleInputChange}
-              />
+              <Typography variant="subtitle2" color="textSecondary">Username</Typography>
+              <Typography>{formData.username}</Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Email"
-                name="email"
-                value={formData.email}
-                disabled
-              />
+              <Typography variant="subtitle2" color="textSecondary">Email</Typography>
+              <Typography>{formData.email}</Typography>
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Address"
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                multiline
-                rows={2}
-              />
+              <Typography variant="subtitle2" color="textSecondary">Address</Typography>
+              <Typography>{formData.address || 'No address provided'}</Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-              />
+              <Typography variant="subtitle2" color="textSecondary">Phone</Typography>
+              <Typography>{formData.phone || 'No phone provided'}</Typography>
             </Grid>
-            {user?.accountType !== 'regular' && (
+            {user?.accountType !== 'Regular' && (
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="textSecondary">Business Name</Typography>
+                <Typography>{formData.businessName || 'No business name provided'}</Typography>
+              </Grid>
+            )}
+          </Grid>
+        ) : (
+          // Edit Mode
+          <form onSubmit={handleSubmit}>
+            <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Business Name"
-                  name="businessName"
-                  value={formData.businessName}
+                  label="Username"
+                  name="username"
+                  value={formData.username}
                   onChange={handleInputChange}
                 />
               </Grid>
-            )}
-            <Grid item xs={12}>
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={() => setOpenPasswordDialog(true)}
-                sx={{ mr: 2 }}
-              >
-                Change Password
-              </Button>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={loading}
-              >
-                {loading ? <CircularProgress size={24} /> : 'Save Changes'}
-              </Button>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  name="email"
+                  value={formData.email}
+                  disabled
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  multiline
+                  rows={2}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                />
+              </Grid>
+              {user?.accountType !== 'Regular' && (
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Business Name"
+                    name="businessName"
+                    value={formData.businessName}
+                    onChange={handleInputChange}
+                  />
+                </Grid>
+              )}
+              <Grid item xs={12}>
+                <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => setIsEditing(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    disabled={loading}
+                  >
+                    {loading ? <CircularProgress size={24} /> : 'Save Changes'}
+                  </Button>
+                </Box>
+              </Grid>
             </Grid>
-          </Grid>
-        </form>
+          </form>
+        )}
       </DashboardCard>
 
+      <Button
+        variant="outlined"
+        color="primary"
+        onClick={() => setOpenPasswordDialog(true)}
+        sx={{ mt: 2 }}
+      >
+        Change Password
+      </Button>
+
+      {/* Password Dialog */}
       <Dialog open={openPasswordDialog} onClose={() => setOpenPasswordDialog(false)}>
         <DialogTitle>Change Password</DialogTitle>
         <DialogContent>
-          <Box component="form" onSubmit={handlePasswordSubmit} sx={{ mt: 2 }}>
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Current Password"
-              type="password"
-              name="currentPassword"
-              value={passwordData.currentPassword}
-              onChange={handlePasswordChange}
-              required
-            />
-            <TextField
-              fullWidth
-              margin="normal"
-              label="New Password"
-              type="password"
-              name="newPassword"
-              value={passwordData.newPassword}
-              onChange={handlePasswordChange}
-              required
-            />
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Confirm New Password"
-              type="password"
-              name="confirmPassword"
-              value={passwordData.confirmPassword}
-              onChange={handlePasswordChange}
-              required
-            />
-          </Box>
+          <TextField
+            fullWidth
+            label="Current Password"
+            type="password"
+            name="currentPassword"
+            value={passwordData.currentPassword}
+            onChange={handlePasswordChange}
+            margin="normal"
+          />
+          <TextField
+            fullWidth
+            label="New Password"
+            type="password"
+            name="newPassword"
+            value={passwordData.newPassword}
+            onChange={handlePasswordChange}
+            margin="normal"
+          />
+          <TextField
+            fullWidth
+            label="Confirm New Password"
+            type="password"
+            name="confirmPassword"
+            value={passwordData.confirmPassword}
+            onChange={handlePasswordChange}
+            margin="normal"
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenPasswordDialog(false)}>Cancel</Button>
-          <Button 
-            onClick={handlePasswordSubmit}
-            variant="contained" 
-            color="primary"
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={24} /> : 'Change Password'}
+          <Button onClick={handlePasswordSubmit} color="primary">
+            Change Password
           </Button>
         </DialogActions>
       </Dialog>

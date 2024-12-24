@@ -10,18 +10,28 @@ const register = async (req, res) => {
         
         const { username, email, password, accountType } = req.body;
 
+        // Normalize account type
+        const normalizedAccountType = accountType 
+            ? accountType.charAt(0).toUpperCase() + accountType.slice(1).toLowerCase()
+            : 'Regular';
+
+        // Validate account type
+        if (!['Regular', 'Business', 'Vendor'].includes(normalizedAccountType)) {
+            return res.status(400).json({ message: 'Invalid account type' });
+        }
+
         // Check if user exists
         let user = await User.findOne({ email });
         if (user) {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        // Create user
+        // Create user with normalized account type
         user = new User({
             username,
             email,
             password,
-            accountType,
+            accountType: normalizedAccountType,
             // Add other fields as needed
         });
 
