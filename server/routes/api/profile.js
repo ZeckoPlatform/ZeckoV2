@@ -117,14 +117,15 @@ router.post('/avatar', authenticateToken, upload.single('avatar'), async (req, r
     const updatedUser = await Model.findByIdAndUpdate(
       req.user.userId, 
       { avatarUrl },
-      { new: true }  // Return updated document
+      { new: true }
     );
 
     if (!updatedUser) {
       throw new Error('User not found after update');
     }
 
-    // Return the secure URL
+    console.log('Updated user:', updatedUser);
+
     res.json({ 
       message: 'Avatar uploaded successfully',
       avatarUrl: avatarUrl,

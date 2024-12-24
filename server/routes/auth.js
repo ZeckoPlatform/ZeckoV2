@@ -19,10 +19,7 @@ router.get('/verify', authenticateToken, async (req, res) => {
   try {
     console.log('Verify endpoint called with user:', req.user);
     
-    let user;
     let Model;
-
-    // Determine which model to use based on account type
     switch(req.user.accountType) {
       case 'business':
         Model = BusinessUser;
@@ -34,8 +31,7 @@ router.get('/verify', authenticateToken, async (req, res) => {
         Model = User;
     }
 
-    // Use req.user.id or req.user.userId
-    user = await Model.findById(req.user.id || req.user.userId)
+    const user = await Model.findById(req.user.userId)
       .select('-password')
       .lean();
 
@@ -48,36 +44,16 @@ router.get('/verify', authenticateToken, async (req, res) => {
       id: user._id,
       userId: user._id,
       email: user.email,
-      username: user.username,
+      username: user.username || user.email,
       accountType: req.user.accountType,
       role: user.role,
       createdAt: user.createdAt,
-      avatarUrl: user.avatarUrl // Make sure this is included
+      avatarUrl: user.avatarUrl || null,  // Ensure avatarUrl is included
+      // ... other fields ...
     };
 
-    // Add type-specific fields
-    if (req.user.accountType === 'business') {
-      Object.assign(userData, {
-        businessName: user.businessName,
-        businessType: user.businessType,
-        serviceCategories: user.serviceCategories,
-        serviceArea: user.serviceArea
-      });
-    } else if (req.user.accountType === 'vendor') {
-      Object.assign(userData, {
-        businessName: user.businessName,
-        vendorCategory: user.vendorCategory,
-        storeSettings: user.storeSettings,
-        ratings: user.ratings
-      });
-    }
-
     console.log('Verify response:', userData);
-
-    res.json({ 
-      user: userData, 
-      verified: true 
-    });
+    res.json({ user: userData, verified: true });
   } catch (error) {
     console.error('Verification error:', error);
     res.status(500).json({ message: 'Server error during verification' });

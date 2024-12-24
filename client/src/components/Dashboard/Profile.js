@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import api from '../../services/api';
@@ -85,16 +85,27 @@ const UserInfo = styled.div`
 const AvatarDisplay = () => {
   const { user } = useAuth();
   const [imgError, setImgError] = useState(false);
+  const defaultAvatar = '/default-avatar.png';
+
+  useEffect(() => {
+    // Reset error state when user or avatarUrl changes
+    if (user?.avatarUrl) {
+      setImgError(false);
+    }
+  }, [user?.avatarUrl]);
+
+  const handleImageError = (e) => {
+    console.log('Avatar failed to load:', user?.avatarUrl);
+    setImgError(true);
+    e.currentTarget.src = defaultAvatar;
+  };
 
   return (
-    <StyledAvatar 
-      src={!imgError && user?.avatarUrl ? user.avatarUrl : '/default-avatar.png'}
+    <Avatar
+      src={(!imgError && user?.avatarUrl) ? user.avatarUrl : defaultAvatar}
       alt={user?.username || 'User avatar'}
-      onError={(e) => {
-        console.log('Avatar failed to load, falling back to default');
-        setImgError(true);
-        e.currentTarget.src = '/default-avatar.png';
-      }}
+      onError={handleImageError}
+      sx={{ width: 120, height: 120 }}
     />
   );
 };
