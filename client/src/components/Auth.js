@@ -65,7 +65,7 @@ export function Register() {
     username: '',
     email: '',
     password: '',
-    accountType: 'user',
+    accountType: 'Regular',
     businessName: '',
     businessType: ''
   });
@@ -73,7 +73,26 @@ export function Register() {
   const { register, error } = useAuth();
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    if (name === 'accountType') {
+      const normalizedValue = {
+        'customer': 'Regular',
+        'business': 'Business',
+        'seller': 'Vendor'
+      }[value] || value;
+      
+      setFormData(prev => ({ 
+        ...prev, 
+        [name]: normalizedValue,
+        ...(normalizedValue === 'Regular' && {
+          businessName: '',
+          businessType: ''
+        })
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -128,7 +147,9 @@ export function Register() {
         <select
           id="accountType"
           name="accountType"
-          value={formData.accountType}
+          value={formData.accountType === 'Regular' ? 'customer' : 
+                 formData.accountType === 'Business' ? 'business' : 
+                 formData.accountType === 'Vendor' ? 'seller' : 'customer'}
           onChange={handleChange}
         >
           <option value="customer">Customer</option>
@@ -136,26 +157,32 @@ export function Register() {
           <option value="seller">Seller</option>
         </select>
       </div>
-      <div>
-        <label htmlFor="businessName">Business Name:</label>
-        <input
-          type="text"
-          id="businessName"
-          name="businessName"
-          value={formData.businessName}
-          onChange={handleChange}
-        />
-      </div>
-      <div>
-        <label htmlFor="businessType">Business Type:</label>
-        <input
-          type="text"
-          id="businessType"
-          name="businessType"
-          value={formData.businessType}
-          onChange={handleChange}
-        />
-      </div>
+      {(formData.accountType === 'Business' || formData.accountType === 'Vendor') && (
+        <>
+          <div>
+            <label htmlFor="businessName">Business Name:</label>
+            <input
+              type="text"
+              id="businessName"
+              name="businessName"
+              value={formData.businessName}
+              onChange={handleChange}
+              required={formData.accountType !== 'Regular'}
+            />
+          </div>
+          <div>
+            <label htmlFor="businessType">Business Type:</label>
+            <input
+              type="text"
+              id="businessType"
+              name="businessType"
+              value={formData.businessType}
+              onChange={handleChange}
+              required={formData.accountType !== 'Regular'}
+            />
+          </div>
+        </>
+      )}
       <button type="submit">Register</button>
     </form>
   );
