@@ -40,7 +40,8 @@ const auth = async (req, res, next) => {
         }
 
         let user;
-        const userQuery = decoded.accountType === 'business' ? 
+        // Normalize business type check
+        const userQuery = decoded.accountType?.toLowerCase() === 'business' ? 
             BusinessUser.findById(decoded.userId) :
             User.findById(decoded.userId);
 
@@ -54,12 +55,19 @@ const auth = async (req, res, next) => {
             throw new Error('User not found');
         }
 
+        // Normalize account type
+        const normalizedAccountType = user.accountType
+            ? user.accountType.charAt(0).toUpperCase() + user.accountType.slice(1).toLowerCase()
+            : decoded.accountType
+                ? decoded.accountType.charAt(0).toUpperCase() + decoded.accountType.slice(1).toLowerCase()
+                : 'Regular';
+
         const userData = {
             id: user._id,
             userId: user._id,
             email: user.email,
-            role: decoded.accountType || user.role,
-            accountType: user.accountType.charAt(0).toUpperCase() + user.accountType.slice(1).toLowerCase(),
+            role: decoded.role || user.role,
+            accountType: normalizedAccountType,
             businessName: user.businessName
         };
 
