@@ -72,7 +72,7 @@ const login = async (req, res) => {
         const { email, password } = req.body;
 
         // Find user
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email }).select('+password');
         if (!user) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
@@ -83,9 +83,18 @@ const login = async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        // Generate token
+        // Normalize account type
+        const normalizedAccountType = user.accountType
+            ? user.accountType.charAt(0).toUpperCase() + user.accountType.slice(1).toLowerCase()
+            : 'Regular';
+
+        // Generate token with normalized account type
         const token = jwt.sign(
-            { userId: user._id },
+            { 
+                userId: user._id,
+                accountType: normalizedAccountType,
+                role: user.role 
+            },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
@@ -97,7 +106,8 @@ const login = async (req, res) => {
                 id: user._id,
                 email: user.email,
                 username: user.username,
-                role: user.role
+                role: user.role,
+                accountType: normalizedAccountType
             }
         });
     } catch (error) {
