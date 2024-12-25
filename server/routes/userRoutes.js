@@ -116,7 +116,7 @@ router.post('/login', async (req, res) => {
                 { 
                     userId: user._id,
                     role: user.role,
-                    accountType: 'personal'
+                    accountType: user.accountType || 'Regular'
                 },
                 process.env.JWT_SECRET,
                 { expiresIn: '24h' }
@@ -131,7 +131,7 @@ router.post('/login', async (req, res) => {
                     email: user.email,
                     username: user.username,
                     role: user.role,
-                    accountType: 'personal'
+                    accountType: user.accountType || 'Regular'
                 }
             });
         } catch (passwordError) {
