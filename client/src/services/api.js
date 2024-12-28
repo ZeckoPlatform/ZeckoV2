@@ -1,57 +1,40 @@
 import axios from 'axios';
 
-const api = axios.create({
-    baseURL: process.env.NODE_ENV === 'production' 
-        ? 'https://zeckov2-deceb43992ac.herokuapp.com/api'
-        : '/api'
+// Create axios instance with base URL
+export const api = axios.create({
+  baseURL: process.env.REACT_APP_API_URL || '/api',
+  headers: {
+    'Content-Type': 'application/json'
+  }
 });
 
-// Add request interceptor
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers = {
-                ...config.headers,
-                Authorization: `Bearer ${token}`
-            };
-        }
-
-        // Only set Content-Type if it's not FormData
-        if (!(config.data instanceof FormData)) {
-            config.headers = {
-                ...config.headers,
-                'Content-Type': 'application/json'
-            };
-        }
-
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
-
-// Add response interceptor to handle errors
-api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            localStorage.removeItem('token');
-            window.location.href = '/login';
-        }
-        return Promise.reject(error);
-    }
-);
-
+// Define API endpoints
 export const endpoints = {
-  // ... existing endpoints
-  leads: {
-    latest: '/lead/latest',  // Remove /api prefix
-    list: '/lead',
-    create: '/lead',
-    getById: (id) => `/lead/${id}`,
+  auth: {
+    login: '/auth/login',
+    register: '/auth/register',
+    verify: '/auth/verify',
+    logout: '/auth/logout'
+  },
+  users: {
+    profile: '/users/profile',
+    addresses: '/users/addresses',
+    security: '/users/security-settings'
   }
 };
+
+// Add request interceptor for auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 export default api;

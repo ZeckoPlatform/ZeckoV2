@@ -1,10 +1,11 @@
-import { api, endpoints } from './api';
+import api from './api';
+import { endpoints } from './api';
 
 export const authService = {
   login: async (credentials) => {
     try {
       console.log('AuthService: Attempting login with:', credentials);
-      const response = await api.post('/auth/login', credentials);
+      const response = await api.post(endpoints.auth.login, credentials);
       
       if (!response.data || !response.data.token) {
         throw new Error('Invalid response format from server');
