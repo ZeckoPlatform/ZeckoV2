@@ -97,7 +97,14 @@ router.post('/login', async (req, res) => {
         
         console.log('Login attempt for:', email);
 
-        const user = await User.findOne({ email });
+        // Try to find user in all collections
+        let user = await User.findOne({ email });
+        if (!user) {
+            user = await BusinessUser.findOne({ email });
+        }
+        if (!user) {
+            user = await VendorUser.findOne({ email });
+        }
         
         if (!user) {
             console.log('No user found with email:', email);
@@ -112,26 +119,37 @@ router.post('/login', async (req, res) => {
                 return res.status(401).json({ error: 'Invalid credentials' });
             }
 
+            // Determine account type based on the collection
+            let accountType = 'Regular';
+            if (user instanceof BusinessUser) {
+                accountType = 'Business';
+            } else if (user instanceof VendorUser) {
+                accountType = 'Vendor';
+            }
+
             const token = jwt.sign(
                 { 
                     userId: user._id,
-                    role: user.role,
-                    accountType: user.accountType || 'Regular'
+                    role: user.role || 'user',
+                    accountType
                 },
                 process.env.JWT_SECRET,
                 { expiresIn: '24h' }
             );
 
             console.log('Login successful for:', email);
+            console.log('Account type:', accountType);
 
             res.json({
                 token,
                 user: {
                     id: user._id,
                     email: user.email,
-                    username: user.username,
-                    role: user.role,
-                    accountType: user.accountType || 'Regular'
+                    username: user.username || user.email,
+                    role: user.role || 'user',
+                    accountType,
+                    businessName: user.businessName || '',
+                    businessType: user.businessType || ''
                 }
             });
         } catch (passwordError) {
