@@ -20,6 +20,8 @@ import {
 import styled from 'styled-components';
 import DashboardCard from './common/DashboardCard';
 import axios from 'axios';
+import EditIcon from '@mui/icons-material/Edit';
+import { endpoints } from '../../services/api';
 
 const ProfileContainer = styled.div`
   display: grid;
@@ -40,11 +42,29 @@ const ProfileHeader = styled(DashboardCard)`
   }
 `;
 
-const AvatarContainer = styled.div`
-  position: relative;
-  width: 120px;
-  height: 120px;
-`;
+const AvatarContainer = ({ children }) => {
+  const fileInputRef = React.useRef(null);
+
+  const handleClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  return (
+    <div style={{ position: 'relative', width: '120px', height: '120px' }}>
+      {children}
+      <AvatarUpload onClick={handleClick}>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleAvatarChange}
+          style={{ display: 'none' }}
+        />
+        <EditIcon fontSize="small" />
+      </AvatarUpload>
+    </div>
+  );
+};
 
 const StyledAvatar = styled(Avatar)`
   width: 100%;
@@ -214,13 +234,11 @@ const Profile = () => {
       const formData = new FormData();
       formData.append('avatar', file);
 
-      const response = await api.post('/profile/avatar', formData, {
+      const response = await api.post(endpoints.users.avatar, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         }
       });
-
-      console.log('Avatar upload response:', response.data);
 
       if (response.data.avatarUrl) {
         // Pre-load the image
@@ -234,13 +252,10 @@ const Profile = () => {
           setAvatarError(false);
         };
         img.onerror = () => {
-          console.error('Failed to load the uploaded image');
           setAvatarError(true);
           setError('Failed to load the uploaded image');
         };
         img.src = response.data.avatarUrl;
-      } else {
-        throw new Error('No avatar URL in response');
       }
     } catch (error) {
       console.error('Avatar upload error:', error);
@@ -277,14 +292,6 @@ const Profile = () => {
       <ProfileHeader>
         <AvatarContainer>
           <AvatarDisplay />
-          <AvatarUpload disabled={loading}>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarChange}
-              disabled={loading}
-            />
-          </AvatarUpload>
         </AvatarContainer>
         
         <UserInfo>

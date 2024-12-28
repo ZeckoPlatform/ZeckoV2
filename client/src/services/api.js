@@ -19,7 +19,8 @@ export const endpoints = {
   users: {
     profile: '/api/users/profile',
     addresses: '/api/users/addresses',
-    security: '/api/users/security-settings'
+    security: '/api/users/security-settings',
+    avatar: '/api/users/profile/avatar'
   }
 };
 
