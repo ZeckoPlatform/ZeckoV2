@@ -40,28 +40,29 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post('/auth/login', credentials);
       console.log('Login response:', response.data);
       
+      if (!response.data || !response.data.token) {
+        throw new Error('Invalid response from server');
+      }
+
       const { token, user: userData } = response.data;
 
-      // Ensure user data is properly structured
+      // Normalize user data with proper casing
       const normalizedUser = {
         ...userData,
-        accountType: userData.accountType || 'regular',
+        accountType: userData.accountType || 'Regular',
         role: userData.role || 'user'
       };
-
-      if (!normalizedUser) {
-        throw new Error('Invalid user data received');
-      }
 
       localStorage.setItem('token', token);
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(normalizedUser);
       
       console.log('User set in context:', normalizedUser);
-      return { user: normalizedUser, token };
+      return { success: true, user: normalizedUser };
     } catch (error) {
       console.error('Login error:', error);
-      throw error;
+      const errorMessage = error.response?.data?.error || error.message || 'Login failed';
+      throw new Error(errorMessage);
     }
   };
 

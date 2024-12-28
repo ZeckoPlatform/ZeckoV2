@@ -99,11 +99,15 @@ router.post('/login', async (req, res) => {
 
         // Try to find user in all collections
         let user = await User.findOne({ email });
+        let userType = 'regular';
+
         if (!user) {
             user = await BusinessUser.findOne({ email });
+            userType = user ? 'business' : null;
         }
         if (!user) {
             user = await VendorUser.findOne({ email });
+            userType = user ? 'vendor' : null;
         }
         
         if (!user) {
@@ -111,54 +115,51 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        try {
-            const isMatch = await user.comparePassword(password);
-            
-            if (!isMatch) {
-                console.log('Password mismatch for user:', email);
-                return res.status(401).json({ error: 'Invalid credentials' });
-            }
-
-            // Determine account type based on the collection
-            let accountType = 'Regular';
-            if (user instanceof BusinessUser) {
-                accountType = 'Business';
-            } else if (user instanceof VendorUser) {
-                accountType = 'Vendor';
-            }
-
-            const token = jwt.sign(
-                { 
-                    userId: user._id,
-                    role: user.role || 'user',
-                    accountType
-                },
-                process.env.JWT_SECRET,
-                { expiresIn: '24h' }
-            );
-
-            console.log('Login successful for:', email);
-            console.log('Account type:', accountType);
-
-            res.json({
-                token,
-                user: {
-                    id: user._id,
-                    email: user.email,
-                    username: user.username || user.email,
-                    role: user.role || 'user',
-                    accountType,
-                    businessName: user.businessName || '',
-                    businessType: user.businessType || ''
-                }
-            });
-        } catch (passwordError) {
-            console.error('Password comparison error:', passwordError);
-            res.status(500).json({ 
-                error: 'Login failed', 
-                details: 'Error verifying credentials' 
-            });
+        // Verify password
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            console.log('Password mismatch for user:', email);
+            return res.status(401).json({ error: 'Invalid credentials' });
         }
+
+        // Map user type to proper account type
+        const accountTypeMap = {
+            'regular': 'Regular',
+            'business': 'Business',
+            'vendor': 'Vendor'
+        };
+
+        const accountType = accountTypeMap[userType] || 'Regular';
+
+        // Create token
+        const token = jwt.sign(
+            { 
+                userId: user._id,
+                role: user.role || 'user',
+                accountType
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        console.log('Login successful for:', email);
+        console.log('Account type:', accountType);
+
+        // Send response
+        res.json({
+            token,
+            user: {
+                id: user._id,
+                email: user.email,
+                username: user.username || user.email,
+                role: user.role || 'user',
+                accountType,
+                businessName: user.businessName || '',
+                businessType: user.businessType || '',
+                avatarUrl: user.avatarUrl || '',
+                profile: user.profile || {}
+            }
+        });
     } catch (error) {
         console.error('Server error during login:', error);
         res.status(500).json({ 
