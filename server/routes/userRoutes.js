@@ -104,18 +104,25 @@ router.post('/auth/login', async (req, res) => {
         }
 
         // Try to find user in all collections
-        let user = await User.findOne({ email }).select('+password');
-        let userType = 'Regular';
+        let user = null;
+        let userType = null;
 
-        if (!user) {
-            user = await BusinessUser.findOne({ email }).select('+password');
-            userType = user ? 'Business' : null;
+        // Check each user type collection
+        const regularUser = await User.findOne({ email }).select('+password');
+        const businessUser = await BusinessUser.findOne({ email }).select('+password');
+        const vendorUser = await VendorUser.findOne({ email }).select('+password');
+
+        if (regularUser) {
+            user = regularUser;
+            userType = 'Regular';
+        } else if (businessUser) {
+            user = businessUser;
+            userType = 'Business';
+        } else if (vendorUser) {
+            user = vendorUser;
+            userType = 'Vendor';
         }
-        if (!user) {
-            user = await VendorUser.findOne({ email }).select('+password');
-            userType = user ? 'Vendor' : null;
-        }
-        
+
         if (!user) {
             console.log('No user found with email:', email);
             return res.status(401).json({ 
@@ -124,26 +131,20 @@ router.post('/auth/login', async (req, res) => {
         }
 
         // Verify password
-        const isMatch = await bcrypt.compare(password, user.password);
+        let isMatch = false;
+        try {
+            isMatch = await bcrypt.compare(password, user.password);
+        } catch (error) {
+            console.error('Password comparison error:', error);
+            return res.status(500).json({ 
+                error: 'Error verifying password' 
+            });
+        }
+
         if (!isMatch) {
             console.log('Password mismatch for user:', email);
             return res.status(401).json({ 
                 error: 'Invalid email or password' 
-            });
-        }
-
-        // Check if 2FA is enabled
-        if (user.securitySettings?.twoFactorEnabled) {
-            // Create temporary token for 2FA
-            const tempToken = jwt.sign(
-                { tempUserId: user._id },
-                process.env.JWT_SECRET,
-                { expiresIn: '5m' }
-            );
-            return res.json({
-                requiresTwoFactor: true,
-                tempToken,
-                message: '2FA verification required'
             });
         }
 
@@ -159,32 +160,32 @@ router.post('/auth/login', async (req, res) => {
             { expiresIn: '24h' }
         );
 
-        // Remove password from user object
-        user = user.toObject();
-        delete user.password;
+        // Remove sensitive data
+        const userResponse = {
+            id: user._id,
+            email: user.email,
+            username: user.username || user.email,
+            name: user.name || user.username,
+            role: user.role || 'user',
+            accountType: userType,
+            businessName: user.businessName || '',
+            businessType: user.businessType || '',
+            profile: user.profile || {}
+        };
 
         console.log('Login successful for:', email);
         
         // Send response
         res.json({
             token,
-            user: {
-                id: user._id,
-                email: user.email,
-                username: user.username || user.email,
-                name: user.name || user.username,
-                role: user.role || 'user',
-                accountType: userType,
-                businessName: user.businessName || '',
-                businessType: user.businessType || '',
-                profile: user.profile || {}
-            }
+            user: userResponse
         });
+
     } catch (error) {
         console.error('Server error during login:', error);
         res.status(500).json({ 
             error: 'Login failed',
-            details: error.message 
+            details: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
         });
     }
 });
