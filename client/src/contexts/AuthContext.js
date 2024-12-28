@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
+import { authService } from '../services/authService';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -36,15 +38,17 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      console.log('Attempting login with:', credentials);
-      const response = await api.post('/auth/login', credentials);
-      console.log('Login response:', response.data);
+      setError(null);
+      console.log('AuthContext: Attempting login with:', credentials);
       
-      if (!response.data || !response.data.token) {
+      const response = await authService.login(credentials);
+      console.log('AuthContext: Login response:', response);
+      
+      if (!response || !response.token) {
         throw new Error('Invalid response from server');
       }
 
-      const { token, user: userData } = response.data;
+      const { token, user: userData } = response;
 
       // Normalize user data with proper casing
       const normalizedUser = {
@@ -57,12 +61,12 @@ export const AuthProvider = ({ children }) => {
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(normalizedUser);
       
-      console.log('User set in context:', normalizedUser);
+      console.log('AuthContext: User set in context:', normalizedUser);
       return { success: true, user: normalizedUser };
     } catch (error) {
-      console.error('Login error:', error);
-      const errorMessage = error.response?.data?.error || error.message || 'Login failed';
-      throw new Error(errorMessage);
+      console.error('AuthContext: Login error:', error);
+      setError(error.message || 'Login failed');
+      throw error;
     }
   };
 
@@ -88,6 +92,8 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     loading,
+    error,
+    setError,
     isAuthenticated: !!user,
     updateUser
   };
