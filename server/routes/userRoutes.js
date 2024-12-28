@@ -91,60 +91,80 @@ router.post('/register', async (req, res) => {
     }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         
         console.log('Login attempt for:', email);
 
+        if (!email || !password) {
+            return res.status(400).json({ 
+                error: 'Email and password are required' 
+            });
+        }
+
         // Try to find user in all collections
-        let user = await User.findOne({ email });
-        let userType = 'regular';
+        let user = await User.findOne({ email }).select('+password');
+        let userType = 'Regular';
 
         if (!user) {
-            user = await BusinessUser.findOne({ email });
-            userType = user ? 'business' : null;
+            user = await BusinessUser.findOne({ email }).select('+password');
+            userType = user ? 'Business' : null;
         }
         if (!user) {
-            user = await VendorUser.findOne({ email });
-            userType = user ? 'vendor' : null;
+            user = await VendorUser.findOne({ email }).select('+password');
+            userType = user ? 'Vendor' : null;
         }
         
         if (!user) {
             console.log('No user found with email:', email);
-            return res.status(401).json({ error: 'Invalid credentials' });
+            return res.status(401).json({ 
+                error: 'Invalid email or password' 
+            });
         }
 
         // Verify password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             console.log('Password mismatch for user:', email);
-            return res.status(401).json({ error: 'Invalid credentials' });
+            return res.status(401).json({ 
+                error: 'Invalid email or password' 
+            });
         }
 
-        // Map user type to proper account type
-        const accountTypeMap = {
-            'regular': 'Regular',
-            'business': 'Business',
-            'vendor': 'Vendor'
-        };
-
-        const accountType = accountTypeMap[userType] || 'Regular';
+        // Check if 2FA is enabled
+        if (user.securitySettings?.twoFactorEnabled) {
+            // Create temporary token for 2FA
+            const tempToken = jwt.sign(
+                { tempUserId: user._id },
+                process.env.JWT_SECRET,
+                { expiresIn: '5m' }
+            );
+            return res.json({
+                requiresTwoFactor: true,
+                tempToken,
+                message: '2FA verification required'
+            });
+        }
 
         // Create token
         const token = jwt.sign(
             { 
                 userId: user._id,
+                email: user.email,
                 role: user.role || 'user',
-                accountType
+                accountType: userType
             },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
 
-        console.log('Login successful for:', email);
-        console.log('Account type:', accountType);
+        // Remove password from user object
+        user = user.toObject();
+        delete user.password;
 
+        console.log('Login successful for:', email);
+        
         // Send response
         res.json({
             token,
@@ -152,11 +172,11 @@ router.post('/login', async (req, res) => {
                 id: user._id,
                 email: user.email,
                 username: user.username || user.email,
+                name: user.name || user.username,
                 role: user.role || 'user',
-                accountType,
+                accountType: userType,
                 businessName: user.businessName || '',
                 businessType: user.businessType || '',
-                avatarUrl: user.avatarUrl || '',
                 profile: user.profile || {}
             }
         });
