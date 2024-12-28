@@ -162,6 +162,12 @@ const Profile = () => {
     });
   }, [user]);
 
+  useEffect(() => {
+    if (user?.avatarUrl) {
+      setAvatarError(false);
+    }
+  }, [user?.avatarUrl]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
