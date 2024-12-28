@@ -98,6 +98,7 @@ router.post('/auth/login', async (req, res) => {
         console.log('Login attempt for:', email);
 
         if (!email || !password) {
+            console.log('Missing credentials:', { email: !!email, password: !!password });
             return res.status(400).json({ 
                 error: 'Email and password are required' 
             });
@@ -107,20 +108,36 @@ router.post('/auth/login', async (req, res) => {
         let user = null;
         let userType = null;
 
-        // Check each user type collection
-        const regularUser = await User.findOne({ email }).select('+password');
-        const businessUser = await BusinessUser.findOne({ email }).select('+password');
-        const vendorUser = await VendorUser.findOne({ email }).select('+password');
+        try {
+            // Check each user type collection
+            console.log('Checking User collection...');
+            const regularUser = await User.findOne({ email }).select('+password');
+            
+            console.log('Checking BusinessUser collection...');
+            const businessUser = await BusinessUser.findOne({ email }).select('+password');
+            
+            console.log('Checking VendorUser collection...');
+            const vendorUser = await VendorUser.findOne({ email }).select('+password');
 
-        if (regularUser) {
-            user = regularUser;
-            userType = 'Regular';
-        } else if (businessUser) {
-            user = businessUser;
-            userType = 'Business';
-        } else if (vendorUser) {
-            user = vendorUser;
-            userType = 'Vendor';
+            if (regularUser) {
+                user = regularUser;
+                userType = 'Regular';
+                console.log('Found regular user');
+            } else if (businessUser) {
+                user = businessUser;
+                userType = 'Business';
+                console.log('Found business user');
+            } else if (vendorUser) {
+                user = vendorUser;
+                userType = 'Vendor';
+                console.log('Found vendor user');
+            }
+        } catch (dbError) {
+            console.error('Database error during user lookup:', dbError);
+            return res.status(500).json({
+                error: 'Database error during user lookup',
+                details: dbError.message
+            });
         }
 
         if (!user) {
@@ -130,14 +147,25 @@ router.post('/auth/login', async (req, res) => {
             });
         }
 
+        if (!user.password) {
+            console.error('User found but password field is missing:', user._id);
+            return res.status(500).json({
+                error: 'User data error',
+                details: 'Password field is missing'
+            });
+        }
+
         // Verify password
         let isMatch = false;
         try {
+            console.log('Attempting password verification...');
             isMatch = await bcrypt.compare(password, user.password);
-        } catch (error) {
-            console.error('Password comparison error:', error);
+            console.log('Password verification result:', isMatch);
+        } catch (bcryptError) {
+            console.error('Password comparison error:', bcryptError);
             return res.status(500).json({ 
-                error: 'Error verifying password' 
+                error: 'Error verifying password',
+                details: bcryptError.message
             });
         }
 
@@ -149,16 +177,27 @@ router.post('/auth/login', async (req, res) => {
         }
 
         // Create token
-        const token = jwt.sign(
-            { 
-                userId: user._id,
-                email: user.email,
-                role: user.role || 'user',
-                accountType: userType
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' }
-        );
+        let token;
+        try {
+            console.log('Creating JWT token...');
+            token = jwt.sign(
+                { 
+                    userId: user._id,
+                    email: user.email,
+                    role: user.role || 'user',
+                    accountType: userType
+                },
+                process.env.JWT_SECRET,
+                { expiresIn: '24h' }
+            );
+            console.log('JWT token created successfully');
+        } catch (jwtError) {
+            console.error('JWT creation error:', jwtError);
+            return res.status(500).json({
+                error: 'Error creating authentication token',
+                details: jwtError.message
+            });
+        }
 
         // Remove sensitive data
         const userResponse = {
@@ -174,6 +213,7 @@ router.post('/auth/login', async (req, res) => {
         };
 
         console.log('Login successful for:', email);
+        console.log('User response prepared:', { ...userResponse, token: 'REDACTED' });
         
         // Send response
         res.json({
@@ -182,7 +222,8 @@ router.post('/auth/login', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Server error during login:', error);
+        console.error('Unexpected error during login:', error);
+        console.error('Error stack:', error.stack);
         res.status(500).json({ 
             error: 'Login failed',
             details: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
