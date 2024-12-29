@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../services/api';
+import api, { endpoints } from '../services/api';
 import { authService } from '../services/authService';
 
 const AuthContext = createContext(null);
@@ -51,34 +51,25 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      setError(null);
-      console.log('AuthContext: Attempting login with:', credentials);
+      console.log('Attempting login with:', credentials);
+      const response = await api.post('/auth/login', credentials);
+      console.log('Login response:', response.data);
       
-      const response = await authService.login(credentials);
-      console.log('AuthContext: Login response:', response);
-      
-      if (!response || !response.token) {
-        throw new Error('Invalid response from server');
+      const { token, user } = response.data;
+
+      if (!user || !user.accountType) {
+        console.error('Invalid user data:', user);
+        throw new Error('Invalid user data received');
       }
-
-      const { token, user: userData } = response;
-
-      // Normalize user data with proper casing
-      const normalizedUser = {
-        ...userData,
-        accountType: userData.accountType || 'Regular',
-        role: userData.role || 'user'
-      };
 
       localStorage.setItem('token', token);
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setUser(normalizedUser);
+      setUser(user);
       
-      console.log('AuthContext: User set in context:', normalizedUser);
-      return { success: true, user: normalizedUser };
+      console.log('User set in context:', user);
+      return { user, token };
     } catch (error) {
-      console.error('AuthContext: Login error:', error);
-      setError(error.message || 'Login failed');
+      console.error('Login error:', error);
       throw error;
     }
   };
