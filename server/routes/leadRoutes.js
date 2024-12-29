@@ -3,6 +3,7 @@ const router = express.Router();
 const Job = require('../models/jobModel');
 const { auth } = require('../middleware/auth');
 const cache = require('memory-cache');
+const Lead = require('../models/leadModel');
 
 // Add error handling for model import
 if (!Job) {
@@ -216,6 +217,23 @@ router.get('/user', auth, async (req, res) => {
       message: 'Error fetching jobs',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
+  }
+});
+
+// GET /api/leads
+router.get('/', auth, async (req, res) => {
+  try {
+    const { userId } = req.query;
+    const query = userId ? { userId } : {};
+    
+    const leads = await Lead.find(query)
+      .sort({ createdAt: -1 })
+      .limit(10);
+      
+    res.json(leads);
+  } catch (error) {
+    console.error('Error fetching leads:', error);
+    res.status(500).json({ message: 'Error fetching leads' });
   }
 });
 

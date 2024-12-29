@@ -15,6 +15,7 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import Home from './pages/Home';
 import Profile from './components/Dashboard/Profile';
 import UserProfile from './pages/UserProfile';
+import PostLead from './pages/PostLead';
 
 // PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -105,6 +106,13 @@ function AppContent() {
                                 <Layout>
                                     <Profile />
                                 </Layout>
+                            </PrivateRoute>
+                        } />
+
+                        {/* Post lead route */}
+                        <Route path="/post-lead" element={
+                            <PrivateRoute>
+                                <PostLead />
                             </PrivateRoute>
                         } />
 

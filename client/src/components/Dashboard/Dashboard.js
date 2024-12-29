@@ -141,140 +141,71 @@ const ProfileSummary = () => {
 };
 
 const Dashboard = () => {
-  const navigate = useNavigate();
   const { user } = useAuth();
-  const { showNotification } = useNotification();
-  const [data, setData] = useState({
-    jobs: [],
-    products: [],
-    orders: [],
-    business: null,
-    addresses: [],
-    cart: null,
-    leads: []
-  });
-  const [loading, setLoading] = useState({
-    jobs: true,
-    products: true,
-    orders: true,
-    business: true,
-    addresses: true,
-    cart: true,
-    leads: true
-  });
-
-  const loadData = useCallback(async (key, endpoint) => {
-    setLoading(prev => ({ ...prev, [key]: true }));
-    try {
-      const { data: responseData, error } = await fetchData(endpoint);
-      if (error) {
-        showNotification(`Failed to load ${key}: ${error}`, 'error');
-      } else {
-        setData(prev => ({ ...prev, [key]: responseData }));
-      }
-    } catch (err) {
-      showNotification(`Error loading ${key}`, 'error');
-    } finally {
-      setLoading(prev => ({ ...prev, [key]: false }));
-    }
-  }, [showNotification]);
+  const [leads, setLeads] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (user?._id) {
-      loadData('leads', endpoints.leads.list);
-      loadData('jobs', endpoints.jobs.user(user._id));
-      loadData('products', endpoints.products.list({}));
-      loadData('orders', endpoints.orders.user);
-      loadData('business', endpoints.business);
-      loadData('addresses', endpoints.users.addresses);
-      loadData('cart', endpoints.cart);
+    const fetchUserLeads = async () => {
+      try {
+        // Update this to fetch only user's leads
+        const response = await api.get(`${endpoints.leads.list}?userId=${user.id}`);
+        setLeads(response.data);
+      } catch (error) {
+        console.error('Error fetching leads:', error);
+      }
+    };
+
+    if (user) {
+      fetchUserLeads();
     }
-  }, [user, loadData]);
+  }, [user]);
 
-  if (!user) {
-    return <LoadingContainer>Please log in to view your dashboard</LoadingContainer>;
-  }
-
-  if (Object.values(loading).every(Boolean)) {
-    return <LoadingContainer>Loading dashboard...</LoadingContainer>;
-  }
+  const handlePostLead = () => {
+    navigate('/post-lead'); // Update this to the correct path
+  };
 
   return (
     <DashboardContainer>
-      <ProfileSummary />
-      <ActionButton onClick={() => navigate('/post-lead')}>
-        Post a Lead
-      </ActionButton>
+      <DashboardHeader>
+        <h1>Dashboard</h1>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handlePostLead}
+        >
+          Post Lead
+        </Button>
+      </DashboardHeader>
 
       {/* Recent Leads Section */}
-      <Section>
-        <div className="section-header">
-          <h2>Recent Leads</h2>
-        </div>
-        {loading.leads ? (
-          <p>Loading leads...</p>
-        ) : data.leads?.length > 0 ? (
-          <JobsList>
-            {data.leads.map(lead => (
-              <LeadCard key={lead._id} lead={lead} />
-            ))}
-          </JobsList>
-        ) : (
-          <p>No leads found</p>
-        )}
-      </Section>
-
-      {/* Jobs Section */}
-      <Section>
-        <div className="section-header">
-          <h2>Your Jobs</h2>
-          <ActionButton onClick={() => navigate('/post-job')}>
-            Post a New Job
-          </ActionButton>
-        </div>
-        {loading.jobs ? (
-          <p>Loading jobs...</p>
-        ) : data.jobs?.length > 0 ? (
-          <JobsList>
-            {data.jobs.map(job => (
-              <JobItem key={job._id}>
-                <h3>{job.title}</h3>
-                <p>{job.description}</p>
-                <div className="job-details">
-                  {job.budget && <span>Budget: ${job.budget}</span>}
-                  {job.deadline && (
-                    <span>Deadline: {new Date(job.deadline).toLocaleDateString()}</span>
-                  )}
-                  {job.location && <span>Location: {job.location}</span>}
-                </div>
-              </JobItem>
-            ))}
-          </JobsList>
-        ) : (
-          <p>No jobs found. Click "Post a New Job" to get started!</p>
-        )}
-      </Section>
-
-      {/* Products Section */}
-      <Section>
-        <div className="section-header">
-          <h2>Products</h2>
-        </div>
-        {loading.products ? (
-          <p>Loading products...</p>
-        ) : data.products?.length > 0 ? (
-          <ProductGrid>
-            {data.products.map(product => (
-              <ProductCard key={product._id}>
-                <h3>{product.name}</h3>
-                <p>{product.price}</p>
-              </ProductCard>
-            ))}
-          </ProductGrid>
-        ) : (
-          <p>No products found</p>
-        )}
-      </Section>
+      <DashboardCard>
+        <CardHeader>
+          <h2>Your Recent Leads</h2>
+        </CardHeader>
+        <CardContent>
+          {leads.length > 0 ? (
+            <LeadsList>
+              {leads.map((lead) => (
+                <LeadItem key={lead._id}>
+                  <LeadTitle>{lead.title}</LeadTitle>
+                  <LeadDetails>
+                    <span>{lead.category}</span>
+                    <span>{new Date(lead.createdAt).toLocaleDateString()}</span>
+                    <span>{lead.status}</span>
+                  </LeadDetails>
+                </LeadItem>
+              ))}
+            </LeadsList>
+          ) : (
+            <EmptyState>
+              No leads posted yet. Click "Post Lead" to create your first lead.
+            </EmptyState>
+          )}
+        </CardContent>
+      </DashboardCard>
+      
+      {/* ... rest of your dashboard components ... */}
     </DashboardContainer>
   );
 };
