@@ -17,34 +17,42 @@ const userSchema = new mongoose.Schema({
         required: true,
         select: false
     },
-    name: String,
-    accountType: {
+    name: {
         type: String,
-        enum: ['Regular', 'Business', 'Vendor', 'Admin'],
-        default: 'Regular'
+        required: true
+    },
+    avatarUrl: {
+        type: String,
+        default: null
+    },
+    profile: {
+        phone: {
+            type: String,
+            default: ''
+        },
+        bio: {
+            type: String,
+            default: ''
+        },
+        address: [{
+            street: String,
+            city: String,
+            state: String,
+            zipCode: String,
+            country: String,
+            isDefault: Boolean
+        }]
     },
     role: {
         type: String,
         enum: ['user', 'admin'],
         default: 'user'
     },
-    profile: {
-        type: mongoose.Schema.Types.Mixed,
-        default: {}
-    },
-    securitySettings: {
-        twoFactorEnabled: {
-            type: Boolean,
-            default: false
-        },
-        twoFactorSecret: String
-    },
-    avatarUrl: {
+    accountType: {
         type: String,
-        default: null
+        enum: ['user', 'business', 'vendor'],
+        default: 'user'
     }
-}, {
-    timestamps: true
 });
 
 // Hash password before saving

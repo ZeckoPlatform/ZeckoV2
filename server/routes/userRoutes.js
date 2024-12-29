@@ -197,23 +197,46 @@ router.get('/profile', auth, async (req, res) => {
 
 router.put('/profile', auth, async (req, res) => {
   try {
-    const { name, email, phone, bio } = req.body;
     const user = await User.findById(req.user.id);
-
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    user.name = name || user.name;
-    user.email = email || user.email;
-    user.profile.phone = phone || user.profile.phone;
-    user.profile.bio = bio || user.profile.bio;
+    const { name, phone, bio } = req.body;
+
+    // Update basic user fields
+    if (name) user.name = name;
+
+    // Initialize profile if it doesn't exist
+    if (!user.profile) {
+      user.profile = {};
+    }
+
+    // Update profile fields
+    if (phone !== undefined) user.profile.phone = phone;
+    if (bio !== undefined) user.profile.bio = bio;
 
     await user.save();
-    res.json(user);
+
+    // Return updated user without sensitive information
+    const userResponse = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      username: user.username,
+      avatarUrl: user.avatarUrl,
+      profile: user.profile,
+      role: user.role,
+      accountType: user.accountType
+    };
+
+    res.json(userResponse);
   } catch (error) {
     console.error('Profile update error:', error);
-    res.status(500).json({ message: 'Error updating profile' });
+    res.status(500).json({ 
+      message: 'Error updating profile',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
