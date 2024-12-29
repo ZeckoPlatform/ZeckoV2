@@ -1,57 +1,88 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { jobCategories, getAllCategories, getSubcategories } from '../Data/leadCategories';
 
 const PostLead = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    company: '',
-    budget: '',
-    deadline: '',
-    requirements: '',
-    location: ''
+    category: '',
+    subcategory: '',
+    budget: {
+      min: '',
+      max: '',
+      currency: 'USD'
+    },
+    requirements: [], // Array to store answers to category-specific questions
+    location: {
+      address: '',
+      city: '',
+      state: '',
+      country: '',
+      postalCode: ''
+    }
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedSubcategory, setSelectedSubcategory] = useState('');
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  // Fetch categories when component mounts
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await api.get('/api/categories');
+        setCategories(response.data.filter(cat => cat.active)); // Only show active categories
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        setError('Failed to load categories');
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Update selected category and reset form fields when category changes
+  const handleCategoryChange = (e) => {
+    const categoryId = e.target.value;
+    const category = categories.find(cat => cat._id === categoryId);
+    setSelectedCategory(category);
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      category: categoryId,
+      subcategory: '',
+      requirements: category ? category.questions.map(q => ({ 
+        question: q.text,
+        answer: '' 
+      })) : []
     }));
   };
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      const selectedCategoryObj = jobCategories.find(cat => cat.name === formData.category);
-      
-      if (!selectedCategoryObj) {
-        throw new Error('Invalid category selected');
+      if (!formData.category) {
+        throw new Error('Please select a category');
       }
 
       const leadData = {
         ...formData,
-        category: selectedCategoryObj._id,
-        userId: user._id
+        client: user._id,
+        requirements: formData.requirements.filter(req => req.answer), // Only send answered questions
       };
 
-      await api.post('/api/leads', leadData);
+      console.log('Submitting lead data:', leadData);
+      const response = await api.post('/api/leads', leadData);
       navigate('/dashboard');
     } catch (err) {
-      console.error('Error details:', err.response?.data);
+      console.error('Error details:', err);
       setError(err.response?.data?.message || 'Failed to post lead');
     } finally {
       setLoading(false);
@@ -59,205 +90,116 @@ const PostLead = () => {
   };
 
   return (
-    <Container>
-      <FormCard>
-        <h1>Post a New Lead</h1>
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-        <Form onSubmit={handleSubmit}>
-          <FormGroup>
-            <Label>Category *</Label>
+    <form onSubmit={handleSubmit}>
+      {error && <ErrorMessage>{error}</ErrorMessage>}
+      
+      {/* Basic Information */}
+      <FormGroup>
+        <Label>Category</Label>
+        <Select 
+          value={formData.category} 
+          onChange={handleCategoryChange}
+        >
+          <option value="">Select a category</option>
+          {categories.map(cat => (
+            <option key={cat._id} value={cat._id}>
+              {cat.name}
+            </option>
+          ))}
+        </Select>
+      </FormGroup>
+
+      {/* Subcategories (if available) */}
+      {selectedCategory?.subcategories?.length > 0 && (
+        <FormGroup>
+          <Label>Subcategory</Label>
+          <Select
+            value={formData.subcategory}
+            onChange={(e) => setFormData(prev => ({
+              ...prev,
+              subcategory: e.target.value
+            }))}
+          >
+            <option value="">Select a subcategory</option>
+            {selectedCategory.subcategories.map(sub => (
+              <option key={sub.slug} value={sub.name}>
+                {sub.name}
+              </option>
+            ))}
+          </Select>
+        </FormGroup>
+      )}
+
+      {/* Dynamic Questions based on category */}
+      {selectedCategory?.questions?.map((question, index) => (
+        <FormGroup key={index}>
+          <Label>{question.text}{question.required && '*'}</Label>
+          {question.type === 'multiple_choice' ? (
             <Select
-              value={selectedCategory}
+              value={formData.requirements[index]?.answer || ''}
               onChange={(e) => {
-                setSelectedCategory(e.target.value);
-                setSelectedSubcategory('');
+                const newRequirements = [...formData.requirements];
+                newRequirements[index] = {
+                  question: question.text,
+                  answer: e.target.value
+                };
+                setFormData(prev => ({ ...prev, requirements: newRequirements }));
               }}
-              required
+              required={question.required}
             >
-              <option value="">Select a Category</option>
-              {getAllCategories().map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
+              <option value="">Select an option</option>
+              {question.options.map((option, i) => (
+                <option key={i} value={option}>{option}</option>
               ))}
             </Select>
-          </FormGroup>
-
-          {selectedCategory && (
-            <FormGroup>
-              <Label>Subcategory *</Label>
-              <Select
-                value={selectedSubcategory}
-                onChange={(e) => setSelectedSubcategory(e.target.value)}
-                required
-              >
-                <option value="">Select a Subcategory</option>
-                {getSubcategories(selectedCategory).map((subcategory) => (
-                  <option key={subcategory} value={subcategory}>
-                    {subcategory}
-                  </option>
-                ))}
-              </Select>
-            </FormGroup>
+          ) : (
+            <Input
+              type={question.type === 'date' ? 'date' : 'text'}
+              value={formData.requirements[index]?.answer || ''}
+              onChange={(e) => {
+                const newRequirements = [...formData.requirements];
+                newRequirements[index] = {
+                  question: question.text,
+                  answer: e.target.value
+                };
+                setFormData(prev => ({ ...prev, requirements: newRequirements }));
+              }}
+              required={question.required}
+            />
           )}
+        </FormGroup>
+      ))}
 
-          <FormGroup>
-            <Label>Title *</Label>
-            <Input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              required
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>Description *</Label>
-            <Textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              required
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>Budget (£) *</Label>
-            <Input
-              type="number"
-              name="budget"
-              value={formData.budget}
-              onChange={handleChange}
-              required
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>Deadline *</Label>
-            <Input
-              type="date"
-              name="deadline"
-              value={formData.deadline}
-              onChange={handleChange}
-              required
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>Requirements *</Label>
-            <Textarea
-              name="requirements"
-              value={formData.requirements}
-              onChange={handleChange}
-              required
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>Location *</Label>
-            <Input
-              type="text"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              required
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>Company *</Label>
-            <Input
-              type="text"
-              name="company"
-              value={formData.company}
-              onChange={handleChange}
-              required
-            />
-          </FormGroup>
-
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Posting...' : 'Post Lead'}
-          </Button>
-        </Form>
-      </FormCard>
-    </Container>
+      {/* Rest of your form fields */}
+      <Button type="submit" disabled={loading}>
+        {loading ? 'Posting...' : 'Post Lead'}
+      </Button>
+    </form>
   );
 };
 
-// Styled components
-const Container = styled.div`
-  padding: 2rem;
-  max-width: 800px;
-  margin: 0 auto;
-`;
-
-const FormCard = styled.div`
-  background: white;
-  border-radius: 8px;
-  padding: 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-
-  h1 {
-    margin-bottom: 2rem;
-    color: ${({ theme }) => theme.colors.text.primary};
-  }
-`;
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-`;
-
+// Styled components (add these if you haven't already)
 const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  margin-bottom: 1rem;
 `;
 
 const Label = styled.label`
-  font-weight: 500;
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const Input = styled.input`
-  padding: 0.75rem;
-  border: 1px solid ${({ theme }) => theme.colors.border.main};
-  border-radius: 4px;
-  font-size: 1rem;
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary.main};
-  }
+  display: block;
+  margin-bottom: 0.5rem;
 `;
 
 const Select = styled.select`
-  padding: 0.75rem;
-  border: 1px solid ${({ theme }) => theme.colors.border.main};
+  width: 100%;
+  padding: 0.5rem;
   border-radius: 4px;
-  font-size: 1rem;
-  background-color: white;
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary.main};
-  }
+  border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
-const Textarea = styled.textarea`
-  padding: 0.75rem;
-  border: 1px solid ${({ theme }) => theme.colors.border.main};
+const Input = styled.input`
+  width: 100%;
+  padding: 0.5rem;
   border-radius: 4px;
-  font-size: 1rem;
-  min-height: 100px;
-  resize: vertical;
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary.main};
-  }
+  border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
 const Button = styled.button`
