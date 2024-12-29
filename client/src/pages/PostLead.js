@@ -36,14 +36,16 @@ const PostLead = () => {
     setError('');
 
     try {
+      const selectedCategoryObj = jobCategories.find(cat => cat.name === formData.category);
+      
+      if (!selectedCategoryObj) {
+        throw new Error('Invalid category selected');
+      }
+
       const leadData = {
-        title: formData.title,
-        description: formData.description,
-        category: selectedCategory,
-        subcategory: selectedSubcategory,
-        budget: formData.budget,
-        location: formData.location,
-        requirements: formData.requirements
+        ...formData,
+        category: selectedCategoryObj._id,
+        userId: user._id
       };
 
       await api.post('/api/leads', leadData);
