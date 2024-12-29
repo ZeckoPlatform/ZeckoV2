@@ -1,240 +1,164 @@
 const express = require('express');
 const router = express.Router();
-const Job = require('../models/jobModel');
 const { auth } = require('../middleware/auth');
-const cache = require('memory-cache');
-const Lead = require('../models/leadModel');
+const Lead = require('../models/Lead');
 
-// Add error handling for model import
-if (!Job) {
-    console.error('Job model not found');
-    throw new Error('Job model not found');
-}
-
-// Add validation middleware
-const validateJob = (req, res, next) => {
-    const { 
-      title, 
-      description, 
-      company, 
-      location, 
-      category,      // Added category
-      subcategory,   // Added subcategory
-      budget,        // Added budget
-      deadline,      // Added deadline
-      requirements   // Added requirements
-    } = req.body;
-
-    if (!title || !description || !company || !location || 
-        !category || !subcategory || !budget || !deadline || !requirements) {
-        return res.status(400).json({ 
-            message: 'Missing required fields',
-            required: [
-              'title', 
-              'description', 
-              'company', 
-              'location',
-              'category',
-              'subcategory',
-              'budget',
-              'deadline',
-              'requirements'
-            ]
-        });
-    }
-    next();
-};
-
-// Timeout middleware with error handling
-const timeoutMiddleware = (req, res, next) => {
-    const timeout = setTimeout(() => {
-        clearTimeout(timeout);
-        res.status(503).json({ 
-            message: 'Request timeout',
-            code: 'TIMEOUT_ERROR'
-        });
-    }, 20000);
-
-    req.on('end', () => clearTimeout(timeout));
-    next();
-};
-
-// Add request timeout handling
-const requestTimeout = 25000; // 25 seconds
-
-// Get featured jobs with caching
-router.get('/featured', async (req, res) => {
-    const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Request timeout')), requestTimeout)
-    );
-
-    try {
-        const result = await Promise.race([
-            Job.find({ featured: true }).exec(),
-            timeoutPromise
-        ]);
-        res.json(result);
-    } catch (error) {
-        console.error('Featured jobs error:', error);
-        res.status(error.message === 'Request timeout' ? 503 : 500)
-           .json({ message: error.message });
-    }
-});
-
-// Get user's jobs with caching
-router.get('/user/:userId', auth, timeoutMiddleware, async (req, res) => {
-  try {
-    const cacheKey = `user_jobs_${req.params.userId}`;
-    const cachedJobs = cache.get(cacheKey);
-    
-    if (cachedJobs) {
-      return res.json(cachedJobs);
-    }
-
-    const jobs = await Job.find({ postedBy: req.params.userId })
-      .select('title description company location salary type createdAt postedBy')
-      .sort({ createdAt: -1 })
-      .populate('postedBy', 'username')
-      .lean()
-      .exec();
-
-    cache.put(cacheKey, jobs, 2 * 60 * 1000); // Cache for 2 minutes
-    res.json(jobs);
-  } catch (error) {
-    console.error('User jobs error:', error);
-    res.status(500).json({ message: 'Error fetching user jobs' });
-  }
-});
-
-// Create new job
-router.post('/', auth, timeoutMiddleware, validateJob, async (req, res) => {
-  try {
-    const job = new Job({
-      ...req.body,
-      postedBy: req.user.id
-    });
-    await job.save();
-
-    // Clear relevant caches
-    cache.del('featured_jobs');
-    cache.del(`user_jobs_${req.user.id}`);
-
-    res.status(201).json(job);
-  } catch (error) {
-    console.error('Create job error:', error);
-    res.status(500).json({ message: 'Error creating job' });
-  }
-});
-
-// Update job
-router.put('/:id', auth, timeoutMiddleware, async (req, res) => {
-  try {
-    const job = await Job.findOneAndUpdate(
-      { _id: req.params.id, postedBy: req.user.id },
-      req.body,
-      { new: true }
-    ).exec();
-
-    if (!job) {
-      return res.status(404).json({ message: 'Job not found' });
-    }
-
-    // Clear relevant caches
-    cache.del('featured_jobs');
-    cache.del(`user_jobs_${req.user.id}`);
-
-    res.json(job);
-  } catch (error) {
-    console.error('Update job error:', error);
-    res.status(500).json({ message: 'Error updating job' });
-  }
-});
-
-// Delete job
-router.delete('/:id', auth, timeoutMiddleware, async (req, res) => {
-  try {
-    const job = await Job.findOneAndDelete({
-      _id: req.params.id,
-      postedBy: req.user.id
-    }).exec();
-
-    if (!job) {
-      return res.status(404).json({ message: 'Job not found' });
-    }
-
-    // Clear relevant caches
-    cache.del('featured_jobs');
-    cache.del(`user_jobs_${req.user.id}`);
-
-    res.json({ message: 'Job deleted successfully' });
-  } catch (error) {
-    console.error('Delete job error:', error);
-    res.status(500).json({ message: 'Error deleting job' });
-  }
-});
-
-// Add global error handler for this router
-router.use((error, req, res, next) => {
-    console.error('Job routes error:', error);
-    res.status(500).json({
-        message: 'An error occurred in job routes',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-});
-
-// Add this route if it's not already there
-router.get('/user', auth, async (req, res) => {
-  try {
-    const { sort, status, search, searchField } = req.query;
-    
-    // Build query
-    const query = { postedBy: req.user.id };
-    
-    // Add status filter if it's not 'all'
-    if (status && status !== 'all') {
-      query.status = status;
-    }
-    
-    // Add search if provided
-    if (search && searchField) {
-      query[searchField] = new RegExp(search, 'i');
-    }
-
-    // Default sort to createdAt if not specified
-    const sortObj = sort === 'deadline' ? { deadline: 1 } : 
-                   sort === 'budget' ? { budget: -1 } : 
-                   { createdAt: -1 };
-
-    const jobs = await Job.find(query)
-      .sort(sortObj)
-      .populate('postedBy', 'name email')
-      .lean();
-
-    return res.json(jobs);
-  } catch (error) {
-    console.error('Error in jobs/user:', error);
-    return res.status(500).json({ 
-      message: 'Error fetching jobs',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
-  }
-});
-
-// GET /api/leads
+// Get all leads with filtering
 router.get('/', auth, async (req, res) => {
-  try {
-    const { userId } = req.query;
-    const query = userId ? { userId } : {};
-    
-    const leads = await Lead.find(query)
-      .sort({ createdAt: -1 })
-      .limit(10);
-      
-    res.json(leads);
-  } catch (error) {
-    console.error('Error fetching leads:', error);
-    res.status(500).json({ message: 'Error fetching leads' });
-  }
+    try {
+        const { userId } = req.query;
+        const query = userId ? { client: userId } : {};
+        
+        const leads = await Lead.find(query)
+            .populate('category')
+            .populate('client', 'username businessName')
+            .sort({ createdAt: -1 })
+            .limit(10);
+            
+        res.json(leads);
+    } catch (error) {
+        console.error('Error fetching leads:', error);
+        res.status(500).json({ message: 'Error fetching leads' });
+    }
+});
+
+// Create new lead
+router.post('/', auth, async (req, res) => {
+    try {
+        const {
+            title,
+            description,
+            category,
+            subcategory,
+            budget,
+            location,
+            requirements
+        } = req.body;
+
+        const lead = new Lead({
+            title,
+            description,
+            category,
+            subCategory: subcategory,
+            budget: {
+                min: parseFloat(budget),
+                max: parseFloat(budget),
+                currency: 'GBP'
+            },
+            location: {
+                address: location,
+                // You can add more location fields here if needed
+            },
+            client: req.user.id,
+            requirements: requirements ? [{ 
+                question: 'Requirements', 
+                answer: requirements 
+            }] : [],
+            status: 'active',
+            visibility: 'public'
+        });
+        
+        const newLead = await lead.save();
+        await newLead.populate('category');
+        await newLead.populate('client', 'username businessName');
+        
+        res.status(201).json(newLead);
+    } catch (error) {
+        console.error('Error creating lead:', error);
+        res.status(400).json({ 
+            message: 'Error creating lead', 
+            error: error.message 
+        });
+    }
+});
+
+// Get lead by ID
+router.get('/:id', auth, async (req, res) => {
+    try {
+        const lead = await Lead.findById(req.params.id)
+            .populate('category')
+            .populate('client', 'username businessName')
+            .populate('proposals.contractor', 'username businessName');
+
+        if (!lead) {
+            return res.status(404).json({ message: 'Lead not found' });
+        }
+
+        // Increment view count
+        lead.metrics.viewCount += 1;
+        await lead.save();
+
+        res.json(lead);
+    } catch (error) {
+        console.error('Error fetching lead:', error);
+        res.status(500).json({ message: 'Error fetching lead' });
+    }
+});
+
+// Update lead
+router.patch('/:id', auth, async (req, res) => {
+    try {
+        const lead = await Lead.findOneAndUpdate(
+            { _id: req.params.id, client: req.user.id },
+            req.body,
+            { new: true }
+        ).populate('category')
+         .populate('client', 'username businessName');
+
+        if (!lead) {
+            return res.status(404).json({ message: 'Lead not found' });
+        }
+
+        res.json(lead);
+    } catch (error) {
+        console.error('Error updating lead:', error);
+        res.status(400).json({ message: 'Error updating lead' });
+    }
+});
+
+// Delete lead
+router.delete('/:id', auth, async (req, res) => {
+    try {
+        const lead = await Lead.findOneAndDelete({
+            _id: req.params.id,
+            client: req.user.id
+        });
+
+        if (!lead) {
+            return res.status(404).json({ message: 'Lead not found' });
+        }
+
+        res.json({ message: 'Lead deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting lead:', error);
+        res.status(500).json({ message: 'Error deleting lead' });
+    }
+});
+
+// Submit proposal
+router.post('/:id/proposals', auth, async (req, res) => {
+    try {
+        const lead = await Lead.findById(req.params.id);
+        
+        if (!lead) {
+            return res.status(404).json({ message: 'Lead not found' });
+        }
+
+        lead.proposals.push({
+            contractor: req.user.id,
+            amount: {
+                value: req.body.amount,
+                currency: 'GBP'
+            },
+            message: req.body.message
+        });
+
+        await lead.save();
+        res.status(201).json(lead);
+    } catch (error) {
+        console.error('Error submitting proposal:', error);
+        res.status(400).json({ message: 'Error submitting proposal' });
+    }
 });
 
 module.exports = router;
