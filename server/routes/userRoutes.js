@@ -9,11 +9,32 @@ const speakeasy = require('speakeasy');
 const mongoose = require('mongoose');
 const BusinessUser = require('../models/businessUserModel');
 const VendorUser = require('../models/vendorUserModel');
+const cloudinary = require('cloudinary').v2;
+const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 console.log('Loading userRoutes.js - START');
 
 // Import controllers
 const userController = require('../controllers/userController');
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Configure multer for Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'avatars',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif']
+  }
+});
+
+const upload = multer({ storage: storage });
 
 // Auth routes
 router.post('/register', async (req, res) => {
@@ -442,6 +463,42 @@ router.delete('/addresses/:addressId', auth, async (req, res) => {
 
 // GET /api/users/me
 router.get('/me', auth, userController.getProfile);
+
+// Avatar upload route
+router.post('/profile/avatar', auth, upload.single('avatar'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // If there's an existing avatar, delete it from Cloudinary
+    if (user.avatarUrl && user.avatarUrl.includes('cloudinary')) {
+      const publicId = user.avatarUrl.split('/').pop().split('.')[0];
+      await cloudinary.uploader.destroy(publicId);
+    }
+
+    // Update user's avatar URL
+    user.avatarUrl = req.file.path;
+    await user.save();
+
+    res.json({
+      message: 'Avatar uploaded successfully',
+      avatarUrl: user.avatarUrl
+    });
+
+  } catch (error) {
+    console.error('Avatar upload error:', error);
+    res.status(500).json({ 
+      message: 'Error uploading avatar',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
 
 console.log('Loading userRoutes.js - END');
 

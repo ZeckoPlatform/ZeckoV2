@@ -38,6 +38,10 @@ const userSchema = new mongoose.Schema({
             default: false
         },
         twoFactorSecret: String
+    },
+    avatarUrl: {
+        type: String,
+        default: null
     }
 }, {
     timestamps: true
