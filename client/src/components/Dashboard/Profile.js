@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import api, { endpoints } from '../../services/api';
 import EditIcon from '@mui/icons-material/Edit';
+import { Avatar } from '@mui/material';
 import styled from 'styled-components';
 import DashboardCard from './common/DashboardCard';
 
