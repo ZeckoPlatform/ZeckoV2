@@ -4,36 +4,49 @@ import { authService } from '../services/authService';
 
 const AuthContext = createContext(null);
 
+const TOKEN_REFRESH_INTERVAL = 15 * 60 * 1000; // 15 minutes
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const refreshToken = async () => {
+    try {
+      const response = await api.post(endpoints.auth.refresh);
+      const { token } = response.data;
+      localStorage.setItem('token', token);
+      return token;
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      logout();
+    }
+  };
+
   useEffect(() => {
-    const checkAuth = async () => {
+    if (user) {
+      const refreshInterval = setInterval(refreshToken, TOKEN_REFRESH_INTERVAL);
+      return () => clearInterval(refreshInterval);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const initAuth = async () => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          const response = await api.get('/auth/verify');
-          
-          if (response.data.user) {
-            console.log('Auth check successful:', response.data.user);
-            setUser(response.data.user);
-          } else {
-            throw new Error('No user data in response');
-          }
+          const response = await api.get(endpoints.users.profile);
+          setUser(response.data);
         } catch (error) {
-          console.error('Auth check error:', error);
+          console.error('Auth initialization failed:', error);
           localStorage.removeItem('token');
-          delete api.defaults.headers.common['Authorization'];
           setUser(null);
         }
       }
       setLoading(false);
     };
-    
-    checkAuth();
+
+    initAuth();
   }, []);
 
   const login = async (credentials) => {

@@ -14,7 +14,8 @@ export const endpoints = {
     login: '/api/auth/login',
     register: '/api/auth/register',
     verify: '/api/auth/verify',
-    logout: '/api/auth/logout'
+    logout: '/api/auth/logout',
+    refresh: '/api/users/refresh-token'
   },
   users: {
     profile: '/api/users/profile',

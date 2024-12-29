@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import api, { endpoints } from '../../services/api';
 import EditIcon from '@mui/icons-material/Edit';
-import { Avatar } from '@mui/material';
+import { Avatar, TextField, Button, Grid, Alert } from '@mui/material';
 import styled from 'styled-components';
 import DashboardCard from './common/DashboardCard';
 
@@ -71,6 +71,12 @@ const UserInfo = styled.div`
   flex: 1;
 `;
 
+// Add this styled component for the form
+const StyledForm = styled.form`
+  width: 100%;
+  margin-top: ${({ theme }) => theme.spacing.md || '16px'};
+`;
+
 // Main component
 const Profile = () => {
   const { user, updateUser } = useAuth();
@@ -78,6 +84,49 @@ const Profile = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [avatarError, setAvatarError] = useState(false);
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    username: user?.username || '',
+    phone: user?.profile?.phone || '',
+    bio: user?.profile?.bio || ''
+  });
+
+  // Add this useEffect to update form data when user changes
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        username: user.username || '',
+        phone: user.profile?.phone || '',
+        bio: user.profile?.bio || ''
+      });
+    }
+  }, [user]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      setError('');
+      const response = await api.put(endpoints.users.profile, formData);
+      updateUser(response.data);
+      setSuccess('Profile updated successfully!');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAvatarChange = async (event) => {
     const file = event.target.files?.[0];
@@ -193,7 +242,79 @@ const Profile = () => {
           <AvatarDisplay />
         </AvatarContainer>
         <UserInfo>
-          {/* User info content */}
+          <StyledForm onSubmit={handleSubmit}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  disabled
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  disabled
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Bio"
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleInputChange}
+                  multiline
+                  rows={4}
+                />
+              </Grid>
+              {error && (
+                <Grid item xs={12}>
+                  <Alert severity="error">{error}</Alert>
+                </Grid>
+              )}
+              {success && (
+                <Grid item xs={12}>
+                  <Alert severity="success">{success}</Alert>
+                </Grid>
+              )}
+              <Grid item xs={12}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={loading}
+                >
+                  {loading ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </Grid>
+            </Grid>
+          </StyledForm>
         </UserInfo>
       </ProfileHeader>
       {/* Rest of your JSX */}
