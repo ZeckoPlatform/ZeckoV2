@@ -93,12 +93,35 @@ const PostLead = () => {
     <form onSubmit={handleSubmit}>
       {error && <ErrorMessage>{error}</ErrorMessage>}
       
-      {/* Basic Information */}
+      {/* Title */}
       <FormGroup>
-        <Label>Category</Label>
+        <Label>Title*</Label>
+        <Input
+          type="text"
+          value={formData.title}
+          onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+          required
+        />
+      </FormGroup>
+
+      {/* Description */}
+      <FormGroup>
+        <Label>Description*</Label>
+        <TextArea
+          value={formData.description}
+          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+          required
+          rows={4}
+        />
+      </FormGroup>
+
+      {/* Category */}
+      <FormGroup>
+        <Label>Category*</Label>
         <Select 
           value={formData.category} 
           onChange={handleCategoryChange}
+          required
         >
           <option value="">Select a category</option>
           {categories.map(cat => (
@@ -109,7 +132,7 @@ const PostLead = () => {
         </Select>
       </FormGroup>
 
-      {/* Subcategories (if available) */}
+      {/* Subcategories */}
       {selectedCategory?.subcategories?.length > 0 && (
         <FormGroup>
           <Label>Subcategory</Label>
@@ -130,7 +153,92 @@ const PostLead = () => {
         </FormGroup>
       )}
 
-      {/* Dynamic Questions based on category */}
+      {/* Budget */}
+      <FormGroup>
+        <Label>Budget*</Label>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ flex: 1 }}>
+            <Label>Minimum</Label>
+            <Input
+              type="number"
+              value={formData.budget.min}
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                budget: { ...prev.budget, min: e.target.value }
+              }))}
+              required
+              min="0"
+            />
+          </div>
+          <div style={{ flex: 1 }}>
+            <Label>Maximum</Label>
+            <Input
+              type="number"
+              value={formData.budget.max}
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                budget: { ...prev.budget, max: e.target.value }
+              }))}
+              required
+              min="0"
+            />
+          </div>
+        </div>
+      </FormGroup>
+
+      {/* Location */}
+      <FormGroup>
+        <Label>Location</Label>
+        <Input
+          type="text"
+          placeholder="Address"
+          value={formData.location.address}
+          onChange={(e) => setFormData(prev => ({
+            ...prev,
+            location: { ...prev.location, address: e.target.value }
+          }))}
+        />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+          <Input
+            type="text"
+            placeholder="City"
+            value={formData.location.city}
+            onChange={(e) => setFormData(prev => ({
+              ...prev,
+              location: { ...prev.location, city: e.target.value }
+            }))}
+          />
+          <Input
+            type="text"
+            placeholder="State"
+            value={formData.location.state}
+            onChange={(e) => setFormData(prev => ({
+              ...prev,
+              location: { ...prev.location, state: e.target.value }
+            }))}
+          />
+          <Input
+            type="text"
+            placeholder="Country"
+            value={formData.location.country}
+            onChange={(e) => setFormData(prev => ({
+              ...prev,
+              location: { ...prev.location, country: e.target.value }
+            }))}
+          />
+          <Input
+            type="text"
+            placeholder="Postal Code"
+            value={formData.location.postalCode}
+            onChange={(e) => setFormData(prev => ({
+              ...prev,
+              location: { ...prev.location, postalCode: e.target.value }
+            }))}
+          />
+        </div>
+      </FormGroup>
+
+      {/* Dynamic Questions */}
       {selectedCategory?.questions?.map((question, index) => (
         <FormGroup key={index}>
           <Label>{question.text}{question.required && '*'}</Label>
@@ -170,7 +278,6 @@ const PostLead = () => {
         </FormGroup>
       ))}
 
-      {/* Rest of your form fields */}
       <Button type="submit" disabled={loading}>
         {loading ? 'Posting...' : 'Post Lead'}
       </Button>
@@ -228,6 +335,14 @@ const ErrorMessage = styled.div`
   padding: 0.75rem;
   border-radius: 4px;
   background-color: ${({ theme }) => theme.colors.error.light};
+`;
+
+const TextArea = styled.textarea`
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  resize: vertical;
 `;
 
 export default PostLead; 
