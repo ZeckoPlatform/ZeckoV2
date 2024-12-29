@@ -16,6 +16,7 @@ import Home from './pages/Home';
 import Profile from './components/Dashboard/Profile';
 import UserProfile from './pages/UserProfile';
 import PostLead from './pages/PostLead';
+import DashboardProfile from './components/Dashboard/Profile';
 
 // PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -97,6 +98,30 @@ function AppContent() {
                                 </Layout>
                             </PrivateRoute>
                         } />
+
+                        {/* Main profile page route */}
+                        <Route 
+                            path="/profile" 
+                            element={
+                                <PrivateRoute>
+                                    <Layout>
+                                        <UserProfile />
+                                    </Layout>
+                                </PrivateRoute>
+                            } 
+                        />
+
+                        {/* Dashboard profile route */}
+                        <Route 
+                            path="/dashboard/profile" 
+                            element={
+                                <PrivateRoute>
+                                    <Layout>
+                                        <Profile />
+                                    </Layout>
+                                </PrivateRoute>
+                            } 
+                        />
 
                         {/* Catch all route */}
                         <Route path="*" element={<Navigate to="/" replace />} />

@@ -165,7 +165,7 @@ const Navbar = () => {
     { text: 'Home', path: '/' },
     { text: 'Services', path: '/services' },
     { text: 'Dashboard', path: '/dashboard' },
-    { text: 'Profile', path: '/profile' }
+    { text: 'Profile', path: '/dashboard/profile' }
   ] : [
     { text: 'Home', path: '/' },
     { text: 'Services', path: '/services' },

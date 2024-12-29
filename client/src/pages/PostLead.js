@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { jobCategories, getAllCategories, getSubcategories } from '../Data/leadCategories';
 
 const PostLead = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -34,19 +36,21 @@ const PostLead = () => {
     setError('');
 
     try {
-      const jobData = {
-        ...formData,
+      const leadData = {
+        title: formData.title,
+        description: formData.description,
         category: selectedCategory,
         subcategory: selectedSubcategory,
-        budget: parseFloat(formData.budget),
-        deadline: new Date(formData.deadline).toISOString()
+        budget: formData.budget,
+        location: formData.location,
+        requirements: formData.requirements
       };
 
-      await api.post('/jobs', jobData);
+      await api.post('/api/leads', leadData);
       navigate('/dashboard');
     } catch (err) {
       console.error('Error details:', err.response?.data);
-      setError(err.response?.data?.message || 'Failed to post job');
+      setError(err.response?.data?.message || 'Failed to post lead');
     } finally {
       setLoading(false);
     }
