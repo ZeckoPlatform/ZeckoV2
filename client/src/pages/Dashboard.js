@@ -1,184 +1,117 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import {
-    Container,
-    Typography,
-    Box,
-    Grid,
-    Paper,
-    Button,
-    Card,
-    CardContent,
-    CardActions
-} from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility as ViewIcon } from '@mui/icons-material';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import api, { endpoints } from '../services/api';
+import { Button } from '@mui/material';
+import styled from 'styled-components';
+import DashboardCard from '../components/Dashboard/common/DashboardCard';
+import Profile from '../components/Dashboard/Profile';
+
+const DashboardContainer = styled.div`
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+`;
+
+const DashboardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+`;
+
+const LeadsList = styled.div`
+  display: grid;
+  gap: 16px;
+`;
+
+const LeadItem = styled.div`
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+`;
+
+const LeadTitle = styled.h3`
+  margin: 0 0 8px 0;
+`;
+
+const LeadDetails = styled.div`
+  display: flex;
+  gap: 16px;
+  color: #666;
+  font-size: 0.9em;
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 24px;
+  color: #666;
+`;
 
 const Dashboard = () => {
-    const { user } = useAuth();
-    const navigate = useNavigate();
+  const { user } = useAuth();
+  const [leads, setLeads] = useState([]);
+  const navigate = useNavigate();
 
-    console.log('Dashboard user:', user);
-
-    if (!user) {
-        return <Navigate to="/login" replace />;
-    }
-
-    const renderRegularDashboard = () => (
-        <Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-                <Typography variant="h4" gutterBottom>
-                    Welcome back, {user.username}!
-                </Typography>
-                <Box display="flex" gap={2}>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        startIcon={<AddIcon />}
-                        onClick={() => navigate('/leads/new')}
-                    >
-                        Post Lead
-                    </Button>
-                    <Button
-                        variant="outlined"
-                        startIcon={<ViewIcon />}
-                        onClick={() => navigate('/leads')}
-                    >
-                        View Leads
-                    </Button>
-                </Box>
-            </Box>
-
-            <Grid container spacing={3}>
-                {/* Recent Leads */}
-                <Grid item xs={12} md={8}>
-                    <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Recent Leads
-                        </Typography>
-                        <Grid container spacing={2}>
-                            {/* Sample Lead Cards - Replace with actual data */}
-                            {[1, 2, 3].map((item) => (
-                                <Grid item xs={12} key={item}>
-                                    <Card>
-                                        <CardContent>
-                                            <Typography variant="h6">
-                                                Sample Lead {item}
-                                            </Typography>
-                                            <Typography color="textSecondary">
-                                                Posted: {new Date().toLocaleDateString()}
-                                            </Typography>
-                                        </CardContent>
-                                        <CardActions>
-                                            <Button size="small" startIcon={<ViewIcon />}>
-                                                View
-                                            </Button>
-                                            <Button size="small" startIcon={<EditIcon />}>
-                                                Edit
-                                            </Button>
-                                            <Button size="small" startIcon={<DeleteIcon />}>
-                                                Delete
-                                            </Button>
-                                        </CardActions>
-                                    </Card>
-                                </Grid>
-                            ))}
-                        </Grid>
-                    </Paper>
-                </Grid>
-
-                {/* Profile Summary */}
-                <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Profile Summary
-                        </Typography>
-                        <Box>
-                            <Typography>
-                                <strong>Email:</strong> {user.email}
-                            </Typography>
-                            <Typography>
-                                <strong>Account Type:</strong> {user.accountType}
-                            </Typography>
-                            <Typography>
-                                <strong>Member Since:</strong> {new Date(user.createdAt).toLocaleDateString()}
-                            </Typography>
-                            <Button
-                                variant="outlined"
-                                fullWidth
-                                sx={{ mt: 2 }}
-                                onClick={() => navigate('/profile')}
-                            >
-                                Edit Profile
-                            </Button>
-                        </Box>
-                    </Paper>
-                </Grid>
-            </Grid>
-        </Box>
-    );
-
-    const renderBusinessDashboard = () => (
-        <Box>
-            <Typography variant="h4" gutterBottom>
-                Welcome back, {user.username}!
-            </Typography>
-            <Typography variant="subtitle1" gutterBottom>
-                Business Account
-            </Typography>
-            <Grid container spacing={3}>
-                {/* Business dashboard content */}
-            </Grid>
-        </Box>
-    );
-
-    const renderVendorDashboard = () => (
-        <Box>
-            <Typography variant="h4" gutterBottom>
-                Welcome back, {user.username}!
-            </Typography>
-            <Typography variant="subtitle1" gutterBottom>
-                Vendor Account
-            </Typography>
-            <Grid container spacing={3}>
-                {/* Vendor dashboard content */}
-            </Grid>
-        </Box>
-    );
-
-    const getDashboardContent = () => {
-        console.log('Account type:', user.accountType);
-
-        switch (user.accountType) {
-            case 'regular':
-                return renderRegularDashboard();
-            case 'business':
-                return renderBusinessDashboard();
-            case 'vendor':
-                return renderVendorDashboard();
-            default:
-                console.error('Unknown account type:', user.accountType);
-                return (
-                    <Box>
-                        <Typography variant="h4" gutterBottom>
-                            Welcome back, {user.username}!
-                        </Typography>
-                        <Typography variant="subtitle1" color="error">
-                            Account type not recognized: {user.accountType}
-                        </Typography>
-                    </Box>
-                );
-        }
+  useEffect(() => {
+    const fetchUserLeads = async () => {
+      try {
+        const response = await api.get(`${endpoints.leads.list}?userId=${user.id}`);
+        setLeads(response.data);
+      } catch (error) {
+        console.error('Error fetching leads:', error);
+      }
     };
 
-    return (
-        <Container>
-            <Box py={4}>
-                {getDashboardContent()}
-            </Box>
-        </Container>
-    );
+    if (user) {
+      fetchUserLeads();
+    }
+  }, [user]);
+
+  const handlePostLead = () => {
+    navigate('/post-lead');
+  };
+
+  return (
+    <DashboardContainer>
+      <DashboardHeader>
+        <h1>Dashboard</h1>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handlePostLead}
+        >
+          Post Lead
+        </Button>
+      </DashboardHeader>
+
+      {/* Profile Section */}
+      <Profile />
+
+      {/* User's Leads Section */}
+      <DashboardCard>
+        <h2>Your Recent Leads</h2>
+        {leads.length > 0 ? (
+          <LeadsList>
+            {leads.map((lead) => (
+              <LeadItem key={lead._id}>
+                <LeadTitle>{lead.title}</LeadTitle>
+                <LeadDetails>
+                  <span>{lead.category}</span>
+                  <span>{new Date(lead.createdAt).toLocaleDateString()}</span>
+                  <span>{lead.status}</span>
+                </LeadDetails>
+              </LeadItem>
+            ))}
+          </LeadsList>
+        ) : (
+          <EmptyState>
+            No leads posted yet. Click "Post Lead" to create your first lead.
+          </EmptyState>
+        )}
+      </DashboardCard>
+    </DashboardContainer>
+  );
 };
 
 export default Dashboard;

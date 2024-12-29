@@ -57,7 +57,7 @@ function AppContent() {
             <Router>
                 <ServiceProvider>
                     <Routes>
-                        {/* Public routes with Layout */}
+                        {/* Public routes */}
                         <Route path="/" element={
                             <Layout>
                                 <Home />
@@ -90,29 +90,11 @@ function AppContent() {
                                 </Layout>
                             </PrivateRoute>
                         } />
-
-                        {/* Admin routes */}
-                        <Route path="/admin" element={
-                            <AdminRoute>
-                                <Layout>
-                                    <AdminDashboard />
-                                </Layout>
-                            </AdminRoute>
-                        } />
-
-                        {/* Profile route */}
-                        <Route path="/profile" element={
-                            <PrivateRoute>
-                                <Layout>
-                                    <Profile />
-                                </Layout>
-                            </PrivateRoute>
-                        } />
-
-                        {/* Post lead route */}
                         <Route path="/post-lead" element={
                             <PrivateRoute>
-                                <PostLead />
+                                <Layout>
+                                    <PostLead />
+                                </Layout>
                             </PrivateRoute>
                         } />
 

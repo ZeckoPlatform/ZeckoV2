@@ -42,8 +42,6 @@ const PostLead = () => {
         deadline: new Date(formData.deadline).toISOString()
       };
 
-      console.log('Submitting job data:', jobData);
-
       await api.post('/jobs', jobData);
       navigate('/dashboard');
     } catch (err) {
@@ -66,7 +64,7 @@ const PostLead = () => {
               value={selectedCategory}
               onChange={(e) => {
                 setSelectedCategory(e.target.value);
-                setSelectedSubcategory(''); // Reset subcategory when category changes
+                setSelectedSubcategory('');
               }}
               required
             >
@@ -119,7 +117,7 @@ const PostLead = () => {
           </FormGroup>
 
           <FormGroup>
-            <Label>Budget</Label>
+            <Label>Budget (£) *</Label>
             <Input
               type="number"
               name="budget"
@@ -130,7 +128,7 @@ const PostLead = () => {
           </FormGroup>
 
           <FormGroup>
-            <Label>Deadline</Label>
+            <Label>Deadline *</Label>
             <Input
               type="date"
               name="deadline"
@@ -141,7 +139,7 @@ const PostLead = () => {
           </FormGroup>
 
           <FormGroup>
-            <Label>Requirements</Label>
+            <Label>Requirements *</Label>
             <Textarea
               name="requirements"
               value={formData.requirements}
@@ -151,7 +149,7 @@ const PostLead = () => {
           </FormGroup>
 
           <FormGroup>
-            <Label>Location</Label>
+            <Label>Location *</Label>
             <Input
               type="text"
               name="location"
@@ -229,6 +227,19 @@ const Input = styled.input`
   }
 `;
 
+const Select = styled.select`
+  padding: 0.75rem;
+  border: 1px solid ${({ theme }) => theme.colors.border.main};
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: white;
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.primary.main};
+  }
+`;
+
 const Textarea = styled.textarea`
   padding: 0.75rem;
   border: 1px solid ${({ theme }) => theme.colors.border.main};
@@ -266,20 +277,9 @@ const Button = styled.button`
 const ErrorMessage = styled.div`
   color: ${({ theme }) => theme.colors.error.main};
   margin-bottom: 1rem;
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  padding: 0.75rem;
   border-radius: 4px;
-  font-size: 16px;
-  margin-bottom: 1rem;
-  
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary.main};
-  }
+  background-color: ${({ theme }) => theme.colors.error.light};
 `;
 
 export default PostLead; 
