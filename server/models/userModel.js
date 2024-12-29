@@ -50,7 +50,7 @@ const userSchema = new mongoose.Schema({
     },
     accountType: {
         type: String,
-        enum: ['user', 'business', 'vendor'],
+        enum: ['user', 'business', 'vendor', 'regular'],
         default: 'user'
     }
 });

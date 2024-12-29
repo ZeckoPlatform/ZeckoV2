@@ -7,100 +7,26 @@ const cache = require('memory-cache');
 // Main authentication middleware
 const auth = async (req, res, next) => {
     try {
-        const token = req.header('Authorization')?.replace('Bearer ', '');
+        const token = req.headers.authorization?.replace('Bearer ', '');
         
         if (!token) {
-            console.log('No token provided');
-            return res.status(401).json({ message: 'No auth token' });
+            return res.status(401).json({ message: 'No authorization token provided' });
         }
 
-        // Check token cache first
-        const cachedUser = cache.get(`auth_${token}`);
-        if (cachedUser) {
-            // Add business cache check
-            const cachedBusiness = cache.get(`business_${cachedUser.id}`);
-            if (cachedBusiness) {
-                req.user = cachedUser;
-                req.business = cachedBusiness;
-                return next();
-            }
-        }
-
-        console.log('Token received:', token.substring(0, 20) + '...');
-        
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log('Decoded token:', {
-            userId: decoded.userId,
-            accountType: decoded.accountType,
-            role: decoded.role
-        });
-
-        if (!mongoose.Types.ObjectId.isValid(decoded.userId)) {
-            throw new Error('Invalid user ID format');
-        }
-
-        let user;
-        // Normalize business type check
-        const userQuery = decoded.accountType?.toLowerCase() === 'business' ? 
-            BusinessUser.findById(decoded.userId) :
-            User.findById(decoded.userId);
-
-        user = await userQuery
-            .select('-password -__v')
-            .lean()
-            .exec();
-
-        if (!user) {
-            console.log('No user found for ID:', decoded.userId);
-            throw new Error('User not found');
-        }
-
-        // Normalize account type
-        const normalizedAccountType = user.accountType
-            ? user.accountType.charAt(0).toUpperCase() + user.accountType.slice(1).toLowerCase()
-            : decoded.accountType
-                ? decoded.accountType.charAt(0).toUpperCase() + decoded.accountType.slice(1).toLowerCase()
-                : 'Regular';
-
-        const userData = {
-            id: user._id,
-            userId: user._id,
-            email: user.email,
-            role: decoded.role || user.role,
-            accountType: normalizedAccountType,
-            businessName: user.businessName
+        
+        // Handle both formats of user ID in token
+        req.user = {
+            id: decoded.userId || decoded.id,
+            userId: decoded.userId || decoded.id,
+            role: decoded.role,
+            accountType: decoded.accountType
         };
 
-        // Cache user data for 5 minutes
-        cache.put(`auth_${token}`, userData, 5 * 60 * 1000);
-        
-        // Add error handling for token expiration
-        if (decoded.exp && Date.now() >= decoded.exp * 1000) {
-            throw new Error('Token has expired');
-        }
-        
-        req.user = userData;
         next();
     } catch (error) {
-        console.error('Auth middleware error:', {
-            message: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        });
-        
-        // Enhanced error handling
-        const errorResponse = {
-            message: 'Authentication failed',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        };
-
-        // Specific error handling for different scenarios
-        if (error.name === 'JsonWebTokenError') {
-            errorResponse.message = 'Invalid token';
-        } else if (error.name === 'TokenExpiredError') {
-            errorResponse.message = 'Token has expired';
-        }
-        
-        res.status(401).json(errorResponse);
+        console.error('Auth middleware error:', error);
+        res.status(401).json({ message: 'Please authenticate' });
     }
 };
 

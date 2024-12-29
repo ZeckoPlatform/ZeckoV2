@@ -197,7 +197,7 @@ router.get('/profile', auth, async (req, res) => {
 
 router.put('/profile', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id || req.user.userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -216,7 +216,8 @@ router.put('/profile', auth, async (req, res) => {
     if (phone !== undefined) user.profile.phone = phone;
     if (bio !== undefined) user.profile.bio = bio;
 
-    await user.save();
+    // Save without validation for accountType
+    await user.save({ validateModifiedOnly: true });
 
     // Return updated user without sensitive information
     const userResponse = {
