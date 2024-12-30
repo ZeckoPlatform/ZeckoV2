@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
+import { jobCategories } from '../Data/leadCategories';
 
 const ServiceContext = createContext();
 
@@ -13,11 +14,31 @@ export const ServiceProvider = ({ children }) => {
         try {
             setLoading(true);
             const response = await api.get('/api/categories');
-            setCategories(response.data);
+            if (response.data && response.data.length > 0) {
+                setCategories(response.data);
+            } else {
+                const formattedCategories = Object.values(jobCategories).map(category => ({
+                    _id: category.name.toLowerCase().replace(/\s+/g, '-'),
+                    name: category.name,
+                    description: category.description,
+                    icon: category.icon,
+                    subcategories: category.subcategories
+                }));
+                setCategories(formattedCategories);
+            }
             setError(null);
         } catch (err) {
-            setError('Failed to fetch categories');
             console.error('Error fetching categories:', err);
+            // Fallback to predefined categories
+            const formattedCategories = Object.values(jobCategories).map(category => ({
+                _id: category.name.toLowerCase().replace(/\s+/g, '-'),
+                name: category.name,
+                description: category.description,
+                icon: category.icon,
+                subcategories: category.subcategories
+            }));
+            setCategories(formattedCategories);
+            setError(null);
         } finally {
             setLoading(false);
         }
