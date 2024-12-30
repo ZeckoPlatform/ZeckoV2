@@ -49,25 +49,14 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  const login = async (credentials) => {
+  const login = async (email, password) => {
     try {
-      console.log('Attempting login with:', credentials);
-      const response = await api.post('/auth/login', credentials);
-      console.log('Login response:', response.data);
-      
+      const response = await api.post('/users/login', { email, password });
       const { token, user } = response.data;
-
-      if (!user || !user.accountType) {
-        console.error('Invalid user data:', user);
-        throw new Error('Invalid user data received');
-      }
-
-      localStorage.setItem('token', token);
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setUser(user);
       
-      console.log('User set in context:', user);
-      return { user, token };
+      localStorage.setItem('token', token);
+      setUser(user);
+      return response.data;
     } catch (error) {
       console.error('Login error:', error);
       throw error;
