@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      console.log('Login attempt with:', { email, password: '***' }); // Debug log
+      console.log('Login attempt with:', { email, password: '***' });
       
       const response = await api.post(endpoints.auth.login, {
         email,
@@ -59,6 +59,11 @@ export const AuthProvider = ({ children }) => {
       });
       
       const { token, user } = response.data;
+      
+      if (response.data.requiresTwoFactor) {
+        // Handle 2FA if needed
+        return response.data;
+      }
       
       localStorage.setItem('token', token);
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;

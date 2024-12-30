@@ -11,11 +11,11 @@ const api = axios.create({
 // Define API endpoints
 export const endpoints = {
   auth: {
-    login: '/api/users/login',
-    register: '/api/users/register',
-    verify: '/api/users/verify-2fa',
-    logout: '/api/users/logout',
-    refresh: '/api/users/refresh-token'
+    login: '/users/login',
+    register: '/users/register',
+    verify: '/users/verify-2fa',
+    logout: '/users/logout',
+    refresh: '/users/refresh-token'
   },
   users: {
     profile: '/api/users/profile',

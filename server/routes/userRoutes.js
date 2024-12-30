@@ -115,10 +115,16 @@ router.post('/register', async (req, res) => {
 // Add this after the register route and before the verify-2fa route
 router.post('/login', async (req, res) => {
   try {
-    console.log('Login request body:', req.body); // Debug log
+    console.log('Login request body:', req.body);
     
-    const { email, password } = req.body.email || req.body; // Handle both formats temporarily
+    // Extract email and password, handling both nested and flat structures
+    const email = req.body.email?.email || req.body.email;
+    const password = req.body.email?.password || req.body.password;
     
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
     // Find user by email
     const user = await User.findOne({ email }).select('+password +twoFactorSecret +securitySettings');
     if (!user) {
