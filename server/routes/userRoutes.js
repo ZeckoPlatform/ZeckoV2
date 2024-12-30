@@ -112,6 +112,65 @@ router.post('/register', async (req, res) => {
     }
 });
 
+// Add this after the register route and before the verify-2fa route
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    // Find user by email
+    const user = await User.findOne({ email }).select('+password +twoFactorSecret +securitySettings');
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Verify password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Check if 2FA is enabled
+    if (user.securitySettings?.twoFactorEnabled) {
+      // Generate temporary token for 2FA
+      const tempToken = jwt.sign(
+        { tempUserId: user._id },
+        process.env.JWT_SECRET,
+        { expiresIn: '5m' }
+      );
+      return res.json({
+        requiresTwoFactor: true,
+        tempToken,
+        message: '2FA verification required'
+      });
+    }
+
+    // Generate token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Remove sensitive data before sending response
+    const userResponse = {
+      _id: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      avatarUrl: user.avatarUrl,
+      profile: user.profile
+    };
+
+    res.json({
+      token,
+      user: userResponse
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error during login' });
+  }
+});
+
 // Add a new route for 2FA verification during login
 router.post('/verify-2fa', async (req, res) => {
   try {
