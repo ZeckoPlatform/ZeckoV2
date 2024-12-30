@@ -19,42 +19,25 @@ export const ServiceCategoryProvider = ({ children }) => {
         }
       });
 
-      if (response.data && response.data.length > 0) {
+      if (response.data && Array.isArray(response.data)) {
         // Ensure icons are properly mapped from the imported jobCategories
         const categoriesWithIcons = response.data.map(category => {
           const predefinedCategory = Object.values(jobCategories).find(
-            c => c.name.toLowerCase() === category.name.toLowerCase()
+            c => c.name.toLowerCase() === category.name?.toLowerCase()
           );
           return {
             ...category,
+            subcategories: category.subcategories || [], // Ensure subcategories is always an array
             icon: predefinedCategory?.icon || null
           };
         });
         setCategories(categoriesWithIcons);
       } else {
-        // Fallback to predefined categories
-        const formattedCategories = Object.values(jobCategories).map(category => ({
-          _id: category.name.toLowerCase().replace(/\s+/g, '-'),
-          name: category.name,
-          description: category.description,
-          icon: category.icon,
-          subcategories: category.subcategories
-        }));
-        setCategories(formattedCategories);
+        setCategories([]);
       }
-      setError(null);
     } catch (err) {
       console.error('Error fetching categories:', err);
-      // Fallback to predefined categories on error
-      const formattedCategories = Object.values(jobCategories).map(category => ({
-        _id: category.name.toLowerCase().replace(/\s+/g, '-'),
-        name: category.name,
-        description: category.description,
-        icon: category.icon,
-        subcategories: category.subcategories
-      }));
-      setCategories(formattedCategories);
-      setError(null);
+      setError('Failed to fetch categories');
     } finally {
       setLoading(false);
     }

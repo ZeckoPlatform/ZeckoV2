@@ -2,7 +2,7 @@
 exports.jobCategories = {
   "Construction & Building": {
     name: "Construction & Building",
-    description: "Professional construction, renovation, and building services for residential, commercial, and industrial projects",
+    description: "Professional construction, renovation, and building services",
     subcategories: [
       "General Contractors",
       "Architects",
@@ -78,8 +78,11 @@ exports.jobCategories = {
   },
   "Home Services": {
     name: "Home Services",
-    description: "Professional home maintenance and improvement services",
+    description: "Home maintenance and improvement services",
     subcategories: [
+      "Cleaning",
+      "Gardening",
+      "Painting",
       "House Cleaning",
       "Window Cleaning",
       "Carpet Cleaning",

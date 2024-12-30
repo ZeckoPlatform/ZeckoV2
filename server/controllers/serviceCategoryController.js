@@ -33,18 +33,19 @@ exports.getCategories = async (req, res) => {
                 _id: category.name.toLowerCase().replace(/\s+/g, '-'),
                 name: category.name,
                 description: category.description,
-                subcategories: category.subcategories,
-                active: true,
-                // Don't include icon here - it will be mapped on the client side
+                subcategories: category.subcategories || [],
+                active: true
             }));
             
             categories = formattedCategories;
         }
 
+        categories = categories.map(cat => ({
+            ...cat,
+            subcategories: cat.subcategories || []
+        }));
+
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Expires', '0');
-        
         res.json(categories);
     } catch (error) {
         console.error('Error fetching categories:', error);
