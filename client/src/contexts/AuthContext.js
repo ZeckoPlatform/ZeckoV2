@@ -51,21 +51,21 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await api.post(endpoints.auth.login, { email, password });
-      const { token, user, requiresTwoFactor, tempToken } = response.data;
+      console.log('Login attempt with:', { email, password: '***' }); // Debug log
       
-      if (requiresTwoFactor) {
-        // Store temp token and return 2FA requirement
-        localStorage.setItem('tempToken', tempToken);
-        return { requiresTwoFactor: true };
-      }
+      const response = await api.post(endpoints.auth.login, {
+        email,
+        password
+      });
+      
+      const { token, user } = response.data;
       
       localStorage.setItem('token', token);
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(user);
       return response.data;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login error:', error.response?.data || error.message);
       throw error;
     }
   };

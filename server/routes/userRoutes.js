@@ -115,7 +115,9 @@ router.post('/register', async (req, res) => {
 // Add this after the register route and before the verify-2fa route
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    console.log('Login request body:', req.body); // Debug log
+    
+    const { email, password } = req.body.email || req.body; // Handle both formats temporarily
     
     // Find user by email
     const user = await User.findOne({ email }).select('+password +twoFactorSecret +securitySettings');
