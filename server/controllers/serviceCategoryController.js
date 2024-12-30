@@ -29,13 +29,13 @@ exports.getCategories = async (req, res) => {
         let categories = await ServiceCategory.find({ active: true });
         
         if (!categories || categories.length === 0) {
-            const formattedCategories = Object.values(jobCategories).map(category => ({
+            const formattedCategories = Object.entries(jobCategories).map(([key, category]) => ({
                 _id: category.name.toLowerCase().replace(/\s+/g, '-'),
                 name: category.name,
                 description: category.description,
-                icon: category.icon,
                 subcategories: category.subcategories,
-                active: true
+                active: true,
+                // Don't include icon here - it will be mapped on the client side
             }));
             
             categories = formattedCategories;
