@@ -1,5 +1,6 @@
 const ServiceCategory = require('../models/serviceCategoryModel');
 const { validateRequest } = require('../utils/validator');
+const { jobCategories } = require('../data/leadCategories');
 
 exports.createCategory = async (req, res) => {
     try {
@@ -25,9 +26,28 @@ exports.createCategory = async (req, res) => {
 
 exports.getCategories = async (req, res) => {
     try {
-        const categories = await ServiceCategory.find({ active: true });
+        let categories = await ServiceCategory.find({ active: true });
+        
+        if (!categories || categories.length === 0) {
+            const formattedCategories = Object.values(jobCategories).map(category => ({
+                _id: category.name.toLowerCase().replace(/\s+/g, '-'),
+                name: category.name,
+                description: category.description,
+                icon: category.icon,
+                subcategories: category.subcategories,
+                active: true
+            }));
+            
+            categories = formattedCategories;
+        }
+
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        
         res.json(categories);
     } catch (error) {
+        console.error('Error fetching categories:', error);
         res.status(500).json({ error: error.message });
     }
 };

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
-import { jobCategories } from '../Data/leadCategories'; // Import the predefined categories
+import { jobCategories } from '../Data/leadCategories';
 
 const ServiceCategoryContext = createContext();
 
@@ -9,20 +9,30 @@ export const ServiceCategoryProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch categories when component mounts
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      // First try to fetch from API
-      const response = await api.get('/api/categories');
+      const response = await api.get('/api/categories', {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
       if (response.data && response.data.length > 0) {
-        setCategories(response.data);
+        // Ensure icons are properly mapped from the imported jobCategories
+        const categoriesWithIcons = response.data.map(category => {
+          const predefinedCategory = Object.values(jobCategories).find(
+            c => c.name.toLowerCase() === category.name.toLowerCase()
+          );
+          return {
+            ...category,
+            icon: predefinedCategory?.icon || null
+          };
+        });
+        setCategories(categoriesWithIcons);
       } else {
-        // If no categories from API, use predefined categories
+        // Fallback to predefined categories
         const formattedCategories = Object.values(jobCategories).map(category => ({
           _id: category.name.toLowerCase().replace(/\s+/g, '-'),
           name: category.name,
@@ -49,6 +59,10 @@ export const ServiceCategoryProvider = ({ children }) => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   const addCategory = async (categoryData) => {
     try {
