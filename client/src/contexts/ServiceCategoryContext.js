@@ -21,30 +21,31 @@ export const ServiceCategoryProvider = ({ children }) => {
       setState(prev => ({ ...prev, loading: true, error: null }));
       
       const response = await api.get('/api/categories');
-      console.log('API Response:', response); // Debug log
-
+      
       if (!response?.data) {
-        setState(prev => ({
-          ...prev,
-          loading: false,
-          error: 'No data received',
-          categories: []
-        }));
-        return;
+        throw new Error('No data received from API');
       }
 
-      const processedCategories = (Array.isArray(response.data) ? response.data : [])
-        .map(category => ({
-          _id: category?._id?.toString() || '',
-          name: category?.name || '',
-          subcategories: Array.isArray(category?.subcategories) ? category.subcategories : []
-        }))
-        .filter(cat => cat._id && cat.name);
+      // Ensure we have an array and process it safely
+      const processedCategories = Array.isArray(response.data) 
+        ? response.data.map(category => ({
+            _id: category?._id?.toString() || '',
+            name: category?.name || '',
+            subcategories: Array.isArray(category?.subcategories) 
+              ? [...category.subcategories] 
+              : []
+          }))
+        : [];
 
-      console.log('Processed Categories:', processedCategories); // Debug log
+      // Filter out invalid entries
+      const validCategories = processedCategories.filter(cat => 
+        cat._id && 
+        cat.name && 
+        Array.isArray(cat.subcategories)
+      );
 
       setState({
-        categories: processedCategories,
+        categories: validCategories,
         loading: false,
         error: null
       });
@@ -54,11 +55,12 @@ export const ServiceCategoryProvider = ({ children }) => {
         ...prev,
         loading: false,
         error: err.message || 'Failed to fetch categories',
-        categories: []
+        categories: [] // Reset categories on error
       }));
     }
   }, []);
 
+  // Fetch on mount
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
@@ -88,5 +90,11 @@ export const useServiceCategories = () => {
     };
   }
   
-  return context;
+  // Ensure we always return a valid object with expected properties
+  return {
+    categories: Array.isArray(context.categories) ? context.categories : [],
+    loading: Boolean(context.loading),
+    error: context.error || null,
+    fetchCategories: context.fetchCategories || (() => Promise.resolve())
+  };
 }; 
