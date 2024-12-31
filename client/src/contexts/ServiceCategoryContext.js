@@ -20,7 +20,6 @@ export const ServiceCategoryProvider = ({ children }) => {
       });
 
       if (response.data && Array.isArray(response.data)) {
-        // Map the server response to include icons from jobCategories
         const categoriesWithIcons = response.data.map(category => {
           const predefinedCategory = Object.values(jobCategories).find(
             c => c.name.toLowerCase() === category.name?.toLowerCase()
@@ -50,7 +49,9 @@ export const ServiceCategoryProvider = ({ children }) => {
   const addCategory = async (categoryData) => {
     try {
       const response = await api.post('/api/categories', categoryData);
-      setCategories([...categories, response.data]);
+      if (response.data) {
+        setCategories(prevCategories => [...prevCategories, response.data]);
+      }
       return response.data;
     } catch (err) {
       setError('Failed to add category');
@@ -58,16 +59,16 @@ export const ServiceCategoryProvider = ({ children }) => {
     }
   };
 
+  const value = {
+    categories: categories || [],
+    loading,
+    error,
+    fetchCategories,
+    addCategory
+  };
+
   return (
-    <ServiceCategoryContext.Provider 
-      value={{ 
-        categories, 
-        loading, 
-        error, 
-        fetchCategories, 
-        addCategory 
-      }}
-    >
+    <ServiceCategoryContext.Provider value={value}>
       {children}
     </ServiceCategoryContext.Provider>
   );
