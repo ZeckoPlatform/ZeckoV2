@@ -91,12 +91,21 @@ function JobPostForm({ onJobPosted }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [budget, setBudget] = useState('');
-  const [category, setCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [subcategory, setSubcategory] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const selectedCategory = categories.find(cat => cat.name === category);
+  const handleCategoryChange = useCallback((e) => {
+    const categoryId = e.target.value;
+    const category = categories.find(cat => cat._id === categoryId);
+    setSelectedCategory(category || null);
+    setSubcategory(''); // Reset subcategory when category changes
+  }, [categories]);
+
+  const hasSubcategories = selectedCategory && 
+    Array.isArray(selectedCategory.subcategories) && 
+    selectedCategory.subcategories.length > 0;
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
@@ -114,7 +123,7 @@ function JobPostForm({ onJobPosted }) {
           title, 
           description, 
           budget: parseFloat(budget),
-          category,
+          category: selectedCategory?._id,
           subcategory
         })
       });
@@ -128,14 +137,14 @@ function JobPostForm({ onJobPosted }) {
       setTitle('');
       setDescription('');
       setBudget('');
-      setCategory('');
+      setSelectedCategory(null);
       setSubcategory('');
     } catch (error) {
-      setError(error.message);
+      setError(error.message || 'An error occurred');
     } finally {
       setLoading(false);
     }
-  }, [title, description, budget, category, subcategory, onJobPosted]);
+  }, [title, description, budget, selectedCategory, subcategory, onJobPosted]);
 
   if (categoriesLoading) {
     return <Spinner />;
@@ -185,25 +194,22 @@ function JobPostForm({ onJobPosted }) {
         <Label htmlFor="job-category">Category</Label>
         <Select
           id="job-category"
-          value={category}
-          onChange={(e) => {
-            setCategory(e.target.value);
-            setSubcategory(''); // Reset subcategory when category changes
-          }}
+          value={selectedCategory?._id || ''}
+          onChange={handleCategoryChange}
           required
-          disabled={loading}
+          disabled={loading || categoriesLoading}
           aria-required="true"
         >
           <option value="">Select a category</option>
-          {categories.map((cat) => (
-            <option key={cat._id} value={cat.name}>
-              {cat.name}
+          {Array.isArray(categories) && categories.map((category) => (
+            <option key={category._id} value={category._id}>
+              {category.name}
             </option>
           ))}
         </Select>
       </FormGroup>
 
-      {selectedCategory && selectedCategory.subcategories.length > 0 && (
+      {hasSubcategories && (
         <FormGroup>
           <Label htmlFor="job-subcategory">Subcategory</Label>
           <Select
@@ -224,7 +230,7 @@ function JobPostForm({ onJobPosted }) {
         </FormGroup>
       )}
 
-      <SubmitButton type="submit" disabled={loading} aria-busy={loading}>
+      <SubmitButton type="submit" disabled={loading || categoriesLoading} aria-busy={loading}>
         {loading ? <Spinner /> : 'Post Job'}
       </SubmitButton>
     </FormContainer>
