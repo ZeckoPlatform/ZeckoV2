@@ -87,7 +87,7 @@ const Select = styled.select`
 `;
 
 function JobPostForm({ onJobPosted }) {
-  const { categories, loading: categoriesLoading, error: categoriesError } = useServiceCategories();
+  const { categories = [], loading: categoriesLoading, error: categoriesError } = useServiceCategories() || {};
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [budget, setBudget] = useState('');
@@ -96,23 +96,7 @@ function JobPostForm({ onJobPosted }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Ensure categories is always an array and handle undefined/null cases
-  const validCategories = useMemo(() => {
-    return Array.isArray(categories) ? categories : [];
-  }, [categories]);
-
-  // Find the selected category safely
-  const currentCategory = useMemo(() => {
-    return validCategories.find(cat => cat?._id === selectedCategory) || null;
-  }, [validCategories, selectedCategory]);
-
-  // Safely get subcategories
-  const subcategories = useMemo(() => {
-    return currentCategory?.subcategories || [];
-  }, [currentCategory]);
-
-  // Show loading state while categories are being fetched
-  if (categoriesLoading) {
+  if (!categories && categoriesLoading) {
     return (
       <FormContainer>
         <Spinner />
@@ -120,16 +104,19 @@ function JobPostForm({ onJobPosted }) {
     );
   }
 
-  // Show error state if categories failed to load
-  if (categoriesError) {
-    return (
-      <FormContainer>
-        <ErrorMessage role="alert">
-          Failed to load categories: {categoriesError}
-        </ErrorMessage>
-      </FormContainer>
-    );
-  }
+  const validCategories = useMemo(() => {
+    return Array.isArray(categories) ? categories : [];
+  }, [categories]);
+
+  const currentCategory = useMemo(() => {
+    if (!selectedCategory) return null;
+    return validCategories.find(cat => cat?._id === selectedCategory) || null;
+  }, [validCategories, selectedCategory]);
+
+  const subcategories = useMemo(() => {
+    if (!currentCategory) return [];
+    return Array.isArray(currentCategory.subcategories) ? currentCategory.subcategories : [];
+  }, [currentCategory]);
 
   const handleCategoryChange = useCallback((e) => {
     const categoryId = e.target.value;

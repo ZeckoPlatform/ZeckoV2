@@ -51,14 +51,13 @@ const AdminRoute = ({ children }) => {
 
 function AppContent() {
     const { muiTheme } = useTheme();
-    const { user } = useAuth();
-
+    
     return (
         <MuiThemeProvider theme={muiTheme}>
             <CssBaseline />
             <Router>
-                <ServiceProvider>
-                    <ServiceCategoryProvider>
+                <ServiceCategoryProvider>
+                    <ServiceProvider>
                         <Routes>
                             {/* Public routes */}
                             <Route path="/" element={
@@ -128,8 +127,8 @@ function AppContent() {
                             {/* Catch all route */}
                             <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>
-                    </ServiceCategoryProvider>
-                </ServiceProvider>
+                    </ServiceProvider>
+                </ServiceCategoryProvider>
             </Router>
         </MuiThemeProvider>
     );
