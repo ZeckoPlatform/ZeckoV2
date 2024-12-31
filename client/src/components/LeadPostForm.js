@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import styled from 'styled-components';
 import Spinner from './Spinner';
 import { useServiceCategories } from '../contexts/ServiceCategoryContext';
@@ -87,38 +87,34 @@ const Select = styled.select`
 `;
 
 function JobPostForm({ onJobPosted }) {
-  // Initialize state with empty values
+  const { categories, loading: categoriesLoading } = useServiceCategories();
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    budget: '',
     category: '',
-    subcategory: ''
+    subcategory: '',
+    // ... other form fields
   });
-
-  // Get categories with proper default values
-  const {
-    categories = [],
-    loading: categoriesLoading,
-    error: categoriesError
-  } = useServiceCategories() || {};
-
-  // Ensure categories is always an array
+  
+  // Ensure categories is always an array and filter out invalid entries
   const validCategories = useMemo(() => {
-    return Array.isArray(categories) ? categories : [];
+    return Array.isArray(categories) 
+      ? categories.filter(cat => cat && cat._id && cat.name)
+      : [];
   }, [categories]);
 
-  // Get subcategories based on selected category
-  const subcategories = useMemo(() => {
-    const selectedCategory = validCategories.find(cat => cat._id === formData.category);
-    return selectedCategory?.subcategories || [];
-  }, [validCategories, formData.category]);
+  const [subcategories, setSubcategories] = useState([]);
+
+  // Update subcategories when category changes
+  useEffect(() => {
+    if (formData.category && validCategories.length > 0) {
+      const selectedCategory = validCategories.find(cat => cat._id === formData.category);
+      setSubcategories(selectedCategory?.subcategories || []);
+    } else {
+      setSubcategories([]);
+    }
+  }, [formData.category, validCategories]);
 
   return (
     <FormContainer onSubmit={handleSubmit}>
-      {categoriesLoading && <Spinner />}
-      {categoriesError && <ErrorMessage>{categoriesError}</ErrorMessage>}
-      
       <FormGroup>
         <Label htmlFor="category">Category</Label>
         <Select
@@ -130,7 +126,7 @@ function JobPostForm({ onJobPosted }) {
           disabled={categoriesLoading}
         >
           <option value="">Select a category</option>
-          {validCategories.length > 0 && validCategories.map(category => (
+          {validCategories.map(category => (
             <option key={category._id} value={category._id}>
               {category.name}
             </option>
@@ -149,16 +145,15 @@ function JobPostForm({ onJobPosted }) {
             required
           >
             <option value="">Select a subcategory</option>
-            {subcategories.map((sub, index) => (
-              <option key={`${formData.category}-${index}`} value={sub}>
+            {subcategories.map(sub => (
+              <option key={`${formData.category}-${sub}`} value={sub}>
                 {sub}
               </option>
             ))}
           </Select>
         </FormGroup>
       )}
-
-      {/* Rest of your form */}
+      {/* ... rest of the form ... */}
     </FormContainer>
   );
 }
