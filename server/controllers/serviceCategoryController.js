@@ -26,27 +26,17 @@ exports.createCategory = async (req, res) => {
 
 exports.getCategories = async (req, res) => {
     try {
-        let categories = await ServiceCategory.find({ active: true });
-        
-        if (!categories || categories.length === 0) {
-            const formattedCategories = Object.entries(jobCategories).map(([key, category]) => ({
-                _id: category.name.toLowerCase().replace(/\s+/g, '-'),
-                name: category.name,
-                description: category.description,
-                subcategories: category.subcategories || [],
-                active: true
-            }));
-            
-            categories = formattedCategories;
-        }
-
-        categories = categories.map(cat => ({
-            ...cat,
-            subcategories: cat.subcategories || []
+        // Convert jobCategories object to array format expected by client
+        const formattedCategories = Object.entries(jobCategories).map(([key, category]) => ({
+            _id: key.toLowerCase().replace(/\s+/g, '-'),
+            name: category.name,
+            description: category.description,
+            subcategories: category.subcategories || [],
+            active: true
         }));
 
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.json(categories);
+        res.json(formattedCategories);
     } catch (error) {
         console.error('Error fetching categories:', error);
         res.status(500).json({ error: error.message });

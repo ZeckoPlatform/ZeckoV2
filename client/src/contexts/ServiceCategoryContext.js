@@ -20,14 +20,14 @@ export const ServiceCategoryProvider = ({ children }) => {
       });
 
       if (response.data && Array.isArray(response.data)) {
-        // Ensure icons are properly mapped from the imported jobCategories
+        // Map the server response to include icons from jobCategories
         const categoriesWithIcons = response.data.map(category => {
           const predefinedCategory = Object.values(jobCategories).find(
             c => c.name.toLowerCase() === category.name?.toLowerCase()
           );
           return {
             ...category,
-            subcategories: category.subcategories || [], // Ensure subcategories is always an array
+            subcategories: category.subcategories || [],
             icon: predefinedCategory?.icon || null
           };
         });
