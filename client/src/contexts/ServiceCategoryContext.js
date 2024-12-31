@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { jobCategories } from '../Data/leadCategories';
 
@@ -9,7 +9,7 @@ export const ServiceCategoryProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -20,28 +20,26 @@ export const ServiceCategoryProvider = ({ children }) => {
         }
       });
 
-      // Ensure we have valid data before processing
-      if (response?.data && Array.isArray(response.data)) {
-        const categoriesWithIcons = response.data.map(category => {
-          const predefinedCategory = category?.name 
-            ? Object.values(jobCategories).find(
-                c => c.name.toLowerCase() === category.name.toLowerCase()
-              )
-            : null;
-          
-          return {
-            ...category,
-            _id: category._id || category.name?.toLowerCase().replace(/\s+/g, '-'),
-            name: category.name || '',
-            subcategories: category.subcategories || [],
-            icon: predefinedCategory?.icon || null
-          };
-        });
-        setCategories(categoriesWithIcons);
-      } else {
-        console.warn('Invalid categories data received');
+      // Enhanced data validation
+      if (!response?.data) {
         setCategories([]);
+        throw new Error('No data received from server');
       }
+
+      // Ensure categories is always an array with proper structure
+      const categoriesData = Array.isArray(response.data) ? response.data : [];
+      
+      const processedCategories = categoriesData.map(category => ({
+        ...category,
+        _id: category?._id || '',
+        name: category?.name || '',
+        icon: category?.icon || 'default-icon',
+        subcategories: Array.isArray(category?.subcategories) 
+          ? category.subcategories.filter(sub => sub) // Filter out null/undefined
+          : []
+      }));
+
+      setCategories(processedCategories);
     } catch (err) {
       console.error('Error fetching categories:', err);
       setError('Failed to fetch categories');
@@ -49,11 +47,11 @@ export const ServiceCategoryProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [fetchCategories]);
 
   const addCategory = async (categoryData) => {
     try {

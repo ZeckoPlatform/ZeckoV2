@@ -87,7 +87,7 @@ const Select = styled.select`
 `;
 
 function JobPostForm({ onJobPosted }) {
-  const { categories, loading: categoriesLoading } = useServiceCategories();
+  const { categories, loading: categoriesLoading, error: categoriesError } = useServiceCategories();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [budget, setBudget] = useState('');
@@ -98,13 +98,13 @@ function JobPostForm({ onJobPosted }) {
 
   const handleCategoryChange = useCallback((e) => {
     const categoryId = e.target.value;
-    const category = categories.find(cat => cat._id === categoryId);
+    const category = categories?.find(cat => cat?._id === categoryId);
     setSelectedCategory(category || null);
     setSubcategory(''); // Reset subcategory when category changes
   }, [categories]);
 
   const hasSubcategories = selectedCategory && 
-    Array.isArray(selectedCategory.subcategories) && 
+    Array.isArray(selectedCategory?.subcategories) && 
     selectedCategory.subcategories.length > 0;
 
   const handleSubmit = useCallback(async (e) => {
@@ -153,7 +153,11 @@ function JobPostForm({ onJobPosted }) {
   return (
     <FormContainer onSubmit={handleSubmit} aria-labelledby="job-post-form-title">
       <h2 id="job-post-form-title">Post a New Job</h2>
-      {error && <ErrorMessage role="alert">{error}</ErrorMessage>}
+      {(error || categoriesError) && (
+        <ErrorMessage role="alert">
+          {error || categoriesError}
+        </ErrorMessage>
+      )}
       
       <FormGroup>
         <Label htmlFor="job-title">Job Title</Label>
@@ -202,8 +206,8 @@ function JobPostForm({ onJobPosted }) {
         >
           <option value="">Select a category</option>
           {Array.isArray(categories) && categories.map((category) => (
-            <option key={category._id} value={category._id}>
-              {category.name}
+            <option key={category?._id || ''} value={category?._id || ''}>
+              {category?.name || ''}
             </option>
           ))}
         </Select>
@@ -222,15 +226,19 @@ function JobPostForm({ onJobPosted }) {
           >
             <option value="">Select a subcategory</option>
             {selectedCategory.subcategories.map((sub) => (
-              <option key={sub} value={sub}>
-                {sub}
+              <option key={sub || ''} value={sub || ''}>
+                {sub || ''}
               </option>
             ))}
           </Select>
         </FormGroup>
       )}
 
-      <SubmitButton type="submit" disabled={loading || categoriesLoading} aria-busy={loading}>
+      <SubmitButton 
+        type="submit" 
+        disabled={loading || categoriesLoading} 
+        aria-busy={loading}
+      >
         {loading ? <Spinner /> : 'Post Job'}
       </SubmitButton>
     </FormContainer>
