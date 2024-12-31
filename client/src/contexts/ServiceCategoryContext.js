@@ -4,7 +4,7 @@ import { jobCategories } from '../Data/leadCategories';
 
 const ServiceCategoryContext = createContext({
   categories: [],
-  loading: false,
+  loading: true,
   error: null,
   fetchCategories: () => Promise.resolve()
 });
@@ -21,9 +21,16 @@ export const ServiceCategoryProvider = ({ children }) => {
       setState(prev => ({ ...prev, loading: true, error: null }));
       
       const response = await api.get('/api/categories');
-      
+      console.log('API Response:', response); // Debug log
+
       if (!response?.data) {
-        throw new Error('No data received from server');
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          error: 'No data received',
+          categories: []
+        }));
+        return;
       }
 
       const processedCategories = (Array.isArray(response.data) ? response.data : [])
@@ -33,6 +40,8 @@ export const ServiceCategoryProvider = ({ children }) => {
           subcategories: Array.isArray(category?.subcategories) ? category.subcategories : []
         }))
         .filter(cat => cat._id && cat.name);
+
+      console.log('Processed Categories:', processedCategories); // Debug log
 
       setState({
         categories: processedCategories,
@@ -45,29 +54,13 @@ export const ServiceCategoryProvider = ({ children }) => {
         ...prev,
         loading: false,
         error: err.message || 'Failed to fetch categories',
-        categories: [] // Reset to empty array on error
+        categories: []
       }));
     }
   }, []);
 
   useEffect(() => {
-    let mounted = true;
-
-    const loadCategories = async () => {
-      try {
-        await fetchCategories();
-      } catch (error) {
-        if (mounted) {
-          console.error('Failed to load categories:', error);
-        }
-      }
-    };
-
-    loadCategories();
-
-    return () => {
-      mounted = false;
-    };
+    fetchCategories();
   }, [fetchCategories]);
 
   const value = useMemo(() => ({

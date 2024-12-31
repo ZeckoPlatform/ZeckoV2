@@ -87,114 +87,62 @@ const Select = styled.select`
 `;
 
 function JobPostForm({ onJobPosted }) {
-  // Initialize state
+  // Initialize state with empty values
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     budget: '',
-    selectedCategory: '',
+    category: '',  // Changed from selectedCategory to match the name attribute
     subcategory: ''
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
-  // Get categories with fallback values
-  const categoriesContext = useServiceCategories();
+  // Get categories with default values
   const {
     categories = [],
     loading: categoriesLoading = false,
     error: categoriesError = null
-  } = categoriesContext || {};
+  } = useServiceCategories() || {};
 
-  // Ensure categories is always an array
+  // Ensure categories is always an array and log for debugging
   const validCategories = useMemo(() => {
-    if (!Array.isArray(categories)) {
-      console.warn('Categories is not an array:', categories);
-      return [];
-    }
-    return categories;
+    console.log('Raw categories:', categories); // Debug log
+    return Array.isArray(categories) ? categories : [];
   }, [categories]);
 
-  // Get current category and subcategories safely
+  // Get current category safely
   const currentCategory = useMemo(() => {
-    if (!formData.selectedCategory) return null;
-    return validCategories.find(cat => cat?._id === formData.selectedCategory);
-  }, [validCategories, formData.selectedCategory]);
+    return validCategories.find(cat => cat?._id === formData.category) || null;
+  }, [validCategories, formData.category]);
 
+  // Get subcategories safely
   const subcategories = useMemo(() => {
-    if (!currentCategory?.subcategories) return [];
-    return Array.isArray(currentCategory.subcategories) 
-      ? currentCategory.subcategories 
-      : [];
+    return currentCategory?.subcategories || [];
   }, [currentCategory]);
-
-  // Handle form changes
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // Handle category change
-  const handleCategoryChange = (e) => {
-    const value = e.target.value;
-    setFormData(prev => ({
-      ...prev,
-      selectedCategory: value,
-      subcategory: '' // Reset subcategory when category changes
-    }));
-  };
 
   // Show loading state
   if (categoriesLoading) {
-    return (
-      <FormContainer>
-        <Spinner />
-      </FormContainer>
-    );
+    return <Spinner />;
   }
 
   return (
     <FormContainer onSubmit={handleSubmit}>
-      {error && <ErrorMessage>{error}</ErrorMessage>}
+      {categoriesError && <ErrorMessage>{categoriesError}</ErrorMessage>}
       
-      <FormGroup>
-        <Label htmlFor="title">Job Title</Label>
-        <Input
-          id="title"
-          name="title"
-          type="text"
-          value={formData.title}
-          onChange={handleChange}
-          required
-          disabled={loading}
-        />
-      </FormGroup>
-
-      {/* Other form fields... */}
-
       <FormGroup>
         <Label htmlFor="category">Category</Label>
         <Select
           id="category"
           name="category"
-          value={formData.selectedCategory}
-          onChange={handleCategoryChange}
+          value={formData.category}
+          onChange={handleChange}
           required
-          disabled={categoriesLoading}
         >
           <option value="">Select a category</option>
-          {validCategories && validCategories.length > 0 ? (
-            validCategories.map(category => (
-              <option key={category._id} value={category._id}>
-                {category.name || 'Unnamed Category'}
-              </option>
-            ))
-          ) : (
-            <option value="" disabled>No categories available</option>
-          )}
+          {validCategories.map(category => (
+            <option key={category._id} value={category._id}>
+              {category.name}
+            </option>
+          ))}
         </Select>
       </FormGroup>
 
@@ -210,7 +158,7 @@ function JobPostForm({ onJobPosted }) {
           >
             <option value="">Select a subcategory</option>
             {subcategories.map((sub, index) => (
-              <option key={`${sub}-${index}`} value={sub}>
+              <option key={index} value={sub}>
                 {sub}
               </option>
             ))}
@@ -218,12 +166,7 @@ function JobPostForm({ onJobPosted }) {
         </FormGroup>
       )}
 
-      <SubmitButton 
-        type="submit" 
-        disabled={loading || categoriesLoading}
-      >
-        {loading ? <Spinner /> : 'Post Job'}
-      </SubmitButton>
+      {/* Rest of your form */}
     </FormContainer>
   );
 }
