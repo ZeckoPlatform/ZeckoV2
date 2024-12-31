@@ -1,24 +1,29 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../services/api';
 import { jobCategories } from '../Data/leadCategories';
 
-const ServiceCategoryContext = createContext(null);
+const ServiceCategoryContext = createContext({
+  categories: [],
+  loading: false,
+  error: null,
+  fetchCategories: () => Promise.resolve()
+});
 
 export const ServiceCategoryProvider = ({ children }) => {
-  const [categories, setCategories] = useState([]);  // Initialize with empty array
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [state, setState] = useState({
+    categories: [],
+    loading: true,
+    error: null
+  });
 
   const fetchCategories = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
+      setState(prev => ({ ...prev, loading: true, error: null }));
       
       const response = await api.get('/api/categories');
       
       if (!response?.data) {
-        setCategories([]);
-        return;
+        throw new Error('No data received from server');
       }
 
       const processedCategories = (Array.isArray(response.data) ? response.data : [])
@@ -29,26 +34,46 @@ export const ServiceCategoryProvider = ({ children }) => {
         }))
         .filter(cat => cat._id && cat.name);
 
-      setCategories(processedCategories);
+      setState({
+        categories: processedCategories,
+        loading: false,
+        error: null
+      });
     } catch (err) {
       console.error('Error fetching categories:', err);
-      setError(err.message || 'Failed to fetch categories');
-      setCategories([]);  // Reset to empty array on error
-    } finally {
-      setLoading(false);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: err.message || 'Failed to fetch categories',
+        categories: [] // Reset to empty array on error
+      }));
     }
   }, []);
 
   useEffect(() => {
-    fetchCategories();
+    let mounted = true;
+
+    const loadCategories = async () => {
+      try {
+        await fetchCategories();
+      } catch (error) {
+        if (mounted) {
+          console.error('Failed to load categories:', error);
+        }
+      }
+    };
+
+    loadCategories();
+
+    return () => {
+      mounted = false;
+    };
   }, [fetchCategories]);
 
-  const value = {
-    categories: categories || [],
-    loading,
-    error,
+  const value = useMemo(() => ({
+    ...state,
     fetchCategories
-  };
+  }), [state, fetchCategories]);
 
   return (
     <ServiceCategoryContext.Provider value={value}>
@@ -61,10 +86,11 @@ export const useServiceCategories = () => {
   const context = useContext(ServiceCategoryContext);
   
   if (!context) {
+    console.warn('useServiceCategories must be used within a ServiceCategoryProvider');
     return {
       categories: [],
       loading: false,
-      error: null,
+      error: 'Context not available',
       fetchCategories: () => Promise.resolve()
     };
   }
