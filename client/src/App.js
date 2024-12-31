@@ -5,6 +5,7 @@ import { CssBaseline } from '@mui/material';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { ServiceProvider } from './contexts/ServiceContext';
+import { ServiceCategoryProvider } from './contexts/ServiceCategoryContext';
 
 // Import components
 import Layout from './components/Layout';
@@ -57,75 +58,77 @@ function AppContent() {
             <CssBaseline />
             <Router>
                 <ServiceProvider>
-                    <Routes>
-                        {/* Public routes */}
-                        <Route path="/" element={
-                            <Layout>
-                                <Home />
-                            </Layout>
-                        } />
-                        <Route path="/login" element={
-                            user ? (
-                                <Navigate to="/dashboard" replace />
-                            ) : (
+                    <ServiceCategoryProvider>
+                        <Routes>
+                            {/* Public routes */}
+                            <Route path="/" element={
                                 <Layout>
-                                    <Login />
+                                    <Home />
                                 </Layout>
-                            )
-                        } />
-                        <Route path="/register" element={
-                            user ? (
-                                <Navigate to="/dashboard" replace />
-                            ) : (
-                                <Layout>
-                                    <Register />
-                                </Layout>
-                            )
-                        } />
+                            } />
+                            <Route path="/login" element={
+                                user ? (
+                                    <Navigate to="/dashboard" replace />
+                                ) : (
+                                    <Layout>
+                                        <Login />
+                                    </Layout>
+                                )
+                            } />
+                            <Route path="/register" element={
+                                user ? (
+                                    <Navigate to="/dashboard" replace />
+                                ) : (
+                                    <Layout>
+                                        <Register />
+                                    </Layout>
+                                )
+                            } />
 
-                        {/* Protected routes */}
-                        <Route path="/dashboard" element={
-                            <PrivateRoute>
-                                <Layout>
-                                    <Dashboard />
-                                </Layout>
-                            </PrivateRoute>
-                        } />
-                        <Route path="/post-lead" element={
-                            <PrivateRoute>
-                                <Layout>
-                                    <PostLead />
-                                </Layout>
-                            </PrivateRoute>
-                        } />
-
-                        {/* Main profile page route */}
-                        <Route 
-                            path="/profile" 
-                            element={
+                            {/* Protected routes */}
+                            <Route path="/dashboard" element={
                                 <PrivateRoute>
                                     <Layout>
-                                        <UserProfile />
+                                        <Dashboard />
                                     </Layout>
                                 </PrivateRoute>
-                            } 
-                        />
-
-                        {/* Dashboard profile route */}
-                        <Route 
-                            path="/dashboard/profile" 
-                            element={
+                            } />
+                            <Route path="/post-lead" element={
                                 <PrivateRoute>
                                     <Layout>
-                                        <Profile />
+                                        <PostLead />
                                     </Layout>
                                 </PrivateRoute>
-                            } 
-                        />
+                            } />
 
-                        {/* Catch all route */}
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
+                            {/* Main profile page route */}
+                            <Route 
+                                path="/profile" 
+                                element={
+                                    <PrivateRoute>
+                                        <Layout>
+                                            <UserProfile />
+                                        </Layout>
+                                    </PrivateRoute>
+                                } 
+                            />
+
+                            {/* Dashboard profile route */}
+                            <Route 
+                                path="/dashboard/profile" 
+                                element={
+                                    <PrivateRoute>
+                                        <Layout>
+                                            <Profile />
+                                        </Layout>
+                                    </PrivateRoute>
+                                } 
+                            />
+
+                            {/* Catch all route */}
+                            <Route path="*" element={<Navigate to="/" replace />} />
+                        </Routes>
+                    </ServiceCategoryProvider>
                 </ServiceProvider>
             </Router>
         </MuiThemeProvider>

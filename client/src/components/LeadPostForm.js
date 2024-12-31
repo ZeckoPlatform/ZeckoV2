@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import Spinner from './Spinner';
 import { useServiceCategories } from '../contexts/ServiceCategoryContext';
@@ -87,7 +87,7 @@ const Select = styled.select`
 `;
 
 function JobPostForm({ onJobPosted }) {
-  const { categories = [], loading: categoriesLoading, error: categoriesError } = useServiceCategories();
+  const { categories, loading: categoriesLoading, error: categoriesError } = useServiceCategories();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [budget, setBudget] = useState('');
@@ -96,14 +96,40 @@ function JobPostForm({ onJobPosted }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Ensure we have valid categories before processing
-  const validCategories = Array.isArray(categories) ? categories : [];
-  
+  // Ensure categories is always an array and handle undefined/null cases
+  const validCategories = useMemo(() => {
+    return Array.isArray(categories) ? categories : [];
+  }, [categories]);
+
   // Find the selected category safely
-  const currentCategory = validCategories.find(cat => cat?._id === selectedCategory) || null;
-  
+  const currentCategory = useMemo(() => {
+    return validCategories.find(cat => cat?._id === selectedCategory) || null;
+  }, [validCategories, selectedCategory]);
+
   // Safely get subcategories
-  const subcategories = currentCategory?.subcategories || [];
+  const subcategories = useMemo(() => {
+    return currentCategory?.subcategories || [];
+  }, [currentCategory]);
+
+  // Show loading state while categories are being fetched
+  if (categoriesLoading) {
+    return (
+      <FormContainer>
+        <Spinner />
+      </FormContainer>
+    );
+  }
+
+  // Show error state if categories failed to load
+  if (categoriesError) {
+    return (
+      <FormContainer>
+        <ErrorMessage role="alert">
+          Failed to load categories: {categoriesError}
+        </ErrorMessage>
+      </FormContainer>
+    );
+  }
 
   const handleCategoryChange = useCallback((e) => {
     const categoryId = e.target.value;
@@ -127,21 +153,24 @@ function JobPostForm({ onJobPosted }) {
           title, 
           description, 
           budget: parseFloat(budget),
-          category: selectedCategory?._id,
+          category: selectedCategory,
           subcategory
         })
       });
       
       if (!response.ok) {
-        throw new Error('Failed to post job');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to post job');
       }
       
       const newJob = await response.json();
       onJobPosted(newJob);
+      
+      // Reset form
       setTitle('');
       setDescription('');
       setBudget('');
-      setSelectedCategory(null);
+      setSelectedCategory('');
       setSubcategory('');
     } catch (error) {
       setError(error.message || 'An error occurred');
@@ -149,10 +178,6 @@ function JobPostForm({ onJobPosted }) {
       setLoading(false);
     }
   }, [title, description, budget, selectedCategory, subcategory, onJobPosted]);
-
-  if (categoriesLoading) {
-    return <Spinner />;
-  }
 
   return (
     <FormContainer onSubmit={handleSubmit} aria-labelledby="job-post-form-title">
