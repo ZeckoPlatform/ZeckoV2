@@ -12,6 +12,7 @@ export const ServiceCategoryProvider = ({ children }) => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await api.get('/api/categories', {
         headers: {
           'Cache-Control': 'no-cache',
@@ -19,24 +20,32 @@ export const ServiceCategoryProvider = ({ children }) => {
         }
       });
 
-      if (response.data && Array.isArray(response.data)) {
+      // Ensure we have valid data before processing
+      if (response?.data && Array.isArray(response.data)) {
         const categoriesWithIcons = response.data.map(category => {
-          const predefinedCategory = Object.values(jobCategories).find(
-            c => c.name.toLowerCase() === category.name?.toLowerCase()
-          );
+          const predefinedCategory = category?.name 
+            ? Object.values(jobCategories).find(
+                c => c.name.toLowerCase() === category.name.toLowerCase()
+              )
+            : null;
+          
           return {
             ...category,
+            _id: category._id || category.name?.toLowerCase().replace(/\s+/g, '-'),
+            name: category.name || '',
             subcategories: category.subcategories || [],
             icon: predefinedCategory?.icon || null
           };
         });
         setCategories(categoriesWithIcons);
       } else {
+        console.warn('Invalid categories data received');
         setCategories([]);
       }
     } catch (err) {
       console.error('Error fetching categories:', err);
       setError('Failed to fetch categories');
+      setCategories([]); // Ensure categories is always an array
     } finally {
       setLoading(false);
     }
@@ -49,10 +58,11 @@ export const ServiceCategoryProvider = ({ children }) => {
   const addCategory = async (categoryData) => {
     try {
       const response = await api.post('/api/categories', categoryData);
-      if (response.data) {
-        setCategories(prevCategories => [...prevCategories, response.data]);
+      if (response?.data) {
+        setCategories(prevCategories => [...(prevCategories || []), response.data]);
+        return response.data;
       }
-      return response.data;
+      throw new Error('Invalid response data');
     } catch (err) {
       setError('Failed to add category');
       throw err;
