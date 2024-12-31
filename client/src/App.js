@@ -51,6 +51,7 @@ const AdminRoute = ({ children }) => {
 
 function AppContent() {
     const { muiTheme } = useTheme();
+    const { user } = useAuth();
     
     return (
         <MuiThemeProvider theme={muiTheme}>
