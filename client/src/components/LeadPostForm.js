@@ -87,25 +87,29 @@ const Select = styled.select`
 `;
 
 function JobPostForm({ onJobPosted }) {
-  const { categories, loading: categoriesLoading, error: categoriesError } = useServiceCategories();
+  const { categories = [], loading: categoriesLoading, error: categoriesError } = useServiceCategories();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [budget, setBudget] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [subcategory, setSubcategory] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Ensure we have valid categories before processing
+  const validCategories = Array.isArray(categories) ? categories : [];
+  
+  // Find the selected category safely
+  const currentCategory = validCategories.find(cat => cat?._id === selectedCategory) || null;
+  
+  // Safely get subcategories
+  const subcategories = currentCategory?.subcategories || [];
+
   const handleCategoryChange = useCallback((e) => {
     const categoryId = e.target.value;
-    const category = categories?.find(cat => cat?._id === categoryId);
-    setSelectedCategory(category || null);
+    setSelectedCategory(categoryId);
     setSubcategory(''); // Reset subcategory when category changes
-  }, [categories]);
-
-  const hasSubcategories = selectedCategory && 
-    Array.isArray(selectedCategory?.subcategories) && 
-    selectedCategory.subcategories.length > 0;
+  }, []);
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
@@ -195,39 +199,36 @@ function JobPostForm({ onJobPosted }) {
         />
       </FormGroup>
       <FormGroup>
-        <Label htmlFor="job-category">Category</Label>
+        <Label htmlFor="category">Category</Label>
         <Select
-          id="job-category"
-          value={selectedCategory?._id || ''}
+          id="category"
+          value={selectedCategory}
           onChange={handleCategoryChange}
           required
-          disabled={loading || categoriesLoading}
-          aria-required="true"
+          disabled={categoriesLoading}
         >
           <option value="">Select a category</option>
-          {Array.isArray(categories) && categories.map((category) => (
-            <option key={category?._id || ''} value={category?._id || ''}>
-              {category?.name || ''}
+          {validCategories.map(category => (
+            <option key={category._id} value={category._id}>
+              {category.name}
             </option>
           ))}
         </Select>
       </FormGroup>
 
-      {hasSubcategories && (
+      {subcategories.length > 0 && (
         <FormGroup>
-          <Label htmlFor="job-subcategory">Subcategory</Label>
+          <Label htmlFor="subcategory">Subcategory</Label>
           <Select
-            id="job-subcategory"
+            id="subcategory"
             value={subcategory}
             onChange={(e) => setSubcategory(e.target.value)}
             required
-            disabled={loading}
-            aria-required="true"
           >
             <option value="">Select a subcategory</option>
-            {selectedCategory.subcategories.map((sub) => (
-              <option key={sub || ''} value={sub || ''}>
-                {sub || ''}
+            {subcategories.map((sub, index) => (
+              <option key={`${sub}-${index}`} value={sub}>
+                {sub}
               </option>
             ))}
           </Select>

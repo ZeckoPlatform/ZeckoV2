@@ -13,29 +13,25 @@ export const ServiceCategoryProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get('/api/categories', {
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
+      const response = await api.get('/api/categories');
 
-      // Enhanced data validation
+      // Initialize with empty array if no data
       if (!response?.data) {
+        console.warn('No categories data received');
         setCategories([]);
-        throw new Error('No data received from server');
+        return;
       }
 
-      // Ensure categories is always an array with proper structure
+      // Ensure we have an array of categories
       const categoriesData = Array.isArray(response.data) ? response.data : [];
       
+      // Process and validate each category
       const processedCategories = categoriesData.map(category => ({
-        ...category,
         _id: category?._id || '',
         name: category?.name || '',
         icon: category?.icon || 'default-icon',
         subcategories: Array.isArray(category?.subcategories) 
-          ? category.subcategories.filter(sub => sub) // Filter out null/undefined
+          ? category.subcategories.filter(Boolean)
           : []
       }));
 
