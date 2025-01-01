@@ -86,38 +86,58 @@ const Select = styled.select`
   }
 `;
 
-function JobPostForm({ onJobPosted }) {
-  const { categories = [], loading: categoriesLoading } = useServiceCategories() || {};
-  
+function LeadPostForm() {
+  // Initialize with empty arrays and loading state
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [formData, setFormData] = useState({
     category: '',
     subcategory: '',
     // ... other form fields
   });
 
-  const [subcategories, setSubcategories] = useState([]);
-
-  const validCategories = useMemo(() => {
-    if (!Array.isArray(categories)) return [];
-    return categories.filter(cat => cat && typeof cat === 'object' && cat._id && cat.name);
-  }, [categories]);
-
+  // Fetch categories directly in the component
   useEffect(() => {
-    if (!formData.category || !validCategories.length) {
-      setSubcategories([]);
-      return;
-    }
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        if (!response.ok) throw new Error('Failed to fetch categories');
+        const data = await response.json();
+        setCategories(data || []);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    const selectedCategory = validCategories.find(cat => cat._id === formData.category);
-    if (selectedCategory?.subcategories) {
-      setSubcategories(selectedCategory.subcategories);
-    } else {
-      setSubcategories([]);
-    }
-  }, [formData.category, validCategories]);
+    fetchCategories();
+  }, []);
+
+  // Get subcategories for selected category
+  const getSubcategories = useCallback(() => {
+    const selectedCategory = categories.find(cat => cat._id === formData.category);
+    return selectedCategory?.subcategories || [];
+  }, [categories, formData.category]);
+
+  // Handle form changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+      // Reset subcategory when category changes
+      ...(name === 'category' ? { subcategory: '' } : {})
+    }));
+  };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
-    <FormContainer onSubmit={handleSubmit}>
+    <FormContainer>
       <FormGroup>
         <Label htmlFor="category">Category</Label>
         <Select
@@ -125,11 +145,10 @@ function JobPostForm({ onJobPosted }) {
           name="category"
           value={formData.category}
           onChange={handleChange}
-          disabled={categoriesLoading}
           required
         >
           <option value="">Select a category</option>
-          {validCategories.map(cat => (
+          {categories.map(cat => (
             <option key={cat._id} value={cat._id}>
               {cat.name}
             </option>
@@ -148,8 +167,8 @@ function JobPostForm({ onJobPosted }) {
             required
           >
             <option value="">Select a subcategory</option>
-            {subcategories.map(sub => (
-              <option key={`${formData.category}-${sub}`} value={sub}>
+            {getSubcategories().map(sub => (
+              <option key={sub} value={sub}>
                 {sub}
               </option>
             ))}
@@ -161,4 +180,4 @@ function JobPostForm({ onJobPosted }) {
   );
 }
 
-export default JobPostForm;
+export default LeadPostForm;
