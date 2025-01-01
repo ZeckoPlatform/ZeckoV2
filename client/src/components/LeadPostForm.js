@@ -101,13 +101,18 @@ function JobPostForm({ onJobPosted }) {
       : [];
   }, [categories]);
 
+  // Initialize subcategories as an empty array
   const [subcategories, setSubcategories] = useState([]);
 
   // Update subcategories when category changes
   useEffect(() => {
     if (formData.category && validCategories.length > 0) {
       const selectedCategory = validCategories.find(cat => cat._id === formData.category);
-      setSubcategories(selectedCategory?.subcategories || []);
+      if (selectedCategory && Array.isArray(selectedCategory.subcategories)) {
+        setSubcategories(selectedCategory.subcategories);
+      } else {
+        setSubcategories([]);
+      }
     } else {
       setSubcategories([]);
     }
@@ -134,7 +139,7 @@ function JobPostForm({ onJobPosted }) {
         </Select>
       </FormGroup>
 
-      {subcategories.length > 0 && (
+      {formData.category && subcategories && subcategories.length > 0 && (
         <FormGroup>
           <Label htmlFor="subcategory">Subcategory</Label>
           <Select
