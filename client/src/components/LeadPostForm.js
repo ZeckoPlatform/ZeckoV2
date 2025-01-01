@@ -87,32 +87,30 @@ const Select = styled.select`
 `;
 
 function JobPostForm({ onJobPosted }) {
-  const { categories, loading: categoriesLoading } = useServiceCategories();
+  const { categories = [], loading: categoriesLoading } = useServiceCategories() || {};
+  
   const [formData, setFormData] = useState({
     category: '',
     subcategory: '',
     // ... other form fields
   });
-  
-  // Ensure categories is always an array and filter out invalid entries
-  const validCategories = useMemo(() => {
-    return Array.isArray(categories) 
-      ? categories.filter(cat => cat && cat._id && cat.name)
-      : [];
-  }, [categories]);
 
-  // Initialize subcategories as an empty array
   const [subcategories, setSubcategories] = useState([]);
 
-  // Update subcategories when category changes
+  const validCategories = useMemo(() => {
+    if (!Array.isArray(categories)) return [];
+    return categories.filter(cat => cat && typeof cat === 'object' && cat._id && cat.name);
+  }, [categories]);
+
   useEffect(() => {
-    if (formData.category && validCategories.length > 0) {
-      const selectedCategory = validCategories.find(cat => cat._id === formData.category);
-      if (selectedCategory && Array.isArray(selectedCategory.subcategories)) {
-        setSubcategories(selectedCategory.subcategories);
-      } else {
-        setSubcategories([]);
-      }
+    if (!formData.category || !validCategories.length) {
+      setSubcategories([]);
+      return;
+    }
+
+    const selectedCategory = validCategories.find(cat => cat._id === formData.category);
+    if (selectedCategory?.subcategories) {
+      setSubcategories(selectedCategory.subcategories);
     } else {
       setSubcategories([]);
     }
@@ -127,19 +125,19 @@ function JobPostForm({ onJobPosted }) {
           name="category"
           value={formData.category}
           onChange={handleChange}
-          required
           disabled={categoriesLoading}
+          required
         >
           <option value="">Select a category</option>
-          {validCategories.map(category => (
-            <option key={category._id} value={category._id}>
-              {category.name}
+          {validCategories.map(cat => (
+            <option key={cat._id} value={cat._id}>
+              {cat.name}
             </option>
           ))}
         </Select>
       </FormGroup>
 
-      {formData.category && subcategories && subcategories.length > 0 && (
+      {formData.category && (
         <FormGroup>
           <Label htmlFor="subcategory">Subcategory</Label>
           <Select
