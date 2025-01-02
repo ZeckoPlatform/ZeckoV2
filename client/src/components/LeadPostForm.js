@@ -87,99 +87,82 @@ const Select = styled.select`
 `;
 
 function LeadPostForm() {
-  // Initialize with empty arrays and loading state
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedSubcategory, setSelectedSubcategory] = useState('');
   const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    price: '',
+    location: '',
     category: '',
-    subcategory: '',
-    // ... other form fields
+    subcategory: ''
   });
 
-  // Add getSubcategories function
-  const getSubcategories = useCallback(() => {
-    if (!categories || !formData.category) return [];
-    
-    const selectedCategory = categories.find(cat => cat.name === formData.category);
-    return selectedCategory?.subcategories || [];
-  }, [categories, formData.category]);
-
-  // Fetch categories
+  // Fetch categories once on component mount
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/categories');
-        if (!response.ok) throw new Error('Failed to fetch categories');
-        const data = await response.json();
+    fetch('/api/categories')
+      .then(res => res.json())
+      .then(data => {
         setCategories(data || []);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCategories();
+      })
+      .catch(err => console.error('Error fetching categories:', err));
   }, []);
 
-  // Handle form changes
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  // Get subcategories for selected category
+  const subcategories = useMemo(() => {
+    const category = categories.find(c => c.name === selectedCategory);
+    return category?.subcategories || [];
+  }, [categories, selectedCategory]);
+
+  // Handle category change
+  const handleCategoryChange = (e) => {
+    const category = e.target.value;
+    setSelectedCategory(category);
+    setSelectedSubcategory('');
     setFormData(prev => ({
       ...prev,
-      [name]: value,
-      // Reset subcategory when category changes
-      ...(name === 'category' ? { subcategory: '' } : {})
+      category,
+      subcategory: ''
     }));
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  // Handle subcategory change
+  const handleSubcategoryChange = (e) => {
+    const subcategory = e.target.value;
+    setSelectedSubcategory(subcategory);
+    setFormData(prev => ({
+      ...prev,
+      subcategory
+    }));
+  };
 
   return (
-    <FormContainer>
-      <FormGroup>
-        <Label htmlFor="category">Category</Label>
-        <Select
-          id="category"
-          name="category"
-          value={formData.category}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select a category</option>
-          {categories.map(cat => (
-            <option key={cat._id} value={cat._id}>
-              {cat.name}
-            </option>
-          ))}
-        </Select>
-      </FormGroup>
+    <form>
+      <select value={selectedCategory} onChange={handleCategoryChange}>
+        <option value="">Select Category</option>
+        {categories.map(category => (
+          <option key={category._id} value={category.name}>
+            {category.name}
+          </option>
+        ))}
+      </select>
 
-      {formData.category && (
-        <FormGroup>
-          <Label htmlFor="subcategory">Subcategory</Label>
-          <Select
-            id="subcategory"
-            name="subcategory"
-            value={formData.subcategory}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Select a subcategory</option>
-            {getSubcategories().map(sub => (
-              <option key={sub} value={sub}>
-                {sub}
-              </option>
-            ))}
-          </Select>
-        </FormGroup>
-      )}
-      {/* ... rest of the form ... */}
-    </FormContainer>
+      <select 
+        value={selectedSubcategory} 
+        onChange={handleSubcategoryChange}
+        disabled={!selectedCategory}
+      >
+        <option value="">Select Subcategory</option>
+        {subcategories.map(sub => (
+          <option key={sub._id} value={sub.name}>
+            {sub.name}
+          </option>
+        ))}
+      </select>
+
+      {/* Rest of your form fields */}
+    </form>
   );
 }
 
