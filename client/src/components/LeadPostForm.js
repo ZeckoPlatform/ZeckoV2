@@ -21,6 +21,7 @@ function CategoryProvider({ children }) {
         const response = await fetch('/api/categories');
         if (!response.ok) throw new Error('Failed to fetch categories');
         const data = await response.json();
+        console.log('Fetched categories:', data);
         
         if (isMounted) {
           setState(prev => ({
@@ -34,6 +35,7 @@ function CategoryProvider({ children }) {
         if (isMounted) {
           setState(prev => ({
             ...prev,
+            categories: [],
             error: err.message,
             isLoading: false
           }));
@@ -45,6 +47,14 @@ function CategoryProvider({ children }) {
     return () => { isMounted = false; };
   }, []);
 
+  if (state.isLoading) {
+    return <div>Loading categories...</div>;
+  }
+
+  if (state.error) {
+    return <div>Error loading categories: {state.error}</div>;
+  }
+
   return (
     <CategoryContext.Provider value={state}>
       {children}
@@ -53,7 +63,7 @@ function CategoryProvider({ children }) {
 }
 
 function LeadPostFormContent() {
-  const { categories, isLoading, error } = useContext(CategoryContext);
+  const { categories } = useContext(CategoryContext);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [formData, setFormData] = useState({
     title: '',
@@ -64,19 +74,13 @@ function LeadPostFormContent() {
     subcategory: ''
   });
 
-  const getSubcategories = () => {
-    try {
-      if (!selectedCategory) return [];
-      const category = categories.find(cat => cat?.name === selectedCategory);
-      return Array.isArray(category?.subcategories) ? category.subcategories : [];
-    } catch {
-      return [];
-    }
-  };
+  const safeCategories = Array.isArray(categories) ? categories : [];
 
-  if (isLoading) return <div>Loading categories...</div>;
-  if (error) return <div>Error: {error}</div>;
-  if (!categories.length) return <div>No categories available</div>;
+  const getSubcategories = () => {
+    if (!selectedCategory) return [];
+    const category = safeCategories.find(cat => cat?.name === selectedCategory);
+    return Array.isArray(category?.subcategories) ? category.subcategories : [];
+  };
 
   return (
     <div className="lead-post-form">
@@ -95,8 +99,11 @@ function LeadPostFormContent() {
             }}
           >
             <option value="">Select Category</option>
-            {categories.map(category => (
-              <option key={category._id || category.name} value={category.name}>
+            {safeCategories.map(category => (
+              <option 
+                key={category._id || category.name} 
+                value={category.name}
+              >
                 {category.name}
               </option>
             ))}
@@ -116,7 +123,10 @@ function LeadPostFormContent() {
           >
             <option value="">Select Subcategory</option>
             {getSubcategories().map(sub => (
-              <option key={sub._id || sub.name} value={sub.name}>
+              <option 
+                key={sub._id || sub.name} 
+                value={sub.name}
+              >
                 {sub.name}
               </option>
             ))}

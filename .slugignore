@@ -10,7 +10,17 @@
 # Documentation
 /docs/ 
 
-# Client-side files
+# Node modules (will be reinstalled during build)
 /client/node_modules/
+/server/node_modules/
+
+# Git files
 .git/
-*.log 
+
+# Logs
+*.log
+
+# Keep these files
+!server/data/leadCategories.js
+!server/controllers/serviceCategoryController.js
+!server/models/serviceCategoryModel.js 
