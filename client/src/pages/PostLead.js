@@ -50,11 +50,20 @@ const PostLead = () => {
     );
   }
 
+  // Add this debug log
+  console.log('All categories:', categories);
+
   // Update selected category and reset form fields when category changes
   const handleCategoryChange = (e) => {
     const categoryId = e.target.value;
+    console.log('Category ID selected:', categoryId); // Debug log
     const selectedCat = categories.find(cat => cat._id === categoryId);
+    console.log('Selected category object:', selectedCat); // Debug log
     setSelectedCategory(selectedCat);
+    
+    // Log the subcategories immediately
+    console.log('Subcategories of selected category:', selectedCat?.subcategories);
+    
     setFormData(prev => ({
       ...prev,
       category: categoryId,
@@ -68,10 +77,11 @@ const PostLead = () => {
 
   // Add this helper function to get subcategories
   const getSubcategories = () => {
+    console.log('Getting subcategories for:', selectedCategory); // Debug log
     if (!selectedCategory) return [];
-    return Array.isArray(selectedCategory?.subcategories) 
-      ? selectedCategory.subcategories 
-      : [];
+    const subs = selectedCategory.subcategories || [];
+    console.log('Found subcategories:', subs); // Debug log
+    return subs;
   };
 
   // Handle form submission
@@ -138,14 +148,17 @@ const PostLead = () => {
             required
           >
             <option value="">Select a category</option>
-            {categories.map(cat => (
-              <option 
-                key={cat?._id || 'default'} 
-                value={cat?._id || ''}
-              >
-                {cat?.name || 'Unnamed Category'}
-              </option>
-            ))}
+            {categories.map(cat => {
+              console.log('Rendering category:', cat); // Debug log
+              return (
+                <option 
+                  key={cat?._id || 'default'} 
+                  value={cat?._id || ''}
+                >
+                  {cat?.name || 'Unnamed Category'}
+                </option>
+              );
+            })}
           </Select>
         </FormGroup>
 
@@ -155,6 +168,7 @@ const PostLead = () => {
             <Select
               value={formData.subcategory}
               onChange={(e) => {
+                console.log('Selected subcategory:', e.target.value); // Debug log
                 setFormData(prev => ({
                   ...prev,
                   subcategory: e.target.value
@@ -163,14 +177,17 @@ const PostLead = () => {
               required
             >
               <option value="">Select a subcategory</option>
-              {getSubcategories().map(sub => (
-                <option 
-                  key={sub?._id || 'default'} 
-                  value={sub?._id || ''}
-                >
-                  {sub?.name || 'Unnamed Subcategory'}
-                </option>
-              ))}
+              {getSubcategories().map(sub => {
+                console.log('Rendering subcategory:', sub); // Debug log
+                return (
+                  <option 
+                    key={sub._id || `sub-${Math.random()}`} 
+                    value={sub._id || sub.name || ''}
+                  >
+                    {sub.name || sub.title || 'Unnamed Subcategory'}
+                  </option>
+                );
+              })}
             </Select>
           </FormGroup>
         )}
