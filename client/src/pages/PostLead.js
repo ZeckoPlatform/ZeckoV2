@@ -53,17 +53,25 @@ const PostLead = () => {
   // Update selected category and reset form fields when category changes
   const handleCategoryChange = (e) => {
     const categoryId = e.target.value;
-    const category = categories.find(cat => cat._id === categoryId);
-    setSelectedCategory(category);
+    const selectedCat = categories.find(cat => cat._id === categoryId);
+    setSelectedCategory(selectedCat);
     setFormData(prev => ({
       ...prev,
       category: categoryId,
       subcategory: '',
-      requirements: category?.questions?.map(q => ({ 
+      requirements: selectedCat?.questions?.map(q => ({ 
         question: q.text,
         answer: '' 
       })) || []
     }));
+  };
+
+  // Add this helper function to get subcategories
+  const getSubcategories = () => {
+    if (!selectedCategory) return [];
+    return Array.isArray(selectedCategory?.subcategories) 
+      ? selectedCategory.subcategories 
+      : [];
   };
 
   // Handle form submission
@@ -140,6 +148,32 @@ const PostLead = () => {
             ))}
           </Select>
         </FormGroup>
+
+        {selectedCategory && (
+          <FormGroup>
+            <Label>Subcategory*</Label>
+            <Select
+              value={formData.subcategory}
+              onChange={(e) => {
+                setFormData(prev => ({
+                  ...prev,
+                  subcategory: e.target.value
+                }));
+              }}
+              required
+            >
+              <option value="">Select a subcategory</option>
+              {getSubcategories().map(sub => (
+                <option 
+                  key={sub?._id || 'default'} 
+                  value={sub?._id || ''}
+                >
+                  {sub?.name || 'Unnamed Subcategory'}
+                </option>
+              ))}
+            </Select>
+          </FormGroup>
+        )}
 
         <TwoColumnGroup>
           <FormGroup>
