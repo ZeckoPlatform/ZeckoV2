@@ -1,7 +1,28 @@
 import React, { useState, useEffect } from 'react';
 
-function LeadPostForm() {
-  // Initialize all state with safe defaults
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.log('Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <div>Something went wrong. Please try again later.</div>;
+    }
+    return this.props.children;
+  }
+}
+
+function LeadPostFormContent() {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -15,95 +36,121 @@ function LeadPostForm() {
     subcategory: ''
   });
 
-  // Wrap the fetch in a try-catch
   useEffect(() => {
     let isMounted = true;
 
     const fetchCategories = async () => {
       try {
         const response = await fetch('/api/categories');
+        if (!response.ok) throw new Error('Failed to fetch categories');
         const data = await response.json();
         
-        // Only update state if component is still mounted
         if (isMounted) {
-          setCategories(Array.isArray(data) ? data : []);
+          if (!Array.isArray(data)) {
+            console.error('Invalid categories data:', data);
+            setCategories([]);
+          } else {
+            setCategories(data);
+          }
           setIsLoading(false);
         }
       } catch (err) {
+        console.error('Error fetching categories:', err);
         if (isMounted) {
           setError(err.message);
+          setCategories([]);
           setIsLoading(false);
         }
       }
     };
 
     fetchCategories();
-
-    // Cleanup function
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
 
-  // Safely get subcategories
   const getSubcategories = () => {
-    if (!selectedCategory) return [];
-    const category = categories.find(cat => cat.name === selectedCategory);
-    return category?.subcategories || [];
+    try {
+      if (!selectedCategory || !Array.isArray(categories)) return [];
+      const category = categories.find(cat => cat?.name === selectedCategory);
+      return Array.isArray(category?.subcategories) ? category.subcategories : [];
+    } catch (err) {
+      console.error('Error getting subcategories:', err);
+      return [];
+    }
   };
 
   if (isLoading) return <div>Loading categories...</div>;
-  if (error) return <div>Error loading categories: {error}</div>;
+  if (error) return <div>Error: {error}</div>;
+  if (!Array.isArray(categories)) return <div>No categories available</div>;
 
   return (
     <div className="lead-post-form">
       <form onSubmit={(e) => {
         e.preventDefault();
-        // Add your submit logic here
       }}>
         <div className="form-group">
           <select
             value={selectedCategory}
             onChange={(e) => {
-              const newCategory = e.target.value;
-              setSelectedCategory(newCategory);
-              setFormData(prev => ({
-                ...prev,
-                category: newCategory,
-                subcategory: ''
-              }));
+              try {
+                const newCategory = e.target.value;
+                setSelectedCategory(newCategory);
+                setFormData(prev => ({
+                  ...prev,
+                  category: newCategory,
+                  subcategory: ''
+                }));
+              } catch (err) {
+                console.error('Error handling category change:', err);
+              }
             }}
           >
             <option value="">Select Category</option>
-            {Array.isArray(categories) && categories.map(category => (
-              <option key={category._id || category.name} value={category.name}>
-                {category.name}
-              </option>
-            ))}
+            {categories.map(category => 
+              category?.name ? (
+                <option key={category._id || category.name} value={category.name}>
+                  {category.name}
+                </option>
+              ) : null
+            )}
           </select>
         </div>
 
         <div className="form-group">
           <select
             value={formData.subcategory}
-            onChange={(e) => setFormData(prev => ({
-              ...prev,
-              subcategory: e.target.value
-            }))}
+            onChange={(e) => {
+              try {
+                setFormData(prev => ({
+                  ...prev,
+                  subcategory: e.target.value
+                }));
+              } catch (err) {
+                console.error('Error handling subcategory change:', err);
+              }
+            }}
             disabled={!selectedCategory}
           >
             <option value="">Select Subcategory</option>
-            {getSubcategories().map(sub => (
-              <option key={sub._id || sub.name} value={sub.name}>
-                {sub.name}
-              </option>
-            ))}
+            {getSubcategories().map(sub => 
+              sub?.name ? (
+                <option key={sub._id || sub.name} value={sub.name}>
+                  {sub.name}
+                </option>
+              ) : null
+            )}
           </select>
         </div>
-
-        {/* Rest of your form fields */}
       </form>
     </div>
+  );
+}
+
+function LeadPostForm() {
+  return (
+    <ErrorBoundary>
+      <LeadPostFormContent />
+    </ErrorBoundary>
   );
 }
 
