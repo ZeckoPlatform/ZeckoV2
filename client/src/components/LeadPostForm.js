@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext, useMemo, useCallback } from 'react';
 
 const CategoryContext = createContext({
   categories: [],
@@ -66,14 +66,14 @@ function CategoryProvider({ children }) {
 }
 
 function LeadPostFormContent() {
-  const context = useContext(CategoryContext);
+  const context = useContext(CategoryContext) || {
+    categories: [],
+    isLoading: true,
+    error: null
+  };
   
-  if (!context) {
-    console.error('LeadPostFormContent must be used within a CategoryProvider');
-    return <div>Error: Category context not available</div>;
-  }
+  const { categories = [], isLoading = true, error = null } = context;
 
-  const { categories = [] } = context;
   const [selectedCategory, setSelectedCategory] = useState('');
   const [formData, setFormData] = useState({
     title: '',
@@ -84,20 +84,26 @@ function LeadPostFormContent() {
     subcategory: ''
   });
 
-  const safeCategories = Array.isArray(categories) ? categories : [];
+  const safeCategories = useMemo(() => {
+    return Array.isArray(categories) ? categories : [];
+  }, [categories]);
 
-  const getSubcategories = () => {
+  const getSubcategories = useCallback(() => {
     if (!selectedCategory) return [];
     const category = safeCategories.find(cat => cat?.name === selectedCategory);
     return Array.isArray(category?.subcategories) ? category.subcategories : [];
-  };
+  }, [selectedCategory, safeCategories]);
 
-  if (context.isLoading) {
+  if (isLoading) {
     return <div>Loading categories...</div>;
   }
 
-  if (context.error) {
-    return <div>Error loading categories: {context.error}</div>;
+  if (error) {
+    return <div>Error loading categories: {error}</div>;
+  }
+
+  if (!safeCategories.length) {
+    return <div>No categories available</div>;
   }
 
   return (
@@ -117,9 +123,9 @@ function LeadPostFormContent() {
             }}
           >
             <option value="">Select Category</option>
-            {safeCategories.map(category => (
+            {safeCategories?.map(category => (
               <option 
-                key={category?._id || category?.name || 'default'} 
+                key={category?._id || category?.name || `category-${Math.random()}`}
                 value={category?.name || ''}
               >
                 {category?.name || 'Unnamed Category'}
@@ -140,9 +146,9 @@ function LeadPostFormContent() {
             disabled={!selectedCategory}
           >
             <option value="">Select Subcategory</option>
-            {getSubcategories().map(sub => (
+            {getSubcategories()?.map(sub => (
               <option 
-                key={sub?._id || sub?.name || 'default'} 
+                key={sub?._id || sub?.name || `subcategory-${Math.random()}`}
                 value={sub?.name || ''}
               >
                 {sub?.name || 'Unnamed Subcategory'}

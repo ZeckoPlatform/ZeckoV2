@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useServiceCategories } from '../contexts/ServiceCategoryContext';
 
 const PostLead = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [categories, setCategories] = useState([]);
+  const { categories, loading, error: categoryError } = useServiceCategories();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -29,24 +30,7 @@ const PostLead = () => {
     }
   });
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await api.get('/api/categories');
-        console.log('Fetched categories:', response.data);
-        setCategories(Array.isArray(response.data) ? response.data : []);
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-        setError('Failed to load categories');
-        setCategories([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCategories();
-  }, []);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Show loading state
   if (loading) {
@@ -58,10 +42,10 @@ const PostLead = () => {
   }
 
   // Show error state
-  if (error) {
+  if (categoryError) {
     return (
       <Container>
-        <ErrorMessage>{error}</ErrorMessage>
+        <ErrorMessage>{categoryError}</ErrorMessage>
       </Container>
     );
   }
@@ -75,17 +59,17 @@ const PostLead = () => {
       ...prev,
       category: categoryId,
       subcategory: '',
-      requirements: category ? category.questions.map(q => ({ 
+      requirements: category?.questions?.map(q => ({ 
         question: q.text,
         answer: '' 
-      })) : []
+      })) || []
     }));
   };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setIsSubmitting(true);
     setError('');
 
     try {
@@ -96,17 +80,17 @@ const PostLead = () => {
       const leadData = {
         ...formData,
         client: user._id,
-        requirements: formData.requirements.filter(req => req.answer), // Only send answered questions
+        requirements: formData.requirements.filter(req => req.answer),
       };
 
       console.log('Submitting lead data:', leadData);
-      const response = await api.post('/api/leads', leadData);
+      await api.post('/api/leads', leadData);
       navigate('/dashboard');
     } catch (err) {
       console.error('Error details:', err);
       setError(err.response?.data?.message || 'Failed to post lead');
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -146,7 +130,7 @@ const PostLead = () => {
             required
           >
             <option value="">Select a category</option>
-            {Array.isArray(categories) && categories.map(cat => (
+            {categories.map(cat => (
               <option 
                 key={cat?._id || 'default'} 
                 value={cat?._id || ''}
@@ -251,8 +235,8 @@ const PostLead = () => {
           </FormGroup>
         </TwoColumnGroup>
 
-        <SubmitButton type="submit" disabled={loading}>
-          {loading ? 'Posting...' : 'Post Lead'}
+        <SubmitButton type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Posting...' : 'Post Lead'}
         </SubmitButton>
       </StyledForm>
     </Container>
