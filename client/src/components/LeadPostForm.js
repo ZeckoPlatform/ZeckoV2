@@ -98,21 +98,8 @@ function LeadPostForm() {
     subcategory: ''
   });
 
-  // Fetch categories once on component mount
-  useEffect(() => {
-    fetch('/api/categories')
-      .then(res => res.json())
-      .then(data => {
-        setCategories(data || []);
-      })
-      .catch(err => console.error('Error fetching categories:', err));
-  }, []);
-
-  // Get subcategories for selected category
-  const subcategories = useMemo(() => {
-    const category = categories.find(cat => cat.name === selectedCategory);
-    return category?.subcategories || [];
-  }, [categories, selectedCategory]);
+  // Ensure categories is always an array
+  const safeCategories = Array.isArray(categories) ? categories : [];
 
   return (
     <form onSubmit={handleSubmit}>
@@ -121,9 +108,9 @@ function LeadPostForm() {
         onChange={(e) => setSelectedCategory(e.target.value)}
       >
         <option value="">Select Category</option>
-        {Array.isArray(categories) && categories.map(cat => (
-          <option key={cat._id} value={cat.name}>
-            {cat.name}
+        {safeCategories.map(category => (
+          <option key={category._id} value={category.name}>
+            {category.name}
           </option>
         ))}
       </select>
@@ -137,11 +124,12 @@ function LeadPostForm() {
         disabled={!selectedCategory}
       >
         <option value="">Select Subcategory</option>
-        {Array.isArray(subcategories) && subcategories.map(sub => (
-          <option key={sub._id} value={sub.name}>
-            {sub.name}
-          </option>
-        ))}
+        {selectedCategory && safeCategories
+          .find(cat => cat.name === selectedCategory)?.subcategories?.map(sub => (
+            <option key={sub._id} value={sub.name}>
+              {sub.name}
+            </option>
+          ))}
       </select>
 
       {/* Rest of your form fields */}
