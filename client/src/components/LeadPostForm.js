@@ -1,92 +1,7 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import styled from 'styled-components';
-import Spinner from './Spinner';
-import { useServiceCategories } from '../contexts/ServiceCategoryContext';
-
-const FormContainer = styled.form`
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  margin-bottom: 20px;
-`;
-
-const FormGroup = styled.div`
-  margin-bottom: 15px;
-`;
-
-const Label = styled.label`
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 16px;
-
-  &:focus {
-    outline: 2px solid var(--primary-color);
-    border-color: var(--primary-color);
-  }
-`;
-
-const TextArea = styled.textarea`
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  min-height: 100px;
-  font-size: 16px;
-
-  &:focus {
-    outline: 2px solid var(--primary-color);
-    border-color: var(--primary-color);
-  }
-`;
-
-const SubmitButton = styled.button`
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  
-  &:hover, &:focus {
-    background-color: darken(var(--primary-color), 10%);
-    outline: 2px solid var(--primary-color);
-  }
-
-  &:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-  }
-`;
-
-const ErrorMessage = styled.p`
-  color: var(--error-color);
-  margin-bottom: 10px;
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 16px;
-
-  &:focus {
-    outline: 2px solid var(--primary-color);
-    border-color: var(--primary-color);
-  }
-`;
+import React, { useState, useEffect } from 'react';
 
 function LeadPostForm() {
+  // Initialize all state with safe defaults
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -100,70 +15,95 @@ function LeadPostForm() {
     subcategory: ''
   });
 
+  // Wrap the fetch in a try-catch
   useEffect(() => {
+    let isMounted = true;
+
     const fetchCategories = async () => {
       try {
-        setIsLoading(true);
         const response = await fetch('/api/categories');
         const data = await response.json();
-        console.log('Fetched categories:', data);
-        setCategories(Array.isArray(data) ? data : []);
+        
+        // Only update state if component is still mounted
+        if (isMounted) {
+          setCategories(Array.isArray(data) ? data : []);
+          setIsLoading(false);
+        }
       } catch (err) {
-        setError(err.message);
-        console.error('Error fetching categories:', err);
-      } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setError(err.message);
+          setIsLoading(false);
+        }
       }
     };
 
     fetchCategories();
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const selectedCategoryData = categories.find(cat => cat.name === selectedCategory);
-  const subcategories = selectedCategoryData?.subcategories || [];
+  // Safely get subcategories
+  const getSubcategories = () => {
+    if (!selectedCategory) return [];
+    const category = categories.find(cat => cat.name === selectedCategory);
+    return category?.subcategories || [];
+  };
 
   if (isLoading) return <div>Loading categories...</div>;
   if (error) return <div>Error loading categories: {error}</div>;
 
   return (
-    <form onSubmit={handleSubmit}>
-      <select
-        value={selectedCategory}
-        onChange={(e) => {
-          setSelectedCategory(e.target.value);
-          setFormData(prev => ({
-            ...prev,
-            category: e.target.value,
-            subcategory: '' // Reset subcategory when category changes
-          }));
-        }}
-      >
-        <option value="">Select Category</option>
-        {categories.map(category => (
-          <option key={category._id} value={category.name}>
-            {category.name}
-          </option>
-        ))}
-      </select>
+    <div className="lead-post-form">
+      <form onSubmit={(e) => {
+        e.preventDefault();
+        // Add your submit logic here
+      }}>
+        <div className="form-group">
+          <select
+            value={selectedCategory}
+            onChange={(e) => {
+              const newCategory = e.target.value;
+              setSelectedCategory(newCategory);
+              setFormData(prev => ({
+                ...prev,
+                category: newCategory,
+                subcategory: ''
+              }));
+            }}
+          >
+            <option value="">Select Category</option>
+            {Array.isArray(categories) && categories.map(category => (
+              <option key={category._id || category.name} value={category.name}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      <select
-        value={formData.subcategory}
-        onChange={(e) => setFormData(prev => ({
-          ...prev,
-          subcategory: e.target.value
-        }))}
-        disabled={!selectedCategory}
-      >
-        <option value="">Select Subcategory</option>
-        {subcategories.map(sub => (
-          <option key={sub._id} value={sub.name}>
-            {sub.name}
-          </option>
-        ))}
-      </select>
+        <div className="form-group">
+          <select
+            value={formData.subcategory}
+            onChange={(e) => setFormData(prev => ({
+              ...prev,
+              subcategory: e.target.value
+            }))}
+            disabled={!selectedCategory}
+          >
+            <option value="">Select Subcategory</option>
+            {getSubcategories().map(sub => (
+              <option key={sub._id || sub.name} value={sub.name}>
+                {sub.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      {/* Rest of your form */}
-    </form>
+        {/* Rest of your form fields */}
+      </form>
+    </div>
   );
 }
 
