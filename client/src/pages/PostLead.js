@@ -168,7 +168,7 @@ const PostLead = () => {
             <Select
               value={formData.subcategory}
               onChange={(e) => {
-                console.log('Selected subcategory:', e.target.value); // Debug log
+                console.log('Selected subcategory:', e.target.value);
                 setFormData(prev => ({
                   ...prev,
                   subcategory: e.target.value
@@ -177,17 +177,14 @@ const PostLead = () => {
               required
             >
               <option value="">Select a subcategory</option>
-              {getSubcategories().map(sub => {
-                console.log('Rendering subcategory:', sub); // Debug log
-                return (
-                  <option 
-                    key={sub._id || `sub-${Math.random()}`} 
-                    value={sub._id || sub.name || ''}
-                  >
-                    {sub.name || sub.title || 'Unnamed Subcategory'}
-                  </option>
-                );
-              })}
+              {getSubcategories().map((sub, index) => (
+                <option 
+                  key={`${selectedCategory._id}-sub-${index}`}
+                  value={sub}
+                >
+                  {sub}
+                </option>
+              ))}
             </Select>
           </FormGroup>
         )}
