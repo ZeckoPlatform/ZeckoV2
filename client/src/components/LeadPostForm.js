@@ -89,7 +89,6 @@ const Select = styled.select`
 function LeadPostForm() {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedSubcategory, setSelectedSubcategory] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -111,50 +110,34 @@ function LeadPostForm() {
 
   // Get subcategories for selected category
   const subcategories = useMemo(() => {
-    const category = categories.find(c => c.name === selectedCategory);
+    const category = categories.find(cat => cat.name === selectedCategory);
     return category?.subcategories || [];
   }, [categories, selectedCategory]);
 
-  // Handle category change
-  const handleCategoryChange = (e) => {
-    const category = e.target.value;
-    setSelectedCategory(category);
-    setSelectedSubcategory('');
-    setFormData(prev => ({
-      ...prev,
-      category,
-      subcategory: ''
-    }));
-  };
-
-  // Handle subcategory change
-  const handleSubcategoryChange = (e) => {
-    const subcategory = e.target.value;
-    setSelectedSubcategory(subcategory);
-    setFormData(prev => ({
-      ...prev,
-      subcategory
-    }));
-  };
-
   return (
-    <form>
-      <select value={selectedCategory} onChange={handleCategoryChange}>
+    <form onSubmit={handleSubmit}>
+      <select
+        value={selectedCategory}
+        onChange={(e) => setSelectedCategory(e.target.value)}
+      >
         <option value="">Select Category</option>
-        {categories.map(category => (
-          <option key={category._id} value={category.name}>
-            {category.name}
+        {Array.isArray(categories) && categories.map(cat => (
+          <option key={cat._id} value={cat.name}>
+            {cat.name}
           </option>
         ))}
       </select>
 
-      <select 
-        value={selectedSubcategory} 
-        onChange={handleSubcategoryChange}
+      <select
+        value={formData.subcategory}
+        onChange={(e) => setFormData(prev => ({
+          ...prev,
+          subcategory: e.target.value
+        }))}
         disabled={!selectedCategory}
       >
         <option value="">Select Subcategory</option>
-        {subcategories.map(sub => (
+        {Array.isArray(subcategories) && subcategories.map(sub => (
           <option key={sub._id} value={sub.name}>
             {sub.name}
           </option>
