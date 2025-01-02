@@ -29,22 +29,42 @@ const PostLead = () => {
     }
   });
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Add console.log to debug category loading
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await api.get('/api/categories');
-        console.log('Fetched categories:', response.data); // Debug log
-        setCategories(response.data);
+        console.log('Fetched categories:', response.data);
+        setCategories(Array.isArray(response.data) ? response.data : []);
       } catch (err) {
         console.error('Error fetching categories:', err);
         setError('Failed to load categories');
+        setCategories([]);
+      } finally {
+        setLoading(false);
       }
     };
     fetchCategories();
   }, []);
+
+  // Show loading state
+  if (loading) {
+    return (
+      <Container>
+        <FormTitle>Loading categories...</FormTitle>
+      </Container>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <Container>
+        <ErrorMessage>{error}</ErrorMessage>
+      </Container>
+    );
+  }
 
   // Update selected category and reset form fields when category changes
   const handleCategoryChange = (e) => {
@@ -126,9 +146,12 @@ const PostLead = () => {
             required
           >
             <option value="">Select a category</option>
-            {categories.map(cat => (
-              <option key={cat._id} value={cat._id}>
-                {cat.name}
+            {Array.isArray(categories) && categories.map(cat => (
+              <option 
+                key={cat?._id || 'default'} 
+                value={cat?._id || ''}
+              >
+                {cat?.name || 'Unnamed Category'}
               </option>
             ))}
           </Select>
