@@ -88,6 +88,8 @@ const Select = styled.select`
 
 function LeadPostForm() {
   const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [formData, setFormData] = useState({
     title: '',
@@ -98,8 +100,27 @@ function LeadPostForm() {
     subcategory: ''
   });
 
-  // Ensure categories is always an array
-  const safeCategories = Array.isArray(categories) ? categories : [];
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/categories');
+        const data = await response.json();
+        setCategories(data || []);
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching categories:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  if (isLoading) return <div>Loading categories...</div>;
+  if (error) return <div>Error loading categories: {error}</div>;
+  if (!Array.isArray(categories)) return <div>Invalid categories data</div>;
 
   return (
     <form onSubmit={handleSubmit}>
@@ -108,7 +129,7 @@ function LeadPostForm() {
         onChange={(e) => setSelectedCategory(e.target.value)}
       >
         <option value="">Select Category</option>
-        {safeCategories.map(category => (
+        {categories.map(category => (
           <option key={category._id} value={category.name}>
             {category.name}
           </option>
@@ -124,7 +145,7 @@ function LeadPostForm() {
         disabled={!selectedCategory}
       >
         <option value="">Select Subcategory</option>
-        {selectedCategory && safeCategories
+        {selectedCategory && categories
           .find(cat => cat.name === selectedCategory)?.subcategories?.map(sub => (
             <option key={sub._id} value={sub.name}>
               {sub.name}
