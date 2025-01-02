@@ -4,9 +4,6 @@
 /tests/
 /coverage/
 
-# Source maps
-*.map
-
 # Documentation
 /docs/ 
 

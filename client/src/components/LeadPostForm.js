@@ -7,11 +7,11 @@ const CategoryContext = createContext({
 });
 
 function CategoryProvider({ children }) {
-  const [state, setState] = useState({
+  const [state, setState] = useState(() => ({
     categories: [],
     isLoading: true,
     error: null
-  });
+  }));
 
   useEffect(() => {
     let isMounted = true;
@@ -24,21 +24,21 @@ function CategoryProvider({ children }) {
         console.log('Fetched categories:', data);
         
         if (isMounted) {
-          setState(prev => ({
-            ...prev,
-            categories: Array.isArray(data) ? data : [],
-            isLoading: false
-          }));
+          const safeData = Array.isArray(data) ? data : [];
+          setState({
+            categories: safeData,
+            isLoading: false,
+            error: null
+          });
         }
       } catch (err) {
         console.error('Error fetching categories:', err);
         if (isMounted) {
-          setState(prev => ({
-            ...prev,
+          setState({
             categories: [],
-            error: err.message,
-            isLoading: false
-          }));
+            isLoading: false,
+            error: err.message
+          });
         }
       }
     };
@@ -47,23 +47,33 @@ function CategoryProvider({ children }) {
     return () => { isMounted = false; };
   }, []);
 
-  if (state.isLoading) {
-    return <div>Loading categories...</div>;
-  }
-
-  if (state.error) {
-    return <div>Error loading categories: {state.error}</div>;
-  }
+  const value = {
+    ...state,
+    categories: state.categories || []
+  };
 
   return (
-    <CategoryContext.Provider value={state}>
-      {children}
+    <CategoryContext.Provider value={value}>
+      {state.isLoading ? (
+        <div>Loading categories...</div>
+      ) : state.error ? (
+        <div>Error loading categories: {state.error}</div>
+      ) : (
+        children
+      )}
     </CategoryContext.Provider>
   );
 }
 
 function LeadPostFormContent() {
-  const { categories } = useContext(CategoryContext);
+  const context = useContext(CategoryContext);
+  
+  if (!context) {
+    console.error('LeadPostFormContent must be used within a CategoryProvider');
+    return <div>Error: Category context not available</div>;
+  }
+
+  const { categories = [] } = context;
   const [selectedCategory, setSelectedCategory] = useState('');
   const [formData, setFormData] = useState({
     title: '',
@@ -81,6 +91,14 @@ function LeadPostFormContent() {
     const category = safeCategories.find(cat => cat?.name === selectedCategory);
     return Array.isArray(category?.subcategories) ? category.subcategories : [];
   };
+
+  if (context.isLoading) {
+    return <div>Loading categories...</div>;
+  }
+
+  if (context.error) {
+    return <div>Error loading categories: {context.error}</div>;
+  }
 
   return (
     <div className="lead-post-form">
@@ -101,10 +119,10 @@ function LeadPostFormContent() {
             <option value="">Select Category</option>
             {safeCategories.map(category => (
               <option 
-                key={category._id || category.name} 
-                value={category.name}
+                key={category?._id || category?.name || 'default'} 
+                value={category?.name || ''}
               >
-                {category.name}
+                {category?.name || 'Unnamed Category'}
               </option>
             ))}
           </select>
@@ -124,10 +142,10 @@ function LeadPostFormContent() {
             <option value="">Select Subcategory</option>
             {getSubcategories().map(sub => (
               <option 
-                key={sub._id || sub.name} 
-                value={sub.name}
+                key={sub?._id || sub?.name || 'default'} 
+                value={sub?.name || ''}
               >
-                {sub.name}
+                {sub?.name || 'Unnamed Subcategory'}
               </option>
             ))}
           </select>
