@@ -98,10 +98,19 @@ function LeadPostForm() {
     // ... other form fields
   });
 
-  // Fetch categories directly in the component
+  // Add getSubcategories function
+  const getSubcategories = useCallback(() => {
+    if (!categories || !formData.category) return [];
+    
+    const selectedCategory = categories.find(cat => cat.name === formData.category);
+    return selectedCategory?.subcategories || [];
+  }, [categories, formData.category]);
+
+  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
+        setLoading(true);
         const response = await fetch('/api/categories');
         if (!response.ok) throw new Error('Failed to fetch categories');
         const data = await response.json();
@@ -115,12 +124,6 @@ function LeadPostForm() {
 
     fetchCategories();
   }, []);
-
-  // Get subcategories for selected category
-  const getSubcategories = useCallback(() => {
-    const selectedCategory = categories.find(cat => cat._id === formData.category);
-    return selectedCategory?.subcategories || [];
-  }, [categories, formData.category]);
 
   // Handle form changes
   const handleChange = (e) => {
