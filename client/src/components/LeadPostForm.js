@@ -88,9 +88,9 @@ const Select = styled.select`
 
 function LeadPostForm() {
   const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -106,7 +106,8 @@ function LeadPostForm() {
         setIsLoading(true);
         const response = await fetch('/api/categories');
         const data = await response.json();
-        setCategories(data || []);
+        console.log('Fetched categories:', data);
+        setCategories(Array.isArray(data) ? data : []);
       } catch (err) {
         setError(err.message);
         console.error('Error fetching categories:', err);
@@ -118,15 +119,24 @@ function LeadPostForm() {
     fetchCategories();
   }, []);
 
+  const selectedCategoryData = categories.find(cat => cat.name === selectedCategory);
+  const subcategories = selectedCategoryData?.subcategories || [];
+
   if (isLoading) return <div>Loading categories...</div>;
   if (error) return <div>Error loading categories: {error}</div>;
-  if (!Array.isArray(categories)) return <div>Invalid categories data</div>;
 
   return (
     <form onSubmit={handleSubmit}>
       <select
         value={selectedCategory}
-        onChange={(e) => setSelectedCategory(e.target.value)}
+        onChange={(e) => {
+          setSelectedCategory(e.target.value);
+          setFormData(prev => ({
+            ...prev,
+            category: e.target.value,
+            subcategory: '' // Reset subcategory when category changes
+          }));
+        }}
       >
         <option value="">Select Category</option>
         {categories.map(category => (
@@ -145,15 +155,14 @@ function LeadPostForm() {
         disabled={!selectedCategory}
       >
         <option value="">Select Subcategory</option>
-        {selectedCategory && categories
-          .find(cat => cat.name === selectedCategory)?.subcategories?.map(sub => (
-            <option key={sub._id} value={sub.name}>
-              {sub.name}
-            </option>
-          ))}
+        {subcategories.map(sub => (
+          <option key={sub._id} value={sub.name}>
+            {sub.name}
+          </option>
+        ))}
       </select>
 
-      {/* Rest of your form fields */}
+      {/* Rest of your form */}
     </form>
   );
 }
