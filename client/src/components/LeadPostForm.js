@@ -1,39 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 
-class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false };
-  }
+const CategoryContext = createContext({
+  categories: [],
+  isLoading: true,
+  error: null
+});
 
-  static getDerivedStateFromError(error) {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    console.log('Error caught by boundary:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <div>Something went wrong. Please try again later.</div>;
-    }
-    return this.props.children;
-  }
-}
-
-function LeadPostFormContent() {
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    price: '',
-    location: '',
-    category: '',
-    subcategory: ''
+function CategoryProvider({ children }) {
+  const [state, setState] = useState({
+    categories: [],
+    isLoading: true,
+    error: null
   });
 
   useEffect(() => {
@@ -46,20 +23,20 @@ function LeadPostFormContent() {
         const data = await response.json();
         
         if (isMounted) {
-          if (!Array.isArray(data)) {
-            console.error('Invalid categories data:', data);
-            setCategories([]);
-          } else {
-            setCategories(data);
-          }
-          setIsLoading(false);
+          setState(prev => ({
+            ...prev,
+            categories: Array.isArray(data) ? data : [],
+            isLoading: false
+          }));
         }
       } catch (err) {
         console.error('Error fetching categories:', err);
         if (isMounted) {
-          setError(err.message);
-          setCategories([]);
-          setIsLoading(false);
+          setState(prev => ({
+            ...prev,
+            error: err.message,
+            isLoading: false
+          }));
         }
       }
     };
@@ -68,51 +45,61 @@ function LeadPostFormContent() {
     return () => { isMounted = false; };
   }, []);
 
+  return (
+    <CategoryContext.Provider value={state}>
+      {children}
+    </CategoryContext.Provider>
+  );
+}
+
+function LeadPostFormContent() {
+  const { categories, isLoading, error } = useContext(CategoryContext);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    price: '',
+    location: '',
+    category: '',
+    subcategory: ''
+  });
+
   const getSubcategories = () => {
     try {
-      if (!selectedCategory || !Array.isArray(categories)) return [];
+      if (!selectedCategory) return [];
       const category = categories.find(cat => cat?.name === selectedCategory);
       return Array.isArray(category?.subcategories) ? category.subcategories : [];
-    } catch (err) {
-      console.error('Error getting subcategories:', err);
+    } catch {
       return [];
     }
   };
 
   if (isLoading) return <div>Loading categories...</div>;
   if (error) return <div>Error: {error}</div>;
-  if (!Array.isArray(categories)) return <div>No categories available</div>;
+  if (!categories.length) return <div>No categories available</div>;
 
   return (
     <div className="lead-post-form">
-      <form onSubmit={(e) => {
-        e.preventDefault();
-      }}>
+      <form onSubmit={(e) => e.preventDefault()}>
         <div className="form-group">
           <select
             value={selectedCategory}
             onChange={(e) => {
-              try {
-                const newCategory = e.target.value;
-                setSelectedCategory(newCategory);
-                setFormData(prev => ({
-                  ...prev,
-                  category: newCategory,
-                  subcategory: ''
-                }));
-              } catch (err) {
-                console.error('Error handling category change:', err);
-              }
+              const newCategory = e.target.value;
+              setSelectedCategory(newCategory);
+              setFormData(prev => ({
+                ...prev,
+                category: newCategory,
+                subcategory: ''
+              }));
             }}
           >
             <option value="">Select Category</option>
-            {categories.map(category => 
-              category?.name ? (
-                <option key={category._id || category.name} value={category.name}>
-                  {category.name}
-                </option>
-              ) : null
-            )}
+            {categories.map(category => (
+              <option key={category._id || category.name} value={category.name}>
+                {category.name}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -120,25 +107,19 @@ function LeadPostFormContent() {
           <select
             value={formData.subcategory}
             onChange={(e) => {
-              try {
-                setFormData(prev => ({
-                  ...prev,
-                  subcategory: e.target.value
-                }));
-              } catch (err) {
-                console.error('Error handling subcategory change:', err);
-              }
+              setFormData(prev => ({
+                ...prev,
+                subcategory: e.target.value
+              }));
             }}
             disabled={!selectedCategory}
           >
             <option value="">Select Subcategory</option>
-            {getSubcategories().map(sub => 
-              sub?.name ? (
-                <option key={sub._id || sub.name} value={sub.name}>
-                  {sub.name}
-                </option>
-              ) : null
-            )}
+            {getSubcategories().map(sub => (
+              <option key={sub._id || sub.name} value={sub.name}>
+                {sub.name}
+              </option>
+            ))}
           </select>
         </div>
       </form>
@@ -148,9 +129,9 @@ function LeadPostFormContent() {
 
 function LeadPostForm() {
   return (
-    <ErrorBoundary>
+    <CategoryProvider>
       <LeadPostFormContent />
-    </ErrorBoundary>
+    </CategoryProvider>
   );
 }
 
