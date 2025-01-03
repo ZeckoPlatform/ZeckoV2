@@ -96,59 +96,83 @@ const PostLead = () => {
         throw new Error('Please fill in all required fields');
       }
 
-      // Validate budget
-      const minBudget = parseFloat(formData.budget.min);
-      const maxBudget = parseFloat(formData.budget.max);
+      // Validate and parse budget numbers
+      const minBudget = Number(formData.budget.min);
+      const maxBudget = Number(formData.budget.max);
       
       if (isNaN(minBudget) || isNaN(maxBudget)) {
         throw new Error('Please enter valid budget numbers');
       }
-      
-      if (minBudget < 0 || maxBudget < 0) {
-        throw new Error('Budget values must be positive numbers');
-      }
-      
-      if (maxBudget < minBudget) {
-        throw new Error('Maximum budget must be greater than or equal to minimum budget');
-      }
 
-      // Prepare the lead data
+      // Prepare the lead data with proper types and structure
       const leadData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
-        category: formData.category,  // Now this will be a string ID like 'business-services'
+        category: formData.category,
         subcategory: formData.subcategory,
         budget: {
           min: minBudget,
           max: maxBudget,
           currency: formData.budget.currency
         },
+        // Fix location structure
         location: {
-          address: formData.location.address || '',
-          city: formData.location.city || '',
-          state: formData.location.state || '',
-          country: formData.location.country || '',
-          postalCode: formData.location.postalCode || ''
+          address: String(formData.location.address || ''),
+          city: String(formData.location.city || ''),
+          state: String(formData.location.state || ''),
+          country: String(formData.location.country || ''),
+          postalCode: String(formData.location.postalCode || '')
         },
-        requirements: formData.requirements
-          .filter(req => req.answer && req.answer.trim())
-          .map(req => ({
-            question: req.question,
-            answer: req.answer.trim()
-          }))
+        // Fix requirements structure
+        requirements: Array.isArray(formData.requirements) 
+          ? formData.requirements
+              .filter(req => req && req.question && req.answer)
+              .map(req => ({
+                question: String(req.question || ''),
+                answer: String(req.answer || '')
+              }))
+          : []
       };
 
+      // Debug log
       console.log('Submitting lead data:', JSON.stringify(leadData, null, 2));
+      
       const response = await api.post('/api/leads', leadData);
       console.log('Lead posted successfully:', response.data);
       navigate('/dashboard');
     } catch (err) {
       console.error('Error details:', err);
-      console.error('Error response:', err.response?.data);
+      if (err.response?.data) {
+        console.error('Server validation errors:', err.response.data);
+      }
       setError(err.response?.data?.message || err.message || 'Failed to post lead');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Update the budget change handlers
+  const handleBudgetChange = (field) => (e) => {
+    const value = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      budget: {
+        ...prev.budget,
+        [field]: value === '' ? '' : Number(value)
+      }
+    }));
+  };
+
+  // Update the location change handlers
+  const handleLocationChange = (field) => (e) => {
+    const value = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      location: {
+        ...prev.location,
+        [field]: String(value)
+      }
+    }));
   };
 
   return (
@@ -236,32 +260,28 @@ const PostLead = () => {
           <FormGroup>
             <Label htmlFor="budgetMin">Minimum Budget*</Label>
             <Input
+              type="number"
               id="budgetMin"
               name="budgetMin"
-              type="number"
               value={formData.budget.min}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                budget: { ...prev.budget, min: Number(e.target.value) }
-              }))}
+              onChange={handleBudgetChange('min')}
               required
               min="0"
+              step="0.01"
               placeholder="Min budget"
             />
           </FormGroup>
           <FormGroup>
             <Label htmlFor="budgetMax">Maximum Budget*</Label>
             <Input
+              type="number"
               id="budgetMax"
               name="budgetMax"
-              type="number"
               value={formData.budget.max}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                budget: { ...prev.budget, max: Number(e.target.value) }
-              }))}
+              onChange={handleBudgetChange('max')}
               required
               min="0"
+              step="0.01"
               placeholder="Max budget"
             />
           </FormGroup>
@@ -271,12 +291,11 @@ const PostLead = () => {
           <Label>Location</Label>
           <Input
             type="text"
-            placeholder="Address"
+            id="address"
+            name="address"
             value={formData.location.address}
-            onChange={(e) => setFormData(prev => ({
-              ...prev,
-              location: { ...prev.location, address: e.target.value }
-            }))}
+            onChange={handleLocationChange('address')}
+            placeholder="Address"
           />
         </FormGroup>
 
@@ -286,10 +305,7 @@ const PostLead = () => {
               type="text"
               placeholder="City"
               value={formData.location.city}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                location: { ...prev.location, city: e.target.value }
-              }))}
+              onChange={handleLocationChange('city')}
             />
           </FormGroup>
           <FormGroup>
@@ -297,10 +313,7 @@ const PostLead = () => {
               type="text"
               placeholder="State"
               value={formData.location.state}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                location: { ...prev.location, state: e.target.value }
-              }))}
+              onChange={handleLocationChange('state')}
             />
           </FormGroup>
         </TwoColumnGroup>
@@ -311,10 +324,7 @@ const PostLead = () => {
               type="text"
               placeholder="Country"
               value={formData.location.country}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                location: { ...prev.location, country: e.target.value }
-              }))}
+              onChange={handleLocationChange('country')}
             />
           </FormGroup>
           <FormGroup>
@@ -322,10 +332,7 @@ const PostLead = () => {
               type="text"
               placeholder="Postal Code"
               value={formData.location.postalCode}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                location: { ...prev.location, postalCode: e.target.value }
-              }))}
+              onChange={handleLocationChange('postalCode')}
             />
           </FormGroup>
         </TwoColumnGroup>
