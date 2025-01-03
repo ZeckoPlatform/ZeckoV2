@@ -110,13 +110,16 @@ const PostLead = () => {
           currency: 'USD'
         },
         location: {
-          address: formData.location.address,
-          city: formData.location.city,
-          state: formData.location.state,
-          country: formData.location.country,
-          postalCode: formData.location.postalCode
+          address: String(formData.location.address || ''),
+          city: String(formData.location.city || ''),
+          state: String(formData.location.state || ''),
+          country: String(formData.location.country || ''),
+          postalCode: String(formData.location.postalCode || '')
         },
-        requirements: []
+        requirements: [],
+        attachments: [],
+        status: 'active',
+        visibility: 'public'
       };
 
       // Debug logs
@@ -129,8 +132,12 @@ const PostLead = () => {
       console.error('Error details:', err);
       if (err.response?.data) {
         console.error('Server validation errors:', err.response.data);
+        // More detailed error message
+        const errorMessage = err.response.data.error || err.response.data.message;
+        setError(`Submission failed: ${errorMessage}`);
+      } else {
+        setError(err.message || 'Failed to post lead');
       }
-      setError(err.response?.data?.message || err.message || 'Failed to post lead');
     } finally {
       setIsSubmitting(false);
     }
@@ -139,24 +146,33 @@ const PostLead = () => {
   // Update budget change handler
   const handleBudgetChange = (field) => (e) => {
     const value = e.target.value;
-    const numValue = value === '' ? '' : parseFloat(value);
     setFormData(prev => ({
       ...prev,
       budget: {
         ...prev.budget,
-        [field]: numValue
+        [field]: value // Keep as string in state, parse on submit
       }
     }));
   };
 
   // Update location change handler
   const handleLocationChange = (field) => (e) => {
+    const value = e.target.value || ''; // Ensure string
     setFormData(prev => ({
       ...prev,
       location: {
         ...prev.location,
-        [field]: e.target.value
+        [field]: value
       }
+    }));
+  };
+
+  // Add subcategory change handler
+  const handleSubcategoryChange = (e) => {
+    const value = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      subcategory: value
     }));
   };
 
@@ -220,12 +236,7 @@ const PostLead = () => {
               id="subcategory"
               name="subcategory"
               value={formData.subcategory}
-              onChange={(e) => {
-                setFormData(prev => ({
-                  ...prev,
-                  subcategory: e.target.value
-                }));
-              }}
+              onChange={handleSubcategoryChange}
               required
             >
               <option value="">Select a subcategory</option>
