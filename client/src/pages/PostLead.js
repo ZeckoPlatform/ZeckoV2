@@ -91,22 +91,39 @@ const PostLead = () => {
     setError('');
 
     try {
-      if (!formData.category) {
-        throw new Error('Please select a category');
+      // Validate required fields
+      if (!formData.title || !formData.description || !formData.category || !formData.subcategory) {
+        throw new Error('Please fill in all required fields');
       }
 
       const leadData = {
-        ...formData,
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        subcategory: formData.subcategory,
+        budget: {
+          min: formData.budget.min || 0,
+          max: formData.budget.max || 0,
+          currency: formData.budget.currency || 'USD'
+        },
+        location: {
+          address: formData.location.address || '',
+          city: formData.location.city || '',
+          state: formData.location.state || '',
+          country: formData.location.country || '',
+          postalCode: formData.location.postalCode || ''
+        },
         client: user._id,
-        requirements: formData.requirements.filter(req => req.answer),
+        requirements: formData.requirements.filter(req => req.answer)
       };
 
       console.log('Submitting lead data:', leadData);
-      await api.post('/api/leads', leadData);
+      const response = await api.post('/api/leads', leadData);
+      console.log('Lead posted successfully:', response.data);
       navigate('/dashboard');
     } catch (err) {
       console.error('Error details:', err);
-      setError(err.response?.data?.message || 'Failed to post lead');
+      setError(err.response?.data?.message || err.message || 'Failed to post lead');
     } finally {
       setIsSubmitting(false);
     }
@@ -283,7 +300,10 @@ const PostLead = () => {
           </FormGroup>
         </TwoColumnGroup>
 
-        <SubmitButton type="submit" disabled={isSubmitting}>
+        <SubmitButton 
+          type="submit" 
+          disabled={isSubmitting || !formData.title || !formData.description || !formData.category || !formData.subcategory}
+        >
           {isSubmitting ? 'Posting...' : 'Post Lead'}
         </SubmitButton>
       </StyledForm>
@@ -376,22 +396,19 @@ const TextArea = styled.textarea`
 const SubmitButton = styled.button`
   width: 100%;
   padding: 1rem;
-  background-color: ${({ theme }) => theme.colors.primary.main};
+  background-color: ${({ theme, disabled }) => 
+    disabled ? theme.colors.primary.light : theme.colors.primary.main};
   color: white;
   border: none;
   border-radius: 4px;
   font-size: 1rem;
   font-weight: 500;
-  cursor: pointer;
+  cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.primary.dark};
-  }
-
-  &:disabled {
-    background-color: ${({ theme }) => theme.colors.primary.light};
-    cursor: not-allowed;
+    background-color: ${({ theme, disabled }) => 
+      disabled ? theme.colors.primary.light : theme.colors.primary.dark};
   }
 `;
 
