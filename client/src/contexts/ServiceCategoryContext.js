@@ -22,40 +22,59 @@ export const ServiceCategoryProvider = ({ children }) => {
       
       const response = await api.get('/api/categories');
       
-      if (!response?.data) {
-        throw new Error('No data received from API');
+      // If API fails or returns empty data, use local jobCategories
+      if (!response?.data || response.data.length === 0) {
+        const localCategories = Object.entries(jobCategories).map(([id, category]) => ({
+          _id: id.toLowerCase().replace(/\s+/g, '-'),
+          name: category.name,
+          description: category.description,
+          subcategories: category.subcategories || [],
+          icon: category.icon
+        }));
+        
+        setState(prev => ({
+          ...prev,
+          categories: localCategories,
+          loading: false
+        }));
+        return;
       }
 
-      // Ensure we have an array and process it safely
+      // Process API response if successful
       const processedCategories = Array.isArray(response.data) 
         ? response.data.map(category => ({
             _id: category?._id?.toString() || '',
             name: category?.name || '',
+            description: category?.description || '',
             subcategories: Array.isArray(category?.subcategories) 
-              ? [...category.subcategories] 
-              : []
+              ? category.subcategories 
+              : jobCategories[category?.name]?.subcategories || [],
+            icon: category?.icon || jobCategories[category?.name]?.icon
           }))
         : [];
 
-      // Filter out invalid entries
-      const validCategories = processedCategories.filter(cat => 
-        cat._id && 
-        cat.name && 
-        Array.isArray(cat.subcategories)
-      );
-
-      setState({
-        categories: validCategories,
-        loading: false,
-        error: null
-      });
-    } catch (err) {
-      console.error('Error fetching categories:', err);
       setState(prev => ({
         ...prev,
+        categories: processedCategories,
+        loading: false
+      }));
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+      
+      // Fallback to local data on error
+      const localCategories = Object.entries(jobCategories).map(([id, category]) => ({
+        _id: id.toLowerCase().replace(/\s+/g, '-'),
+        name: category.name,
+        description: category.description,
+        subcategories: category.subcategories || [],
+        icon: category.icon
+      }));
+      
+      setState(prev => ({
+        ...prev,
+        categories: localCategories,
         loading: false,
-        error: err.message || 'Failed to fetch categories',
-        categories: [] // Reset categories on error
+        error: null // We're not showing error since we have fallback data
       }));
     }
   }, []);
