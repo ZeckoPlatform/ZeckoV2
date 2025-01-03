@@ -20,14 +20,14 @@ const PostLead = () => {
       max: '',
       currency: 'USD'
     },
-    requirements: [],
     location: {
       address: '',
       city: '',
       state: '',
       country: '',
       postalCode: ''
-    }
+    },
+    requirements: []
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -97,32 +97,45 @@ const PostLead = () => {
       }
 
       // Validate budget
-      if (Number(formData.budget.min) < 0 || Number(formData.budget.max) < 0) {
+      const minBudget = parseFloat(formData.budget.min);
+      const maxBudget = parseFloat(formData.budget.max);
+      
+      if (isNaN(minBudget) || isNaN(maxBudget)) {
+        throw new Error('Please enter valid budget numbers');
+      }
+      
+      if (minBudget < 0 || maxBudget < 0) {
         throw new Error('Budget values must be positive numbers');
       }
-      if (Number(formData.budget.max) < Number(formData.budget.min)) {
+      
+      if (maxBudget < minBudget) {
         throw new Error('Maximum budget must be greater than or equal to minimum budget');
       }
 
+      // Prepare the lead data
       const leadData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
-        category: formData.category,
+        category: formData.category,  // Now this will be a string ID like 'business-services'
         subcategory: formData.subcategory,
         budget: {
-          min: Number(formData.budget.min) || 0,
-          max: Number(formData.budget.max) || 0,
+          min: minBudget,
+          max: maxBudget,
           currency: formData.budget.currency
         },
         location: {
-          address: formData.location.address?.trim(),
-          city: formData.location.city?.trim(),
-          state: formData.location.state?.trim(),
-          country: formData.location.country?.trim(),
-          postalCode: formData.location.postalCode?.trim()
+          address: formData.location.address || '',
+          city: formData.location.city || '',
+          state: formData.location.state || '',
+          country: formData.location.country || '',
+          postalCode: formData.location.postalCode || ''
         },
-        client: user._id,
-        requirements: formData.requirements.filter(req => req.answer?.trim())
+        requirements: formData.requirements
+          .filter(req => req.answer && req.answer.trim())
+          .map(req => ({
+            question: req.question,
+            answer: req.answer.trim()
+          }))
       };
 
       console.log('Submitting lead data:', JSON.stringify(leadData, null, 2));

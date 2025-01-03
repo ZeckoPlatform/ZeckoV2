@@ -21,30 +21,21 @@ export const ServiceCategoryProvider = ({ children }) => {
       setState(prev => ({ ...prev, loading: true, error: null }));
       
       const response = await api.get('/api/categories');
+      console.log('API Response categories:', response?.data); // Debug log
       
       // If API fails or returns empty data, use local jobCategories
       if (!response?.data || response.data.length === 0) {
-        // Debug log to check local data
-        console.log('Using local jobCategories:', jobCategories);
-        
+        console.warn('No categories from API, using local data');
         const localCategories = Object.entries(jobCategories).map(([id, category]) => {
-          // Debug log for each category's subcategories
-          console.log(`${id} subcategories:`, category.subcategories?.length || 0);
-          
+          console.log(`Processing local category: ${category.name}`); // Debug log
           return {
-            _id: id.toLowerCase().replace(/\s+/g, '-'),
+            _id: id.toLowerCase().replace(/[&\s]+/g, '-'), // Format ID to match MongoDB
             name: category.name,
             description: category.description,
             subcategories: category.subcategories || [],
             icon: category.icon
           };
         });
-        
-        // Debug log final processed categories
-        console.log('Processed local categories:', localCategories.map(c => ({
-          name: c.name,
-          subCount: c.subcategories.length
-        })));
         
         setState(prev => ({
           ...prev,
@@ -55,26 +46,16 @@ export const ServiceCategoryProvider = ({ children }) => {
       }
 
       // Process API response if successful
-      const processedCategories = Array.isArray(response.data) 
-        ? response.data.map(category => {
-            const localCategory = jobCategories[category?.name];
-            // Debug log for API category processing
-            console.log(`Processing API category ${category?.name}:`, {
-              apiSubs: category?.subcategories?.length || 0,
-              localSubs: localCategory?.subcategories?.length || 0
-            });
-            
-            return {
-              _id: category?._id?.toString() || '',
-              name: category?.name || '',
-              description: category?.description || '',
-              subcategories: Array.isArray(category?.subcategories) 
-                ? category.subcategories 
-                : localCategory?.subcategories || [],
-              icon: category?.icon || localCategory?.icon
-            };
-          })
-        : [];
+      const processedCategories = response.data.map(category => {
+        console.log(`Processing API category: ${category.name}, ID: ${category._id}`); // Debug log
+        return {
+          _id: category._id,
+          name: category.name,
+          description: category.description,
+          subcategories: category.subcategories || [],
+          icon: category.icon
+        };
+      });
 
       setState(prev => ({
         ...prev,
@@ -83,21 +64,10 @@ export const ServiceCategoryProvider = ({ children }) => {
       }));
     } catch (err) {
       console.error('Error fetching categories:', err);
-      
-      // Fallback to local data on error with same debug logs
-      const localCategories = Object.entries(jobCategories).map(([id, category]) => ({
-        _id: id.toLowerCase().replace(/\s+/g, '-'),
-        name: category.name,
-        description: category.description,
-        subcategories: category.subcategories || [],
-        icon: category.icon
-      }));
-      
       setState(prev => ({
         ...prev,
-        categories: localCategories,
         loading: false,
-        error: null
+        error: err.message
       }));
     }
   }, []);
