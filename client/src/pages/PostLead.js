@@ -56,22 +56,16 @@ const PostLead = () => {
   // Update selected category and reset form fields when category changes
   const handleCategoryChange = (e) => {
     const categoryId = e.target.value;
-    console.log('Category ID selected:', categoryId); // Debug log
+    console.log('Selected category ID:', categoryId);
     const selectedCat = categories.find(cat => cat._id === categoryId);
-    console.log('Selected category object:', selectedCat); // Debug log
+    console.log('Found category:', selectedCat);
     setSelectedCategory(selectedCat);
-    
-    // Log the subcategories immediately
-    console.log('Subcategories of selected category:', selectedCat?.subcategories);
     
     setFormData(prev => ({
       ...prev,
       category: categoryId,
       subcategory: '',
-      requirements: selectedCat?.questions?.map(q => ({ 
-        question: q.text,
-        answer: '' 
-      })) || []
+      requirements: []
     }));
   };
 
@@ -96,7 +90,7 @@ const PostLead = () => {
         throw new Error('Please fill in all required fields');
       }
 
-      // Validate and parse budget numbers
+      // Validate budget
       const minBudget = Number(formData.budget.min);
       const maxBudget = Number(formData.budget.max);
       
@@ -104,18 +98,24 @@ const PostLead = () => {
         throw new Error('Please enter valid budget numbers');
       }
 
-      // Prepare the lead data with proper types and structure
+      // Find the selected category to get its MongoDB _id
+      const selectedCategory = categories.find(cat => cat._id === formData.category);
+      if (!selectedCategory) {
+        throw new Error('Invalid category selected');
+      }
+
+      // Prepare the lead data
       const leadData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
-        category: formData.category,
+        categoryId: formData.category, // Send the string ID
+        category: formData.category,   // Keep this for backward compatibility
         subcategory: formData.subcategory,
         budget: {
           min: minBudget,
           max: maxBudget,
           currency: formData.budget.currency
         },
-        // Fix location structure
         location: {
           address: String(formData.location.address || ''),
           city: String(formData.location.city || ''),
@@ -123,18 +123,12 @@ const PostLead = () => {
           country: String(formData.location.country || ''),
           postalCode: String(formData.location.postalCode || '')
         },
-        // Fix requirements structure
-        requirements: Array.isArray(formData.requirements) 
-          ? formData.requirements
-              .filter(req => req && req.question && req.answer)
-              .map(req => ({
-                question: String(req.question || ''),
-                answer: String(req.answer || '')
-              }))
-          : []
+        requirements: []
       };
 
-      // Debug log
+      // Debug logs
+      console.log('Category from form:', formData.category);
+      console.log('Selected category:', selectedCategory);
       console.log('Submitting lead data:', JSON.stringify(leadData, null, 2));
       
       const response = await api.post('/api/leads', leadData);
@@ -219,10 +213,10 @@ const PostLead = () => {
             <option value="">Select a category</option>
             {categories.map(cat => (
               <option 
-                key={cat?._id || 'default'} 
-                value={cat?._id || ''}
+                key={cat._id} 
+                value={cat._id}
               >
-                {cat?.name || 'Unnamed Category'}
+                {cat.name}
               </option>
             ))}
           </Select>
