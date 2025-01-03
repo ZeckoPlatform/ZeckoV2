@@ -96,33 +96,42 @@ const PostLead = () => {
         throw new Error('Please fill in all required fields');
       }
 
+      // Validate budget
+      if (Number(formData.budget.min) < 0 || Number(formData.budget.max) < 0) {
+        throw new Error('Budget values must be positive numbers');
+      }
+      if (Number(formData.budget.max) < Number(formData.budget.min)) {
+        throw new Error('Maximum budget must be greater than or equal to minimum budget');
+      }
+
       const leadData = {
-        title: formData.title,
-        description: formData.description,
+        title: formData.title.trim(),
+        description: formData.description.trim(),
         category: formData.category,
         subcategory: formData.subcategory,
         budget: {
-          min: formData.budget.min || 0,
-          max: formData.budget.max || 0,
-          currency: formData.budget.currency || 'USD'
+          min: Number(formData.budget.min) || 0,
+          max: Number(formData.budget.max) || 0,
+          currency: formData.budget.currency
         },
         location: {
-          address: formData.location.address || '',
-          city: formData.location.city || '',
-          state: formData.location.state || '',
-          country: formData.location.country || '',
-          postalCode: formData.location.postalCode || ''
+          address: formData.location.address?.trim(),
+          city: formData.location.city?.trim(),
+          state: formData.location.state?.trim(),
+          country: formData.location.country?.trim(),
+          postalCode: formData.location.postalCode?.trim()
         },
         client: user._id,
-        requirements: formData.requirements.filter(req => req.answer)
+        requirements: formData.requirements.filter(req => req.answer?.trim())
       };
 
-      console.log('Submitting lead data:', leadData);
+      console.log('Submitting lead data:', JSON.stringify(leadData, null, 2));
       const response = await api.post('/api/leads', leadData);
       console.log('Lead posted successfully:', response.data);
       navigate('/dashboard');
     } catch (err) {
       console.error('Error details:', err);
+      console.error('Error response:', err.response?.data);
       setError(err.response?.data?.message || err.message || 'Failed to post lead');
     } finally {
       setIsSubmitting(false);
@@ -136,8 +145,10 @@ const PostLead = () => {
         {error && <ErrorMessage>{error}</ErrorMessage>}
         
         <FormGroup>
-          <Label>Title*</Label>
+          <Label htmlFor="title">Title*</Label>
           <Input
+            id="title"
+            name="title"
             type="text"
             value={formData.title}
             onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
@@ -147,8 +158,10 @@ const PostLead = () => {
         </FormGroup>
 
         <FormGroup>
-          <Label>Description*</Label>
+          <Label htmlFor="description">Description*</Label>
           <TextArea
+            id="description"
+            name="description"
             value={formData.description}
             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
             required
@@ -158,34 +171,34 @@ const PostLead = () => {
         </FormGroup>
 
         <FormGroup>
-          <Label>Category*</Label>
+          <Label htmlFor="category">Category*</Label>
           <Select 
+            id="category"
+            name="category"
             value={formData.category} 
             onChange={handleCategoryChange}
             required
           >
             <option value="">Select a category</option>
-            {categories.map(cat => {
-              console.log('Rendering category:', cat); // Debug log
-              return (
-                <option 
-                  key={cat?._id || 'default'} 
-                  value={cat?._id || ''}
-                >
-                  {cat?.name || 'Unnamed Category'}
-                </option>
-              );
-            })}
+            {categories.map(cat => (
+              <option 
+                key={cat?._id || 'default'} 
+                value={cat?._id || ''}
+              >
+                {cat?.name || 'Unnamed Category'}
+              </option>
+            ))}
           </Select>
         </FormGroup>
 
         {selectedCategory && (
           <FormGroup>
-            <Label>Subcategory*</Label>
+            <Label htmlFor="subcategory">Subcategory*</Label>
             <Select
+              id="subcategory"
+              name="subcategory"
               value={formData.subcategory}
               onChange={(e) => {
-                console.log('Selected subcategory:', e.target.value);
                 setFormData(prev => ({
                   ...prev,
                   subcategory: e.target.value
@@ -208,8 +221,10 @@ const PostLead = () => {
 
         <TwoColumnGroup>
           <FormGroup>
-            <Label>Minimum Budget*</Label>
+            <Label htmlFor="budgetMin">Minimum Budget*</Label>
             <Input
+              id="budgetMin"
+              name="budgetMin"
               type="number"
               value={formData.budget.min}
               onChange={(e) => setFormData(prev => ({
@@ -222,8 +237,10 @@ const PostLead = () => {
             />
           </FormGroup>
           <FormGroup>
-            <Label>Maximum Budget*</Label>
+            <Label htmlFor="budgetMax">Maximum Budget*</Label>
             <Input
+              id="budgetMax"
+              name="budgetMax"
               type="number"
               value={formData.budget.max}
               onChange={(e) => setFormData(prev => ({
@@ -302,7 +319,15 @@ const PostLead = () => {
 
         <SubmitButton 
           type="submit" 
-          disabled={isSubmitting || !formData.title || !formData.description || !formData.category || !formData.subcategory}
+          disabled={
+            isSubmitting || 
+            !formData.title || 
+            !formData.description || 
+            !formData.category || 
+            !formData.subcategory ||
+            !formData.budget.min ||
+            !formData.budget.max
+          }
         >
           {isSubmitting ? 'Posting...' : 'Post Lead'}
         </SubmitButton>
@@ -397,8 +422,8 @@ const SubmitButton = styled.button`
   width: 100%;
   padding: 1rem;
   background-color: ${({ theme, disabled }) => 
-    disabled ? theme.colors.primary.light : theme.colors.primary.main};
-  color: white;
+    disabled ? '#e0e0e0' : '#4CAF50'};
+  color: ${({ disabled }) => disabled ? '#757575' : 'white'};
   border: none;
   border-radius: 4px;
   font-size: 1rem;
@@ -407,8 +432,13 @@ const SubmitButton = styled.button`
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: ${({ theme, disabled }) => 
-      disabled ? theme.colors.primary.light : theme.colors.primary.dark};
+    background-color: ${({ disabled }) => 
+      disabled ? '#e0e0e0' : '#45a049'};
+  }
+
+  &:active {
+    background-color: ${({ disabled }) => 
+      disabled ? '#e0e0e0' : '#3d8b40'};
   }
 `;
 
