@@ -91,44 +91,35 @@ const PostLead = () => {
       }
 
       // Validate budget
-      const minBudget = Number(formData.budget.min);
-      const maxBudget = Number(formData.budget.max);
+      const minBudget = parseFloat(formData.budget.min);
+      const maxBudget = parseFloat(formData.budget.max);
       
       if (isNaN(minBudget) || isNaN(maxBudget)) {
         throw new Error('Please enter valid budget numbers');
       }
 
-      // Find the selected category to get its MongoDB _id
-      const selectedCategory = categories.find(cat => cat._id === formData.category);
-      if (!selectedCategory) {
-        throw new Error('Invalid category selected');
-      }
-
-      // Prepare the lead data
+      // Prepare the lead data with proper types
       const leadData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
-        categoryId: formData.category, // Send the string ID
-        category: formData.category,   // Keep this for backward compatibility
+        category: formData.category,
         subcategory: formData.subcategory,
         budget: {
           min: minBudget,
           max: maxBudget,
-          currency: formData.budget.currency
+          currency: 'USD'
         },
         location: {
-          address: String(formData.location.address || ''),
-          city: String(formData.location.city || ''),
-          state: String(formData.location.state || ''),
-          country: String(formData.location.country || ''),
-          postalCode: String(formData.location.postalCode || '')
+          address: formData.location.address,
+          city: formData.location.city,
+          state: formData.location.state,
+          country: formData.location.country,
+          postalCode: formData.location.postalCode
         },
         requirements: []
       };
 
       // Debug logs
-      console.log('Category from form:', formData.category);
-      console.log('Selected category:', selectedCategory);
       console.log('Submitting lead data:', JSON.stringify(leadData, null, 2));
       
       const response = await api.post('/api/leads', leadData);
@@ -145,26 +136,26 @@ const PostLead = () => {
     }
   };
 
-  // Update the budget change handlers
+  // Update budget change handler
   const handleBudgetChange = (field) => (e) => {
     const value = e.target.value;
+    const numValue = value === '' ? '' : parseFloat(value);
     setFormData(prev => ({
       ...prev,
       budget: {
         ...prev.budget,
-        [field]: value === '' ? '' : Number(value)
+        [field]: numValue
       }
     }));
   };
 
-  // Update the location change handlers
+  // Update location change handler
   const handleLocationChange = (field) => (e) => {
-    const value = e.target.value;
     setFormData(prev => ({
       ...prev,
       location: {
         ...prev.location,
-        [field]: String(value)
+        [field]: e.target.value
       }
     }));
   };

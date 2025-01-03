@@ -3,25 +3,19 @@ const mongoose = require('mongoose');
 const leadSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
-  category: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'ServiceCategory', 
-    required: true 
-  },
-  subCategory: { type: String },
+  category: { type: String, required: true },
+  subcategory: { type: String, required: true },
   budget: {
     min: { type: Number, required: true },
     max: { type: Number, required: true },
     currency: { type: String, default: 'USD' }
   },
   location: {
-    type: { type: String, default: 'Point' },
-    coordinates: [Number],
-    address: String,
-    city: String,
-    state: String,
-    country: String,
-    postalCode: String
+    address: { type: String, default: '' },
+    city: { type: String, default: '' },
+    state: { type: String, default: '' },
+    country: { type: String, default: '' },
+    postalCode: { type: String, default: '' }
   },
   client: {
     type: mongoose.Schema.Types.ObjectId,
@@ -29,8 +23,8 @@ const leadSchema = new mongoose.Schema({
     required: true
   },
   requirements: [{
-    question: String,
-    answer: String
+    question: { type: String },
+    answer: { type: String }
   }],
   attachments: [{
     url: String,
