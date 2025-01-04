@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { HeroSection } from '../components/HeroSection';
 import SimpleCarousel from '../components/SimpleCarousel';
 import api from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const HomeContainer = styled.div`
   min-height: 100vh;
@@ -31,6 +32,7 @@ const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchFeaturedItems = async () => {
@@ -75,6 +77,10 @@ const Home = () => {
     fetchFeaturedItems();
   }, []);
 
+  const handleAccountTypeSelection = (type) => {
+    navigate('/register', { state: { accountType: type } });
+  };
+
   if (loading) {
     return (
       <HomeContainer>
@@ -87,7 +93,14 @@ const Home = () => {
 
   return (
     <HomeContainer>
-      <HeroSection />
+      <HeroSection>
+        <Button onClick={() => handleAccountTypeSelection('client')}>
+          Join as Client
+        </Button>
+        <Button onClick={() => handleAccountTypeSelection('vendor')}>
+          Join as Vendor
+        </Button>
+      </HeroSection>
       
       <MainContent>
         <Section>
