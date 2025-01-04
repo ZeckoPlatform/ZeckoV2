@@ -28,7 +28,11 @@ const PostLead = () => {
       country: '',
       postalCode: ''
     },
-    requirements: [{ answer: '' }]
+    requirements: [
+      {
+        answer: ''
+      }
+    ]
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,34 +90,20 @@ const PostLead = () => {
     setError('');
 
     try {
-      // Debug logs
-      console.log('Form Data before submission:', formData);
-      
       // Validate required fields
       if (!formData.title || !formData.description || !formData.category || !formData.subcategory) {
-        console.log('Missing required fields:', {
-          title: !formData.title,
-          description: !formData.description,
-          category: !formData.category,
-          subcategory: !formData.subcategory
-        });
         throw new Error('Please fill in all required fields');
       }
 
       // Parse and validate budget numbers
-      const minBudget = parseFloat(formData.budget.min) || 0;
-      const maxBudget = parseFloat(formData.budget.max) || 0;
-      
-      console.log('Budget values:', { minBudget, maxBudget });
+      const minBudget = Math.max(0, parseFloat(formData.budget.min) || 0);
+      const maxBudget = Math.max(0, parseFloat(formData.budget.max) || 0);
       
       if (isNaN(minBudget) || isNaN(maxBudget)) {
         throw new Error('Please enter valid budget numbers');
       }
 
-      // Format location string
-      const locationString = `${formData.location.address || ''}, ${formData.location.city || ''}, ${formData.location.state || ''}, ${formData.location.country || ''}, ${formData.location.postalCode || ''}`.trim();
-
-      // Prepare the lead data
+      // Create the lead data object
       const leadData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
@@ -125,23 +115,27 @@ const PostLead = () => {
           currency: formData.budget.currency || 'GBP'
         },
         location: {
-          address: locationString,
+          address: formData.location.address || '',
           city: formData.location.city || '',
           state: formData.location.state || '',
           country: formData.location.country || '',
           postalCode: formData.location.postalCode || ''
         },
-        requirements: [{ answer: '' }]  // Default empty requirement
+        requirements: [
+          {
+            answer: ''
+          }
+        ]
       };
 
-      console.log('Final lead data being sent:', leadData);
-      
+      // Debug log
+      console.log('Sending lead data:', JSON.stringify(leadData, null, 2));
+
       const response = await api.post('/api/leads', leadData);
-      console.log('Response from server:', response);
+      console.log('Server response:', response);
       navigate('/dashboard');
     } catch (err) {
       console.error('Error details:', err);
-      console.error('Server response:', err.response?.data);
       setError(err.response?.data?.error || err.message);
     } finally {
       setIsSubmitting(false);
@@ -151,15 +145,15 @@ const PostLead = () => {
   // Update budget change handler
   const handleBudgetChange = (field) => (e) => {
     const value = e.target.value.trim();
-    console.log(`Budget ${field} change:`, value);
     
-    // Only allow positive numbers
-    if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0)) {
+    // Only allow positive numbers or empty string
+    if (value === '' || (/^\d*\.?\d*$/.test(value))) {
+      const numValue = parseFloat(value) || 0;
       setFormData(prev => ({
         ...prev,
         budget: {
           ...prev.budget,
-          [field]: value
+          [field]: numValue.toString()
         }
       }));
     }
@@ -180,7 +174,7 @@ const PostLead = () => {
   // Add subcategory change handler
   const handleSubcategoryChange = (e) => {
     const value = e.target.value;
-    console.log('Subcategory selected:', value);
+    console.log('Setting subcategory:', value);
     setFormData(prev => ({
       ...prev,
       subcategory: value
