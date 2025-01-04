@@ -17,9 +17,9 @@ const PostLead = () => {
     category: '',
     subcategory: '',
     budget: {
-      min: '',
-      max: '',
-      currency: 'USD'
+      min: '0',
+      max: '0',
+      currency: 'GBP'
     },
     location: {
       address: '',
@@ -91,9 +91,9 @@ const PostLead = () => {
         throw new Error('Please fill in all required fields');
       }
 
-      // Validate budget
-      const minBudget = parseFloat(formData.budget.min);
-      const maxBudget = parseFloat(formData.budget.max);
+      // Parse and validate budget numbers
+      const minBudget = Number(formData.budget.min || 0);
+      const maxBudget = Number(formData.budget.max || 0);
       
       if (isNaN(minBudget) || isNaN(maxBudget)) {
         throw new Error('Please enter valid budget numbers');
@@ -112,30 +112,40 @@ const PostLead = () => {
         throw new Error('You must be logged in to post a lead');
       }
 
+      // Log current form data for debugging
+      console.log('Current form data:', formData);
+
       // Prepare the lead data with proper types
       const leadData = {
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        category: formData.category,
-        subcategory: formData.subcategory,
+        title: String(formData.title).trim(),
+        description: String(formData.description).trim(),
+        category: String(formData.category),
+        subcategory: String(formData.subcategory),
         client: user._id,
         budget: {
           min: minBudget,
           max: maxBudget,
-          currency: 'USD'
+          currency: 'GBP'
         },
+        // Fix location structure by sending strings directly
         location: {
-          address: String(formData.location.address || ''),
-          city: String(formData.location.city || ''),
-          state: String(formData.location.state || ''),
-          country: String(formData.location.country || ''),
-          postalCode: String(formData.location.postalCode || '')
+          address: formData.location.address || '',
+          city: formData.location.city || '',
+          state: formData.location.state || '',
+          country: formData.location.country || '',
+          postalCode: formData.location.postalCode || ''
         },
+        // Initialize empty arrays correctly
         requirements: [],
         attachments: [],
         status: 'active',
         visibility: 'public'
       };
+
+      // Validate the data before sending
+      if (!leadData.subcategory) {
+        throw new Error('Subcategory is required');
+      }
 
       // Debug logs
       console.log('User ID:', user._id);
@@ -162,7 +172,7 @@ const PostLead = () => {
   const handleBudgetChange = (field) => (e) => {
     const value = e.target.value;
     // Only allow positive numbers or empty string
-    if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0)) {
+    if (value === '' || (/^\d*\.?\d*$/.test(value) && !isNaN(parseFloat(value)))) {
       setFormData(prev => ({
         ...prev,
         budget: {
@@ -175,7 +185,7 @@ const PostLead = () => {
 
   // Update location change handler
   const handleLocationChange = (field) => (e) => {
-    const value = e.target.value || ''; // Ensure string
+    const value = e.target.value || '';
     setFormData(prev => ({
       ...prev,
       location: {
@@ -191,6 +201,17 @@ const PostLead = () => {
     setFormData(prev => ({
       ...prev,
       subcategory: value
+    }));
+  };
+
+  // Optional: Add a currency selector to your form
+  const handleCurrencyChange = (e) => {
+    setFormData(prev => ({
+      ...prev,
+      budget: {
+        ...prev.budget,
+        currency: e.target.value
+      }
     }));
   };
 
@@ -300,6 +321,20 @@ const PostLead = () => {
             />
           </FormGroup>
         </TwoColumnGroup>
+
+        <FormGroup>
+          <Label htmlFor="currency">Currency</Label>
+          <Select
+            id="currency"
+            name="currency"
+            value={formData.budget.currency}
+            onChange={handleCurrencyChange}
+          >
+            <option value="GBP">£ (GBP)</option>
+            <option value="USD">$ (USD)</option>
+            <option value="EUR">€ (EUR)</option>
+          </Select>
+        </FormGroup>
 
         <FormGroup>
           <Label>Location</Label>

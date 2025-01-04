@@ -109,6 +109,15 @@ const Profile = () => {
                                 <Grid item xs={12} sm={6}>
                                     <TextField
                                         fullWidth
+                                        label="Username"
+                                        name="username"
+                                        value={formData.username}
+                                        onChange={handleInputChange}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        fullWidth
                                         label="Email"
                                         name="email"
                                         value={formData.email}
@@ -119,9 +128,20 @@ const Profile = () => {
                                     <TextField
                                         fullWidth
                                         label="Phone"
-                                        name="profile.phone"
-                                        value={formData.profile?.phone || ''}
+                                        name="phone"
+                                        value={formData.phone || ''}
                                         onChange={handleInputChange}
+                                    />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        fullWidth
+                                        label="Bio"
+                                        name="bio"
+                                        value={formData.bio || ''}
+                                        onChange={handleInputChange}
+                                        multiline
+                                        rows={4}
                                     />
                                 </Grid>
                             </Grid>
