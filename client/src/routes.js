@@ -30,6 +30,18 @@ export const router = createBrowserRouter([
       {
         path: 'post-job',
         element: <PrivateRoute><PostJob /></PrivateRoute>
+      },
+      {
+        path: 'profile',
+        element: <PrivateRoute><Profile /></PrivateRoute>
+      },
+      {
+        path: 'orders',
+        element: <PrivateRoute><Orders /></PrivateRoute>
+      },
+      {
+        path: 'notifications',
+        element: <PrivateRoute><Notifications /></PrivateRoute>
       }
     ]
   }
