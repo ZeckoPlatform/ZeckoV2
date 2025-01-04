@@ -103,6 +103,15 @@ const PostLead = () => {
         throw new Error('Please enter valid budget numbers');
       }
 
+      // Format location as a single string
+      const fullAddress = [
+        formData.location.address,
+        formData.location.city,
+        formData.location.state,
+        formData.location.country,
+        formData.location.postalCode
+      ].filter(Boolean).join(', ');
+
       // Create the lead data object
       const leadData = {
         title: formData.title.trim(),
@@ -115,7 +124,7 @@ const PostLead = () => {
           currency: formData.budget.currency || 'GBP'
         },
         location: {
-          address: formData.location.address || '',
+          address: fullAddress, // Send as a single string
           city: formData.location.city || '',
           state: formData.location.state || '',
           country: formData.location.country || '',
@@ -123,14 +132,12 @@ const PostLead = () => {
         },
         requirements: [
           {
-            answer: ''
+            answer: String(formData.requirements[0]?.answer || '')  // Ensure it's a string
           }
         ]
       };
 
-      // Debug log
       console.log('Submitting data:', JSON.stringify(leadData, null, 2));
-
       const response = await api.post('/api/leads', leadData);
       console.log('Server response:', response);
       navigate('/dashboard');
@@ -143,13 +150,12 @@ const PostLead = () => {
     }
   };
 
-  // Update budget change handler
+  // Update budget change handler to ensure valid numbers
   const handleBudgetChange = (field) => (e) => {
     const value = e.target.value.trim();
     
-    // Only allow positive numbers or empty string
     if (value === '' || (/^\d*\.?\d*$/.test(value))) {
-      const numValue = parseFloat(value) || 0;
+      const numValue = Math.max(0, parseFloat(value) || 0);
       setFormData(prev => ({
         ...prev,
         budget: {
@@ -176,6 +182,11 @@ const PostLead = () => {
   const handleSubcategoryChange = (e) => {
     const value = e.target.value;
     console.log('Setting subcategory:', value);
+    if (!value) {
+      setError('Please select a subcategory');
+      return;
+    }
+    setError('');
     setFormData(prev => ({
       ...prev,
       subcategory: value
