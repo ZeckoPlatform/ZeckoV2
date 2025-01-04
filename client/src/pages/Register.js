@@ -7,7 +7,7 @@ const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const plan = searchParams.get('plan');
+  const type = searchParams.get('type');
   
   // Determine account type based on plan
   const getAccountType = (plan) => {
@@ -27,7 +27,7 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    accountType: getAccountType(plan),
+    accountType: type || 'client', // Default to client if no type specified
     businessName: '',
     businessType: '',
     vendorCategory: ''

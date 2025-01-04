@@ -161,16 +161,15 @@ export function HeroSection() {
             transition={{ delay: 0.2 }}
           >
             <TierHeader>
-              <TierTitle>Basic</TierTitle>
-              <TierPrice>$9.99<span>/month</span></TierPrice>
+              <TierTitle>Client</TierTitle>
+              <TierPrice>Free<span>/month</span></TierPrice>
             </TierHeader>
             <TierFeatures>
-              <li>5 Job Postings</li>
-              <li>Basic Analytics</li>
+              <li>Basic Features</li>
+              <li>Personal Use</li>
               <li>Email Support</li>
-              <li>Profile Customization</li>
             </TierFeatures>
-            <TierButton to="/register?plan=basic">Choose Basic</TierButton>
+            <TierButton to="/register?type=client">Register as Client</TierButton>
           </TierCard>
 
           <TierCard
@@ -181,17 +180,16 @@ export function HeroSection() {
           >
             <PopularBadge>Most Popular</PopularBadge>
             <TierHeader>
-              <TierTitle>Professional</TierTitle>
+              <TierTitle>Business</TierTitle>
               <TierPrice>$24.99<span>/month</span></TierPrice>
             </TierHeader>
             <TierFeatures>
-              <li>20 Job Postings</li>
-              <li>Advanced Analytics</li>
+              <li>All Client Features</li>
+              <li>Business Dashboard</li>
               <li>Priority Support</li>
-              <li>Featured Listings</li>
-              <li>API Access</li>
+              <li>Advanced Analytics</li>
             </TierFeatures>
-            <TierButton to="/register?plan=professional">Choose Pro</TierButton>
+            <TierButton to="/register?type=business">Register as Business</TierButton>
           </TierCard>
 
           <TierCard
@@ -200,18 +198,16 @@ export function HeroSection() {
             transition={{ delay: 0.6 }}
           >
             <TierHeader>
-              <TierTitle>Enterprise</TierTitle>
-              <TierPrice>$49.99<span>/month</span></TierPrice>
+              <TierTitle>Vendor</TierTitle>
+              <TierPrice>$19.99<span>/month</span></TierPrice>
             </TierHeader>
             <TierFeatures>
-              <li>Unlimited Job Postings</li>
-              <li>Custom Analytics</li>
-              <li>24/7 Premium Support</li>
-              <li>Featured Listings</li>
-              <li>API Access</li>
-              <li>Custom Integration</li>
+              <li>Store Management</li>
+              <li>Product Listings</li>
+              <li>Sales Analytics</li>
+              <li>Vendor Dashboard</li>
             </TierFeatures>
-            <TierButton to="/register?plan=enterprise">Go Enterprise</TierButton>
+            <TierButton to="/register?type=vendor">Register as Vendor</TierButton>
           </TierCard>
         </SubscriptionTiers>
       </HeroContent>
