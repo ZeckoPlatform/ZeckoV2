@@ -92,21 +92,15 @@ const PostLead = () => {
       }
 
       // Parse and validate budget numbers
-      const minBudget = parseFloat(formData.budget.min) || 0;
-      const maxBudget = parseFloat(formData.budget.max) || 0;
+      const minBudget = Number(formData.budget.min);
+      const maxBudget = Number(formData.budget.max);
       
       if (isNaN(minBudget) || isNaN(maxBudget)) {
         throw new Error('Please enter valid budget numbers');
       }
 
-      // Format location as strings
-      const locationString = {
-        address: String(formData.location.address || ''),
-        city: String(formData.location.city || ''),
-        state: String(formData.location.state || ''),
-        country: String(formData.location.country || ''),
-        postalCode: String(formData.location.postalCode || '')
-      };
+      // Format location as a single string
+      const locationAddress = `${formData.location.address}, ${formData.location.city}, ${formData.location.state}, ${formData.location.country}, ${formData.location.postalCode}`.trim();
 
       // Prepare the lead data
       const leadData = {
@@ -119,11 +113,18 @@ const PostLead = () => {
           max: maxBudget,
           currency: formData.budget.currency || 'GBP'
         },
-        location: locationString,
-        requirements: formData.requirements.map(req => ({
-          question: String(req.question || ''),
-          answer: String(req.answer || '')
-        }))
+        location: {
+          address: locationAddress,
+          city: formData.location.city,
+          state: formData.location.state,
+          country: formData.location.country,
+          postalCode: formData.location.postalCode
+        },
+        requirements: formData.requirements.length > 0 ? 
+          formData.requirements.map(req => ({
+            question: String(req.question || ''),
+            answer: String(req.answer || '')
+          })) : []
       };
 
       console.log('Submitting lead data:', leadData);
@@ -167,11 +168,7 @@ const PostLead = () => {
   // Add subcategory change handler
   const handleSubcategoryChange = (e) => {
     const value = e.target.value;
-    if (!value) {
-      setError('Please select a subcategory');
-    } else {
-      setError('');
-    }
+    console.log('Selected subcategory:', value); // Debug log
     setFormData(prev => ({
       ...prev,
       subcategory: value
