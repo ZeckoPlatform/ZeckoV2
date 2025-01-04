@@ -105,6 +105,16 @@ const Register = () => {
 };
 
 // Styled components
+const StyledForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
 const Container = styled.div`
   max-width: 400px;
   margin: 0 auto;
@@ -114,6 +124,7 @@ const Container = styled.div`
 const FormTitle = styled.h1`
   margin-bottom: 2rem;
   text-align: center;
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const FormGroup = styled.div`
@@ -123,45 +134,48 @@ const FormGroup = styled.div`
 `;
 
 const Label = styled.label`
+  color: ${({ theme }) => theme.colors.text.primary};
   font-weight: 500;
-  color: ${({ theme }) => theme?.colors?.text || '#333333'};
 `;
 
 const Input = styled.input`
   padding: 0.75rem;
-  border: 1px solid ${({ theme }) => theme?.palette?.divider || '#e0e0e0'};
+  border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: 4px;
   font-size: 1rem;
 
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme?.colors?.primary || '#4CAF50'};
+    border-color: ${({ theme }) => theme.colors.primary.main};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary.light};
   }
 `;
 
 const SubmitButton = styled.button`
-  padding: 0.75rem;
-  background: ${({ theme }) => theme?.colors?.primary || '#4CAF50'};
-  color: ${({ theme }) => theme?.palette?.primary?.contrastText || '#FFFFFF'};
+  width: 100%;
+  padding: 1rem;
+  background-color: ${({ theme, disabled }) => 
+    disabled ? theme.colors.disabled : theme.colors.primary.main};
+  color: white;
   border: none;
   border-radius: 4px;
   font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.2s;
+  font-weight: 500;
+  cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
+  transition: background-color 0.2s;
 
   &:hover {
-    background: ${({ theme }) => theme?.palette?.primary?.dark || '#388E3C'};
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
+    background-color: ${({ theme, disabled }) => 
+      disabled ? theme.colors.disabled : theme.colors.primary.dark};
   }
 `;
 
 const ErrorMessage = styled.div`
-  color: #ff0000;
-  font-size: 0.875rem;
+  color: ${({ theme }) => theme.colors.error.main};
+  background-color: ${({ theme }) => theme.colors.error.light};
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
 `;
 
 export default Register;

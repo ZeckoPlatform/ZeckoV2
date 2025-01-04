@@ -5,6 +5,22 @@ import SimpleCarousel from '../components/SimpleCarousel';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
+const Button = styled.button`
+  padding: 1rem 2rem;
+  margin: 0.5rem;
+  background-color: ${({ theme }) => theme.colors.primary.main};
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.primary.dark};
+  }
+`;
+
 const HomeContainer = styled.div`
   min-height: 100vh;
   background: ${({ theme }) => theme.colors.background};
