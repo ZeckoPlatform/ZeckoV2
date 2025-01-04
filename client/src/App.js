@@ -18,6 +18,8 @@ import Profile from './components/Dashboard/Profile';
 import UserProfile from './pages/UserProfile';
 import PostLead from './pages/PostLead';
 import DashboardProfile from './components/Dashboard/Profile';
+import RegisterVendor from './pages/RegisterVendor';
+import RegisterBusiness from './pages/RegisterBusiness';
 
 // PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -84,6 +86,8 @@ function AppContent() {
                                     </Layout>
                                 )
                             } />
+                            <Route path="/register/vendor" element={<RegisterVendor />} />
+                            <Route path="/register/business" element={<RegisterBusiness />} />
 
                             {/* Protected routes */}
                             <Route path="/dashboard" element={

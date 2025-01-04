@@ -119,8 +119,8 @@ const Profile = () => {
                                         label="Username"
                                         name="username"
                                         value={formData.username}
-                                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                                        sx={{ mb: 2 }}
+                                        onChange={handleInputChange}
+                                        helperText="Choose your display name"
                                     />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
@@ -130,6 +130,7 @@ const Profile = () => {
                                         name="email"
                                         value={formData.email}
                                         disabled
+                                        helperText="Email cannot be changed"
                                     />
                                 </Grid>
                                 <Grid item xs={12}>

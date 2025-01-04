@@ -92,8 +92,8 @@ const PostLead = () => {
       }
 
       // Parse and validate budget numbers
-      const minBudget = parseFloat(formData.budget.min);
-      const maxBudget = parseFloat(formData.budget.max);
+      const minBudget = Number(formData.budget.min) || 0;
+      const maxBudget = Number(formData.budget.max) || 0;
       
       if (isNaN(minBudget) || isNaN(maxBudget)) {
         throw new Error('Please enter valid budget numbers');
@@ -105,22 +105,22 @@ const PostLead = () => {
         description: formData.description.trim(),
         category: formData.category,
         subcategory: formData.subcategory,
-        client: user._id,
         budget: {
           min: minBudget,
           max: maxBudget,
           currency: formData.budget.currency || 'GBP'
         },
-        // Fix location structure by sending strings directly
-        location: formData.location.address || '',
-        city: formData.location.city || '',
-        state: formData.location.state || '',
-        country: formData.location.country || '',
-        postalCode: formData.location.postalCode || '',
+        location: {
+          address: formData.location.address,
+          city: formData.location.city,
+          state: formData.location.state,
+          country: formData.location.country,
+          postalCode: formData.location.postalCode
+        },
         requirements: formData.requirements.map(req => ({
-          question: req.question || '',
-          answer: req.answer || ''
-        }))
+          question: String(req.question || ''),
+          answer: String(req.answer || '')
+        })) || []
       };
 
       console.log('Submitting lead data:', leadData);

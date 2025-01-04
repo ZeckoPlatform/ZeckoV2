@@ -6,15 +6,31 @@ import { useAuth } from '../contexts/AuthContext';
 const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const accountType = location.state?.accountType || 'client';
-  const accountTitle = location.state?.accountTitle || 'Client';
+  const searchParams = new URLSearchParams(location.search);
+  const plan = searchParams.get('plan');
+  
+  // Determine account type based on plan
+  const getAccountType = (plan) => {
+    switch(plan) {
+      case 'professional':
+      case 'enterprise':
+        return 'business';
+      case 'vendor':
+        return 'vendor';
+      default:
+        return 'regular';
+    }
+  };
 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
-    role: accountType,
+    accountType: getAccountType(plan),
+    businessName: '',
+    businessType: '',
+    vendorCategory: ''
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,7 +57,11 @@ const Register = () => {
 
   return (
     <Container>
-      <FormTitle>Create {accountTitle} Account</FormTitle>
+      <FormTitle>
+        Create {formData.accountType === 'business' ? 'Business' : 
+               formData.accountType === 'vendor' ? 'Vendor' : 
+               'User'} Account
+      </FormTitle>
       {error && <ErrorMessage>{error}</ErrorMessage>}
       
       <StyledForm onSubmit={handleSubmit}>
@@ -93,10 +113,63 @@ const Register = () => {
           />
         </FormGroup>
 
-        <SubmitButton 
-          type="submit" 
-          disabled={isSubmitting}
-        >
+        {/* Show business fields for business accounts */}
+        {formData.accountType === 'business' && (
+          <>
+            <FormGroup>
+              <Label htmlFor="businessName">Business Name</Label>
+              <Input
+                type="text"
+                id="businessName"
+                name="businessName"
+                value={formData.businessName}
+                onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+                required
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label htmlFor="businessType">Business Type</Label>
+              <Input
+                type="text"
+                id="businessType"
+                name="businessType"
+                value={formData.businessType}
+                onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
+                required
+              />
+            </FormGroup>
+          </>
+        )}
+
+        {/* Show vendor fields for vendor accounts */}
+        {formData.accountType === 'vendor' && (
+          <>
+            <FormGroup>
+              <Label htmlFor="businessName">Store Name</Label>
+              <Input
+                type="text"
+                id="businessName"
+                name="businessName"
+                value={formData.businessName}
+                onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+                required
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label htmlFor="vendorCategory">Store Category</Label>
+              <Input
+                type="text"
+                id="vendorCategory"
+                name="vendorCategory"
+                value={formData.vendorCategory}
+                onChange={(e) => setFormData({ ...formData, vendorCategory: e.target.value })}
+                required
+              />
+            </FormGroup>
+          </>
+        )}
+
+        <SubmitButton type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Creating Account...' : 'Create Account'}
         </SubmitButton>
       </StyledForm>

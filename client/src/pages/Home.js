@@ -94,7 +94,14 @@ const Home = () => {
   }, []);
 
   const handleAccountTypeSelection = (type) => {
-    navigate('/register', { 
+    // Define the registration paths for different account types
+    const registrationPaths = {
+      client: '/register',
+      vendor: '/register/vendor',
+      business: '/register/business'
+    };
+
+    navigate(registrationPaths[type], { 
       state: { 
         accountType: type,
         accountTitle: getAccountTitle(type)

@@ -170,7 +170,7 @@ export function HeroSection() {
               <li>Email Support</li>
               <li>Profile Customization</li>
             </TierFeatures>
-            <TierButton to="/register?plan=basic">Get Started</TierButton>
+            <TierButton to="/register?plan=basic">Choose Basic</TierButton>
           </TierCard>
 
           <TierCard
