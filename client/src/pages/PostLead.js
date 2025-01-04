@@ -86,8 +86,17 @@ const PostLead = () => {
     setError('');
 
     try {
+      // Debug logs
+      console.log('Form Data before submission:', formData);
+      
       // Validate required fields
       if (!formData.title || !formData.description || !formData.category || !formData.subcategory) {
+        console.log('Missing required fields:', {
+          title: !formData.title,
+          description: !formData.description,
+          category: !formData.category,
+          subcategory: !formData.subcategory
+        });
         throw new Error('Please fill in all required fields');
       }
 
@@ -95,12 +104,20 @@ const PostLead = () => {
       const minBudget = Number(formData.budget.min);
       const maxBudget = Number(formData.budget.max);
       
+      console.log('Budget values:', { minBudget, maxBudget });
+      
       if (isNaN(minBudget) || isNaN(maxBudget)) {
         throw new Error('Please enter valid budget numbers');
       }
 
       // Format location as a single string
-      const locationAddress = `${formData.location.address}, ${formData.location.city}, ${formData.location.state}, ${formData.location.country}, ${formData.location.postalCode}`.trim();
+      const locationAddress = [
+        formData.location.address,
+        formData.location.city,
+        formData.location.state,
+        formData.location.country,
+        formData.location.postalCode
+      ].filter(Boolean).join(', ');
 
       // Prepare the lead data
       const leadData = {
@@ -115,23 +132,22 @@ const PostLead = () => {
         },
         location: {
           address: locationAddress,
-          city: formData.location.city,
-          state: formData.location.state,
-          country: formData.location.country,
-          postalCode: formData.location.postalCode
+          city: formData.location.city || '',
+          state: formData.location.state || '',
+          country: formData.location.country || '',
+          postalCode: formData.location.postalCode || ''
         },
-        requirements: formData.requirements.length > 0 ? 
-          formData.requirements.map(req => ({
-            question: String(req.question || ''),
-            answer: String(req.answer || '')
-          })) : []
+        requirements: []  // Simplified for now
       };
 
-      console.log('Submitting lead data:', leadData);
+      console.log('Final lead data being sent:', leadData);
+      
       const response = await api.post('/api/leads', leadData);
+      console.log('Response from server:', response);
       navigate('/dashboard');
     } catch (err) {
       console.error('Error details:', err);
+      console.error('Server response:', err.response?.data);
       setError(err.response?.data?.error || err.message);
     } finally {
       setIsSubmitting(false);
@@ -141,8 +157,10 @@ const PostLead = () => {
   // Update budget change handler
   const handleBudgetChange = (field) => (e) => {
     const value = e.target.value;
-    // Only allow positive numbers or empty string
-    if (value === '' || (/^\d*\.?\d*$/.test(value) && !isNaN(parseFloat(value)))) {
+    console.log(`Budget ${field} change:`, value);
+    
+    // Only allow positive numbers
+    if (value === '' || (/^\d*\.?\d*$/.test(value) && Number(value) >= 0)) {
       setFormData(prev => ({
         ...prev,
         budget: {
@@ -168,7 +186,7 @@ const PostLead = () => {
   // Add subcategory change handler
   const handleSubcategoryChange = (e) => {
     const value = e.target.value;
-    console.log('Selected subcategory:', value); // Debug log
+    console.log('Subcategory selected:', value);
     setFormData(prev => ({
       ...prev,
       subcategory: value
