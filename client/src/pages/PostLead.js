@@ -129,13 +129,14 @@ const PostLead = () => {
       };
 
       // Debug log
-      console.log('Sending lead data:', JSON.stringify(leadData, null, 2));
+      console.log('Submitting data:', JSON.stringify(leadData, null, 2));
 
       const response = await api.post('/api/leads', leadData);
       console.log('Server response:', response);
       navigate('/dashboard');
     } catch (err) {
       console.error('Error details:', err);
+      console.error('Server validation error:', err.response?.data);
       setError(err.response?.data?.error || err.message);
     } finally {
       setIsSubmitting(false);
