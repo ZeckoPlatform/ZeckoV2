@@ -13,35 +13,51 @@ import Shop from './pages/Shop';
 import Services from './pages/Services';
 import PrivateRoute from './components/routing/PrivateRoute';
 
+// Define all routes here
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <App />,
     children: [
-      { index: true, element: <Home /> },
-      { path: 'login', element: <Login /> },
-      { path: 'register', element: <Register /> },
-      { path: 'shop', element: <Shop /> },
-      { path: 'services', element: <Services /> },
+      { 
+        index: true, 
+        element: <Home /> 
+      },
+      { 
+        path: 'login', 
+        element: <Login /> 
+      },
+      { 
+        path: 'register', 
+        element: <Register /> 
+      },
+      { 
+        path: 'shop', 
+        element: <Shop /> 
+      },
+      { 
+        path: 'services', 
+        element: <Services /> 
+      },
       { 
         path: 'dashboard', 
-        element: <PrivateRoute><Dashboard /></PrivateRoute>
+        element: <PrivateRoute><Dashboard /></PrivateRoute> 
       },
-      {
-        path: 'post-job',
-        element: <PrivateRoute><PostJob /></PrivateRoute>
+      { 
+        path: 'post-job', 
+        element: <PrivateRoute><PostJob /></PrivateRoute> 
       },
-      {
-        path: 'profile',
-        element: <PrivateRoute><Profile /></PrivateRoute>
+      { 
+        path: 'profile', 
+        element: <PrivateRoute><Profile /></PrivateRoute> 
       },
-      {
-        path: 'orders',
-        element: <PrivateRoute><Orders /></PrivateRoute>
+      { 
+        path: 'orders', 
+        element: <PrivateRoute><Orders /></PrivateRoute> 
       },
-      {
-        path: 'notifications',
-        element: <PrivateRoute><Notifications /></PrivateRoute>
+      { 
+        path: 'notifications', 
+        element: <PrivateRoute><Notifications /></PrivateRoute> 
       }
     ]
   }
