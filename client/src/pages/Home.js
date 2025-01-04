@@ -94,7 +94,25 @@ const Home = () => {
   }, []);
 
   const handleAccountTypeSelection = (type) => {
-    navigate('/register', { state: { accountType: type } });
+    navigate('/register', { 
+      state: { 
+        accountType: type,
+        accountTitle: getAccountTitle(type)
+      } 
+    });
+  };
+
+  const getAccountTitle = (type) => {
+    switch(type) {
+      case 'client':
+        return 'Individual Client';
+      case 'vendor':
+        return 'Service Provider';
+      case 'business':
+        return 'Business Client';
+      default:
+        return 'Client';
+    }
   };
 
   if (loading) {
@@ -110,12 +128,31 @@ const Home = () => {
   return (
     <HomeContainer>
       <HeroSection>
-        <Button onClick={() => handleAccountTypeSelection('client')}>
-          Join as Client
-        </Button>
-        <Button onClick={() => handleAccountTypeSelection('vendor')}>
-          Join as Vendor
-        </Button>
+        <HeroContent>
+          <h1>Choose Your Account Type</h1>
+          <ButtonGroup>
+            <AccountButton onClick={() => handleAccountTypeSelection('client')}>
+              <AccountTitle>Individual Client</AccountTitle>
+              <AccountDescription>
+                Looking for services for personal needs
+              </AccountDescription>
+            </AccountButton>
+
+            <AccountButton onClick={() => handleAccountTypeSelection('vendor')}>
+              <AccountTitle>Service Provider</AccountTitle>
+              <AccountDescription>
+                Offer your services to clients
+              </AccountDescription>
+            </AccountButton>
+
+            <AccountButton onClick={() => handleAccountTypeSelection('business')}>
+              <AccountTitle>Business Client</AccountTitle>
+              <AccountDescription>
+                Looking for services for your business
+              </AccountDescription>
+            </AccountButton>
+          </ButtonGroup>
+        </HeroContent>
       </HeroSection>
       
       <MainContent>
@@ -142,5 +179,55 @@ const Home = () => {
     </HomeContainer>
   );
 };
+
+const HeroContent = styled.div`
+  text-align: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+
+  h1 {
+    color: ${({ theme }) => theme.colors.text.primary};
+    margin-bottom: 2rem;
+    font-size: 2.5rem;
+  }
+`;
+
+const ButtonGroup = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+`;
+
+const AccountButton = styled.button`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  background-color: white;
+  border: 2px solid ${({ theme }) => theme.colors.primary.main};
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background-color: ${({ theme }) => theme.colors.primary.light};
+  }
+`;
+
+const AccountTitle = styled.h3`
+  color: ${({ theme }) => theme.colors.primary.main};
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+`;
+
+const AccountDescription = styled.p`
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: 1rem;
+  line-height: 1.5;
+`;
 
 export default Home;

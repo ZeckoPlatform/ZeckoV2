@@ -37,7 +37,11 @@ const Profile = () => {
     const { categories } = useService();
     const [tabValue, setTabValue] = useState(0);
     const [formData, setFormData] = useState({
-        ...user,
+        name: user?.name || '',
+        username: user?.username || '',
+        email: user?.email || '',
+        phone: user?.phone || '',
+        bio: user?.bio || '',
         businessProfile: user.businessProfile || {
             companyName: '',
             businessType: '',
@@ -75,7 +79,10 @@ const Profile = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await updateUser(formData);
+            await updateUser({
+                ...formData,
+                username: formData.username.trim()
+            });
             // Show success message
         } catch (error) {
             // Show error message
@@ -112,7 +119,8 @@ const Profile = () => {
                                         label="Username"
                                         name="username"
                                         value={formData.username}
-                                        onChange={handleInputChange}
+                                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                                        sx={{ mb: 2 }}
                                     />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>

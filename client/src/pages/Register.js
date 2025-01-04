@@ -6,15 +6,15 @@ import { useAuth } from '../contexts/AuthContext';
 const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  // Get the account type from URL parameters or state
   const accountType = location.state?.accountType || 'client';
+  const accountTitle = location.state?.accountTitle || 'Client';
 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
-    role: accountType, // Set the role from the URL parameter
+    role: accountType,
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,7 +41,7 @@ const Register = () => {
 
   return (
     <Container>
-      <FormTitle>Create {accountType === 'vendor' ? 'Vendor' : 'Client'} Account</FormTitle>
+      <FormTitle>Create {accountTitle} Account</FormTitle>
       {error && <ErrorMessage>{error}</ErrorMessage>}
       
       <StyledForm onSubmit={handleSubmit}>

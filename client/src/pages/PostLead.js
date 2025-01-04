@@ -92,77 +92,43 @@ const PostLead = () => {
       }
 
       // Parse and validate budget numbers
-      const minBudget = Number(formData.budget.min || 0);
-      const maxBudget = Number(formData.budget.max || 0);
+      const minBudget = parseFloat(formData.budget.min);
+      const maxBudget = parseFloat(formData.budget.max);
       
       if (isNaN(minBudget) || isNaN(maxBudget)) {
         throw new Error('Please enter valid budget numbers');
       }
 
-      if (minBudget < 0 || maxBudget < 0) {
-        throw new Error('Budget values must be positive');
-      }
-
-      if (minBudget > maxBudget) {
-        throw new Error('Minimum budget cannot be greater than maximum budget');
-      }
-
-      // Ensure user is logged in
-      if (!user?._id) {
-        throw new Error('You must be logged in to post a lead');
-      }
-
-      // Log current form data for debugging
-      console.log('Current form data:', formData);
-
-      // Prepare the lead data with proper types
+      // Prepare the lead data
       const leadData = {
-        title: String(formData.title).trim(),
-        description: String(formData.description).trim(),
-        category: String(formData.category),
-        subcategory: String(formData.subcategory),
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        category: formData.category,
+        subcategory: formData.subcategory,
         client: user._id,
         budget: {
           min: minBudget,
           max: maxBudget,
-          currency: 'GBP'
+          currency: formData.budget.currency || 'GBP'
         },
         // Fix location structure by sending strings directly
-        location: {
-          address: formData.location.address || '',
-          city: formData.location.city || '',
-          state: formData.location.state || '',
-          country: formData.location.country || '',
-          postalCode: formData.location.postalCode || ''
-        },
-        // Initialize empty arrays correctly
-        requirements: [],
-        attachments: [],
-        status: 'active',
-        visibility: 'public'
+        location: formData.location.address || '',
+        city: formData.location.city || '',
+        state: formData.location.state || '',
+        country: formData.location.country || '',
+        postalCode: formData.location.postalCode || '',
+        requirements: formData.requirements.map(req => ({
+          question: req.question || '',
+          answer: req.answer || ''
+        }))
       };
 
-      // Validate the data before sending
-      if (!leadData.subcategory) {
-        throw new Error('Subcategory is required');
-      }
-
-      // Debug logs
-      console.log('User ID:', user._id);
-      console.log('Submitting lead data:', JSON.stringify(leadData, null, 2));
-      
+      console.log('Submitting lead data:', leadData);
       const response = await api.post('/api/leads', leadData);
-      console.log('Lead posted successfully:', response.data);
       navigate('/dashboard');
     } catch (err) {
       console.error('Error details:', err);
-      if (err.response?.data) {
-        console.error('Server validation errors:', err.response.data);
-        const errorMessage = err.response.data.error || err.response.data.message;
-        setError(`Submission failed: ${errorMessage}`);
-      } else {
-        setError(err.message || 'Failed to post lead');
-      }
+      setError(err.response?.data?.error || err.message);
     } finally {
       setIsSubmitting(false);
     }
