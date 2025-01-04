@@ -8,6 +8,7 @@ import { useServiceCategories } from '../contexts/ServiceCategoryContext';
 const PostLead = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  console.log('Current user:', user);
   const { categories, loading, error: categoryError } = useServiceCategories();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [formData, setFormData] = useState({
@@ -98,12 +99,26 @@ const PostLead = () => {
         throw new Error('Please enter valid budget numbers');
       }
 
+      if (minBudget < 0 || maxBudget < 0) {
+        throw new Error('Budget values must be positive');
+      }
+
+      if (minBudget > maxBudget) {
+        throw new Error('Minimum budget cannot be greater than maximum budget');
+      }
+
+      // Ensure user is logged in
+      if (!user?._id) {
+        throw new Error('You must be logged in to post a lead');
+      }
+
       // Prepare the lead data with proper types
       const leadData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         category: formData.category,
         subcategory: formData.subcategory,
+        client: user._id,
         budget: {
           min: minBudget,
           max: maxBudget,
@@ -123,6 +138,7 @@ const PostLead = () => {
       };
 
       // Debug logs
+      console.log('User ID:', user._id);
       console.log('Submitting lead data:', JSON.stringify(leadData, null, 2));
       
       const response = await api.post('/api/leads', leadData);
@@ -132,7 +148,6 @@ const PostLead = () => {
       console.error('Error details:', err);
       if (err.response?.data) {
         console.error('Server validation errors:', err.response.data);
-        // More detailed error message
         const errorMessage = err.response.data.error || err.response.data.message;
         setError(`Submission failed: ${errorMessage}`);
       } else {
@@ -146,13 +161,16 @@ const PostLead = () => {
   // Update budget change handler
   const handleBudgetChange = (field) => (e) => {
     const value = e.target.value;
-    setFormData(prev => ({
-      ...prev,
-      budget: {
-        ...prev.budget,
-        [field]: value // Keep as string in state, parse on submit
-      }
-    }));
+    // Only allow positive numbers or empty string
+    if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0)) {
+      setFormData(prev => ({
+        ...prev,
+        budget: {
+          ...prev.budget,
+          [field]: value
+        }
+      }));
+    }
   };
 
   // Update location change handler
