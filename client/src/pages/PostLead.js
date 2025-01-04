@@ -28,7 +28,7 @@ const PostLead = () => {
       country: '',
       postalCode: ''
     },
-    requirements: []
+    requirements: [{ answer: '' }]
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,8 +101,8 @@ const PostLead = () => {
       }
 
       // Parse and validate budget numbers
-      const minBudget = Number(formData.budget.min);
-      const maxBudget = Number(formData.budget.max);
+      const minBudget = parseFloat(formData.budget.min) || 0;
+      const maxBudget = parseFloat(formData.budget.max) || 0;
       
       console.log('Budget values:', { minBudget, maxBudget });
       
@@ -110,14 +110,8 @@ const PostLead = () => {
         throw new Error('Please enter valid budget numbers');
       }
 
-      // Format location as a single string
-      const locationAddress = [
-        formData.location.address,
-        formData.location.city,
-        formData.location.state,
-        formData.location.country,
-        formData.location.postalCode
-      ].filter(Boolean).join(', ');
+      // Format location string
+      const locationString = `${formData.location.address || ''}, ${formData.location.city || ''}, ${formData.location.state || ''}, ${formData.location.country || ''}, ${formData.location.postalCode || ''}`.trim();
 
       // Prepare the lead data
       const leadData = {
@@ -131,13 +125,13 @@ const PostLead = () => {
           currency: formData.budget.currency || 'GBP'
         },
         location: {
-          address: locationAddress,
+          address: locationString,
           city: formData.location.city || '',
           state: formData.location.state || '',
           country: formData.location.country || '',
           postalCode: formData.location.postalCode || ''
         },
-        requirements: []  // Simplified for now
+        requirements: [{ answer: '' }]  // Default empty requirement
       };
 
       console.log('Final lead data being sent:', leadData);
@@ -156,11 +150,11 @@ const PostLead = () => {
 
   // Update budget change handler
   const handleBudgetChange = (field) => (e) => {
-    const value = e.target.value;
+    const value = e.target.value.trim();
     console.log(`Budget ${field} change:`, value);
     
     // Only allow positive numbers
-    if (value === '' || (/^\d*\.?\d*$/.test(value) && Number(value) >= 0)) {
+    if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0)) {
       setFormData(prev => ({
         ...prev,
         budget: {
