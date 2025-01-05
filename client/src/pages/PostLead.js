@@ -49,22 +49,29 @@ const PostLead = () => {
   // Update selected category and reset form fields when category changes
   const handleCategoryChange = (e) => {
     const categoryId = e.target.value;
-    console.log('Selected category:', categoryId);
+    console.log('Category selected:', categoryId);
+    
     const selectedCat = categories.find(cat => cat._id === categoryId);
+    console.log('Found category:', selectedCat);
+    
     setSelectedCategory(selectedCat);
-    setFormData(prev => ({
-      ...prev,
-      category: categoryId,
-      subcategory: ''
-    }));
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        category: categoryId,
+        subcategory: ''
+      };
+      console.log('Updated form data after category change:', updated);
+      return updated;
+    });
   };
 
   // Add this helper function to get subcategories
   const getSubcategories = () => {
-    console.log('Getting subcategories for:', selectedCategory); // Debug log
+    console.log('Getting subcategories for category:', selectedCategory);
     if (!selectedCategory) return [];
     const subs = selectedCategory.subcategories || [];
-    console.log('Found subcategories:', subs); // Debug log
+    console.log('Available subcategories:', subs);
     return subs;
   };
 
@@ -75,39 +82,52 @@ const PostLead = () => {
     setError('');
 
     try {
-      // Create the most basic lead object possible
+      // Debug logs
+      console.log('Form Data before submission:', formData);
+      console.log('Selected Category:', selectedCategory);
+      console.log('Selected Subcategory:', formData.subcategory);
+
+      // Validate required fields
+      if (!formData.title || !formData.description || !formData.category || !formData.subcategory) {
+        throw new Error(`Missing required fields: ${[
+          !formData.title && 'title',
+          !formData.description && 'description',
+          !formData.category && 'category',
+          !formData.subcategory && 'subcategory'
+        ].filter(Boolean).join(', ')}`);
+      }
+
+      // Create lead data with explicit type conversion
       const leadData = {
-        title: formData.title,
-        description: formData.description,
-        category: formData.category,
-        subcategory: formData.subcategory,
+        title: String(formData.title).trim(),
+        description: String(formData.description).trim(),
+        category: String(formData.category),
+        subcategory: String(formData.subcategory),
         budget: {
-          min: 100,
-          max: 1000,
+          min: Number(100),  // Explicit number conversion
+          max: Number(1000), // Explicit number conversion
           currency: 'GBP'
         },
-        // Simplified requirements
         requirements: [{
-          question: 'Test Question',
-          answer: 'Test Answer'
+          question: String('Test Question'),
+          answer: String('Test Answer')
         }]
       };
 
-      // Log the exact data being sent
-      console.log('Sending to server:', JSON.stringify(leadData, null, 2));
+      // Debug log the final payload
+      console.log('Final payload:', JSON.stringify(leadData, null, 2));
 
-      // Add auth token to request
-      const response = await api.post('/api/leads', leadData, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
+      const response = await api.post('/api/leads', leadData);
       console.log('Success:', response.data);
       navigate('/dashboard');
     } catch (err) {
-      console.error('Error response:', err.response?.data);
-      setError(err.response?.data?.error || err.message);
+      console.error('Detailed error:', {
+        error: err,
+        response: err.response?.data,
+        formData: formData,
+        selectedCategory: selectedCategory
+      });
+      setError(err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -116,11 +136,16 @@ const PostLead = () => {
   // Simplified subcategory change handler
   const handleSubcategoryChange = (e) => {
     const value = e.target.value;
-    console.log('Setting subcategory to:', value);
-    setFormData(prev => ({
-      ...prev,
-      subcategory: value
-    }));
+    console.log('Subcategory selected:', value);
+    
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        subcategory: value
+      };
+      console.log('Updated form data after subcategory change:', updated);
+      return updated;
+    });
   };
 
   return (
