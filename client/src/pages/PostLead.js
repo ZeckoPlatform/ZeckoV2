@@ -17,19 +17,10 @@ const PostLead = () => {
     category: '',
     subcategory: '',
     budget: {
-      min: 0,
-      max: 0,
+      min: 100,
+      max: 1000,
       currency: 'GBP'
-    },
-    location: {
-      address: ''
-    },
-    requirements: [
-      {
-        question: 'Default',
-        answer: 'Default'
-      }
-    ]
+    }
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,16 +49,13 @@ const PostLead = () => {
   // Update selected category and reset form fields when category changes
   const handleCategoryChange = (e) => {
     const categoryId = e.target.value;
-    console.log('Selected category ID:', categoryId);
+    console.log('Selected category:', categoryId);
     const selectedCat = categories.find(cat => cat._id === categoryId);
-    console.log('Found category:', selectedCat);
     setSelectedCategory(selectedCat);
-    
     setFormData(prev => ({
       ...prev,
       category: categoryId,
-      subcategory: '',
-      requirements: []
+      subcategory: ''
     }));
   };
 
@@ -87,91 +75,52 @@ const PostLead = () => {
     setError('');
 
     try {
-      // Create a minimal valid lead object
+      // Log form data before submission
+      console.log('Current form data:', formData);
+
+      // Create the most basic lead object possible
       const leadData = {
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        category: formData.category,
-        subcategory: formData.subcategory,
+        title: String(formData.title).trim(),
+        description: String(formData.description).trim(),
+        category: String(formData.category),
+        subcategory: String(formData.subcategory),
         budget: {
-          min: 0, // Start with hardcoded values to test
-          max: 0,
+          min: 100,  // Hardcoded for testing
+          max: 1000, // Hardcoded for testing
           currency: 'GBP'
         },
-        // Send location as simple strings
-        location: formData.location.address,
-        // Send a simple requirement
+        location: 'Test Location', // Simple string
         requirements: [
           {
-            question: "Default",
-            answer: "Default"
+            question: 'Test Question',
+            answer: 'Test Answer'
           }
         ],
         status: 'active',
         visibility: 'public'
       };
 
-      // Debug log
-      console.log('Submitting minimal lead data:', JSON.stringify(leadData, null, 2));
+      // Log the exact data being sent
+      console.log('Sending to server:', JSON.stringify(leadData, null, 2));
 
       const response = await api.post('/api/leads', leadData);
-      console.log('Server response:', response);
+      console.log('Success:', response.data);
       navigate('/dashboard');
     } catch (err) {
-      console.error('Full error:', err);
-      console.error('Response data:', err.response?.data);
+      console.error('Error response:', err.response?.data);
       setError(err.response?.data?.error || err.message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Simplify budget handler
-  const handleBudgetChange = (field) => (e) => {
-    const value = parseInt(e.target.value.replace(/\D/g, ''), 10) || 0;
-    setFormData(prev => ({
-      ...prev,
-      budget: {
-        ...prev.budget,
-        [field]: value
-      }
-    }));
-  };
-
-  // Update location change handler
-  const handleLocationChange = (field) => (e) => {
-    const value = e.target.value;
-    setFormData(prev => ({
-      ...prev,
-      location: {
-        ...prev.location,
-        [field]: value
-      }
-    }));
-  };
-
-  // Add subcategory change handler
+  // Simplified subcategory change handler
   const handleSubcategoryChange = (e) => {
     const value = e.target.value;
-    console.log('Setting subcategory:', value);
-    setFormData(prev => {
-      const updated = {
-        ...prev,
-        subcategory: value
-      };
-      console.log('Updated form data:', updated);
-      return updated;
-    });
-  };
-
-  // Optional: Add a currency selector to your form
-  const handleCurrencyChange = (e) => {
+    console.log('Setting subcategory to:', value);
     setFormData(prev => ({
       ...prev,
-      budget: {
-        ...prev.budget,
-        currency: e.target.value
-      }
+      subcategory: value
     }));
   };
 
@@ -260,7 +209,7 @@ const PostLead = () => {
               id="budgetMin"
               name="budgetMin"
               value={formData.budget.min}
-              onChange={handleBudgetChange('min')}
+              onChange={(e) => setFormData(prev => ({ ...prev, budget: { ...prev.budget, min: parseInt(e.target.value.replace(/\D/g, ''), 10) || 0 } }))}
               required
               placeholder="Min budget"
             />
@@ -272,7 +221,7 @@ const PostLead = () => {
               id="budgetMax"
               name="budgetMax"
               value={formData.budget.max}
-              onChange={handleBudgetChange('max')}
+              onChange={(e) => setFormData(prev => ({ ...prev, budget: { ...prev.budget, max: parseInt(e.target.value.replace(/\D/g, ''), 10) || 0 } }))}
               required
               placeholder="Max budget"
             />
@@ -285,63 +234,13 @@ const PostLead = () => {
             id="currency"
             name="currency"
             value={formData.budget.currency}
-            onChange={handleCurrencyChange}
+            onChange={(e) => setFormData(prev => ({ ...prev, budget: { ...prev.budget, currency: e.target.value } }))}
           >
             <option value="GBP">£ (GBP)</option>
             <option value="USD">$ (USD)</option>
             <option value="EUR">€ (EUR)</option>
           </Select>
         </FormGroup>
-
-        <FormGroup>
-          <Label>Location</Label>
-          <Input
-            type="text"
-            id="address"
-            name="address"
-            value={formData.location.address}
-            onChange={handleLocationChange('address')}
-            placeholder="Address"
-          />
-        </FormGroup>
-
-        <TwoColumnGroup>
-          <FormGroup>
-            <Input
-              type="text"
-              placeholder="City"
-              value={formData.location.city}
-              onChange={handleLocationChange('city')}
-            />
-          </FormGroup>
-          <FormGroup>
-            <Input
-              type="text"
-              placeholder="State"
-              value={formData.location.state}
-              onChange={handleLocationChange('state')}
-            />
-          </FormGroup>
-        </TwoColumnGroup>
-
-        <TwoColumnGroup>
-          <FormGroup>
-            <Input
-              type="text"
-              placeholder="Country"
-              value={formData.location.country}
-              onChange={handleLocationChange('country')}
-            />
-          </FormGroup>
-          <FormGroup>
-            <Input
-              type="text"
-              placeholder="Postal Code"
-              value={formData.location.postalCode}
-              onChange={handleLocationChange('postalCode')}
-            />
-          </FormGroup>
-        </TwoColumnGroup>
 
         <SubmitButton 
           type="submit" 
