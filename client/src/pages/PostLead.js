@@ -90,23 +90,20 @@ const PostLead = () => {
     setError('');
 
     try {
-      // Debug log initial form data
-      console.log('Initial form data:', formData);
-
       // Validate required fields
       if (!formData.title || !formData.description || !formData.category || !formData.subcategory) {
         throw new Error('Please fill in all required fields');
       }
 
       // Parse and validate budget numbers
-      const minBudget = parseFloat(formData.budget.min);
-      const maxBudget = parseFloat(formData.budget.max);
+      const minBudget = Number(formData.budget.min);
+      const maxBudget = Number(formData.budget.max);
       
       if (isNaN(minBudget) || isNaN(maxBudget)) {
         throw new Error('Please enter valid budget numbers');
       }
 
-      // Create the lead data object
+      // Format location as individual strings
       const leadData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
@@ -118,14 +115,17 @@ const PostLead = () => {
           currency: formData.budget.currency
         },
         location: {
-          address: formData.location.address,
-          city: formData.location.city,
-          state: formData.location.state,
-          country: formData.location.country,
-          postalCode: formData.location.postalCode
+          address: String(formData.location.address || ''),
+          city: String(formData.location.city || ''),
+          state: String(formData.location.state || ''),
+          country: String(formData.location.country || ''),
+          postalCode: String(formData.location.postalCode || '')
         },
         requirements: [
-          { answer: '' }
+          {
+            question: 'Default Question',
+            answer: String(formData.requirements[0]?.answer || '')
+          }
         ]
       };
 
@@ -147,15 +147,15 @@ const PostLead = () => {
   // Update budget change handler
   const handleBudgetChange = (field) => (e) => {
     const value = e.target.value;
-    console.log(`Budget ${field} change:`, value);
     
-    // Only allow numbers
+    // Only allow numbers and decimal points
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      const numValue = value === '' ? '' : String(Math.max(0, Number(value)));
       setFormData(prev => ({
         ...prev,
         budget: {
           ...prev.budget,
-          [field]: value
+          [field]: numValue
         }
       }));
     }
