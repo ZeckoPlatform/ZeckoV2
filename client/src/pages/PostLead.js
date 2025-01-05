@@ -17,8 +17,8 @@ const PostLead = () => {
     category: '',
     subcategory: '',
     budget: {
-      min: '',
-      max: '',
+      min: '0',
+      max: '0',
       currency: 'GBP'
     },
     location: {
@@ -28,11 +28,10 @@ const PostLead = () => {
       country: '',
       postalCode: ''
     },
-    requirements: [
-      {
-        answer: ''
-      }
-    ]
+    requirements: [{
+      question: 'Default Question',
+      answer: 'Default Answer'
+    }]
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -95,15 +94,15 @@ const PostLead = () => {
         throw new Error('Please fill in all required fields');
       }
 
-      // Parse and validate budget numbers
-      const minBudget = Number(formData.budget.min);
-      const maxBudget = Number(formData.budget.max);
+      // Parse budget values - ensure they are numbers
+      const minBudget = parseInt(formData.budget.min, 10);
+      const maxBudget = parseInt(formData.budget.max, 10);
       
       if (isNaN(minBudget) || isNaN(maxBudget)) {
         throw new Error('Please enter valid budget numbers');
       }
 
-      // Format location as individual strings
+      // Create the lead data object that exactly matches the schema
       const leadData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
@@ -114,19 +113,22 @@ const PostLead = () => {
           max: maxBudget,
           currency: formData.budget.currency
         },
+        // Location as separate strings
         location: {
-          address: String(formData.location.address || ''),
-          city: String(formData.location.city || ''),
-          state: String(formData.location.state || ''),
-          country: String(formData.location.country || ''),
-          postalCode: String(formData.location.postalCode || '')
+          address: formData.location.address,
+          city: formData.location.city,
+          state: formData.location.state,
+          country: formData.location.country,
+          postalCode: formData.location.postalCode
         },
-        requirements: [
-          {
-            question: 'Default Question',
-            answer: String(formData.requirements[0]?.answer || '')
-          }
-        ]
+        // Simple requirements array with one item
+        requirements: [{
+          question: "Default Question",
+          answer: "Default Answer"
+        }],
+        // Required default values from schema
+        status: 'active',
+        visibility: 'public'
       };
 
       // Debug log
@@ -144,21 +146,16 @@ const PostLead = () => {
     }
   };
 
-  // Update budget change handler
+  // Update budget change handler to ensure integer values
   const handleBudgetChange = (field) => (e) => {
-    const value = e.target.value;
-    
-    // Only allow numbers and decimal points
-    if (value === '' || /^\d*\.?\d*$/.test(value)) {
-      const numValue = value === '' ? '' : String(Math.max(0, Number(value)));
-      setFormData(prev => ({
-        ...prev,
-        budget: {
-          ...prev.budget,
-          [field]: numValue
-        }
-      }));
-    }
+    const value = e.target.value.replace(/[^\d]/g, ''); // Only allow digits
+    setFormData(prev => ({
+      ...prev,
+      budget: {
+        ...prev.budget,
+        [field]: value
+      }
+    }));
   };
 
   // Update location change handler
@@ -275,6 +272,7 @@ const PostLead = () => {
             <Label htmlFor="budgetMin">Minimum Budget*</Label>
             <Input
               type="text"
+              pattern="\d*"
               id="budgetMin"
               name="budgetMin"
               value={formData.budget.min}
