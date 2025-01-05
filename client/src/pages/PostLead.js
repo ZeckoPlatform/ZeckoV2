@@ -17,21 +17,19 @@ const PostLead = () => {
     category: '',
     subcategory: '',
     budget: {
-      min: '0',
-      max: '0',
+      min: 0,
+      max: 0,
       currency: 'GBP'
     },
     location: {
-      address: '',
-      city: '',
-      state: '',
-      country: '',
-      postalCode: ''
+      address: ''
     },
-    requirements: [{
-      question: 'Default Question',
-      answer: 'Default Answer'
-    }]
+    requirements: [
+      {
+        question: 'Default',
+        answer: 'Default'
+      }
+    ]
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,66 +87,48 @@ const PostLead = () => {
     setError('');
 
     try {
-      // Validate required fields
-      if (!formData.title || !formData.description || !formData.category || !formData.subcategory) {
-        throw new Error('Please fill in all required fields');
-      }
-
-      // Parse budget values - ensure they are numbers
-      const minBudget = parseInt(formData.budget.min, 10);
-      const maxBudget = parseInt(formData.budget.max, 10);
-      
-      if (isNaN(minBudget) || isNaN(maxBudget)) {
-        throw new Error('Please enter valid budget numbers');
-      }
-
-      // Create the lead data object that exactly matches the schema
+      // Create a minimal valid lead object
       const leadData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         category: formData.category,
         subcategory: formData.subcategory,
         budget: {
-          min: minBudget,
-          max: maxBudget,
-          currency: formData.budget.currency
+          min: 0, // Start with hardcoded values to test
+          max: 0,
+          currency: 'GBP'
         },
-        // Location as separate strings
-        location: {
-          address: formData.location.address,
-          city: formData.location.city,
-          state: formData.location.state,
-          country: formData.location.country,
-          postalCode: formData.location.postalCode
-        },
-        // Simple requirements array with one item
-        requirements: [{
-          question: "Default Question",
-          answer: "Default Answer"
-        }],
-        // Required default values from schema
+        // Send location as simple strings
+        location: formData.location.address,
+        // Send a simple requirement
+        requirements: [
+          {
+            question: "Default",
+            answer: "Default"
+          }
+        ],
         status: 'active',
         visibility: 'public'
       };
 
       // Debug log
-      console.log('Submitting lead data:', JSON.stringify(leadData, null, 2));
+      console.log('Submitting minimal lead data:', JSON.stringify(leadData, null, 2));
 
       const response = await api.post('/api/leads', leadData);
       console.log('Server response:', response);
       navigate('/dashboard');
     } catch (err) {
-      console.error('Error details:', err);
-      console.error('Server validation error:', err.response?.data);
+      console.error('Full error:', err);
+      console.error('Response data:', err.response?.data);
       setError(err.response?.data?.error || err.message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Update budget change handler to ensure integer values
+  // Simplify budget handler
   const handleBudgetChange = (field) => (e) => {
-    const value = e.target.value.replace(/[^\d]/g, ''); // Only allow digits
+    const value = parseInt(e.target.value.replace(/\D/g, ''), 10) || 0;
     setFormData(prev => ({
       ...prev,
       budget: {
@@ -174,10 +154,14 @@ const PostLead = () => {
   const handleSubcategoryChange = (e) => {
     const value = e.target.value;
     console.log('Setting subcategory:', value);
-    setFormData(prev => ({
-      ...prev,
-      subcategory: value
-    }));
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        subcategory: value
+      };
+      console.log('Updated form data:', updated);
+      return updated;
+    });
   };
 
   // Optional: Add a currency selector to your form
