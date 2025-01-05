@@ -75,35 +75,34 @@ const PostLead = () => {
     setError('');
 
     try {
-      // Log form data before submission
-      console.log('Current form data:', formData);
-
       // Create the most basic lead object possible
       const leadData = {
-        title: String(formData.title).trim(),
-        description: String(formData.description).trim(),
-        category: String(formData.category),
-        subcategory: String(formData.subcategory),
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        subcategory: formData.subcategory,
         budget: {
-          min: 100,  // Hardcoded for testing
-          max: 1000, // Hardcoded for testing
+          min: 100,
+          max: 1000,
           currency: 'GBP'
         },
-        location: 'Test Location', // Simple string
-        requirements: [
-          {
-            question: 'Test Question',
-            answer: 'Test Answer'
-          }
-        ],
-        status: 'active',
-        visibility: 'public'
+        // Simplified requirements
+        requirements: [{
+          question: 'Test Question',
+          answer: 'Test Answer'
+        }]
       };
 
       // Log the exact data being sent
       console.log('Sending to server:', JSON.stringify(leadData, null, 2));
 
-      const response = await api.post('/api/leads', leadData);
+      // Add auth token to request
+      const response = await api.post('/api/leads', leadData, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
       console.log('Success:', response.data);
       navigate('/dashboard');
     } catch (err) {
@@ -167,10 +166,7 @@ const PostLead = () => {
           >
             <option value="">Select a category</option>
             {categories.map(cat => (
-              <option 
-                key={cat._id} 
-                value={cat._id}
-              >
+              <option key={cat._id} value={cat._id}>
                 {cat.name}
               </option>
             ))}
@@ -189,10 +185,7 @@ const PostLead = () => {
             >
               <option value="">Select a subcategory</option>
               {getSubcategories().map((sub, index) => (
-                <option 
-                  key={`${selectedCategory._id}-sub-${index}`}
-                  value={sub}
-                >
+                <option key={`${selectedCategory._id}-sub-${index}`} value={sub}>
                   {sub}
                 </option>
               ))}
