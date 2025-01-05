@@ -52,18 +52,14 @@ const PostLead = () => {
     console.log('Category selected:', categoryId);
     
     const selectedCat = categories.find(cat => cat._id === categoryId);
-    console.log('Found category:', selectedCat);
+    console.log('Category details:', selectedCat);
     
     setSelectedCategory(selectedCat);
-    setFormData(prev => {
-      const updated = {
-        ...prev,
-        category: categoryId,
-        subcategory: ''
-      };
-      console.log('Updated form data after category change:', updated);
-      return updated;
-    });
+    setFormData(prev => ({
+      ...prev,
+      category: categoryId,
+      subcategory: '' // Reset subcategory when category changes
+    }));
   };
 
   // Add this helper function to get subcategories
@@ -82,52 +78,35 @@ const PostLead = () => {
     setError('');
 
     try {
-      // Debug logs
-      console.log('Form Data before submission:', formData);
-      console.log('Selected Category:', selectedCategory);
-      console.log('Selected Subcategory:', formData.subcategory);
-
-      // Validate required fields
-      if (!formData.title || !formData.description || !formData.category || !formData.subcategory) {
-        throw new Error(`Missing required fields: ${[
-          !formData.title && 'title',
-          !formData.description && 'description',
-          !formData.category && 'category',
-          !formData.subcategory && 'subcategory'
-        ].filter(Boolean).join(', ')}`);
-      }
-
-      // Create lead data with explicit type conversion
-      const leadData = {
-        title: String(formData.title).trim(),
-        description: String(formData.description).trim(),
-        category: String(formData.category),
-        subcategory: String(formData.subcategory),
+      // Start with the absolute minimum required fields
+      const minimalData = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        subcategory: formData.subcategory,
         budget: {
-          min: Number(100),  // Explicit number conversion
-          max: Number(1000), // Explicit number conversion
-          currency: 'GBP'
-        },
-        requirements: [{
-          question: String('Test Question'),
-          answer: String('Test Answer')
-        }]
+          min: 100,
+          max: 1000,
+          currency: "GBP"
+        }
       };
 
-      // Debug log the final payload
-      console.log('Final payload:', JSON.stringify(leadData, null, 2));
+      // Log the minimal data
+      console.log('Sending minimal data:', minimalData);
 
-      const response = await api.post('/api/leads', leadData);
+      // First try to submit with just the required fields
+      const response = await api.post('/api/leads', minimalData);
       console.log('Success:', response.data);
       navigate('/dashboard');
     } catch (err) {
-      console.error('Detailed error:', {
-        error: err,
-        response: err.response?.data,
-        formData: formData,
-        selectedCategory: selectedCategory
+      // Log the complete error details
+      console.error('API Error:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        headers: err.response?.headers,
+        sent: minimalData
       });
-      setError(err.message);
+      setError(err.response?.data?.error || err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -138,14 +117,10 @@ const PostLead = () => {
     const value = e.target.value;
     console.log('Subcategory selected:', value);
     
-    setFormData(prev => {
-      const updated = {
-        ...prev,
-        subcategory: value
-      };
-      console.log('Updated form data after subcategory change:', updated);
-      return updated;
-    });
+    setFormData(prev => ({
+      ...prev,
+      subcategory: value
+    }));
   };
 
   return (
@@ -209,8 +184,8 @@ const PostLead = () => {
               required
             >
               <option value="">Select a subcategory</option>
-              {getSubcategories().map((sub, index) => (
-                <option key={`${selectedCategory._id}-sub-${index}`} value={sub}>
+              {(selectedCategory.subcategories || []).map((sub, index) => (
+                <option key={index} value={sub}>
                   {sub}
                 </option>
               ))}
