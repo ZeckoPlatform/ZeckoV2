@@ -17,8 +17,8 @@ const PostLead = () => {
     category: '',
     subcategory: '',
     budget: {
-      min: '0',
-      max: '0',
+      min: '',
+      max: '',
       currency: 'GBP'
     },
     location: {
@@ -90,27 +90,21 @@ const PostLead = () => {
     setError('');
 
     try {
+      // Debug log initial form data
+      console.log('Initial form data:', formData);
+
       // Validate required fields
       if (!formData.title || !formData.description || !formData.category || !formData.subcategory) {
         throw new Error('Please fill in all required fields');
       }
 
       // Parse and validate budget numbers
-      const minBudget = Math.max(0, parseFloat(formData.budget.min) || 0);
-      const maxBudget = Math.max(0, parseFloat(formData.budget.max) || 0);
+      const minBudget = parseFloat(formData.budget.min);
+      const maxBudget = parseFloat(formData.budget.max);
       
       if (isNaN(minBudget) || isNaN(maxBudget)) {
         throw new Error('Please enter valid budget numbers');
       }
-
-      // Format location as a single string
-      const fullAddress = [
-        formData.location.address,
-        formData.location.city,
-        formData.location.state,
-        formData.location.country,
-        formData.location.postalCode
-      ].filter(Boolean).join(', ');
 
       // Create the lead data object
       const leadData = {
@@ -121,23 +115,23 @@ const PostLead = () => {
         budget: {
           min: minBudget,
           max: maxBudget,
-          currency: formData.budget.currency || 'GBP'
+          currency: formData.budget.currency
         },
         location: {
-          address: fullAddress, // Send as a single string
-          city: formData.location.city || '',
-          state: formData.location.state || '',
-          country: formData.location.country || '',
-          postalCode: formData.location.postalCode || ''
+          address: formData.location.address,
+          city: formData.location.city,
+          state: formData.location.state,
+          country: formData.location.country,
+          postalCode: formData.location.postalCode
         },
         requirements: [
-          {
-            answer: String(formData.requirements[0]?.answer || '')  // Ensure it's a string
-          }
+          { answer: '' }
         ]
       };
 
-      console.log('Submitting data:', JSON.stringify(leadData, null, 2));
+      // Debug log
+      console.log('Submitting lead data:', JSON.stringify(leadData, null, 2));
+
       const response = await api.post('/api/leads', leadData);
       console.log('Server response:', response);
       navigate('/dashboard');
@@ -150,17 +144,18 @@ const PostLead = () => {
     }
   };
 
-  // Update budget change handler to ensure valid numbers
+  // Update budget change handler
   const handleBudgetChange = (field) => (e) => {
-    const value = e.target.value.trim();
+    const value = e.target.value;
+    console.log(`Budget ${field} change:`, value);
     
-    if (value === '' || (/^\d*\.?\d*$/.test(value))) {
-      const numValue = Math.max(0, parseFloat(value) || 0);
+    // Only allow numbers
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setFormData(prev => ({
         ...prev,
         budget: {
           ...prev.budget,
-          [field]: numValue.toString()
+          [field]: value
         }
       }));
     }
@@ -168,7 +163,7 @@ const PostLead = () => {
 
   // Update location change handler
   const handleLocationChange = (field) => (e) => {
-    const value = e.target.value || '';
+    const value = e.target.value;
     setFormData(prev => ({
       ...prev,
       location: {
@@ -182,11 +177,6 @@ const PostLead = () => {
   const handleSubcategoryChange = (e) => {
     const value = e.target.value;
     console.log('Setting subcategory:', value);
-    if (!value) {
-      setError('Please select a subcategory');
-      return;
-    }
-    setError('');
     setFormData(prev => ({
       ...prev,
       subcategory: value
@@ -284,28 +274,24 @@ const PostLead = () => {
           <FormGroup>
             <Label htmlFor="budgetMin">Minimum Budget*</Label>
             <Input
-              type="number"
+              type="text"
               id="budgetMin"
               name="budgetMin"
               value={formData.budget.min}
               onChange={handleBudgetChange('min')}
               required
-              min="0"
-              step="0.01"
               placeholder="Min budget"
             />
           </FormGroup>
           <FormGroup>
             <Label htmlFor="budgetMax">Maximum Budget*</Label>
             <Input
-              type="number"
+              type="text"
               id="budgetMax"
               name="budgetMax"
               value={formData.budget.max}
               onChange={handleBudgetChange('max')}
               required
-              min="0"
-              step="0.01"
               placeholder="Max budget"
             />
           </FormGroup>
