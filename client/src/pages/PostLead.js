@@ -15,12 +15,7 @@ const PostLead = () => {
     title: '',
     description: '',
     category: '',
-    subcategory: '',
-    budget: {
-      min: 100,
-      max: 1000,
-      currency: 'GBP'
-    }
+    subcategory: ''
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,7 +53,7 @@ const PostLead = () => {
     setFormData(prev => ({
       ...prev,
       category: categoryId,
-      subcategory: '' // Reset subcategory when category changes
+      subcategory: ''
     }));
   };
 
@@ -77,41 +72,43 @@ const PostLead = () => {
     setIsSubmitting(true);
     setError('');
     
-    let minimalData = null;
-
     try {
-      // Create a minimal valid lead object with hardcoded budget values
-      minimalData = {
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        category: formData.category,
-        subcategory: formData.subcategory,
+      // Create the most basic possible payload
+      const payload = {
+        title: String(formData.title).trim(),
+        description: String(formData.description).trim(),
+        category: String(formData.category),
+        subcategory: String(formData.subcategory),
         budget: {
-          min: 100,  // Hardcoded number
-          max: 1000, // Hardcoded number
+          min: 100,
+          max: 1000,
           currency: "GBP"
         },
-        requirements: [{
-          question: "Default Question",
-          answer: "Default Answer"
-        }]
+        requirements: [
+          {
+            question: "Default Question",
+            answer: "Default Answer"
+          }
+        ]
       };
 
-      // Debug logs
-      console.log('Form Data:', formData);
-      console.log('Selected Category:', formData.category);
-      console.log('Selected Subcategory:', formData.subcategory);
-      console.log('Sending data:', JSON.stringify(minimalData, null, 2));
+      // Log the exact payload being sent
+      console.log('Payload:', JSON.stringify(payload));
 
-      const response = await api.post('/api/leads', minimalData);
+      // Send the request
+      const response = await api.post('/api/leads', payload, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
       console.log('Success:', response.data);
       navigate('/dashboard');
     } catch (err) {
-      console.error('API Error:', {
+      console.error('Error details:', {
         message: err.message,
         response: err.response?.data,
-        formData: formData,
-        minimalData: minimalData
+        status: err.response?.status
       });
       setError(err.response?.data?.error || err.message);
     } finally {
@@ -121,12 +118,9 @@ const PostLead = () => {
 
   // Simplified subcategory change handler
   const handleSubcategoryChange = (e) => {
-    const value = e.target.value;
-    console.log('Subcategory selected:', value);
-    
     setFormData(prev => ({
       ...prev,
-      subcategory: value
+      subcategory: e.target.value
     }));
   };
 
