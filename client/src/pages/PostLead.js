@@ -77,29 +77,30 @@ const PostLead = () => {
     setIsSubmitting(true);
     setError('');
     
-    // Declare minimalData outside try block so it's available in catch
     let minimalData = null;
 
     try {
-      // Create the minimal data object with explicit number values
+      // Create a minimal valid lead object with hardcoded budget values
       minimalData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         category: formData.category,
         subcategory: formData.subcategory,
         budget: {
-          min: Number(100),  // Explicit number conversion
-          max: Number(1000), // Explicit number conversion
+          min: 100,  // Hardcoded number
+          max: 1000, // Hardcoded number
           currency: "GBP"
-        }
+        },
+        requirements: [{
+          question: "Default Question",
+          answer: "Default Answer"
+        }]
       };
 
-      // Validate the data before sending
-      if (!minimalData.title || !minimalData.description || !minimalData.category || !minimalData.subcategory) {
-        throw new Error('Please fill in all required fields');
-      }
-
-      // Debug log
+      // Debug logs
+      console.log('Form Data:', formData);
+      console.log('Selected Category:', formData.category);
+      console.log('Selected Subcategory:', formData.subcategory);
       console.log('Sending data:', JSON.stringify(minimalData, null, 2));
 
       const response = await api.post('/api/leads', minimalData);
@@ -107,9 +108,10 @@ const PostLead = () => {
       navigate('/dashboard');
     } catch (err) {
       console.error('API Error:', {
-        error: err.message,
-        data: err.response?.data,
-        sent: minimalData  // Now minimalData is in scope
+        message: err.message,
+        response: err.response?.data,
+        formData: formData,
+        minimalData: minimalData
       });
       setError(err.response?.data?.error || err.message);
     } finally {
