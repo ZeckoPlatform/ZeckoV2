@@ -76,10 +76,13 @@ const PostLead = () => {
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
+    
+    // Declare minimalData outside try block so it's available in catch
+    let minimalData = null;
 
     try {
       // Create the minimal data object with explicit number values
-      const minimalData = {
+      minimalData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         category: formData.category,
@@ -106,7 +109,7 @@ const PostLead = () => {
       console.error('API Error:', {
         error: err.message,
         data: err.response?.data,
-        sent: minimalData
+        sent: minimalData  // Now minimalData is in scope
       });
       setError(err.response?.data?.error || err.message);
     } finally {
