@@ -79,13 +79,16 @@ const Profile = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await updateUser({
+            const response = await api.patch('/api/users/profile', {
                 ...formData,
                 username: formData.username.trim()
             });
-            // Show success message
+            
+            if (response.data) {
+                updateUser(response.data);
+            }
         } catch (error) {
-            // Show error message
+            console.error('Error updating profile:', error);
         }
     };
 
@@ -120,7 +123,12 @@ const Profile = () => {
                                         name="username"
                                         value={formData.username}
                                         onChange={handleInputChange}
-                                        helperText="Choose your display name"
+                                        helperText="You can change your username"
+                                        required
+                                        inputProps={{
+                                            minLength: 3,
+                                            maxLength: 30
+                                        }}
                                     />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
