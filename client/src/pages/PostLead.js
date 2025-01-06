@@ -77,38 +77,22 @@ const PostLead = () => {
     setError('');
     
     try {
-        // Create the payload with proper number handling
-        const payload = {
-            title: String(formData.title).trim(),
-            description: String(formData.description).trim(),
-            category: String(formData.category),
-            subcategory: String(formData.subcategory),
+        const response = await api.post('/api/leads', {
+            title: formData.title.trim(),
+            description: formData.description.trim(),
+            category: formData.category,
+            subcategory: formData.subcategory,
             budget: {
                 min: Number(formData.budget.min),
                 max: Number(formData.budget.max),
-                currency: formData.budget.currency
+                currency: 'GBP'
             },
-            requirements: [{
-                question: "Default Question",
-                answer: "Default Answer"
-            }]
-        };
+            requirements: formData.requirements
+        });
 
-        // Validate required fields and numbers
-        if (!payload.title || !payload.description || !payload.category || !payload.subcategory) {
-            throw new Error('Please fill in all required fields');
+        if (response.data) {
+            navigate('/dashboard');
         }
-
-        if (isNaN(payload.budget.min) || isNaN(payload.budget.max)) {
-            throw new Error('Please enter valid budget values');
-        }
-
-        // Log the exact payload for debugging
-        console.log('Sending payload:', JSON.stringify(payload, null, 2));
-
-        const response = await api.post('/leads', payload);
-        console.log('Success:', response.data);
-        navigate('/dashboard');
     } catch (err) {
         console.error('Error details:', {
             message: err.message,

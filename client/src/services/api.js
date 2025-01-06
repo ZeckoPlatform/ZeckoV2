@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with base URL
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'https://zeckov2-deceb43992ac.herokuapp.com/api',
+  baseURL: process.env.REACT_APP_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json'
   }
@@ -22,6 +22,11 @@ export const endpoints = {
     addresses: '/api/users/addresses',
     security: '/api/users/security-settings',
     avatar: '/api/users/profile/avatar'
+  },
+  leads: {
+    create: '/leads',
+    list: '/leads',
+    delete: '/leads'
   }
 };
 

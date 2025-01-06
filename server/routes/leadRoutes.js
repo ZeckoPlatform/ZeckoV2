@@ -62,10 +62,7 @@ router.post('/', auth, async (req, res) => {
         res.status(201).json(newLead);
     } catch (error) {
         console.error('Error creating lead:', error);
-        res.status(400).json({ 
-            message: 'Error creating lead', 
-            error: error.message 
-        });
+        res.status(400).json({ error: error.message });
     }
 });
 
