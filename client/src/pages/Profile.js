@@ -124,11 +124,6 @@ const Profile = () => {
                                         value={formData.username}
                                         onChange={handleInputChange}
                                         helperText="You can change your username"
-                                        required
-                                        inputProps={{
-                                            minLength: 3,
-                                            maxLength: 30
-                                        }}
                                     />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>

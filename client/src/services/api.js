@@ -24,9 +24,9 @@ export const endpoints = {
     avatar: '/api/users/profile/avatar'
   },
   leads: {
-    create: '/leads',
-    list: '/leads',
-    delete: '/leads'
+    create: '/api/leads',
+    list: '/api/leads',
+    delete: '/api/leads'
   }
 };
 

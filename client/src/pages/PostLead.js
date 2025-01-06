@@ -4,12 +4,13 @@ import styled from 'styled-components';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useServiceCategories } from '../contexts/ServiceCategoryContext';
+import { endpoints } from '../services/api';
 
 const PostLead = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   console.log('Current user:', user);
-  const { categories, loading, error: categoryError } = useServiceCategories();
+  const { categories = [], loading, error: categoryError } = useServiceCategories();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -77,31 +78,31 @@ const PostLead = () => {
     setError('');
     
     try {
-        const response = await api.post('/api/leads', {
-            title: formData.title.trim(),
-            description: formData.description.trim(),
-            category: formData.category,
-            subcategory: formData.subcategory,
-            budget: {
-                min: Number(formData.budget.min),
-                max: Number(formData.budget.max),
-                currency: 'GBP'
-            },
-            requirements: formData.requirements
-        });
+      const response = await api.post(endpoints.leads.create, {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        category: formData.category,
+        subcategory: formData.subcategory,
+        budget: {
+          min: Number(formData.budget.min),
+          max: Number(formData.budget.max),
+          currency: 'GBP'
+        },
+        requirements: formData.requirements
+      });
 
-        if (response.data) {
-            navigate('/dashboard');
-        }
+      if (response.data) {
+        navigate('/dashboard');
+      }
     } catch (err) {
-        console.error('Error details:', {
-            message: err.message,
-            response: err.response?.data,
-            status: err.response?.status
-        });
-        setError(err.response?.data?.error || err.message);
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+      setError(err.response?.data?.error || err.message);
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -128,6 +129,20 @@ const PostLead = () => {
             }
         }));
     }
+  };
+
+  // Add a guard clause for categories
+  const renderCategories = () => {
+    if (!Array.isArray(categories)) {
+      console.error('Categories is not an array:', categories);
+      return null;
+    }
+    
+    return categories.map(cat => (
+      <option key={cat._id} value={cat._id}>
+        {cat.name}
+      </option>
+    ));
   };
 
   return (
@@ -172,11 +187,7 @@ const PostLead = () => {
             required
           >
             <option value="">Select a category</option>
-            {categories.map(cat => (
-              <option key={cat._id} value={cat._id}>
-                {cat.name}
-              </option>
-            ))}
+            {renderCategories()}
           </Select>
         </FormGroup>
 
