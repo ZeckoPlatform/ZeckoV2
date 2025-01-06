@@ -15,7 +15,12 @@ const PostLead = () => {
     title: '',
     description: '',
     category: '',
-    subcategory: ''
+    subcategory: '',
+    budget: {
+      min: 100,
+      max: 1000,
+      currency: 'GBP'
+    }
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -73,7 +78,7 @@ const PostLead = () => {
     setError('');
     
     try {
-      // Create the most basic possible payload
+      // Create the payload
       const payload = {
         title: String(formData.title).trim(),
         description: String(formData.description).trim(),
@@ -93,9 +98,8 @@ const PostLead = () => {
       };
 
       // Log the exact payload being sent
-      console.log('Payload:', JSON.stringify(payload));
+      console.log('Sending payload:', payload);
 
-      // Send the request
       const response = await api.post('/api/leads', payload, {
         headers: {
           'Content-Type': 'application/json'
@@ -126,7 +130,7 @@ const PostLead = () => {
 
   // Update budget handler to ensure proper number values
   const handleBudgetChange = (field) => (e) => {
-    const value = parseInt(e.target.value.replace(/\D/g, ''), 10) || 0;
+    const value = parseInt(e.target.value, 10) || 0;
     setFormData(prev => ({
       ...prev,
       budget: {
