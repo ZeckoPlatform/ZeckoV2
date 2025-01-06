@@ -49,12 +49,11 @@ const PostLead = () => {
   // Update selected category and reset form fields when category changes
   const handleCategoryChange = (e) => {
     const categoryId = e.target.value;
-    console.log('Category selected:', categoryId);
+    console.log('Selected category:', categoryId);
     
     const selectedCat = categories.find(cat => cat._id === categoryId);
-    console.log('Category details:', selectedCat);
-    
     setSelectedCategory(selectedCat);
+    
     setFormData(prev => ({
       ...prev,
       category: categoryId,
@@ -78,39 +77,40 @@ const PostLead = () => {
     setError('');
     
     try {
-      // Create the payload
+      // Create the payload with explicit type casting
       const payload = {
         title: String(formData.title).trim(),
         description: String(formData.description).trim(),
         category: String(formData.category),
         subcategory: String(formData.subcategory),
         budget: {
-          min: 100,
-          max: 1000,
+          min: parseInt("100", 10),  // Explicit integer conversion
+          max: parseInt("1000", 10), // Explicit integer conversion
           currency: "GBP"
         },
-        requirements: [
-          {
-            question: "Default Question",
-            answer: "Default Answer"
-          }
-        ]
+        requirements: [{
+          question: String("Default Question"),
+          answer: String("Default Answer")
+        }]
       };
 
-      // Log the exact payload being sent
-      console.log('Sending payload:', payload);
+      // Validate required fields
+      if (!payload.title || !payload.description || !payload.category || !payload.subcategory) {
+        throw new Error('Please fill in all required fields');
+      }
 
-      const response = await api.post('/api/leads', payload, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      // Log the exact payload for debugging
+      console.log('Sending payload:', JSON.stringify(payload, null, 2));
+
+      const response = await api.post('/api/leads', payload);
 
       console.log('Success:', response.data);
       navigate('/dashboard');
     } catch (err) {
+      // Detailed error logging
       console.error('Error details:', {
         message: err.message,
+        payload: payload,
         response: err.response?.data,
         status: err.response?.status
       });
@@ -122,9 +122,12 @@ const PostLead = () => {
 
   // Simplified subcategory change handler
   const handleSubcategoryChange = (e) => {
+    const value = e.target.value;
+    console.log('Selected subcategory:', value);
+    
     setFormData(prev => ({
       ...prev,
-      subcategory: e.target.value
+      subcategory: value
     }));
   };
 
