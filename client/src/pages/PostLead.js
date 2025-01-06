@@ -77,46 +77,47 @@ const PostLead = () => {
     setError('');
     
     try {
-      // Create the payload with explicit type casting
-      const payload = {
-        title: String(formData.title).trim(),
-        description: String(formData.description).trim(),
-        category: String(formData.category),
-        subcategory: String(formData.subcategory),
-        budget: {
-          min: parseInt("100", 10),  // Explicit integer conversion
-          max: parseInt("1000", 10), // Explicit integer conversion
-          currency: "GBP"
-        },
-        requirements: [{
-          question: String("Default Question"),
-          answer: String("Default Answer")
-        }]
-      };
+        // Create the payload with proper number handling
+        const payload = {
+            title: String(formData.title).trim(),
+            description: String(formData.description).trim(),
+            category: String(formData.category),
+            subcategory: String(formData.subcategory),
+            budget: {
+                min: Number(formData.budget.min),
+                max: Number(formData.budget.max),
+                currency: formData.budget.currency
+            },
+            requirements: [{
+                question: "Default Question",
+                answer: "Default Answer"
+            }]
+        };
 
-      // Validate required fields
-      if (!payload.title || !payload.description || !payload.category || !payload.subcategory) {
-        throw new Error('Please fill in all required fields');
-      }
+        // Validate required fields and numbers
+        if (!payload.title || !payload.description || !payload.category || !payload.subcategory) {
+            throw new Error('Please fill in all required fields');
+        }
 
-      // Log the exact payload for debugging
-      console.log('Sending payload:', JSON.stringify(payload, null, 2));
+        if (isNaN(payload.budget.min) || isNaN(payload.budget.max)) {
+            throw new Error('Please enter valid budget values');
+        }
 
-      const response = await api.post('/api/leads', payload);
+        // Log the exact payload for debugging
+        console.log('Sending payload:', JSON.stringify(payload, null, 2));
 
-      console.log('Success:', response.data);
-      navigate('/dashboard');
+        const response = await api.post('/leads', payload);
+        console.log('Success:', response.data);
+        navigate('/dashboard');
     } catch (err) {
-      // Detailed error logging
-      console.error('Error details:', {
-        message: err.message,
-        payload: payload,
-        response: err.response?.data,
-        status: err.response?.status
-      });
-      setError(err.response?.data?.error || err.message);
+        console.error('Error details:', {
+            message: err.message,
+            response: err.response?.data,
+            status: err.response?.status
+        });
+        setError(err.response?.data?.error || err.message);
     } finally {
-      setIsSubmitting(false);
+        setIsSubmitting(false);
     }
   };
 
@@ -133,14 +134,16 @@ const PostLead = () => {
 
   // Update budget handler to ensure proper number values
   const handleBudgetChange = (field) => (e) => {
-    const value = parseInt(e.target.value, 10) || 0;
-    setFormData(prev => ({
-      ...prev,
-      budget: {
-        ...prev.budget,
-        [field]: value
-      }
-    }));
+    const value = e.target.value === '' ? 0 : Number(e.target.value);
+    if (!isNaN(value)) {
+        setFormData(prev => ({
+            ...prev,
+            budget: {
+                ...prev.budget,
+                [field]: value
+            }
+        }));
+    }
   };
 
   return (

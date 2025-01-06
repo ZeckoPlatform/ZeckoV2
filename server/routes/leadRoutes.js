@@ -39,21 +39,18 @@ router.post('/', auth, async (req, res) => {
             title,
             description,
             category,
-            subCategory: subcategory,
+            subcategory,
             budget: {
-                min: parseFloat(budget),
-                max: parseFloat(budget),
-                currency: 'GBP'
+                min: Number(budget.min),
+                max: Number(budget.max),
+                currency: budget.currency || 'GBP'
             },
-            location: {
-                address: location,
-                // You can add more location fields here if needed
-            },
+            location: location || {},
             client: req.user.id,
-            requirements: requirements ? [{ 
-                question: 'Requirements', 
-                answer: requirements 
-            }] : [],
+            requirements: requirements || [{
+                question: "Default Question",
+                answer: "Default Answer"
+            }],
             status: 'active',
             visibility: 'public'
         });
