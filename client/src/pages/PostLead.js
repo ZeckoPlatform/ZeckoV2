@@ -77,24 +77,24 @@ const PostLead = () => {
     setIsSubmitting(true);
     setError('');
 
-    try {
-      // Start with the absolute minimum required fields
-      const minimalData = {
-        title: formData.title,
-        description: formData.description,
-        category: formData.category,
-        subcategory: formData.subcategory,
-        budget: {
-          min: 100,
-          max: 1000,
-          currency: "GBP"
-        }
-      };
+    // Create the minimal data object at the top of the function
+    const minimalData = {
+      title: formData.title,
+      description: formData.description,
+      category: formData.category,
+      subcategory: formData.subcategory,
+      budget: {
+        min: 100,
+        max: 1000,
+        currency: "GBP"
+      }
+    };
 
+    try {
       // Log the minimal data
       console.log('Sending minimal data:', minimalData);
 
-      // First try to submit with just the required fields
+      // Submit with just the required fields
       const response = await api.post('/api/leads', minimalData);
       console.log('Success:', response.data);
       navigate('/dashboard');
@@ -104,7 +104,7 @@ const PostLead = () => {
         status: err.response?.status,
         data: err.response?.data,
         headers: err.response?.headers,
-        sent: minimalData
+        sent: minimalData  // Now minimalData is in scope
       });
       setError(err.response?.data?.error || err.message);
     } finally {
