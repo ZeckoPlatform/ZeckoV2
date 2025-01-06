@@ -77,34 +77,36 @@ const PostLead = () => {
     setIsSubmitting(true);
     setError('');
 
-    // Create the minimal data object at the top of the function
-    const minimalData = {
-      title: formData.title,
-      description: formData.description,
-      category: formData.category,
-      subcategory: formData.subcategory,
-      budget: {
-        min: 100,
-        max: 1000,
-        currency: "GBP"
-      }
-    };
-
     try {
-      // Log the minimal data
-      console.log('Sending minimal data:', minimalData);
+      // Create the minimal data object with explicit number values
+      const minimalData = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        category: formData.category,
+        subcategory: formData.subcategory,
+        budget: {
+          min: Number(100),  // Explicit number conversion
+          max: Number(1000), // Explicit number conversion
+          currency: "GBP"
+        }
+      };
 
-      // Submit with just the required fields
+      // Validate the data before sending
+      if (!minimalData.title || !minimalData.description || !minimalData.category || !minimalData.subcategory) {
+        throw new Error('Please fill in all required fields');
+      }
+
+      // Debug log
+      console.log('Sending data:', JSON.stringify(minimalData, null, 2));
+
       const response = await api.post('/api/leads', minimalData);
       console.log('Success:', response.data);
       navigate('/dashboard');
     } catch (err) {
-      // Log the complete error details
       console.error('API Error:', {
-        status: err.response?.status,
+        error: err.message,
         data: err.response?.data,
-        headers: err.response?.headers,
-        sent: minimalData  // Now minimalData is in scope
+        sent: minimalData
       });
       setError(err.response?.data?.error || err.message);
     } finally {
@@ -120,6 +122,18 @@ const PostLead = () => {
     setFormData(prev => ({
       ...prev,
       subcategory: value
+    }));
+  };
+
+  // Update budget handler to ensure proper number values
+  const handleBudgetChange = (field) => (e) => {
+    const value = parseInt(e.target.value.replace(/\D/g, ''), 10) || 0;
+    setFormData(prev => ({
+      ...prev,
+      budget: {
+        ...prev.budget,
+        [field]: value
+      }
     }));
   };
 
@@ -197,26 +211,25 @@ const PostLead = () => {
           <FormGroup>
             <Label htmlFor="budgetMin">Minimum Budget*</Label>
             <Input
-              type="text"
-              pattern="\d*"
+              type="number"
               id="budgetMin"
               name="budgetMin"
               value={formData.budget.min}
-              onChange={(e) => setFormData(prev => ({ ...prev, budget: { ...prev.budget, min: parseInt(e.target.value.replace(/\D/g, ''), 10) || 0 } }))}
+              onChange={handleBudgetChange('min')}
+              min="0"
               required
-              placeholder="Min budget"
             />
           </FormGroup>
           <FormGroup>
             <Label htmlFor="budgetMax">Maximum Budget*</Label>
             <Input
-              type="text"
+              type="number"
               id="budgetMax"
               name="budgetMax"
               value={formData.budget.max}
-              onChange={(e) => setFormData(prev => ({ ...prev, budget: { ...prev.budget, max: parseInt(e.target.value.replace(/\D/g, ''), 10) || 0 } }))}
+              onChange={handleBudgetChange('max')}
+              min="0"
               required
-              placeholder="Max budget"
             />
           </FormGroup>
         </TwoColumnGroup>
