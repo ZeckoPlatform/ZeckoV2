@@ -65,20 +65,31 @@ const EmptyState = styled.div`
 const Dashboard = () => {
   const { user } = useAuth();
   const [leads, setLeads] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchUserLeads();
-  }, [user]);
+    const fetchLeads = async () => {
+      try {
+        if (!user?._id) return;
+        
+        const response = await api.get(endpoints.leads.list, {
+          params: {
+            userId: user._id
+          }
+        });
+        setLeads(response.data);
+      } catch (err) {
+        console.error('Error fetching leads:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const fetchUserLeads = async () => {
-    try {
-      const response = await api.get(`${endpoints.leads.list}?userId=${user.id}`);
-      setLeads(response.data);
-    } catch (error) {
-      console.error('Error fetching leads:', error);
-    }
-  };
+    fetchLeads();
+  }, [user]);
 
   const handlePostLead = () => {
     navigate('/post-lead');
@@ -113,7 +124,11 @@ const Dashboard = () => {
       </DashboardHeader>
 
       <DashboardCard>
-        {leads.length > 0 ? (
+        {loading ? (
+          <p>Loading leads...</p>
+        ) : error ? (
+          <p>Error: {error}</p>
+        ) : leads.length > 0 ? (
           <LeadsList>
             {leads.map((lead) => (
               <LeadItem key={lead._id}>

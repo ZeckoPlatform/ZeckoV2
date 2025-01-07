@@ -7,7 +7,12 @@ const Lead = require('../models/Lead');
 router.get('/', auth, async (req, res) => {
     try {
         const { userId } = req.query;
-        const query = userId ? { client: userId } : {};
+        let query = {};
+        
+        // Only filter by userId if it's provided and valid
+        if (userId && userId !== 'undefined') {
+            query.client = userId;
+        }
         
         const leads = await Lead.find(query)
             .populate('category')
@@ -18,7 +23,10 @@ router.get('/', auth, async (req, res) => {
         res.json(leads);
     } catch (error) {
         console.error('Error fetching leads:', error);
-        res.status(500).json({ message: 'Error fetching leads' });
+        res.status(500).json({ 
+            message: 'Error fetching leads',
+            error: error.message 
+        });
     }
 });
 
