@@ -69,25 +69,25 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchLeads = async () => {
-      try {
-        if (!user?._id) return;
-        
-        const response = await api.get(endpoints.leads.list, {
-          params: {
-            userId: user._id
-          }
-        });
-        setLeads(response.data);
-      } catch (err) {
-        console.error('Error fetching leads:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchLeads = async () => {
+    try {
+      if (!user?._id) return;
+      
+      const response = await api.get(endpoints.leads.list, {
+        params: {
+          userId: user._id
+        }
+      });
+      setLeads(response.data);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching leads:', err);
+      setError(err.message);
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchLeads();
   }, [user]);
 
@@ -103,7 +103,7 @@ const Dashboard = () => {
     if (window.confirm('Are you sure you want to delete this lead?')) {
       try {
         await api.delete(`${endpoints.leads.delete}/${leadId}`);
-        fetchUserLeads(); // Refresh the leads list
+        fetchLeads();
       } catch (error) {
         console.error('Error deleting lead:', error);
       }
