@@ -262,50 +262,29 @@ router.get('/profile', auth, async (req, res) => {
   }
 });
 
-router.put('/profile', auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id || req.user.userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+router.patch('/profile', auth, async (req, res) => {
+    try {
+        const updates = req.body;
+        const allowedUpdates = ['name', 'username', 'phone', 'bio', 'businessProfile', 'preferences'];
+        
+        // Filter out any fields that aren't in allowedUpdates
+        const filteredUpdates = Object.keys(updates)
+            .filter(key => allowedUpdates.includes(key))
+            .reduce((obj, key) => {
+                obj[key] = updates[key];
+                return obj;
+            }, {});
+
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            filteredUpdates,
+            { new: true }
+        );
+
+        res.json(user);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
     }
-
-    const { name, phone, bio } = req.body;
-
-    // Update basic user fields
-    if (name) user.name = name;
-
-    // Initialize profile if it doesn't exist
-    if (!user.profile) {
-      user.profile = {};
-    }
-
-    // Update profile fields
-    if (phone !== undefined) user.profile.phone = phone;
-    if (bio !== undefined) user.profile.bio = bio;
-
-    // Save without validation for accountType
-    await user.save({ validateModifiedOnly: true });
-
-    // Return updated user without sensitive information
-    const userResponse = {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      username: user.username,
-      avatarUrl: user.avatarUrl,
-      profile: user.profile,
-      role: user.role,
-      accountType: user.accountType
-    };
-
-    res.json(userResponse);
-  } catch (error) {
-    console.error('Profile update error:', error);
-    res.status(500).json({ 
-      message: 'Error updating profile',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
 });
 
 // Delete account

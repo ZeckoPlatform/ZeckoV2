@@ -42,7 +42,7 @@ const Profile = () => {
         email: user?.email || '',
         phone: user?.phone || '',
         bio: user?.bio || '',
-        businessProfile: user.businessProfile || {
+        businessProfile: user?.businessProfile || {
             companyName: '',
             businessType: '',
             services: [],
@@ -79,7 +79,7 @@ const Profile = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await api.patch('/api/users/profile', {
+            const response = await api.patch(endpoints.users.profile, {
                 ...formData,
                 username: formData.username.trim()
             });
