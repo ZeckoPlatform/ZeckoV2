@@ -135,8 +135,8 @@ const Dashboard = () => {
                 <LeadContent>
                   <LeadTitle>{lead.title}</LeadTitle>
                   <LeadDetails>
-                    <span>Category: {lead.category}</span>
-                    <span>Budget: £{lead.budget}</span>
+                    <span>Category: {lead.category?.name || 'Uncategorized'}</span>
+                    <span>Budget: £{lead.budget?.min || 0} - £{lead.budget?.max || 0}</span>
                     <span>Posted: {new Date(lead.createdAt).toLocaleDateString()}</span>
                     <span>Status: {lead.status}</span>
                   </LeadDetails>
