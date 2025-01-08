@@ -84,6 +84,18 @@ const ProductDetail = ({ product }) => {
                         </ImageList>
                     </Box>
                 )}
+
+                {product?.location && (
+                    <Grid item xs={12}>
+                        <Typography variant="h6" gutterBottom>
+                            Location
+                        </Typography>
+                        <Typography>
+                            {product.location?.city}
+                            {product.location?.country && `, ${product.location.country}`}
+                        </Typography>
+                    </Grid>
+                )}
             </Grid>
             
             <Grid item xs={12} md={6}>

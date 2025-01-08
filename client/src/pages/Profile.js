@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Container,
     Grid,
@@ -11,10 +11,13 @@ import {
     Tab,
     FormControlLabel,
     Switch,
-    Chip
+    Chip,
+    Alert,
+    Snackbar
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { useService } from '../contexts/ServiceContext';
+import api from '../services/api';
 import styled from 'styled-components';
 
 const StyledPaper = styled(Paper)`
@@ -36,6 +39,10 @@ const Profile = () => {
     const { user, updateUser } = useAuth();
     const { categories } = useService();
     const [tabValue, setTabValue] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(false);
+    
     const [formData, setFormData] = useState({
         name: user?.name || '',
         username: user?.username || '',
@@ -50,13 +57,27 @@ const Profile = () => {
                 radius: 0,
                 locations: []
             }
+        },
+        preferences: user?.preferences || {
+            emailNotifications: true
         }
     });
-    const [isEditing, setIsEditing] = useState(false);
-    const [editedUsername, setEditedUsername] = useState(user?.username || '');
-    const [editedName, setEditedName] = useState(user?.name || '');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+
+    // Update form data when user data changes
+    useEffect(() => {
+        if (user) {
+            setFormData(prev => ({
+                ...prev,
+                name: user.name || '',
+                username: user.username || '',
+                email: user.email || '',
+                phone: user.phone || '',
+                bio: user.bio || '',
+                businessProfile: user.businessProfile || prev.businessProfile,
+                preferences: user.preferences || prev.preferences
+            }));
+        }
+    }, [user]);
 
     const handleTabChange = (event, newValue) => {
         setTabValue(newValue);
@@ -81,54 +102,29 @@ const Profile = () => {
         }));
     };
 
-    const handleEdit = () => {
-        setIsEditing(true);
-    };
-
-    const handleCancel = () => {
-        setIsEditing(false);
-        setEditedUsername(user?.username || '');
-        setEditedName(user?.name || '');
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
         setError(null);
-    };
 
-    const handleSave = async () => {
         try {
-            setLoading(true);
-            setError(null);
-
-            const response = await api.patch(endpoints.users.profile, {
-                username: editedUsername,
-                name: editedName
+            const response = await api.patch('/api/users/profile', {
+                name: formData.name,
+                username: formData.username,
+                phone: formData.phone,
+                bio: formData.bio,
+                businessProfile: formData.businessProfile,
+                preferences: formData.preferences
             });
 
             if (response.data) {
                 updateUser(response.data);
-                setIsEditing(false);
+                setSuccess(true);
             }
         } catch (err) {
             setError(err.response?.data?.message || 'Error updating profile');
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await api.patch(endpoints.users.profile, {
-                name: formData.name,
-                username: formData.username,
-                phone: formData.phone,
-                bio: formData.bio,
-                businessProfile: formData.businessProfile
-            });
-
-            if (response.data) {
-                updateUser(response.data);
-            }
-        } catch (error) {
-            console.error('Error updating profile:', error);
         }
     };
 
@@ -142,7 +138,7 @@ const Profile = () => {
                         centered
                     >
                         <Tab label="Profile" />
-                        {user.role === 'vendor' && <Tab label="Business Profile" />}
+                        {user?.role === 'vendor' && <Tab label="Business Profile" />}
                         <Tab label="Settings" />
                     </Tabs>
 
@@ -156,6 +152,7 @@ const Profile = () => {
                                         name="name"
                                         value={formData.name}
                                         onChange={handleInputChange}
+                                        required
                                     />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
@@ -165,6 +162,7 @@ const Profile = () => {
                                         name="username"
                                         value={formData.username}
                                         onChange={handleInputChange}
+                                        required
                                         helperText="You can change your username"
                                     />
                                 </Grid>
@@ -204,7 +202,7 @@ const Profile = () => {
                         </StyledPaper>
                     </TabPanel>
 
-                    {user.role === 'vendor' && (
+                    {user?.role === 'vendor' && (
                         <TabPanel value={tabValue} index={1}>
                             <StyledPaper>
                                 <Grid container spacing={3}>
@@ -246,7 +244,7 @@ const Profile = () => {
                         </TabPanel>
                     )}
 
-                    <TabPanel value={tabValue} index={user.role === 'vendor' ? 2 : 1}>
+                    <TabPanel value={tabValue} index={user?.role === 'vendor' ? 2 : 1}>
                         <StyledPaper>
                             <Grid container spacing={3}>
                                 <Grid item xs={12}>
@@ -278,12 +276,33 @@ const Profile = () => {
                             variant="contained"
                             color="primary"
                             size="large"
+                            disabled={loading}
                         >
-                            Save Changes
+                            {loading ? 'Saving...' : 'Save Changes'}
                         </Button>
                     </Box>
                 </form>
             </Box>
+
+            <Snackbar 
+                open={success} 
+                autoHideDuration={6000} 
+                onClose={() => setSuccess(false)}
+            >
+                <Alert severity="success" onClose={() => setSuccess(false)}>
+                    Profile updated successfully!
+                </Alert>
+            </Snackbar>
+
+            <Snackbar 
+                open={!!error} 
+                autoHideDuration={6000} 
+                onClose={() => setError(null)}
+            >
+                <Alert severity="error" onClose={() => setError(null)}>
+                    {error}
+                </Alert>
+            </Snackbar>
         </Container>
     );
 };
