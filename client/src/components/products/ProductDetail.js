@@ -40,6 +40,15 @@ const ProductDetail = ({ product }) => {
         // Implement add to cart functionality
     };
 
+    // Early return if no product
+    if (!product) {
+        return (
+            <Box p={4}>
+                <Typography>Product not found</Typography>
+            </Box>
+        );
+    }
+
     return (
         <Grid container spacing={4}>
             <Grid item xs={12} md={6}>
@@ -85,16 +94,16 @@ const ProductDetail = ({ product }) => {
                     </Box>
                 )}
 
-                {product?.location && (
-                    <Grid item xs={12}>
+                {product?.location?.city && (
+                    <Box mt={3}>
                         <Typography variant="h6" gutterBottom>
                             Location
                         </Typography>
                         <Typography>
-                            {product.location?.city}
+                            {product.location.city}
                             {product.location?.country && `, ${product.location.country}`}
                         </Typography>
-                    </Grid>
+                    </Box>
                 )}
             </Grid>
             
