@@ -20,7 +20,7 @@ import PostLead from './pages/PostLead';
 import DashboardProfile from './components/Dashboard/Profile';
 import EditLead from './pages/EditLead';
 import LeadDetail from './components/leads/LeadDetail';
-import ProductDetails from './components/products/ProductDetails';
+import ProductDetails from './pages/ProductDetails';
 
 // PrivateRoute component
 const PrivateRoute = ({ children }) => {

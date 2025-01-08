@@ -6,8 +6,8 @@ import {
     CircularProgress,
     Typography
 } from '@mui/material';
-import api from '../../services/api';
-import ProductDetail from './ProductDetail';
+import api from '../services/api';
+import ProductDetail from '../components/products/ProductDetail';
 
 const ProductDetails = () => {
     const { id } = useParams();
