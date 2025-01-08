@@ -20,8 +20,7 @@ import PostLead from './pages/PostLead';
 import DashboardProfile from './components/Dashboard/Profile';
 import EditLead from './pages/EditLead';
 import LeadDetail from './components/leads/LeadDetail';
-import JobDetails from './pages/JobDetails';
-import ProductDetails from './pages/ProductDetails';
+import ProductDetails from './components/products/ProductDetails';
 
 // PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -105,37 +104,29 @@ function AppContent() {
                                 </PrivateRoute>
                             } />
 
-                            {/* Main profile page route */}
-                            <Route 
-                                path="/profile" 
-                                element={
-                                    <PrivateRoute>
-                                        <Layout>
-                                            <UserProfile />
-                                        </Layout>
-                                    </PrivateRoute>
-                                } 
-                            />
+                            {/* Profile routes */}
+                            <Route path="/profile" element={
+                                <PrivateRoute>
+                                    <Layout>
+                                        <UserProfile />
+                                    </Layout>
+                                </PrivateRoute>
+                            } />
+                            <Route path="/dashboard/profile" element={
+                                <PrivateRoute>
+                                    <Layout>
+                                        <Profile />
+                                    </Layout>
+                                </PrivateRoute>
+                            } />
 
-                            {/* Dashboard profile route */}
-                            <Route 
-                                path="/dashboard/profile" 
-                                element={
-                                    <PrivateRoute>
-                                        <Layout>
-                                            <Profile />
-                                        </Layout>
-                                    </PrivateRoute>
-                                } 
-                            />
+                            {/* Lead and Product routes */}
+                            <Route path="/lead/edit/:id" element={<EditLead />} />
+                            <Route path="/lead/:id" element={<LeadDetail />} />
+                            <Route path="/product/:id" element={<ProductDetails />} />
 
                             {/* Catch all route */}
                             <Route path="*" element={<Navigate to="/" replace />} />
-
-                            <Route path="/lead/edit/:id" element={<EditLead />} />
-                            <Route path="/lead/:id" element={<LeadDetail />} />
-                            <Route path="/job/:id" element={<JobDetails />} />
-                            <Route path="/product/:id" element={<ProductDetails />} />
                         </Routes>
                     </ServiceProvider>
                 </ServiceCategoryProvider>

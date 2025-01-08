@@ -1,64 +1,74 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import styled from 'styled-components';
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+    Box,
+    Container,
+    CircularProgress,
+    Typography
+} from '@mui/material';
+import api from '../../services/api';
+import ProductDetail from './ProductDetail';
 
-const ProductContainer = styled.div`
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-`;
+const ProductDetails = () => {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const [product, setProduct] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-const ProductInfo = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-top: 20px;
-`;
+    useEffect(() => {
+        const fetchProduct = async () => {
+            try {
+                const response = await api.get(`/api/products/${id}`);
+                setProduct(response.data);
+                setLoading(false);
+            } catch (error) {
+                console.error('Error fetching product:', error);
+                setError(error.message);
+                setLoading(false);
+            }
+        };
 
-function ProductDetails() {
-  const { id } = useParams();
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+        fetchProduct();
+    }, [id]);
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const response = await fetch(`/api/products/${id}`);
-        if (!response.ok) {
-          throw new Error('Product not found');
-        }
-        const data = await response.json();
-        setProduct(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (loading) {
+        return (
+            <Container>
+                <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+                    <CircularProgress />
+                </Box>
+            </Container>
+        );
+    }
 
-    fetchProduct();
-  }, [id]);
+    if (error) {
+        return (
+            <Container>
+                <Box py={4}>
+                    <Typography color="error">Error: {error}</Typography>
+                </Box>
+            </Container>
+        );
+    }
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
-  if (!product) return <div>Product not found</div>;
+    if (!product) {
+        return (
+            <Container>
+                <Box py={4}>
+                    <Typography>Product not found</Typography>
+                </Box>
+            </Container>
+        );
+    }
 
-  return (
-    <ProductContainer>
-      <h1>{product.name}</h1>
-      <ProductInfo>
-        <div>
-          <img src={product.image} alt={product.name} />
-        </div>
-        <div>
-          <p>{product.description}</p>
-          <p>Price: ${product.price}</p>
-          <button>Add to Cart</button>
-        </div>
-      </ProductInfo>
-    </ProductContainer>
-  );
-}
+    return (
+        <Container>
+            <Box py={4}>
+                <ProductDetail product={product} />
+            </Box>
+        </Container>
+    );
+};
 
 export default ProductDetails;
