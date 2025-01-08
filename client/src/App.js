@@ -19,6 +19,9 @@ import UserProfile from './pages/UserProfile';
 import PostLead from './pages/PostLead';
 import DashboardProfile from './components/Dashboard/Profile';
 import EditLead from './pages/EditLead';
+import LeadDetails from './pages/LeadDetails';
+import JobDetails from './pages/JobDetails';
+import ProductDetails from './pages/ProductDetails';
 
 // PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -130,6 +133,9 @@ function AppContent() {
                             <Route path="*" element={<Navigate to="/" replace />} />
 
                             <Route path="/lead/edit/:id" element={<EditLead />} />
+                            <Route path="/lead/:id" element={<LeadDetails />} />
+                            <Route path="/job/:id" element={<JobDetails />} />
+                            <Route path="/product/:id" element={<ProductDetails />} />
                         </Routes>
                     </ServiceProvider>
                 </ServiceCategoryProvider>

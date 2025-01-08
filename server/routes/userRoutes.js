@@ -263,28 +263,34 @@ router.get('/profile', auth, async (req, res) => {
 });
 
 router.patch('/profile', auth, async (req, res) => {
-  try {
-    const { username, name } = req.body;
-    
-    // Check if username is already taken
-    if (username !== req.user.username) {
-      const existingUser = await User.findOne({ username });
-      if (existingUser) {
-        return res.status(400).json({ message: 'Username already taken' });
-      }
+    try {
+        const { username, name, phone, bio, businessProfile } = req.body;
+
+        // Check if new username is already taken (if username is being changed)
+        if (username !== req.user.username) {
+            const existingUser = await User.findOne({ username });
+            if (existingUser) {
+                return res.status(400).json({ message: 'Username already taken' });
+            }
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user.id,
+            {
+                username,
+                name,
+                phone,
+                bio,
+                businessProfile
+            },
+            { new: true }
+        ).select('-password');
+
+        res.json(updatedUser);
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        res.status(500).json({ message: 'Error updating profile' });
     }
-
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      { username, name },
-      { new: true }
-    ).select('-password');
-
-    res.json(user);
-  } catch (error) {
-    console.error('Error updating profile:', error);
-    res.status(500).json({ message: 'Error updating profile' });
-  }
 });
 
 // Delete account

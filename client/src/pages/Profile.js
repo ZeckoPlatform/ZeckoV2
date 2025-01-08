@@ -113,18 +113,39 @@ const Profile = () => {
         }
     };
 
-    return (
-        <Container>
-            <Box py={4}>
-                <Typography variant="h4" gutterBottom>Profile Settings</Typography>
-                
-                <Tabs value={tabValue} onChange={handleTabChange}>
-                    <Tab label="Basic Information" />
-                    {user.role === 'vendor' && <Tab label="Business Profile" />}
-                    <Tab label="Preferences" />
-                </Tabs>
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await api.patch(endpoints.users.profile, {
+                name: formData.name,
+                username: formData.username,
+                phone: formData.phone,
+                bio: formData.bio,
+                businessProfile: formData.businessProfile
+            });
 
+            if (response.data) {
+                updateUser(response.data);
+            }
+        } catch (error) {
+            console.error('Error updating profile:', error);
+        }
+    };
+
+    return (
+        <Container maxWidth="lg">
+            <Box py={4}>
                 <form onSubmit={handleSubmit}>
+                    <Tabs
+                        value={tabValue}
+                        onChange={handleTabChange}
+                        centered
+                    >
+                        <Tab label="Profile" />
+                        {user.role === 'vendor' && <Tab label="Business Profile" />}
+                        <Tab label="Settings" />
+                    </Tabs>
+
                     <TabPanel value={tabValue} index={0}>
                         <StyledPaper>
                             <Grid container spacing={3}>
@@ -153,16 +174,18 @@ const Profile = () => {
                                         label="Email"
                                         name="email"
                                         value={formData.email}
-                                        disabled
+                                        InputProps={{
+                                            readOnly: true,
+                                        }}
                                         helperText="Email cannot be changed"
                                     />
                                 </Grid>
-                                <Grid item xs={12}>
+                                <Grid item xs={12} sm={6}>
                                     <TextField
                                         fullWidth
                                         label="Phone"
                                         name="phone"
-                                        value={formData.phone || ''}
+                                        value={formData.phone}
                                         onChange={handleInputChange}
                                     />
                                 </Grid>
@@ -171,7 +194,7 @@ const Profile = () => {
                                         fullWidth
                                         label="Bio"
                                         name="bio"
-                                        value={formData.bio || ''}
+                                        value={formData.bio}
                                         onChange={handleInputChange}
                                         multiline
                                         rows={4}

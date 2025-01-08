@@ -279,21 +279,20 @@ const Dashboard = () => {
                         value={editFormData.budget.max}
                         onChange={handleInputChange}
                     />
-                    <FormControl fullWidth margin="normal">
-                        <InputLabel id="status-label">Status</InputLabel>
-                        <Select
-                            labelId="status-label"
-                            name="status"
-                            value={editFormData.status}
-                            onChange={handleInputChange}
-                            sx={{ mt: 1 }}
-                        >
-                            <MenuItem value="open">Open</MenuItem>
-                            <MenuItem value="in_progress">In Progress</MenuItem>
-                            <MenuItem value="completed">Completed</MenuItem>
-                            <MenuItem value="cancelled">Cancelled</MenuItem>
-                        </Select>
-                    </FormControl>
+                    <TextField
+                        select
+                        margin="dense"
+                        name="status"
+                        label="Status"
+                        fullWidth
+                        value={editFormData.status}
+                        onChange={handleInputChange}
+                    >
+                        <MenuItem value="open">Open</MenuItem>
+                        <MenuItem value="in_progress">In Progress</MenuItem>
+                        <MenuItem value="completed">Completed</MenuItem>
+                        <MenuItem value="cancelled">Cancelled</MenuItem>
+                    </TextField>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleEditClose}>Cancel</Button>

@@ -114,8 +114,79 @@ const SimpleCarousel = ({ items, type }) => {
   const currentItem = items[activeStep];
   if (!currentItem) return null;
 
-  const handleViewLead = (leadId) => {
-    navigate(`/leads/${leadId}`);
+  const handleViewItem = (e, itemId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    switch(type) {
+      case 'lead':
+        navigate(`/lead/${itemId}`);
+        break;
+      case 'job':
+        navigate(`/job/${itemId}`);
+        break;
+      case 'product':
+        navigate(`/product/${itemId}`);
+        break;
+      default:
+        console.warn('Unknown item type:', type);
+    }
+  };
+
+  const renderItemContent = (item) => {
+    switch(type) {
+      case 'lead':
+        return (
+          <>
+            <LeadTitle>{item.title}</LeadTitle>
+            <LeadDescription>
+              {item.description?.substring(0, 150)}
+              {item.description?.length > 150 ? '...' : ''}
+            </LeadDescription>
+            <LeadMeta>
+              <span>
+                Budget: ${item.budget?.min || 0} - ${item.budget?.max || 0}
+              </span>
+              <span>
+                Posted: {new Date(item.createdAt).toLocaleDateString()}
+              </span>
+            </LeadMeta>
+          </>
+        );
+      
+      case 'job':
+        return (
+          <>
+            <LeadTitle>{item.title}</LeadTitle>
+            <LeadDescription>
+              {item.description?.substring(0, 150)}
+              {item.description?.length > 150 ? '...' : ''}
+            </LeadDescription>
+            <LeadMeta>
+              <span>{item.location}</span>
+              <span>Posted: {new Date(item.createdAt).toLocaleDateString()}</span>
+            </LeadMeta>
+          </>
+        );
+      
+      case 'product':
+        return (
+          <>
+            <LeadTitle>{item.name}</LeadTitle>
+            <LeadDescription>
+              {item.description?.substring(0, 150)}
+              {item.description?.length > 150 ? '...' : ''}
+            </LeadDescription>
+            <LeadMeta>
+              <span>Price: ${item.price}</span>
+              {item.category && <span>Category: {item.category}</span>}
+            </LeadMeta>
+          </>
+        );
+      
+      default:
+        return null;
+    }
   };
 
   return (
@@ -126,24 +197,12 @@ const SimpleCarousel = ({ items, type }) => {
         onTouchEnd={onTouchEnd}
       >
         <div>
-          <LeadTitle>{currentItem.title}</LeadTitle>
-          <LeadDescription>
-            {currentItem.description?.substring(0, 150)}
-            {currentItem.description?.length > 150 ? '...' : ''}
-          </LeadDescription>
-          <LeadMeta>
-            <span>
-              Budget: ${currentItem.budget?.min || 0} - ${currentItem.budget?.max || 0}
-            </span>
-            <span>
-              Posted: {new Date(currentItem.createdAt).toLocaleDateString()}
-            </span>
-          </LeadMeta>
+          {renderItemContent(currentItem)}
         </div>
         <Button
           variant="contained"
           color="primary"
-          onClick={() => handleViewLead(currentItem._id)}
+          onClick={(e) => handleViewItem(e, currentItem._id)}
           sx={{ alignSelf: 'flex-end', mt: 2 }}
         >
           View Details
