@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { HeroSection } from '../components/HeroSection';
 import SimpleCarousel from '../components/SimpleCarousel';
-import api from '../services/api';
+import api, { endpoints } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
 const Button = styled.button`
@@ -48,6 +48,7 @@ const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [latestLeads, setLatestLeads] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -91,6 +92,21 @@ const Home = () => {
     };
 
     fetchFeaturedItems();
+  }, []);
+
+  useEffect(() => {
+    const fetchLatestLeads = async () => {
+      try {
+        const response = await api.get(endpoints.leads.list);
+        setLatestLeads(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching latest leads:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchLatestLeads();
   }, []);
 
   const handleAccountTypeSelection = (type) => {
@@ -179,6 +195,18 @@ const Home = () => {
             <SimpleCarousel 
               items={featuredProducts} 
               type="product"
+            />
+          )}
+        </Section>
+
+        <Section>
+          <SectionTitle>Latest Leads</SectionTitle>
+          {loading ? (
+            <p>Loading latest leads...</p>
+          ) : (
+            <SimpleCarousel 
+              items={latestLeads} 
+              type="lead"
             />
           )}
         </Section>

@@ -14,11 +14,17 @@ router.get('/', auth, async (req, res) => {
             query.client = userId;
         }
         
+        // Add status filter to only show active/public leads for carousel
+        if (!userId) {
+            query.status = 'open';  // or whatever status you want to show
+            query.visibility = 'public';  // only show public leads
+        }
+        
         const leads = await Lead.find(query)
             .populate('category')
             .populate('client', 'username businessName')
-            .sort({ createdAt: -1 })
-            .limit(10);
+            .sort({ createdAt: -1 })  // Sort by newest first
+            .limit(10);  // Limit to 10 results
             
         res.json(leads);
     } catch (error) {
@@ -160,6 +166,26 @@ router.post('/:id/proposals', auth, async (req, res) => {
     } catch (error) {
         console.error('Error submitting proposal:', error);
         res.status(400).json({ message: 'Error submitting proposal' });
+    }
+});
+
+// Put lead
+router.put('/:id', auth, async (req, res) => {
+    try {
+        const lead = await Lead.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true }
+        );
+        
+        if (!lead) {
+            return res.status(404).json({ message: 'Lead not found' });
+        }
+        
+        res.json(lead);
+    } catch (error) {
+        console.error('Error updating lead:', error);
+        res.status(500).json({ message: 'Error updating lead' });
     }
 });
 

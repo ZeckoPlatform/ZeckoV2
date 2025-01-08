@@ -18,6 +18,7 @@ import Profile from './components/Dashboard/Profile';
 import UserProfile from './pages/UserProfile';
 import PostLead from './pages/PostLead';
 import DashboardProfile from './components/Dashboard/Profile';
+import EditLead from './pages/EditLead';
 
 // PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -127,6 +128,8 @@ function AppContent() {
 
                             {/* Catch all route */}
                             <Route path="*" element={<Navigate to="/" replace />} />
+
+                            <Route path="/lead/edit/:id" element={<EditLead />} />
                         </Routes>
                     </ServiceProvider>
                 </ServiceCategoryProvider>
