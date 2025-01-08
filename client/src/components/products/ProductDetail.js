@@ -11,13 +11,10 @@ import {
     Tabs,
     Tab,
     Chip,
-    Avatar
+    Avatar,
+    ImageList,
+    ImageListItem
 } from '@mui/material';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Thumbs } from 'swiper';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/thumbs';
 import styled from 'styled-components';
 
 const ProductImage = styled(Box)`
@@ -26,20 +23,6 @@ const ProductImage = styled(Box)`
     position: relative;
     background-size: cover;
     background-position: center;
-`;
-
-const ThumbImage = styled(Box)`
-    width: 100%;
-    padding-top: 100%;
-    background-size: cover;
-    background-position: center;
-    cursor: pointer;
-    opacity: ${props => props.active ? 1 : 0.6};
-    transition: opacity 0.2s;
-    
-    &:hover {
-        opacity: 1;
-    }
 `;
 
 const TabPanel = ({ children, value, index }) => (
@@ -51,7 +34,7 @@ const TabPanel = ({ children, value, index }) => (
 const ProductDetail = ({ product }) => {
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState(0);
-    const [thumbsSwiper, setThumbsSwiper] = useState(null);
+    const [selectedImage, setSelectedImage] = useState(0);
 
     const handleAddToCart = () => {
         // Implement add to cart functionality
@@ -60,58 +43,70 @@ const ProductDetail = ({ product }) => {
     return (
         <Grid container spacing={4}>
             <Grid item xs={12} md={6}>
-                <Swiper
-                    modules={[Navigation, Thumbs]}
-                    navigation
-                    thumbs={{ swiper: thumbsSwiper }}
-                >
-                    {product.images.map((image, index) => (
-                        <SwiperSlide key={index}>
-                            <ProductImage
-                                style={{ backgroundImage: `url(${image.url})` }}
-                            />
-                        </SwiperSlide>
-                    ))}
-                </Swiper>
-                <Box mt={2}>
-                    <Swiper
-                        onSwiper={setThumbsSwiper}
-                        spaceBetween={10}
-                        slidesPerView={4}
-                        watchSlidesProgress
-                    >
-                        {product.images.map((image, index) => (
-                            <SwiperSlide key={index}>
-                                <ThumbImage
-                                    style={{ backgroundImage: `url(${image.url})` }}
-                                />
-                            </SwiperSlide>
-                        ))}
-                    </Swiper>
-                </Box>
+                <ProductImage
+                    component="img"
+                    src={product?.images?.[selectedImage]?.url || '/placeholder.jpg'}
+                    alt={product?.name}
+                    sx={{
+                        width: '100%',
+                        height: 'auto',
+                        objectFit: 'cover'
+                    }}
+                />
+                
+                {product?.images?.length > 1 && (
+                    <Box mt={2}>
+                        <ImageList cols={4} gap={8}>
+                            {product.images.map((image, index) => (
+                                <ImageListItem 
+                                    key={index}
+                                    onClick={() => setSelectedImage(index)}
+                                    sx={{ 
+                                        cursor: 'pointer',
+                                        opacity: selectedImage === index ? 1 : 0.6,
+                                        '&:hover': {
+                                            opacity: 1
+                                        }
+                                    }}
+                                >
+                                    <img
+                                        src={image.url}
+                                        alt={`${product.name} view ${index + 1}`}
+                                        loading="lazy"
+                                        style={{ 
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: 'cover'
+                                        }}
+                                    />
+                                </ImageListItem>
+                            ))}
+                        </ImageList>
+                    </Box>
+                )}
             </Grid>
             
             <Grid item xs={12} md={6}>
                 <Typography variant="h4" gutterBottom>
-                    {product.name}
+                    {product?.name}
                 </Typography>
                 
                 <Box display="flex" alignItems="center" mb={2}>
                     <Rating 
-                        value={product.rating.average} 
+                        value={product?.rating?.average || 0} 
                         precision={0.5} 
                         readOnly 
                     />
                     <Typography variant="body2" color="textSecondary" ml={1}>
-                        ({product.rating.count} reviews)
+                        ({product?.rating?.count || 0} reviews)
                     </Typography>
                 </Box>
 
                 <Box mb={3}>
                     <Typography variant="h4" component="span">
-                        £{product.price.sale || product.price.regular}
+                        £{product?.price?.sale || product?.price?.regular || 0}
                     </Typography>
-                    {product.price.sale && (
+                    {product?.price?.sale && (
                         <Typography
                             variant="h6"
                             component="span"
@@ -124,7 +119,7 @@ const ProductDetail = ({ product }) => {
                 </Box>
 
                 <Typography variant="body1" paragraph>
-                    {product.shortDescription}
+                    {product?.shortDescription}
                 </Typography>
 
                 <Box mb={3}>
@@ -140,7 +135,7 @@ const ProductDetail = ({ product }) => {
                         variant="contained"
                         size="large"
                         onClick={handleAddToCart}
-                        disabled={!product.stock.quantity}
+                        disabled={!product?.stock?.quantity}
                     >
                         Add to Cart
                     </Button>
@@ -156,12 +151,12 @@ const ProductDetail = ({ product }) => {
                     </Tabs>
 
                     <TabPanel value={activeTab} index={0}>
-                        <Typography>{product.description}</Typography>
+                        <Typography>{product?.description}</Typography>
                     </TabPanel>
 
                     <TabPanel value={activeTab} index={1}>
                         <Grid container spacing={2}>
-                            {product.attributes.map((attr, index) => (
+                            {product?.attributes?.map((attr, index) => (
                                 <Grid item xs={12} key={index}>
                                     <Typography component="span" fontWeight="bold">
                                         {attr.name}:
