@@ -10,8 +10,6 @@ import {
     TextField,
     Tabs,
     Tab,
-    Chip,
-    Avatar,
     ImageList,
     ImageListItem
 } from '@mui/material';
@@ -40,7 +38,6 @@ const ProductDetail = ({ product }) => {
         // Implement add to cart functionality
     };
 
-    // Early return if no product
     if (!product) {
         return (
             <Box p={4}>
@@ -91,18 +88,6 @@ const ProductDetail = ({ product }) => {
                                 </ImageListItem>
                             ))}
                         </ImageList>
-                    </Box>
-                )}
-
-                {product?.location?.city && (
-                    <Box mt={3}>
-                        <Typography variant="h6" gutterBottom>
-                            Location
-                        </Typography>
-                        <Typography>
-                            {product.location.city}
-                            {product.location?.country && `, ${product.location.country}`}
-                        </Typography>
                     </Box>
                 )}
             </Grid>
