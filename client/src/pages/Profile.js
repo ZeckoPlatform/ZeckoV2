@@ -52,6 +52,11 @@ const Profile = () => {
             }
         }
     });
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedUsername, setEditedUsername] = useState(user?.username || '');
+    const [editedName, setEditedName] = useState(user?.name || '');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     const handleTabChange = (event, newValue) => {
         setTabValue(newValue);
@@ -76,19 +81,35 @@ const Profile = () => {
         }));
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleEdit = () => {
+        setIsEditing(true);
+    };
+
+    const handleCancel = () => {
+        setIsEditing(false);
+        setEditedUsername(user?.username || '');
+        setEditedName(user?.name || '');
+        setError(null);
+    };
+
+    const handleSave = async () => {
         try {
+            setLoading(true);
+            setError(null);
+
             const response = await api.patch(endpoints.users.profile, {
-                ...formData,
-                username: formData.username.trim()
+                username: editedUsername,
+                name: editedName
             });
-            
+
             if (response.data) {
                 updateUser(response.data);
+                setIsEditing(false);
             }
-        } catch (error) {
-            console.error('Error updating profile:', error);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Error updating profile');
+        } finally {
+            setLoading(false);
         }
     };
 

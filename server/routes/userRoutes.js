@@ -263,28 +263,28 @@ router.get('/profile', auth, async (req, res) => {
 });
 
 router.patch('/profile', auth, async (req, res) => {
-    try {
-        const updates = req.body;
-        const allowedUpdates = ['name', 'username', 'phone', 'bio', 'businessProfile', 'preferences'];
-        
-        // Filter out any fields that aren't in allowedUpdates
-        const filteredUpdates = Object.keys(updates)
-            .filter(key => allowedUpdates.includes(key))
-            .reduce((obj, key) => {
-                obj[key] = updates[key];
-                return obj;
-            }, {});
-
-        const user = await User.findByIdAndUpdate(
-            req.user.id,
-            filteredUpdates,
-            { new: true }
-        );
-
-        res.json(user);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
+  try {
+    const { username, name } = req.body;
+    
+    // Check if username is already taken
+    if (username !== req.user.username) {
+      const existingUser = await User.findOne({ username });
+      if (existingUser) {
+        return res.status(400).json({ message: 'Username already taken' });
+      }
     }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { username, name },
+      { new: true }
+    ).select('-password');
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ message: 'Error updating profile' });
+  }
 });
 
 // Delete account

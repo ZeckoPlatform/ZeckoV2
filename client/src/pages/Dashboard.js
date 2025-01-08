@@ -279,12 +279,14 @@ const Dashboard = () => {
                         value={editFormData.budget.max}
                         onChange={handleInputChange}
                     />
-                    <FormControl fullWidth margin="dense">
-                        <InputLabel>Status</InputLabel>
+                    <FormControl fullWidth margin="normal">
+                        <InputLabel id="status-label">Status</InputLabel>
                         <Select
+                            labelId="status-label"
                             name="status"
                             value={editFormData.status}
                             onChange={handleInputChange}
+                            sx={{ mt: 1 }}
                         >
                             <MenuItem value="open">Open</MenuItem>
                             <MenuItem value="in_progress">In Progress</MenuItem>
