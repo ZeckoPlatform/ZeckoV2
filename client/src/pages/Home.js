@@ -98,6 +98,7 @@ const Home = () => {
     const fetchLatestLeads = async () => {
       try {
         const response = await api.get(endpoints.leads.list);
+        console.log('Fetched leads for carousel:', response.data);
         setLatestLeads(response.data);
         setLoading(false);
       } catch (error) {
@@ -203,11 +204,13 @@ const Home = () => {
           <SectionTitle>Latest Leads</SectionTitle>
           {loading ? (
             <p>Loading latest leads...</p>
-          ) : (
+          ) : latestLeads.length > 0 ? (
             <SimpleCarousel 
               items={latestLeads} 
               type="lead"
             />
+          ) : (
+            <p>No leads available</p>
           )}
         </Section>
       </MainContent>

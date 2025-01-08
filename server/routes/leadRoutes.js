@@ -4,27 +4,26 @@ const { auth } = require('../middleware/auth');
 const Lead = require('../models/Lead');
 
 // Get all leads with filtering
-router.get('/', auth, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const { userId } = req.query;
         let query = {};
         
-        // Only filter by userId if it's provided and valid
         if (userId && userId !== 'undefined') {
             query.client = userId;
-        }
-        
-        // Add status filter to only show active/public leads for carousel
-        if (!userId) {
-            query.status = 'open';  // or whatever status you want to show
-            query.visibility = 'public';  // only show public leads
+        } else {
+            // For public carousel view
+            query = {
+                status: { $in: ['active', 'open'] },  // Accept both statuses
+                visibility: 'public'
+            };
         }
         
         const leads = await Lead.find(query)
             .populate('category')
             .populate('client', 'username businessName')
-            .sort({ createdAt: -1 })  // Sort by newest first
-            .limit(10);  // Limit to 10 results
+            .sort({ createdAt: -1 })
+            .limit(10);
             
         res.json(leads);
     } catch (error) {

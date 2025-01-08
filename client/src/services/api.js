@@ -28,7 +28,8 @@ export const endpoints = {
     create: '/api/leads',
     get: '/api/leads',
     update: '/api/leads',
-    delete: '/api/leads'
+    delete: '/api/leads',
+    latest: '/api/leads'
   }
 };
 
