@@ -262,34 +262,40 @@ router.get('/profile', auth, async (req, res) => {
   }
 });
 
-router.patch('/profile', auth, async (req, res) => {
+router.put('/profile', auth, async (req, res) => {
     try {
-        const { username, name, phone, bio, businessProfile } = req.body;
-
-        // Check if new username is already taken (if username is being changed)
-        if (username !== req.user.username) {
-            const existingUser = await User.findOne({ username });
-            if (existingUser) {
-                return res.status(400).json({ message: 'Username already taken' });
-            }
+        const { username, businessName, phone, location, bio } = req.body;
+        
+        // Check if username is already taken
+        const existingUser = await User.findOne({ 
+            username, 
+            _id: { $ne: req.user.id } 
+        });
+        
+        if (existingUser) {
+            return res.status(400).json({ 
+                error: 'Username is already taken' 
+            });
         }
 
-        const updatedUser = await User.findByIdAndUpdate(
+        const user = await User.findByIdAndUpdate(
             req.user.id,
             {
                 username,
-                name,
+                businessName,
                 phone,
-                bio,
-                businessProfile
+                location,
+                bio
             },
             { new: true }
         ).select('-password');
 
-        res.json(updatedUser);
+        res.json(user);
     } catch (error) {
-        console.error('Error updating profile:', error);
-        res.status(500).json({ message: 'Error updating profile' });
+        console.error('Profile update error:', error);
+        res.status(500).json({ 
+            error: 'Error updating profile' 
+        });
     }
 });
 

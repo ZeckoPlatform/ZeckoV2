@@ -20,37 +20,29 @@ const LeadItem = styled(ListItem)`
     }
 `;
 
-const StatusChip = styled(Chip)`
-    margin-right: 8px;
-`;
-
-const LeadsList = () => {
-    const { requests } = useService();
+const LeadsList = ({ leads = [] }) => {
     const navigate = useNavigate();
 
     const handleViewLead = (leadId) => {
-        navigate(`/provider/leads/${leadId}`);
+        navigate(`/leads/${leadId}`);
     };
 
     return (
         <List>
-            {requests.map((lead) => (
+            {leads.map((lead) => (
                 <LeadItem key={lead._id}>
                     <ListItemText
-                        primary={
-                            <Typography variant="subtitle1">
-                                {lead.title}
-                            </Typography>
-                        }
+                        primary={lead.title}
                         secondary={
                             <Box>
-                                <StatusChip 
-                                    size="small"
+                                <Chip
                                     label={lead.status}
+                                    size="small"
                                     color={lead.status === 'active' ? 'primary' : 'default'}
                                 />
                                 <Typography variant="body2" component="span">
-                                    {lead.location.city} • Posted {new Date(lead.createdAt).toLocaleDateString()}
+                                    {lead.location?.city ? `${lead.location.city} • ` : ''} 
+                                    Posted {new Date(lead.createdAt).toLocaleDateString()}
                                 </Typography>
                             </Box>
                         }

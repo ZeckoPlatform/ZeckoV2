@@ -34,12 +34,12 @@ const TabPanel = ({ children, value, index, ...other }) => (
 const Profile = () => {
     const { user, updateUser } = useAuth();
     const [formData, setFormData] = useState({
-        username: user?.username || '',
-        email: user?.email || '',
-        businessName: user?.businessName || '',
-        phone: user?.phone || '',
-        location: user?.location || '',
-        bio: user?.bio || ''
+        username: '',
+        email: '',
+        businessName: '',
+        phone: '',
+        location: '',
+        bio: ''
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -114,6 +114,7 @@ const Profile = () => {
                                     onChange={handleChange}
                                     required
                                     type="email"
+                                    disabled
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>

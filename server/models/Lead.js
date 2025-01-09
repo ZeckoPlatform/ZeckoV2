@@ -33,7 +33,7 @@ const leadSchema = new mongoose.Schema({
   }],
   status: {
     type: String,
-    enum: ['draft', 'active', 'assigned', 'completed', 'cancelled'],
+    enum: ['active', 'in-progress', 'completed', 'cancelled'],
     default: 'active'
   },
   visibility: {
@@ -90,6 +90,20 @@ leadSchema.pre('save', function(next) {
       const total = this.proposals.reduce((sum, proposal) => sum + proposal.amount.value, 0);
       this.metrics.averageProposal = total / this.proposals.length;
     }
+  }
+  next();
+});
+
+// Add a pre-save middleware to ensure location object exists
+leadSchema.pre('save', function(next) {
+  if (!this.location) {
+    this.location = {
+      address: '',
+      city: '',
+      state: '',
+      country: '',
+      postalCode: ''
+    };
   }
   next();
 });

@@ -41,7 +41,16 @@ router.get('/', async (req, res) => {
 // Create new lead
 router.post('/', auth, async (req, res) => {
     try {
-        const { category, subcategory } = req.body;
+        const { category, subcategory, location = {} } = req.body;
+
+        // Ensure location object has all required fields
+        const sanitizedLocation = {
+            address: location.address || '',
+            city: location.city || '',
+            state: location.state || '',
+            country: location.country || '',
+            postalCode: location.postalCode || ''
+        };
 
         // Validate category and subcategory
         if (!validateCategory(category)) {
@@ -54,14 +63,9 @@ router.post('/', auth, async (req, res) => {
 
         const lead = new Lead({
             ...req.body,
+            location: sanitizedLocation,
             client: req.user.id,
-            status: 'active',
-            location: {
-                ...req.body.location,
-                city: req.body.location?.city || '',
-                state: req.body.location?.state || '',
-                country: req.body.location?.country || ''
-            }
+            status: 'active'
         });
 
         await lead.save();
