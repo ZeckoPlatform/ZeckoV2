@@ -106,6 +106,17 @@ const LeadCard = ({ lead }) => {
   const renderLocation = () => {
     if (!location) return null;
     
+    if (typeof location === 'string') {
+      return (
+        <>
+          <LocationOn fontSize="small" />
+          <Typography variant="body2">
+            {location}
+          </Typography>
+        </>
+      );
+    }
+    
     const locationParts = [];
     if (location.city) locationParts.push(location.city);
     if (location.country) locationParts.push(location.country);

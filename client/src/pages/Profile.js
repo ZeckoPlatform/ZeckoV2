@@ -22,6 +22,7 @@ const StyledPaper = styled(Paper)`
 const Profile = () => {
     const { user, updateUser } = useAuth();
     const [formData, setFormData] = useState({
+        username: '',
         email: '',
         businessName: '',
         phone: '',
@@ -35,6 +36,7 @@ const Profile = () => {
     useEffect(() => {
         if (user) {
             setFormData({
+                username: user.username || '',
                 email: user.email || '',
                 businessName: user.businessName || '',
                 phone: user.phone || '',
@@ -59,6 +61,7 @@ const Profile = () => {
 
         try {
             const response = await api.put('/api/users/profile', {
+                username: formData.username,
                 businessName: formData.businessName,
                 phone: formData.phone,
                 location: formData.location,
@@ -86,6 +89,16 @@ const Profile = () => {
                 <form onSubmit={handleSubmit}>
                     <StyledPaper>
                         <Grid container spacing={3}>
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    label="Username"
+                                    name="username"
+                                    value={formData.username}
+                                    onChange={handleChange}
+                                    helperText="Choose a unique username"
+                                />
+                            </Grid>
                             <Grid item xs={12}>
                                 <TextField
                                     fullWidth
