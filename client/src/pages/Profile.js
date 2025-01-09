@@ -22,7 +22,7 @@ const StyledPaper = styled(Paper)`
 const Profile = () => {
     const { user, updateUser } = useAuth();
     const [formData, setFormData] = useState({
-        username: '',
+        displayName: '',
         email: '',
         businessName: '',
         phone: '',
@@ -36,7 +36,7 @@ const Profile = () => {
     useEffect(() => {
         if (user) {
             setFormData({
-                username: user.username || '',
+                displayName: user.displayName || user.email?.split('@')[0] || '',
                 email: user.email || '',
                 businessName: user.businessName || '',
                 phone: user.phone || '',
@@ -60,7 +60,14 @@ const Profile = () => {
         setError(null);
 
         try {
-            const response = await api.put('/api/users/profile', formData);
+            const username = formData.displayName.toLowerCase().replace(/\s+/g, '');
+            const dataToSubmit = {
+                ...formData,
+                username,
+                displayName: formData.displayName
+            };
+
+            const response = await api.put('/api/users/profile', dataToSubmit);
             if (response.data) {
                 updateUser(response.data);
                 setSuccess(true);
@@ -85,12 +92,16 @@ const Profile = () => {
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    label="Username"
-                                    name="username"
-                                    value={formData.username}
+                                    label="Display Name"
+                                    name="displayName"
+                                    value={formData.displayName}
                                     onChange={handleChange}
                                     required
-                                    helperText="Choose a unique username"
+                                    helperText="This will be shown publicly"
+                                    inputProps={{
+                                        maxLength: 30,
+                                        minLength: 3
+                                    }}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>

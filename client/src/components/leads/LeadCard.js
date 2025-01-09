@@ -80,6 +80,10 @@ const StatusChip = styled(Chip)`
 `;
 
 const LeadCard = ({ lead }) => {
+  if (!lead) {
+    return null;
+  }
+
   const {
     _id,
     title,
@@ -93,6 +97,25 @@ const LeadCard = ({ lead }) => {
     metrics
   } = lead;
 
+  const renderLocation = () => {
+    if (!location) return null;
+    
+    const locationParts = [];
+    if (location.city) locationParts.push(location.city);
+    if (location.country) locationParts.push(location.country);
+    
+    if (locationParts.length === 0) return null;
+
+    return (
+      <>
+        <LocationOn fontSize="small" />
+        <Typography variant="body2">
+          {locationParts.join(', ')}
+        </Typography>
+      </>
+    );
+  };
+
   return (
     <StyledCard>
       <CardContent>
@@ -104,19 +127,12 @@ const LeadCard = ({ lead }) => {
             <LeadMeta>
               <BusinessCenter fontSize="small" />
               <Typography variant="body2">{category?.name}</Typography>
-              {location && (location.city || location.country) && (
-                <>
-                  <LocationOn fontSize="small" />
-                  <Typography variant="body2">
-                    {[location.city, location.country].filter(Boolean).join(', ')}
-                  </Typography>
-                </>
-              )}
+              {renderLocation()}
             </LeadMeta>
           </div>
           <StatusChip 
-            label={status}
-            className={status.toLowerCase()}
+            label={status || 'Unknown'}
+            className={(status || 'unknown').toLowerCase()}
             size="small"
           />
         </LeadHeader>
@@ -128,28 +144,32 @@ const LeadCard = ({ lead }) => {
         </Typography>
 
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <LeadMeta>
-            <AttachMoney fontSize="small" />
-            <Typography variant="body2">
-              Budget: ${budget?.min} - ${budget?.max} {budget?.currency}
-            </Typography>
-          </LeadMeta>
+          {budget && (
+            <LeadMeta>
+              <AttachMoney fontSize="small" />
+              <Typography variant="body2">
+                Budget: ${budget.min || 0} - ${budget.max || 0} {budget.currency || 'USD'}
+              </Typography>
+            </LeadMeta>
+          )}
           
-          <LeadMeta>
-            <Schedule fontSize="small" />
-            <Typography variant="body2">
-              Posted {format(new Date(createdAt), 'MMM dd, yyyy')}
-            </Typography>
-          </LeadMeta>
+          {createdAt && (
+            <LeadMeta>
+              <Schedule fontSize="small" />
+              <Typography variant="body2">
+                Posted {format(new Date(createdAt), 'MMM dd, yyyy')}
+              </Typography>
+            </LeadMeta>
+          )}
         </Box>
 
         <LeadActions>
           <Box display="flex" alignItems="center" gap={1}>
-            <Avatar src={client?.avatar} alt={client?.username}>
+            <Avatar src={client?.avatar} alt={client?.username || 'User'}>
               <Person />
             </Avatar>
             <Typography variant="body2">
-              {client?.businessName || client?.username}
+              {client?.businessName || client?.username || 'Anonymous'}
             </Typography>
           </Box>
 

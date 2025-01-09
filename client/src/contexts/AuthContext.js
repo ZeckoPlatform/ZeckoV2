@@ -85,7 +85,7 @@ export const AuthProvider = ({ children }) => {
     setUser(prevUser => ({
         ...prevUser,
         ...userData,
-        username: userData.username || prevUser.username
+        email: prevUser.email
     }));
   };
 
