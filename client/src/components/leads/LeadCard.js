@@ -80,6 +80,12 @@ const StatusChip = styled(Chip)`
 `;
 
 const LeadCard = ({ lead }) => {
+  console.log('Lead Data:', {
+    id: lead?._id,
+    location: lead?.location,
+    fullLead: lead
+  });
+
   if (!lead) {
     return null;
   }

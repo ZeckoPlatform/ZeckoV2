@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { ServiceProvider } from './contexts/ServiceContext';
 import { ServiceCategoryProvider } from './contexts/ServiceCategoryContext';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Import components
 import Layout from './components/Layout';
@@ -59,78 +60,80 @@ function AppContent() {
     return (
         <MuiThemeProvider theme={muiTheme}>
             <CssBaseline />
-            <Router>
-                <ServiceCategoryProvider>
-                    <ServiceProvider>
-                        <Routes>
-                            {/* Public routes */}
-                            <Route path="/" element={
-                                <Layout>
-                                    <Home />
-                                </Layout>
-                            } />
-                            <Route path="/login" element={
-                                user ? (
-                                    <Navigate to="/dashboard" replace />
-                                ) : (
+            <ErrorBoundary>
+                <Router>
+                    <ServiceCategoryProvider>
+                        <ServiceProvider>
+                            <Routes>
+                                {/* Public routes */}
+                                <Route path="/" element={
                                     <Layout>
-                                        <Login />
+                                        <Home />
                                     </Layout>
-                                )
-                            } />
-                            <Route path="/register" element={
-                                user ? (
-                                    <Navigate to="/dashboard" replace />
-                                ) : (
-                                    <Layout>
-                                        <Register />
-                                    </Layout>
-                                )
-                            } />
+                                } />
+                                <Route path="/login" element={
+                                    user ? (
+                                        <Navigate to="/dashboard" replace />
+                                    ) : (
+                                        <Layout>
+                                            <Login />
+                                        </Layout>
+                                    )
+                                } />
+                                <Route path="/register" element={
+                                    user ? (
+                                        <Navigate to="/dashboard" replace />
+                                    ) : (
+                                        <Layout>
+                                            <Register />
+                                        </Layout>
+                                    )
+                                } />
 
-                            {/* Protected routes */}
-                            <Route path="/dashboard" element={
-                                <PrivateRoute>
-                                    <Layout>
-                                        <Dashboard />
-                                    </Layout>
-                                </PrivateRoute>
-                            } />
-                            <Route path="/post-lead" element={
-                                <PrivateRoute>
-                                    <Layout>
-                                        <PostLead />
-                                    </Layout>
-                                </PrivateRoute>
-                            } />
+                                {/* Protected routes */}
+                                <Route path="/dashboard" element={
+                                    <PrivateRoute>
+                                        <Layout>
+                                            <Dashboard />
+                                        </Layout>
+                                    </PrivateRoute>
+                                } />
+                                <Route path="/post-lead" element={
+                                    <PrivateRoute>
+                                        <Layout>
+                                            <PostLead />
+                                        </Layout>
+                                    </PrivateRoute>
+                                } />
 
-                            {/* Profile routes */}
-                            <Route path="/profile" element={
-                                <PrivateRoute>
-                                    <Layout>
-                                        <UserProfile />
-                                    </Layout>
-                                </PrivateRoute>
-                            } />
-                            <Route path="/dashboard/profile" element={
-                                <PrivateRoute>
-                                    <Layout>
-                                        <Profile />
-                                    </Layout>
-                                </PrivateRoute>
-                            } />
+                                {/* Profile routes */}
+                                <Route path="/profile" element={
+                                    <PrivateRoute>
+                                        <Layout>
+                                            <UserProfile />
+                                        </Layout>
+                                    </PrivateRoute>
+                                } />
+                                <Route path="/dashboard/profile" element={
+                                    <PrivateRoute>
+                                        <Layout>
+                                            <Profile />
+                                        </Layout>
+                                    </PrivateRoute>
+                                } />
 
-                            {/* Lead and Product routes */}
-                            <Route path="/lead/edit/:id" element={<EditLead />} />
-                            <Route path="/lead/:id" element={<LeadDetail />} />
-                            <Route path="/product/:id" element={<ProductDetails />} />
+                                {/* Lead and Product routes */}
+                                <Route path="/lead/edit/:id" element={<EditLead />} />
+                                <Route path="/lead/:id" element={<LeadDetail />} />
+                                <Route path="/product/:id" element={<ProductDetails />} />
 
-                            {/* Catch all route */}
-                            <Route path="*" element={<Navigate to="/" replace />} />
-                        </Routes>
-                    </ServiceProvider>
-                </ServiceCategoryProvider>
-            </Router>
+                                {/* Catch all route */}
+                                <Route path="*" element={<Navigate to="/" replace />} />
+                            </Routes>
+                        </ServiceProvider>
+                    </ServiceCategoryProvider>
+                </Router>
+            </ErrorBoundary>
         </MuiThemeProvider>
     );
 }

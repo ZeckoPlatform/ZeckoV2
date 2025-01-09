@@ -264,27 +264,11 @@ router.get('/profile', auth, async (req, res) => {
 
 router.put('/profile', auth, async (req, res) => {
     try {
-        const { displayName, username, businessName, phone, location, bio } = req.body;
+        const { businessName, phone, location, bio } = req.body;
         
-        // Check if username is already taken
-        if (username) {
-            const existingUser = await User.findOne({ 
-                username, 
-                _id: { $ne: req.user.id } 
-            });
-            
-            if (existingUser) {
-                return res.status(400).json({ 
-                    error: 'This username is already taken' 
-                });
-            }
-        }
-
         const user = await User.findByIdAndUpdate(
             req.user.id,
             {
-                displayName,
-                username,
                 businessName,
                 phone,
                 location,

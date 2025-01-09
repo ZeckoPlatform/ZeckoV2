@@ -22,7 +22,6 @@ const StyledPaper = styled(Paper)`
 const Profile = () => {
     const { user, updateUser } = useAuth();
     const [formData, setFormData] = useState({
-        displayName: '',
         email: '',
         businessName: '',
         phone: '',
@@ -36,7 +35,6 @@ const Profile = () => {
     useEffect(() => {
         if (user) {
             setFormData({
-                displayName: user.displayName || user.email?.split('@')[0] || '',
                 email: user.email || '',
                 businessName: user.businessName || '',
                 phone: user.phone || '',
@@ -60,14 +58,13 @@ const Profile = () => {
         setError(null);
 
         try {
-            const username = formData.displayName.toLowerCase().replace(/\s+/g, '');
-            const dataToSubmit = {
-                ...formData,
-                username,
-                displayName: formData.displayName
-            };
-
-            const response = await api.put('/api/users/profile', dataToSubmit);
+            const response = await api.put('/api/users/profile', {
+                businessName: formData.businessName,
+                phone: formData.phone,
+                location: formData.location,
+                bio: formData.bio
+            });
+            
             if (response.data) {
                 updateUser(response.data);
                 setSuccess(true);
@@ -89,22 +86,7 @@ const Profile = () => {
                 <form onSubmit={handleSubmit}>
                     <StyledPaper>
                         <Grid container spacing={3}>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    fullWidth
-                                    label="Display Name"
-                                    name="displayName"
-                                    value={formData.displayName}
-                                    onChange={handleChange}
-                                    required
-                                    helperText="This will be shown publicly"
-                                    inputProps={{
-                                        maxLength: 30,
-                                        minLength: 3
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid item xs={12}>
                                 <TextField
                                     fullWidth
                                     label="Email"
@@ -114,7 +96,7 @@ const Profile = () => {
                                     helperText="Email cannot be changed"
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid item xs={12}>
                                 <TextField
                                     fullWidth
                                     label="Business Name"
@@ -132,7 +114,7 @@ const Profile = () => {
                                     onChange={handleChange}
                                 />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
                                     label="Location"
@@ -155,7 +137,7 @@ const Profile = () => {
                         </Grid>
                     </StyledPaper>
 
-                    <Box display="flex" justifyContent="flex-end">
+                    <Box mt={3} display="flex" justifyContent="flex-end">
                         <Button
                             type="submit"
                             variant="contained"
