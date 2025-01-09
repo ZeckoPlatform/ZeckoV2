@@ -2,25 +2,28 @@ const express = require('express');
 const router = express.Router();
 const { auth } = require('../middleware/auth');
 const Lead = require('../models/Lead');
+const { validateCategory, validateSubcategory } = require('../data/leadCategories');
 
 // Get all leads with filtering
 router.get('/', async (req, res) => {
     try {
-        const { userId } = req.query;
+        const { userId, category } = req.query;
         let query = {};
         
         if (userId && userId !== 'undefined') {
             query.client = userId;
         } else {
-            // For public carousel view
             query = {
-                status: { $in: ['active', 'open'] },  // Accept both statuses
+                status: { $in: ['active', 'open'] },
                 visibility: 'public'
             };
         }
+
+        if (category && validateCategory(category)) {
+            query.category = category;
+        }
         
         const leads = await Lead.find(query)
-            .populate('category')
             .populate('client', 'username businessName')
             .sort({ createdAt: -1 })
             .limit(10);
@@ -38,44 +41,37 @@ router.get('/', async (req, res) => {
 // Create new lead
 router.post('/', auth, async (req, res) => {
     try {
-        const {
-            title,
-            description,
-            category,
-            subcategory,
-            budget,
-            location,
-            requirements
-        } = req.body;
+        const { category, subcategory } = req.body;
+
+        // Validate category and subcategory
+        if (!validateCategory(category)) {
+            return res.status(400).json({ error: 'Invalid category' });
+        }
+
+        if (subcategory && !validateSubcategory(category, subcategory)) {
+            return res.status(400).json({ error: 'Invalid subcategory' });
+        }
 
         const lead = new Lead({
-            title,
-            description,
-            category,
-            subcategory,
-            budget: {
-                min: Number(budget.min),
-                max: Number(budget.max),
-                currency: budget.currency || 'GBP'
-            },
-            location: location || {},
+            ...req.body,
             client: req.user.id,
-            requirements: requirements || [{
-                question: "Default Question",
-                answer: "Default Answer"
-            }],
             status: 'active',
-            visibility: 'public'
+            location: {
+                ...req.body.location,
+                city: req.body.location?.city || '',
+                state: req.body.location?.state || '',
+                country: req.body.location?.country || ''
+            }
         });
-        
-        const newLead = await lead.save();
-        await newLead.populate('category');
-        await newLead.populate('client', 'username businessName');
-        
-        res.status(201).json(newLead);
+
+        await lead.save();
+        res.status(201).json(lead);
     } catch (error) {
         console.error('Error creating lead:', error);
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ 
+            message: 'Error creating lead',
+            error: error.message 
+        });
     }
 });
 

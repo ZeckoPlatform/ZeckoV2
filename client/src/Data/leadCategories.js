@@ -4,18 +4,14 @@ import {
   FaHardHat, FaBriefcase, FaBroom, FaHome, FaWrench, 
   FaCar, FaPaw, FaBuilding, FaHeart, FaCamera, 
   FaLaptop, FaPaintBrush, FaTree, FaMusic, FaShoppingBag, 
-  FaPlane, FaSpa, FaUtensils, FaDumbbell, FaTools, 
-  FaTruck, FaLeaf, FaCut, FaGavel, FaMedkit, 
-  FaGraduationCap, FaPalette, FaTheaterMasks, FaVideo, 
-  FaUserTie, FaChalkboardTeacher, FaHandsHelping, FaStore, 
-  FaWarehouse, FaIndustry, FaShieldAlt, FaFlask
+  FaPlane, FaSpa, FaUtensils, FaDumbbell, FaTools
 } from 'react-icons/fa';
 
 export const jobCategories = {
   "Construction & Building": {
     name: "Construction & Building",
     icon: FaHardHat,
-    description: "Professional construction, renovation, and building services for residential, commercial, and industrial projects",
+    description: "Professional construction, renovation, and building services",
     subcategories: [
       "General Contractors",
       "Architects",
@@ -944,9 +940,17 @@ export const jobCategories = {
 };
 
 export const getAllCategories = () => {
-  return Object.keys(jobCategories);
+  return Object.keys(jobCategories) || [];
 };
 
 export const getSubcategories = (category) => {
   return jobCategories[category]?.subcategories || [];
+};
+
+export const getCategoryIcon = (category) => {
+  return jobCategories[category]?.icon || FaTools;
+};
+
+export const getCategoryDescription = (category) => {
+  return jobCategories[category]?.description || '';
 };

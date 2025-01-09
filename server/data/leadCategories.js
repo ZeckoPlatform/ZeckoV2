@@ -2,7 +2,7 @@
 exports.jobCategories = {
   "Construction & Building": {
     name: "Construction & Building",
-    description: "Professional construction, renovation, and building services for residential, commercial, and industrial projects",
+    description: "Professional construction, renovation, and building services",
     subcategories: [
       "General Contractors",
       "Architects",
@@ -528,9 +528,17 @@ exports.jobCategories = {
 };
 
 exports.getAllCategories = () => {
-  return Object.keys(exports.jobCategories);
+  return Object.keys(exports.jobCategories) || [];
 };
 
 exports.getSubcategories = (category) => {
   return exports.jobCategories[category]?.subcategories || [];
+};
+
+exports.validateCategory = (category) => {
+  return Boolean(exports.jobCategories[category]);
+};
+
+exports.validateSubcategory = (category, subcategory) => {
+  return exports.jobCategories[category]?.subcategories?.includes(subcategory) || false;
 }; 
