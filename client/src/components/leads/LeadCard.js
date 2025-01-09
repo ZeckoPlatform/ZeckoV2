@@ -104,11 +104,11 @@ const LeadCard = ({ lead }) => {
             <LeadMeta>
               <BusinessCenter fontSize="small" />
               <Typography variant="body2">{category?.name}</Typography>
-              {location?.city && (
+              {location && (location.city || location.country) && (
                 <>
                   <LocationOn fontSize="small" />
                   <Typography variant="body2">
-                    {location.city}, {location.country}
+                    {[location.city, location.country].filter(Boolean).join(', ')}
                   </Typography>
                 </>
               )}
@@ -122,7 +122,7 @@ const LeadCard = ({ lead }) => {
         </LeadHeader>
 
         <Typography variant="body2" color="textSecondary" paragraph>
-          {description.length > 200 
+          {description?.length > 200 
             ? `${description.substring(0, 200)}...` 
             : description}
         </Typography>
@@ -131,7 +131,7 @@ const LeadCard = ({ lead }) => {
           <LeadMeta>
             <AttachMoney fontSize="small" />
             <Typography variant="body2">
-              Budget: ${budget.min} - ${budget.max} {budget.currency}
+              Budget: ${budget?.min} - ${budget?.max} {budget?.currency}
             </Typography>
           </LeadMeta>
           

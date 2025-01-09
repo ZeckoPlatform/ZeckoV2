@@ -7,16 +7,10 @@ import {
     Box,
     TextField,
     Button,
-    Tabs,
-    Tab,
-    FormControlLabel,
-    Switch,
-    Chip,
-    Alert,
-    Snackbar
+    Snackbar,
+    Alert
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
-import { useService } from '../contexts/ServiceContext';
 import api from '../services/api';
 import styled from 'styled-components';
 
@@ -24,12 +18,6 @@ const StyledPaper = styled(Paper)`
     padding: 24px;
     margin-bottom: 24px;
 `;
-
-const TabPanel = ({ children, value, index, ...other }) => (
-    <div role="tabpanel" hidden={value !== index} {...other}>
-        {value === index && <Box p={3}>{children}</Box>}
-    </div>
-);
 
 const Profile = () => {
     const { user, updateUser } = useAuth();
@@ -44,7 +32,6 @@ const Profile = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
-    const [activeTab, setActiveTab] = useState(0);
 
     useEffect(() => {
         if (user) {
@@ -79,7 +66,7 @@ const Profile = () => {
                 setSuccess(true);
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Error updating profile');
+            setError(err.response?.data?.error || 'Error updating profile');
         } finally {
             setLoading(false);
         }
@@ -87,7 +74,7 @@ const Profile = () => {
 
     return (
         <Container maxWidth="md">
-            <Box my={4}>
+            <Box py={4}>
                 <Typography variant="h4" gutterBottom>
                     Profile Settings
                 </Typography>
@@ -103,6 +90,7 @@ const Profile = () => {
                                     value={formData.username}
                                     onChange={handleChange}
                                     required
+                                    helperText="Choose a unique username"
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -111,10 +99,8 @@ const Profile = () => {
                                     label="Email"
                                     name="email"
                                     value={formData.email}
-                                    onChange={handleChange}
-                                    required
-                                    type="email"
                                     disabled
+                                    helperText="Email cannot be changed"
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -158,7 +144,7 @@ const Profile = () => {
                         </Grid>
                     </StyledPaper>
 
-                    <Box mt={3} display="flex" justifyContent="flex-end">
+                    <Box display="flex" justifyContent="flex-end">
                         <Button
                             type="submit"
                             variant="contained"

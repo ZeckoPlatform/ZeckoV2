@@ -81,15 +81,12 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const updateUser = (newUserData) => {
-    console.log('Updating user with:', newUserData);
-    setUser(prevUser => {
-      const updatedUser = typeof newUserData === 'function' 
-        ? newUserData(prevUser)
-        : { ...prevUser, ...newUserData };
-      console.log('Updated user state:', updatedUser);
-      return updatedUser;
-    });
+  const updateUser = (userData) => {
+    setUser(prevUser => ({
+        ...prevUser,
+        ...userData,
+        username: userData.username || prevUser.username
+    }));
   };
 
   const value = {
