@@ -104,50 +104,25 @@ const LeadCard = ({ lead }) => {
   } = lead;
 
   const renderLocation = () => {
+    // Debug log
+    console.log('Rendering location:', location);
+
+    // If no location, return null
     if (!location) return null;
-    
-    try {
-      if (typeof location === 'string') {
-        return (
-          <LeadMeta>
-            <LocationOn fontSize="small" />
-            <Typography variant="body2">
-              {location}
-            </Typography>
-          </LeadMeta>
-        );
-      }
-      
-      if (typeof location !== 'object') return null;
 
-      let locationString = '';
-      
-      if (location.formatted) {
-        locationString = location.formatted;
-      } else {
-        const parts = [];
-        if (location && typeof location === 'object') {
-          if (location.city) parts.push(location.city);
-          if (location.state) parts.push(location.state);
-          if (location.country) parts.push(location.country);
-        }
-        locationString = parts.join(', ');
-      }
+    // Always treat location as a string
+    const locationText = typeof location === 'object' ? 
+      (location.formatted || location.city || location.state || location.country || 'Location not specified') : 
+      (location || 'Location not specified');
 
-      if (!locationString) return null;
-
-      return (
-        <LeadMeta>
-          <LocationOn fontSize="small" />
-          <Typography variant="body2">
-            {locationString}
-          </Typography>
-        </LeadMeta>
-      );
-    } catch (error) {
-      console.error('Error rendering location:', error, 'Location data:', location);
-      return null;
-    }
+    return (
+      <LeadMeta>
+        <LocationOn fontSize="small" />
+        <Typography variant="body2">
+          {locationText}
+        </Typography>
+      </LeadMeta>
+    );
   };
 
   return (

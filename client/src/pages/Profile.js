@@ -21,58 +21,26 @@ const StyledPaper = styled(Paper)`
 
 const Profile = () => {
     const { user, updateUser } = useAuth();
-    const [formData, setFormData] = useState({
-        username: '',
-        email: '',
-        businessName: '',
-        phone: '',
-        location: '',
-        bio: ''
+    const [formData, setFormData] = useState(() => {
+        // Try to load from localStorage first
+        const savedData = localStorage.getItem('profileFormData');
+        return savedData ? JSON.parse(savedData) : {
+            username: user?.username || '',
+            email: user?.email || '',
+            businessName: user?.businessName || '',
+            phone: user?.phone || '',
+            location: user?.location || '',
+            bio: user?.bio || ''
+        };
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
 
-    // Load initial data
+    // Save form data to localStorage whenever it changes
     useEffect(() => {
-        const loadUserData = async () => {
-            try {
-                const response = await api.get('/api/users/profile');
-                console.log('Loaded user data:', response.data);
-                
-                if (response.data) {
-                    setFormData({
-                        username: response.data.username || '',
-                        email: response.data.email || '',
-                        businessName: response.data.businessName || '',
-                        phone: response.data.phone || '',
-                        location: response.data.location || '',
-                        bio: response.data.bio || ''
-                    });
-                }
-            } catch (err) {
-                console.error('Error loading user data:', err);
-                setError('Failed to load user data');
-            }
-        };
-
-        loadUserData();
-    }, []);
-
-    // Update form when user context changes
-    useEffect(() => {
-        if (user) {
-            setFormData(prev => ({
-                ...prev,
-                username: user.username || prev.username,
-                email: user.email || prev.email,
-                businessName: user.businessName || prev.businessName,
-                phone: user.phone || prev.phone,
-                location: user.location || prev.location,
-                bio: user.bio || prev.bio
-            }));
-        }
-    }, [user]);
+        localStorage.setItem('profileFormData', JSON.stringify(formData));
+    }, [formData]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -88,32 +56,28 @@ const Profile = () => {
         setError(null);
 
         try {
-            console.log('Submitting form data:', formData);
+            console.log('Submitting profile data:', formData);
 
             const response = await api.put('/api/users/profile', formData);
             
-            console.log('Server response:', response.data);
-            
             if (response.data) {
-                // Update global context
-                updateUser(response.data);
+                console.log('Server response:', response.data);
                 
-                // Update form
+                // Update both local state and global context
+                const updatedData = response.data;
                 setFormData(prev => ({
                     ...prev,
-                    ...response.data
+                    ...updatedData
                 }));
+                updateUser(updatedData);
+                
+                // Clear localStorage after successful save
+                localStorage.removeItem('profileFormData');
                 
                 setSuccess(true);
-
-                // Force reload profile data
-                const refreshResponse = await api.get('/api/users/profile');
-                if (refreshResponse.data) {
-                    setFormData(prev => ({
-                        ...prev,
-                        ...refreshResponse.data
-                    }));
-                }
+                
+                // Refresh the page to ensure all components update
+                window.location.reload();
             }
         } catch (err) {
             console.error('Profile update error:', err);

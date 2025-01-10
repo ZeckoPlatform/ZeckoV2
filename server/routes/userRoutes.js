@@ -261,29 +261,38 @@ router.get('/profile', auth, async (req, res) => {
 
 router.put('/profile', auth, async (req, res) => {
     try {
-        const { username, businessName, phone, location, bio } = req.body;
-        
-        // Update user
+        const updates = {
+            username: req.body.username,
+            businessName: req.body.businessName,
+            phone: req.body.phone,
+            location: req.body.location,
+            bio: req.body.bio
+        };
+
+        // Remove undefined values
+        Object.keys(updates).forEach(key => 
+            updates[key] === undefined && delete updates[key]
+        );
+
+        console.log('Updating user with:', updates);
+
         const updatedUser = await User.findByIdAndUpdate(
             req.user.id,
-            {
-                $set: {
-                    username,
-                    businessName,
-                    phone,
-                    location,
-                    bio
-                }
-            },
+            { $set: updates },
             { 
                 new: true,
-                runValidators: true 
+                runValidators: true,
+                select: '-password' // Exclude password from response
             }
-        ).select('-password');
+        );
 
-        console.log('Updated user data:', updatedUser);
+        if (!updatedUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
 
-        // Return the complete user object
+        console.log('Updated user:', updatedUser);
+
+        // Send the complete user object back
         res.json(updatedUser);
     } catch (error) {
         console.error('Profile update error:', error);
