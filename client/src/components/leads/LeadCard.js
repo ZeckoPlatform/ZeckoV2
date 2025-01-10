@@ -106,31 +106,37 @@ const LeadCard = ({ lead }) => {
   const renderLocation = () => {
     if (!location) return null;
     
-    if (typeof location === 'string') {
+    try {
+      if (typeof location === 'string') {
+        return (
+          <LeadMeta>
+            <LocationOn fontSize="small" />
+            <Typography variant="body2">
+              {location}
+            </Typography>
+          </LeadMeta>
+        );
+      }
+      
+      const locationParts = [];
+      if (location?.city) locationParts.push(location.city);
+      if (location?.state) locationParts.push(location.state);
+      if (location?.country) locationParts.push(location.country);
+      
+      if (locationParts.length === 0) return null;
+
       return (
-        <>
+        <LeadMeta>
           <LocationOn fontSize="small" />
           <Typography variant="body2">
-            {location}
+            {locationParts.join(', ')}
           </Typography>
-        </>
+        </LeadMeta>
       );
+    } catch (error) {
+      console.error('Error rendering location:', error);
+      return null;
     }
-    
-    const locationParts = [];
-    if (location.city) locationParts.push(location.city);
-    if (location.country) locationParts.push(location.country);
-    
-    if (locationParts.length === 0) return null;
-
-    return (
-      <>
-        <LocationOn fontSize="small" />
-        <Typography variant="body2">
-          {locationParts.join(', ')}
-        </Typography>
-      </>
-    );
   };
 
   return (
@@ -143,9 +149,9 @@ const LeadCard = ({ lead }) => {
             </LeadTitle>
             <LeadMeta>
               <BusinessCenter fontSize="small" />
-              <Typography variant="body2">{category?.name}</Typography>
-              {renderLocation()}
+              <Typography variant="body2">{category?.name || 'Uncategorized'}</Typography>
             </LeadMeta>
+            {renderLocation()}
           </div>
           <StatusChip 
             label={status || 'Unknown'}
@@ -165,7 +171,7 @@ const LeadCard = ({ lead }) => {
             <LeadMeta>
               <AttachMoney fontSize="small" />
               <Typography variant="body2">
-                Budget: ${budget.min || 0} - ${budget.max || 0} {budget.currency || 'USD'}
+                Budget: ${budget?.min || 0} - ${budget?.max || 0} {budget?.currency || 'USD'}
               </Typography>
             </LeadMeta>
           )}

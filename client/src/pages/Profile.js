@@ -33,18 +33,28 @@ const Profile = () => {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
 
+    // Load user data when component mounts or user changes
     useEffect(() => {
-        if (user) {
-            setFormData({
-                username: user.username || '',
-                email: user.email || '',
-                businessName: user.businessName || '',
-                phone: user.phone || '',
-                location: user.location || '',
-                bio: user.bio || ''
-            });
-        }
-    }, [user]);
+        const loadUserData = async () => {
+            try {
+                const response = await api.get('/api/users/profile');
+                const userData = response.data;
+                setFormData({
+                    username: userData.username || '',
+                    email: userData.email || '',
+                    businessName: userData.businessName || '',
+                    phone: userData.phone || '',
+                    location: userData.location || '',
+                    bio: userData.bio || ''
+                });
+            } catch (err) {
+                console.error('Error loading user data:', err);
+                setError('Failed to load user data');
+            }
+        };
+
+        loadUserData();
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -71,8 +81,14 @@ const Profile = () => {
             if (response.data) {
                 updateUser(response.data);
                 setSuccess(true);
+                // Refresh the form data with the updated values
+                setFormData(prev => ({
+                    ...prev,
+                    ...response.data
+                }));
             }
         } catch (err) {
+            console.error('Error updating profile:', err);
             setError(err.response?.data?.error || 'Error updating profile');
         } finally {
             setLoading(false);
