@@ -277,7 +277,8 @@ router.put('/profile', auth, async (req, res) => {
             }
         }
 
-        const user = await User.findByIdAndUpdate(
+        // Update user with all fields
+        const updatedUser = await User.findByIdAndUpdate(
             req.user.id,
             {
                 username,
@@ -286,14 +287,21 @@ router.put('/profile', auth, async (req, res) => {
                 location,
                 bio
             },
-            { new: true }
+            { 
+                new: true,
+                runValidators: true 
+            }
         ).select('-password');
 
-        res.json(user);
+        // Log the updated user data
+        console.log('Updated user data:', updatedUser);
+
+        res.json(updatedUser);
     } catch (error) {
         console.error('Profile update error:', error);
         res.status(500).json({ 
-            error: 'Error updating profile' 
+            error: 'Error updating profile',
+            details: error.message 
         });
     }
 });

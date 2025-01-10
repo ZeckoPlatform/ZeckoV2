@@ -79,16 +79,29 @@ const Profile = () => {
             });
             
             if (response.data) {
+                // Update the global user context
                 updateUser(response.data);
-                setSuccess(true);
-                // Refresh the form data with the updated values
+                
+                // Update local form data with the response
                 setFormData(prev => ({
                     ...prev,
                     ...response.data
                 }));
+                
+                // Show success message
+                setSuccess(true);
+                
+                // Refresh the profile data
+                const refreshResponse = await api.get('/api/users/profile');
+                if (refreshResponse.data) {
+                    setFormData(prev => ({
+                        ...prev,
+                        ...refreshResponse.data
+                    }));
+                }
             }
         } catch (err) {
-            console.error('Error updating profile:', err);
+            console.error('Profile update error:', err);
             setError(err.response?.data?.error || 'Error updating profile');
         } finally {
             setLoading(false);

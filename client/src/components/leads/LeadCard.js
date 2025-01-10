@@ -104,6 +104,8 @@ const LeadCard = ({ lead }) => {
   } = lead;
 
   const renderLocation = () => {
+    console.log('Location data:', location);
+
     if (!location) return null;
     
     try {
@@ -118,23 +120,32 @@ const LeadCard = ({ lead }) => {
         );
       }
       
-      const locationParts = [];
-      if (location?.city) locationParts.push(location.city);
-      if (location?.state) locationParts.push(location.state);
-      if (location?.country) locationParts.push(location.country);
+      if (!location || typeof location !== 'object') return null;
+
+      let locationString = '';
       
-      if (locationParts.length === 0) return null;
+      if (location.formatted) {
+        locationString = location.formatted;
+      } else {
+        const parts = [];
+        if (location.city) parts.push(location.city);
+        if (location.state) parts.push(location.state);
+        if (location.country) parts.push(location.country);
+        locationString = parts.join(', ');
+      }
+
+      if (!locationString) return null;
 
       return (
         <LeadMeta>
           <LocationOn fontSize="small" />
           <Typography variant="body2">
-            {locationParts.join(', ')}
+            {locationString}
           </Typography>
         </LeadMeta>
       );
     } catch (error) {
-      console.error('Error rendering location:', error);
+      console.error('Error rendering location:', error, 'Location data:', location);
       return null;
     }
   };
