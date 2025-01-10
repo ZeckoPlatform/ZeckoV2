@@ -82,11 +82,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUser = (userData) => {
-    setUser(prevUser => ({
-        ...prevUser,
-        ...userData,
-        email: prevUser.email
-    }));
+    console.log('Updating user in context:', userData);
+    setUser(userData);
+    // If you're storing in localStorage, update that too
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
   const value = {

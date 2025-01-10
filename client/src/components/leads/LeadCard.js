@@ -104,8 +104,6 @@ const LeadCard = ({ lead }) => {
   } = lead;
 
   const renderLocation = () => {
-    console.log('Location data:', location);
-
     if (!location) return null;
     
     try {
@@ -120,7 +118,7 @@ const LeadCard = ({ lead }) => {
         );
       }
       
-      if (!location || typeof location !== 'object') return null;
+      if (typeof location !== 'object') return null;
 
       let locationString = '';
       
@@ -128,9 +126,11 @@ const LeadCard = ({ lead }) => {
         locationString = location.formatted;
       } else {
         const parts = [];
-        if (location.city) parts.push(location.city);
-        if (location.state) parts.push(location.state);
-        if (location.country) parts.push(location.country);
+        if (location && typeof location === 'object') {
+          if (location.city) parts.push(location.city);
+          if (location.state) parts.push(location.state);
+          if (location.country) parts.push(location.country);
+        }
         locationString = parts.join(', ');
       }
 

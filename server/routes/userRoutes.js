@@ -263,29 +263,17 @@ router.put('/profile', auth, async (req, res) => {
     try {
         const { username, businessName, phone, location, bio } = req.body;
         
-        // Check if username is already taken (if username is being changed)
-        if (username) {
-            const existingUser = await User.findOne({ 
-                username, 
-                _id: { $ne: req.user.id } 
-            });
-            
-            if (existingUser) {
-                return res.status(400).json({ 
-                    error: 'This username is already taken' 
-                });
-            }
-        }
-
-        // Update user with all fields
+        // Update user
         const updatedUser = await User.findByIdAndUpdate(
             req.user.id,
             {
-                username,
-                businessName,
-                phone,
-                location,
-                bio
+                $set: {
+                    username,
+                    businessName,
+                    phone,
+                    location,
+                    bio
+                }
             },
             { 
                 new: true,
@@ -293,9 +281,9 @@ router.put('/profile', auth, async (req, res) => {
             }
         ).select('-password');
 
-        // Log the updated user data
         console.log('Updated user data:', updatedUser);
 
+        // Return the complete user object
         res.json(updatedUser);
     } catch (error) {
         console.error('Profile update error:', error);

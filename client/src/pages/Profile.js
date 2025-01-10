@@ -33,20 +33,23 @@ const Profile = () => {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
 
-    // Load user data when component mounts or user changes
+    // Load initial data
     useEffect(() => {
         const loadUserData = async () => {
             try {
                 const response = await api.get('/api/users/profile');
-                const userData = response.data;
-                setFormData({
-                    username: userData.username || '',
-                    email: userData.email || '',
-                    businessName: userData.businessName || '',
-                    phone: userData.phone || '',
-                    location: userData.location || '',
-                    bio: userData.bio || ''
-                });
+                console.log('Loaded user data:', response.data);
+                
+                if (response.data) {
+                    setFormData({
+                        username: response.data.username || '',
+                        email: response.data.email || '',
+                        businessName: response.data.businessName || '',
+                        phone: response.data.phone || '',
+                        location: response.data.location || '',
+                        bio: response.data.bio || ''
+                    });
+                }
             } catch (err) {
                 console.error('Error loading user data:', err);
                 setError('Failed to load user data');
@@ -55,6 +58,21 @@ const Profile = () => {
 
         loadUserData();
     }, []);
+
+    // Update form when user context changes
+    useEffect(() => {
+        if (user) {
+            setFormData(prev => ({
+                ...prev,
+                username: user.username || prev.username,
+                email: user.email || prev.email,
+                businessName: user.businessName || prev.businessName,
+                phone: user.phone || prev.phone,
+                location: user.location || prev.location,
+                bio: user.bio || prev.bio
+            }));
+        }
+    }, [user]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -70,28 +88,25 @@ const Profile = () => {
         setError(null);
 
         try {
-            const response = await api.put('/api/users/profile', {
-                username: formData.username,
-                businessName: formData.businessName,
-                phone: formData.phone,
-                location: formData.location,
-                bio: formData.bio
-            });
+            console.log('Submitting form data:', formData);
+
+            const response = await api.put('/api/users/profile', formData);
+            
+            console.log('Server response:', response.data);
             
             if (response.data) {
-                // Update the global user context
+                // Update global context
                 updateUser(response.data);
                 
-                // Update local form data with the response
+                // Update form
                 setFormData(prev => ({
                     ...prev,
                     ...response.data
                 }));
                 
-                // Show success message
                 setSuccess(true);
-                
-                // Refresh the profile data
+
+                // Force reload profile data
                 const refreshResponse = await api.get('/api/users/profile');
                 if (refreshResponse.data) {
                     setFormData(prev => ({
@@ -107,6 +122,16 @@ const Profile = () => {
             setLoading(false);
         }
     };
+
+    // Add effect to log when form data changes
+    useEffect(() => {
+        console.log('Form data changed:', formData);
+    }, [formData]);
+
+    // Add effect to log when user data changes
+    useEffect(() => {
+        console.log('User data changed:', user);
+    }, [user]);
 
     return (
         <Container maxWidth="md">
