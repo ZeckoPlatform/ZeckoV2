@@ -24,7 +24,16 @@ const Profile = () => {
     const [formData, setFormData] = useState(() => {
         // Try to load from localStorage first
         const savedData = localStorage.getItem('profileFormData');
-        return savedData ? JSON.parse(savedData) : {
+        if (savedData) {
+            try {
+                return JSON.parse(savedData);
+            } catch (e) {
+                console.error('Error parsing saved profile data:', e);
+            }
+        }
+        
+        // Fall back to user data
+        return {
             username: user?.username || '',
             email: user?.email || '',
             businessName: user?.businessName || '',
@@ -37,10 +46,20 @@ const Profile = () => {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
 
-    // Save form data to localStorage whenever it changes
+    // Update form data when user data changes
     useEffect(() => {
-        localStorage.setItem('profileFormData', JSON.stringify(formData));
-    }, [formData]);
+        if (user) {
+            setFormData(prev => ({
+                ...prev,
+                username: user.username || prev.username,
+                email: user.email || prev.email,
+                businessName: user.businessName || prev.businessName,
+                phone: user.profile?.phone || prev.phone,
+                location: user.profile?.location || prev.location,
+                bio: user.profile?.bio || prev.bio
+            }));
+        }
+    }, [user]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -56,12 +75,16 @@ const Profile = () => {
         setError(null);
 
         try {
+            // Create the update object with the correct structure
             const updateData = {
                 username: formData.username,
+                email: formData.email,
                 businessName: formData.businessName,
-                phone: formData.phone,
-                location: formData.location,
-                bio: formData.bio
+                profile: {
+                    phone: formData.phone,
+                    location: formData.location,
+                    bio: formData.bio
+                }
             };
 
             console.log('Submitting profile data:', updateData);
@@ -69,22 +92,18 @@ const Profile = () => {
             const response = await api.put('/api/users/profile', updateData);
             
             if (response.data) {
-                // Update form data with the nested profile structure
-                setFormData(prev => ({
-                    ...prev,
-                    username: response.data.username,
-                    email: response.data.email,
-                    businessName: response.data.businessName,
-                    phone: response.data.profile?.phone || '',
-                    location: response.data.profile?.location || '',
-                    bio: response.data.profile?.bio || ''
-                }));
+                // Update local storage
+                localStorage.setItem('profileFormData', JSON.stringify(formData));
                 
+                // Update context
                 updateUser(response.data);
+                
                 setSuccess(true);
                 
-                // Save to localStorage
-                localStorage.setItem('profileFormData', JSON.stringify(formData));
+                // Show success message
+                setTimeout(() => {
+                    setSuccess(false);
+                }, 3000);
             }
         } catch (err) {
             console.error('Profile update error:', err);
