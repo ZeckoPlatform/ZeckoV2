@@ -261,18 +261,23 @@ router.get('/profile', auth, async (req, res) => {
 
 router.put('/profile', auth, async (req, res) => {
     try {
+        const { username, businessName, phone, location, bio } = req.body;
+        
+        // Create the update object
         const updates = {
-            username: req.body.username,
-            businessName: req.body.businessName,
-            phone: req.body.phone,
-            location: req.body.location,
-            bio: req.body.bio
+            'profile.bio': bio,
+            'profile.phone': phone,
+            businessName: businessName
         };
 
-        // Remove undefined values
-        Object.keys(updates).forEach(key => 
-            updates[key] === undefined && delete updates[key]
-        );
+        // Only add location if it exists
+        if (location) {
+            if (typeof location === 'string') {
+                updates['profile.location'] = location;
+            } else if (typeof location === 'object') {
+                updates['profile.location'] = location;
+            }
+        }
 
         console.log('Updating user with:', updates);
 
@@ -281,18 +286,11 @@ router.put('/profile', auth, async (req, res) => {
             { $set: updates },
             { 
                 new: true,
-                runValidators: true,
-                select: '-password' // Exclude password from response
+                runValidators: true 
             }
-        );
-
-        if (!updatedUser) {
-            return res.status(404).json({ error: 'User not found' });
-        }
+        ).select('-password');
 
         console.log('Updated user:', updatedUser);
-
-        // Send the complete user object back
         res.json(updatedUser);
     } catch (error) {
         console.error('Profile update error:', error);

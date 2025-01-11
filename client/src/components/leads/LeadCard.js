@@ -110,19 +110,43 @@ const LeadCard = ({ lead }) => {
     // If no location, return null
     if (!location) return null;
 
-    // Always treat location as a string
-    const locationText = typeof location === 'object' ? 
-      (location.formatted || location.city || location.state || location.country || 'Location not specified') : 
-      (location || 'Location not specified');
+    let displayLocation = '';
 
-    return (
-      <LeadMeta>
-        <LocationOn fontSize="small" />
-        <Typography variant="body2">
-          {locationText}
-        </Typography>
-      </LeadMeta>
-    );
+    try {
+      // If location is a string, use it directly
+      if (typeof location === 'string') {
+        displayLocation = location;
+      } 
+      // If location is an object
+      else if (typeof location === 'object') {
+        if (location.formatted) {
+          displayLocation = location.formatted;
+        } else {
+          const parts = [];
+          if (location.city) parts.push(location.city);
+          if (location.state) parts.push(location.state);
+          if (location.country) parts.push(location.country);
+          displayLocation = parts.join(', ') || location.toString();
+        }
+      }
+
+      // If we still don't have a display location, use a default
+      if (!displayLocation) {
+        return null;
+      }
+
+      return (
+        <LeadMeta>
+          <LocationOn fontSize="small" />
+          <Typography variant="body2">
+            {displayLocation}
+          </Typography>
+        </LeadMeta>
+      );
+    } catch (error) {
+      console.error('Error rendering location:', error);
+      return null;
+    }
   };
 
   return (

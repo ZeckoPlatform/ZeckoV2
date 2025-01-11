@@ -56,27 +56,33 @@ const Profile = () => {
         setError(null);
 
         try {
-            console.log('Submitting profile data:', formData);
+            // Create the update object
+            const updateData = {
+                username: formData.username,
+                businessName: formData.businessName,
+                phone: formData.phone,
+                location: formData.location || '',
+                bio: formData.bio
+            };
 
-            const response = await api.put('/api/users/profile', formData);
+            console.log('Submitting profile data:', updateData);
+
+            const response = await api.put('/api/users/profile', updateData);
             
             if (response.data) {
                 console.log('Server response:', response.data);
                 
                 // Update both local state and global context
-                const updatedData = response.data;
                 setFormData(prev => ({
                     ...prev,
-                    ...updatedData
+                    ...response.data,
+                    location: response.data.profile?.location || ''
                 }));
-                updateUser(updatedData);
                 
-                // Clear localStorage after successful save
-                localStorage.removeItem('profileFormData');
-                
+                updateUser(response.data);
                 setSuccess(true);
-                
-                // Refresh the page to ensure all components update
+
+                // Force a page reload to ensure all components update
                 window.location.reload();
             }
         } catch (err) {
