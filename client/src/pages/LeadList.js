@@ -8,12 +8,16 @@ import {
   InputLabel,
   Button,
   CircularProgress,
-  Pagination
+  Pagination,
+  Box,
+  Alert
 } from '@mui/material';
 import { Search, FilterList } from '@mui/icons-material';
 import LeadCard from '../components/leads/LeadCard';
-import api from '../services/api';
-import LoadingSpinner from '../components/common/LoadingSpinner';
+import leadService from '../services/leadService';
+import { useAuth } from '../contexts/AuthContext';
+import { getLocationDisplay } from '../utils/locationHelpers';
+import { jobCategories } from '../data/leadCategories';
 
 const Container = styled.div`
   padding: 2rem;
@@ -28,111 +32,100 @@ const FiltersContainer = styled.div`
   flex-wrap: wrap;
 `;
 
-const SearchBar = styled.div`
-  flex: 1;
-  min-width: 300px;
-`;
-
 const LeadsList = () => {
+  const { user } = useAuth();
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     search: '',
     category: 'all',
-    sortBy: 'newest',
+    status: 'active',
+    sort: 'newest',
     page: 1
   });
-  const [categories, setCategories] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    fetchCategories();
+    const fetchLeads = async () => {
+      try {
+        setLoading(true);
+        const response = await leadService.getLeads({
+          ...filters,
+          category: filters.category === 'all' ? undefined : filters.category,
+          status: filters.status === 'all' ? undefined : filters.status
+        });
+        
+        setLeads(response.leads);
+        setTotalPages(response.pages);
+      } catch (err) {
+        setError(err.message || 'Error fetching leads');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchLeads();
-  }, [filters.page]);
-
-  const fetchCategories = async () => {
-    try {
-      const response = await api.getCategories();
-      setCategories(response.data);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  };
-
-  const fetchLeads = async () => {
-    setLoading(true);
-    try {
-      const params = {
-        page: filters.page,
-        limit: 10,
-        ...(filters.search && { search: filters.search }),
-        ...(filters.category !== 'all' && { category: filters.category }),
-        sortBy: filters.sortBy
-      };
-
-      const response = await api.getLeads(params);
-      setLeads(response.data.leads);
-      setTotalPages(response.data.totalPages);
-    } catch (error) {
-      console.error('Error fetching leads:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSearch = () => {
-    setFilters({ ...filters, page: 1 });
-    fetchLeads();
-  };
+  }, [filters]);
 
   const handleFilterChange = (name, value) => {
-    setFilters({ ...filters, [name]: value, page: 1 });
-    fetchLeads();
+    setFilters(prev => ({
+      ...prev,
+      [name]: value,
+      page: name === 'page' ? value : 1 // Reset page when other filters change
+    }));
   };
+
+  if (error) {
+    return <Alert severity="error">{error}</Alert>;
+  }
 
   return (
     <Container>
       <FiltersContainer>
-        <SearchBar>
-          <TextField
-            fullWidth
-            placeholder="Search leads..."
-            value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            InputProps={{
-              endAdornment: (
-                <Button 
-                  onClick={handleSearch}
-                  startIcon={<Search />}
-                >
-                  Search
-                </Button>
-              ),
-            }}
-          />
-        </SearchBar>
+        <TextField
+          placeholder="Search leads..."
+          value={filters.search}
+          onChange={(e) => handleFilterChange('search', e.target.value)}
+          InputProps={{
+            startAdornment: <Search color="action" />,
+          }}
+          size="small"
+          sx={{ flexGrow: 1 }}
+        />
 
-        <FormControl style={{ minWidth: 200 }}>
+        <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Category</InputLabel>
           <Select
             value={filters.category}
             onChange={(e) => handleFilterChange('category', e.target.value)}
+            label="Category"
           >
             <MenuItem value="all">All Categories</MenuItem>
-            {categories.map((category) => (
-              <MenuItem key={category._id} value={category._id}>
-                {category.name}
-              </MenuItem>
-            ))}
+            {/* Add your categories here */}
           </Select>
         </FormControl>
 
-        <FormControl style={{ minWidth: 200 }}>
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel>Status</InputLabel>
+          <Select
+            value={filters.status}
+            onChange={(e) => handleFilterChange('status', e.target.value)}
+            label="Status"
+          >
+            <MenuItem value="all">All Status</MenuItem>
+            <MenuItem value="active">Active</MenuItem>
+            <MenuItem value="completed">Completed</MenuItem>
+            <MenuItem value="cancelled">Cancelled</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Sort By</InputLabel>
           <Select
-            value={filters.sortBy}
-            onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+            value={filters.sort}
+            onChange={(e) => handleFilterChange('sort', e.target.value)}
+            label="Sort By"
           >
             <MenuItem value="newest">Newest First</MenuItem>
             <MenuItem value="budget_high">Highest Budget</MenuItem>
@@ -142,20 +135,38 @@ const LeadsList = () => {
         </FormControl>
       </FiltersContainer>
 
-      {loading ? <LoadingSpinner /> : (
+      {loading ? (
+        <Box display="flex" justifyContent="center" p={4}>
+          <CircularProgress />
+        </Box>
+      ) : (
         <>
-          {leads.map((lead) => (
-            <LeadCard key={lead._id} lead={lead} />
-          ))}
+          {leads.length === 0 ? (
+            <Alert severity="info">No leads found matching your criteria.</Alert>
+          ) : (
+            leads.map((lead) => (
+              <LeadCard 
+                key={lead._id} 
+                lead={{
+                  ...lead,
+                  location: lead.location ? {
+                    ...lead.location,
+                    display: getLocationDisplay(lead.location)
+                  } : null
+                }} 
+              />
+            ))
+          )}
           
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
+          <Box display="flex" justifyContent="center" mt={4}>
             <Pagination
               count={totalPages}
               page={filters.page}
-              onChange={(e, value) => setFilters({ ...filters, page: value })}
+              onChange={(e, value) => handleFilterChange('page', value)}
               color="primary"
+              size="large"
             />
-          </div>
+          </Box>
         </>
       )}
     </Container>

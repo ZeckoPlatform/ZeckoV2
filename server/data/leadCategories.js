@@ -1,8 +1,9 @@
 // Server-side categories (without React icons)
-exports.jobCategories = {
-  "Construction & Building": {
+const categories = {
+  "construction-&-building": {
     name: "Construction & Building",
     description: "Professional construction, renovation, and building services",
+    icon: "FaHardHat",
     subcategories: [
       "General Contractors",
       "Architects",
@@ -44,6 +45,7 @@ exports.jobCategories = {
   "Professional Services": {
     name: "Professional Services",
     description: "Expert professional, legal, and consulting services for individuals and businesses of all sizes",
+    icon: "FaUser",
     subcategories: [
       "Lawyers & Solicitors",
       "Accountants",
@@ -85,6 +87,7 @@ exports.jobCategories = {
   "Home Improvement": {
     name: "Home Improvement",
     description: "Comprehensive home renovation and improvement services for interior and exterior transformations",
+    icon: "FaHome",
     subcategories: [
       "Bathroom Installation",
       "Kitchen Installation",
@@ -121,6 +124,7 @@ exports.jobCategories = {
   "Home Services": {
     name: "Home Services",
     description: "Professional home maintenance, improvement, and repair services",
+    icon: "FaHome",
     subcategories: [
       "House Cleaning",
       "Gardening & Landscaping",
@@ -152,6 +156,7 @@ exports.jobCategories = {
   "Technology & Digital": {
     name: "Technology & Digital",
     description: "Professional technology and digital services for modern businesses",
+    icon: "FaLaptop",
     subcategories: [
       "Web Development",
       "Mobile App Development",
@@ -183,6 +188,7 @@ exports.jobCategories = {
   "Creative & Design": {
     name: "Creative & Design",
     description: "Professional creative and design services for businesses and individuals",
+    icon: "FaPaintBrush",
     subcategories: [
       "Graphic Design",
       "Web Design",
@@ -214,6 +220,7 @@ exports.jobCategories = {
   "Real Estate & Property": {
     name: "Real Estate & Property",
     description: "Professional real estate and property services",
+    icon: "FaHome",
     subcategories: [
       "Real Estate Agents",
       "Property Management",
@@ -245,6 +252,7 @@ exports.jobCategories = {
   "Environmental Services": {
     name: "Environmental Services",
     description: "Professional environmental and sustainability services",
+    icon: "FaTree",
     subcategories: [
       "Environmental Consulting",
       "Waste Management",
@@ -276,6 +284,7 @@ exports.jobCategories = {
   "Non-Profit & Community": {
     name: "Non-Profit & Community",
     description: "Professional services for non-profit organizations and community initiatives",
+    icon: "FaUsers",
     subcategories: [
       "Non-Profit Management",
       "Community Development",
@@ -307,6 +316,7 @@ exports.jobCategories = {
   "Research & Development": {
     name: "Research & Development",
     description: "Professional research and development services across industries",
+    icon: "FaResearch",
     subcategories: [
       "Scientific Research",
       "Market Research",
@@ -338,6 +348,7 @@ exports.jobCategories = {
   "Health & Beauty": {
     name: "Health & Beauty",
     description: "Professional health, wellness, and beauty services",
+    icon: "FaHeart",
     subcategories: [
       "Hair Styling",
       "Makeup Artists",
@@ -358,6 +369,7 @@ exports.jobCategories = {
   "Events & Entertainment": {
     name: "Events & Entertainment",
     description: "Professional event planning and entertainment services",
+    icon: "FaCalendar",
     subcategories: [
       "Event Planning",
       "Wedding Planning",
@@ -378,6 +390,7 @@ exports.jobCategories = {
   "Wedding Services": {
     name: "Wedding Services",
     description: "Professional wedding planning and services",
+    icon: "FaRing",
     subcategories: [
       "Wedding Photography",
       "Wedding Videography",
@@ -404,6 +417,7 @@ exports.jobCategories = {
   "Pet Services": {
     name: "Pet Services",
     description: "Professional pet care and animal services",
+    icon: "FaPaw",
     subcategories: [
       "Pet Grooming",
       "Dog Walking",
@@ -422,6 +436,7 @@ exports.jobCategories = {
   "Business Services": {
     name: "Business Services",
     description: "Professional business support and consulting services",
+    icon: "FaBusinessTime",
     subcategories: [
       "Business Consulting",
       "Marketing Services",
@@ -440,6 +455,7 @@ exports.jobCategories = {
   "Education & Training": {
     name: "Education & Training",
     description: "Comprehensive educational and training services for all ages and levels",
+    icon: "FaGraduationCap",
     subcategories: [
       "Academic Tutoring",
       "Professional Training",
@@ -471,6 +487,7 @@ exports.jobCategories = {
   "Specialized Services": {
     name: "Specialized Services",
     description: "Unique and specialized professional services",
+    icon: "FaTools",
     subcategories: [
       "Antique Restoration",
       "Art Restoration",
@@ -502,6 +519,7 @@ exports.jobCategories = {
   "Automotive": {
     name: "Automotive",
     description: "Professional automotive repair and maintenance services",
+    icon: "FaCar",
     subcategories: [
       "Car Servicing",
       "Car Repairs",
@@ -527,18 +545,41 @@ exports.jobCategories = {
   }
 };
 
+exports.jobCategories = categories;
+
 exports.getAllCategories = () => {
-  return Object.keys(exports.jobCategories) || [];
+  return Object.entries(categories).map(([id, category]) => ({
+    _id: id,
+    name: category.name,
+    description: category.description,
+    subcategories: category.subcategories,
+    icon: category.icon,
+    active: true
+  }));
 };
 
-exports.getSubcategories = (category) => {
-  return exports.jobCategories[category]?.subcategories || [];
+exports.getSubcategories = (categoryId) => {
+  return categories[categoryId]?.subcategories || [];
 };
 
-exports.validateCategory = (category) => {
-  return Boolean(exports.jobCategories[category]);
+exports.validateCategory = (categoryId) => {
+  return Boolean(categories[categoryId]);
 };
 
-exports.validateSubcategory = (category, subcategory) => {
-  return exports.jobCategories[category]?.subcategories?.includes(subcategory) || false;
+exports.validateSubcategory = (categoryId, subcategory) => {
+  return categories[categoryId]?.subcategories?.includes(subcategory) || false;
+};
+
+exports.getCategoryById = (categoryId) => {
+  const category = categories[categoryId];
+  if (!category) return null;
+  
+  return {
+    _id: categoryId,
+    name: category.name,
+    description: category.description,
+    subcategories: category.subcategories,
+    icon: category.icon,
+    active: true
+  };
 }; 

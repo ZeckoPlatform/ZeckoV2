@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { 
@@ -8,10 +8,11 @@ import {
   CircularProgress,
   Alert,
   InputAdornment,
-  Divider
+  Typography,
+  Box
 } from '@mui/material';
-import { api } from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
+import leadService from '../../services/leadService';
+import { getLocationDisplay } from '../../utils/locationHelpers';
 
 const FormContainer = styled(Paper)`
   padding: 2rem;
@@ -25,40 +26,29 @@ const Form = styled.form`
   gap: 1.5rem;
 `;
 
-const LeadSummary = styled.div`
+const LeadSummary = styled(Box)`
   margin-bottom: 2rem;
   padding: 1rem;
-  background: ${({ theme }) => theme.colors.background.default};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
+  background-color: ${({ theme }) => theme.palette.grey[50]};
+  border-radius: 4px;
 `;
 
-const ProposalForm = () => {
+const ProposalForm = ({ lead }) => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [lead, setLead] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     amount: '',
-    deliveryTime: '',
     message: ''
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetchLeadDetails();
-  }, [id]);
-
-  const fetchLeadDetails = async () => {
-    try {
-      const response = await api.get(`/leads/${id}`);
-      setLead(response.data);
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -67,80 +57,55 @@ const ProposalForm = () => {
     setError(null);
 
     try {
-      // Check if user has enough credits
-      const creditsNeeded = 1; // Adjust based on your business logic
-      if (user.credits < creditsNeeded) {
-        throw new Error('Insufficient credits to submit proposal');
-      }
-
-      const response = await api.post(`/leads/${id}/proposals`, {
-        ...formData,
-        amount: parseFloat(formData.amount),
-        deliveryTime: parseInt(formData.deliveryTime)
-      });
-
-      navigate(`/leads/${id}`, {
-        state: { message: 'Proposal submitted successfully!' }
-      });
-    } catch (error) {
-      setError(error.message);
+      await leadService.submitProposal(id, formData);
+      navigate(`/leads/${id}`);
+    } catch (err) {
+      setError(err.message || 'Error submitting proposal');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  if (loading) return <CircularProgress />;
-  if (!lead) return <div>Lead not found</div>;
+  if (!lead) return null;
 
   return (
-    <FormContainer>
-      <h2>Submit Proposal</h2>
-      
+    <FormContainer elevation={3}>
+      <Typography variant="h5" gutterBottom>
+        Submit Proposal
+      </Typography>
+
       <LeadSummary>
-        <h3>{lead.title}</h3>
-        <p>Budget: ${lead.budget.min} - ${lead.budget.max}</p>
+        <Typography variant="h6">{lead.title}</Typography>
+        <Typography variant="body2" color="textSecondary">
+          {getLocationDisplay(lead.location)}
+        </Typography>
+        <Typography variant="body2" color="textSecondary">
+          Budget: £{lead.budget?.min?.toLocaleString()} - £{lead.budget?.max?.toLocaleString()}
+        </Typography>
       </LeadSummary>
 
-      <Divider />
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
       <Form onSubmit={handleSubmit}>
-        {error && (
-          <Alert severity="error" style={{ marginBottom: '1rem' }}>
-            {error}
-          </Alert>
-        )}
-
         <TextField
-          label="Bid Amount"
           name="amount"
+          label="Proposal Amount (£)"
           type="number"
           required
           value={formData.amount}
           onChange={handleChange}
           InputProps={{
-            startAdornment: <InputAdornment position="start">$</InputAdornment>,
+            startAdornment: <InputAdornment position="start">£</InputAdornment>,
           }}
         />
 
         <TextField
-          label="Delivery Time (days)"
-          name="deliveryTime"
-          type="number"
-          required
-          value={formData.deliveryTime}
-          onChange={handleChange}
-        />
-
-        <TextField
-          label="Proposal Message"
           name="message"
+          label="Proposal Message"
           multiline
           rows={6}
           required
@@ -149,7 +114,7 @@ const ProposalForm = () => {
           placeholder="Describe why you're the best fit for this job..."
         />
 
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+        <Box display="flex" gap={2} justifyContent="flex-end">
           <Button 
             variant="outlined" 
             onClick={() => navigate(`/leads/${id}`)}
@@ -164,7 +129,7 @@ const ProposalForm = () => {
           >
             {submitting ? <CircularProgress size={24} /> : 'Submit Proposal'}
           </Button>
-        </div>
+        </Box>
       </Form>
     </FormContainer>
   );

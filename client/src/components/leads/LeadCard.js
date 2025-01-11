@@ -29,62 +29,14 @@ const StyledCard = styled(Card)`
   }
 `;
 
-const LeadHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
-`;
-
-const LeadTitle = styled(Typography)`
-  color: ${props => props.theme.colors.primary};
-  text-decoration: none;
-  
-  &:hover {
-    text-decoration: underline;
-  }
-`;
-
 const LeadMeta = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: ${props => props.theme.colors.textSecondary};
-  margin: 0.5rem 0;
-`;
-
-const LeadActions = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid ${props => props.theme.colors.border};
-`;
-
-const StatusChip = styled(Chip)`
-  &.active {
-    background-color: ${props => props.theme.colors.success}20;
-    color: ${props => props.theme.colors.success};
-  }
-  
-  &.completed {
-    background-color: ${props => props.theme.colors.info}20;
-    color: ${props => props.theme.colors.info};
-  }
-  
-  &.cancelled {
-    background-color: ${props => props.theme.colors.danger}20;
-    color: ${props => props.theme.colors.danger};
-  }
+  color: ${props => props.theme.colors.text.secondary};
 `;
 
 const LeadCard = ({ lead }) => {
-  console.group('LeadCard Render');
-  console.log('Full lead data:', lead);
-  console.log('Location data:', lead?.location);
-  console.groupEnd();
-
   if (!lead) return null;
 
   const {
@@ -101,42 +53,22 @@ const LeadCard = ({ lead }) => {
   } = lead;
 
   const renderLocation = () => {
-    if (!location || Object.keys(location).length === 0) {
-      return null;
-    }
-
     try {
       const locationParts = [];
+      if (location?.city) locationParts.push(location.city);
+      if (location?.state) locationParts.push(location.state);
+      if (location?.country) locationParts.push(location.country);
       
-      if (location.city) locationParts.push(location.city);
-      if (location.state) locationParts.push(location.state);
-      if (location.country) locationParts.push(location.country);
+      const locationString = locationParts.join(', ');
       
-      if (locationParts.length === 0) {
-        if (location.address) {
-          locationParts.push(location.address);
-        } else {
-          return null;
-        }
-      }
-
-      const displayLocation = locationParts.join(', ');
-
-      return displayLocation ? (
+      return locationString ? (
         <LeadMeta>
           <LocationOn fontSize="small" />
-          <Typography variant="body2">
-            {displayLocation}
-          </Typography>
+          <Typography variant="body2">{locationString}</Typography>
         </LeadMeta>
       ) : null;
     } catch (error) {
-      console.error('Location render error:', {
-        error,
-        location,
-        locationTypeof: typeof location,
-        lead: _id
-      });
+      console.error('Error rendering location:', error);
       return null;
     }
   };
@@ -144,40 +76,31 @@ const LeadCard = ({ lead }) => {
   return (
     <StyledCard>
       <CardContent>
-        <LeadHeader>
-          <div>
-            <LeadTitle variant="h6" component={Link} to={`/leads/${_id}`}>
-              {title}
-            </LeadTitle>
-            <LeadMeta>
-              <BusinessCenter fontSize="small" />
-              <Typography variant="body2">{category?.name || 'Uncategorized'}</Typography>
-            </LeadMeta>
-            {renderLocation()}
-          </div>
-          <StatusChip 
-            label={status || 'Unknown'}
-            className={(status || 'unknown').toLowerCase()}
-            size="small"
-          />
-        </LeadHeader>
-
-        <Typography variant="body2" color="textSecondary" paragraph>
-          {description?.length > 200 
-            ? `${description.substring(0, 200)}...` 
-            : description}
+        <Typography variant="h6" component="h2" gutterBottom>
+          {title}
         </Typography>
 
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          {budget && (
+        <Typography variant="body2" color="textSecondary" paragraph>
+          {description}
+        </Typography>
+
+        <Box display="flex" flexDirection="column" gap={1} mb={2}>
+          <LeadMeta>
+            <BusinessCenter fontSize="small" />
+            <Typography variant="body2">{category}</Typography>
+          </LeadMeta>
+
+          {budget?.min && budget?.max && (
             <LeadMeta>
               <AttachMoney fontSize="small" />
               <Typography variant="body2">
-                Budget: ${budget?.min || 0} - ${budget?.max || 0} {budget?.currency || 'USD'}
+                {`£${budget.min.toLocaleString()} - £${budget.max.toLocaleString()}`}
               </Typography>
             </LeadMeta>
           )}
-          
+
+          {renderLocation()}
+
           {createdAt && (
             <LeadMeta>
               <Schedule fontSize="small" />
@@ -188,7 +111,7 @@ const LeadCard = ({ lead }) => {
           )}
         </Box>
 
-        <LeadActions>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
           <Box display="flex" alignItems="center" gap={1}>
             <Avatar src={client?.avatar} alt={client?.username || 'User'}>
               <Person />
@@ -216,7 +139,7 @@ const LeadCard = ({ lead }) => {
               />
             )}
           </Box>
-        </LeadActions>
+        </Box>
       </CardContent>
     </StyledCard>
   );

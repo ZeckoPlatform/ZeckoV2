@@ -1,27 +1,23 @@
 const mongoose = require('mongoose');
 
 const leadSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  description: { type: String, required: true },
+  title: { type: String, required: true, trim: true },
+  description: { type: String, required: true, trim: true },
   category: { type: String, required: true },
   subcategory: { type: String, required: true },
   budget: {
-    min: { type: Number, required: true },
-    max: { type: Number, required: true },
-    currency: { type: String, default: 'USD' }
+    min: { type: Number, required: true, min: 0 },
+    max: { type: Number, required: true, min: 0 },
+    currency: { type: String, default: 'GBP', enum: ['GBP', 'USD', 'EUR'] }
   },
   location: {
-    address: { type: String, default: '' },
-    city: { type: String, default: '' },
-    state: { type: String, default: '' },
-    country: { type: String, default: '' },
-    postalCode: { type: String, default: '' }
+    address: { type: String, default: '', trim: true },
+    city: { type: String, default: '', trim: true },
+    state: { type: String, default: '', trim: true },
+    country: { type: String, default: '', trim: true },
+    postalCode: { type: String, default: '', trim: true }
   },
-  client: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
+  client: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   requirements: [{
     question: { type: String },
     answer: { type: String }
@@ -44,29 +40,21 @@ const leadSchema = new mongoose.Schema({
   proposals: [{
     contractor: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      ref: 'User',
+      required: true
     },
     amount: {
-      value: Number,
-      currency: String
+      value: { type: Number, required: true },
+      currency: { type: String, default: 'GBP' }
     },
     message: String,
     status: {
       type: String,
-      enum: ['pending', 'accepted', 'rejected', 'withdrawn'],
+      enum: ['pending', 'accepted', 'rejected'],
       default: 'pending'
     },
-    submittedAt: { type: Date, default: Date.now }
+    createdAt: { type: Date, default: Date.now }
   }],
-  views: [{
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    viewedAt: { type: Date, default: Date.now }
-  }],
-  expiresAt: Date,
-  completedAt: Date,
   metrics: {
     viewCount: { type: Number, default: 0 },
     proposalCount: { type: Number, default: 0 },
@@ -79,11 +67,11 @@ const leadSchema = new mongoose.Schema({
 // Indexes
 leadSchema.index({ category: 1 });
 leadSchema.index({ status: 1 });
-leadSchema.index({ 'location.coordinates': '2dsphere' });
 leadSchema.index({ createdAt: -1 });
 
-// Update metrics when new proposal is added
+// Pre-save middleware
 leadSchema.pre('save', function(next) {
+  // Update metrics
   if (this.isModified('proposals')) {
     this.metrics.proposalCount = this.proposals.length;
     if (this.proposals.length > 0) {
@@ -91,11 +79,8 @@ leadSchema.pre('save', function(next) {
       this.metrics.averageProposal = total / this.proposals.length;
     }
   }
-  next();
-});
 
-// Add a pre-save middleware to ensure location object exists
-leadSchema.pre('save', function(next) {
+  // Ensure location exists
   if (!this.location) {
     this.location = {
       address: '',
@@ -105,6 +90,7 @@ leadSchema.pre('save', function(next) {
       postalCode: ''
     };
   }
+  
   next();
 });
 

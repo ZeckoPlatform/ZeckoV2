@@ -5,6 +5,7 @@ import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useServiceCategories } from '../contexts/ServiceCategoryContext';
 import { endpoints } from '../services/api';
+import { jobCategories } from '../data/leadCategories';
 
 const PostLead = () => {
   const navigate = useNavigate();

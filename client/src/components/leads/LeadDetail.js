@@ -6,88 +6,172 @@ import {
     Button, 
     Grid,
     TextField,
-    Divider 
+    Divider,
+    Chip,
+    Avatar,
+    Alert
 } from '@mui/material';
-import { useParams } from 'react-router-dom';
-import { useService } from '../../contexts/ServiceContext';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import api from '../../services/api';
+import { BusinessCenter, LocationOn, AttachMoney, Person } from '@mui/icons-material';
+import styled from 'styled-components';
+import leadService from '../../services/leadService';
+
+const StyledPaper = styled(Paper)`
+  padding: 2rem;
+  margin: 2rem 0;
+`;
+
+const MetaItem = styled(Box)`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+  color: ${props => props.theme.colors.text.secondary};
+`;
 
 const LeadDetail = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const { user } = useAuth();
-    const { submitQuote } = useService();
     const [lead, setLead] = useState(null);
-    const [quoteForm, setQuoteForm] = useState({
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [proposalForm, setProposalForm] = useState({
         amount: '',
         message: ''
     });
 
     useEffect(() => {
-        // Fetch lead details
         const fetchLead = async () => {
             try {
-                const response = await api.get(`/api/requests/${id}`);
-                setLead(response.data);
-            } catch (error) {
-                console.error('Error fetching lead:', error);
+                const data = await leadService.getLead(id);
+                setLead(data);
+            } catch (err) {
+                setError(err.message || 'Error fetching lead details');
+            } finally {
+                setLoading(false);
             }
         };
+
         fetchLead();
     }, [id]);
 
-    const handleQuoteSubmit = async (e) => {
+    const handleProposalSubmit = async (e) => {
         e.preventDefault();
         try {
-            await submitQuote(id, quoteForm);
-            // Show success message
-        } catch (error) {
-            // Show error message
+            await leadService.submitProposal(id, proposalForm);
+            // Refresh lead data after submission
+            const updatedLead = await leadService.getLead(id);
+            setLead(updatedLead);
+            setProposalForm({ amount: '', message: '' });
+        } catch (err) {
+            setError(err.message || 'Error submitting proposal');
         }
     };
 
-    if (!lead) return <Typography>Loading...</Typography>;
+    if (loading) return <Box p={3}>Loading...</Box>;
+    if (error) return <Alert severity="error">{error}</Alert>;
+    if (!lead) return <Alert severity="error">Lead not found</Alert>;
+
+    const { 
+        title, 
+        description, 
+        category,
+        subcategory,
+        budget,
+        location,
+        client,
+        status,
+        proposals = []
+    } = lead;
+
+    const canSubmitProposal = user && 
+        user.id !== client?._id && 
+        status === 'active' && 
+        !proposals.some(p => p.contractor === user.id);
 
     return (
-        <Box p={3}>
-            <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
-                <Typography variant="h5" gutterBottom>
-                    {lead.title}
-                </Typography>
-                <Typography color="textSecondary" gutterBottom>
-                    Posted on {new Date(lead.createdAt).toLocaleDateString()}
-                </Typography>
-                <Divider sx={{ my: 2 }} />
+        <Box maxWidth="lg" margin="0 auto">
+            <StyledPaper elevation={3}>
                 <Grid container spacing={3}>
                     <Grid item xs={12} md={8}>
-                        <Typography variant="h6" gutterBottom>
-                            Description
+                        <Typography variant="h4" gutterBottom>
+                            {title}
                         </Typography>
-                        <Typography paragraph>
-                            {lead.description}
-                        </Typography>
-                        
-                        <Typography variant="h6" gutterBottom>
-                            Location
-                        </Typography>
-                        <Typography>
-                            {lead.location.city}, {lead.location.postcode}
-                        </Typography>
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                        {user.role === 'vendor' && (
-                            <Paper elevation={1} sx={{ p: 2 }}>
-                                <Typography variant="h6" gutterBottom>
-                                    Submit Quote
+
+                        <MetaItem>
+                            <BusinessCenter fontSize="small" />
+                            <Typography>
+                                {category} {subcategory && `- ${subcategory}`}
+                            </Typography>
+                        </MetaItem>
+
+                        {location?.city && (
+                            <MetaItem>
+                                <LocationOn fontSize="small" />
+                                <Typography>
+                                    {[location.city, location.state, location.country]
+                                        .filter(Boolean)
+                                        .join(', ')}
                                 </Typography>
-                                <form onSubmit={handleQuoteSubmit}>
+                            </MetaItem>
+                        )}
+
+                        <MetaItem>
+                            <AttachMoney fontSize="small" />
+                            <Typography>
+                                Budget: £{budget?.min?.toLocaleString()} - £{budget?.max?.toLocaleString()}
+                            </Typography>
+                        </MetaItem>
+
+                        <Box mt={3}>
+                            <Typography variant="h6" gutterBottom>
+                                Description
+                            </Typography>
+                            <Typography paragraph>
+                                {description}
+                            </Typography>
+                        </Box>
+
+                        <Box mt={3}>
+                            <Typography variant="h6" gutterBottom>
+                                About the Client
+                            </Typography>
+                            <Box display="flex" alignItems="center" gap={1}>
+                                <Avatar>
+                                    <Person />
+                                </Avatar>
+                                <Typography>
+                                    {client?.businessName || client?.username || 'Anonymous'}
+                                </Typography>
+                            </Box>
+                        </Box>
+                    </Grid>
+
+                    <Grid item xs={12} md={4}>
+                        <StyledPaper>
+                            <Typography variant="h6" gutterBottom>
+                                Lead Status
+                            </Typography>
+                            <Chip 
+                                label={status.toUpperCase()} 
+                                color={status === 'active' ? 'success' : 'default'}
+                                sx={{ mb: 2 }}
+                            />
+                            
+                            {canSubmitProposal && (
+                                <form onSubmit={handleProposalSubmit}>
+                                    <Typography variant="h6" gutterBottom>
+                                        Submit Proposal
+                                    </Typography>
                                     <TextField
                                         fullWidth
                                         label="Amount (£)"
                                         type="number"
-                                        value={quoteForm.amount}
-                                        onChange={(e) => setQuoteForm({
-                                            ...quoteForm,
+                                        value={proposalForm.amount}
+                                        onChange={(e) => setProposalForm({
+                                            ...proposalForm,
                                             amount: e.target.value
                                         })}
                                         margin="normal"
@@ -98,9 +182,9 @@ const LeadDetail = () => {
                                         label="Message"
                                         multiline
                                         rows={4}
-                                        value={quoteForm.message}
-                                        onChange={(e) => setQuoteForm({
-                                            ...quoteForm,
+                                        value={proposalForm.message}
+                                        onChange={(e) => setProposalForm({
+                                            ...proposalForm,
                                             message: e.target.value
                                         })}
                                         margin="normal"
@@ -112,14 +196,14 @@ const LeadDetail = () => {
                                         fullWidth
                                         sx={{ mt: 2 }}
                                     >
-                                        Submit Quote
+                                        Submit Proposal
                                     </Button>
                                 </form>
-                            </Paper>
-                        )}
+                            )}
+                        </StyledPaper>
                     </Grid>
                 </Grid>
-            </Paper>
+            </StyledPaper>
         </Box>
     );
 };

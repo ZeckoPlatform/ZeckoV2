@@ -4,10 +4,41 @@ const { auth } = require('../middleware/auth');
 const Lead = require('../models/Lead');
 const { validateCategory, validateSubcategory } = require('../data/leadCategories');
 
+// Error handler middleware
+const errorHandler = (err, req, res, next) => {
+  console.error('Error:', err);
+  
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({
+      error: 'Validation Error',
+      details: Object.values(err.errors).map(e => e.message)
+    });
+  }
+  
+  if (err.name === 'CastError') {
+    return res.status(400).json({
+      error: 'Invalid ID format'
+    });
+  }
+  
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+  });
+};
+
 // Get all leads with filtering
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
     try {
-        const { userId, category } = req.query;
+        const { 
+            userId, 
+            category,
+            status,
+            search,
+            limit = 10,
+            page = 1
+        } = req.query;
+        
         let query = {};
         
         if (userId && userId !== 'undefined') {
@@ -22,135 +53,121 @@ router.get('/', async (req, res) => {
         if (category && validateCategory(category)) {
             query.category = category;
         }
+
+        if (status) {
+            query.status = status;
+        }
+
+        if (search) {
+            query.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ];
+        }
         
         const leads = await Lead.find(query)
             .populate('client', 'username businessName')
             .sort({ createdAt: -1 })
-            .limit(10);
+            .limit(parseInt(limit))
+            .skip((parseInt(page) - 1) * parseInt(limit));
         
-        console.log('Leads being sent:', JSON.stringify(leads, null, 2));
-            
-        res.json(leads);
-    } catch (error) {
-        console.error('Error fetching leads:', error);
-        res.status(500).json({ 
-            message: 'Error fetching leads',
-            error: error.message 
+        const total = await Lead.countDocuments(query);
+        
+        res.json({
+            leads,
+            total,
+            pages: Math.ceil(total / limit)
         });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Get single lead
+router.get('/:id', async (req, res, next) => {
+    try {
+        const lead = await Lead.findById(req.params.id)
+            .populate('client', 'username businessName')
+            .populate('proposals.contractor', 'username businessName');
+        
+        if (!lead) {
+            return res.status(404).json({ message: 'Lead not found' });
+        }
+        
+        res.json(lead);
+    } catch (error) {
+        next(error);
     }
 });
 
 // Create new lead
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, async (req, res, next) => {
     try {
-        const { category, subcategory, location = {} } = req.body;
-
-        // Ensure location object has all required fields
-        const sanitizedLocation = {
-            address: location.address || '',
-            city: location.city || '',
-            state: location.state || '',
-            country: location.country || '',
-            postalCode: location.postalCode || ''
-        };
-
-        // Validate category and subcategory
-        if (!validateCategory(category)) {
-            return res.status(400).json({ error: 'Invalid category' });
-        }
-
-        if (subcategory && !validateSubcategory(category, subcategory)) {
-            return res.status(400).json({ error: 'Invalid subcategory' });
-        }
-
         const lead = new Lead({
             ...req.body,
-            location: sanitizedLocation,
-            client: req.user.id,
-            status: 'active'
+            client: req.user.id
         });
-
+        
         await lead.save();
         res.status(201).json(lead);
     } catch (error) {
-        console.error('Error creating lead:', error);
-        res.status(400).json({ 
-            message: 'Error creating lead',
-            error: error.message 
-        });
-    }
-});
-
-// Get lead by ID
-router.get('/:id', auth, async (req, res) => {
-    try {
-        const lead = await Lead.findById(req.params.id)
-            .populate('category')
-            .populate('client', 'username businessName')
-            .populate('proposals.contractor', 'username businessName');
-
-        if (!lead) {
-            return res.status(404).json({ message: 'Lead not found' });
-        }
-
-        // Increment view count
-        lead.metrics.viewCount += 1;
-        await lead.save();
-
-        res.json(lead);
-    } catch (error) {
-        console.error('Error fetching lead:', error);
-        res.status(500).json({ message: 'Error fetching lead' });
+        next(error);
     }
 });
 
 // Update lead
-router.patch('/:id', auth, async (req, res) => {
+router.patch('/:id', auth, async (req, res, next) => {
     try {
         const lead = await Lead.findOneAndUpdate(
             { _id: req.params.id, client: req.user.id },
             req.body,
-            { new: true }
-        ).populate('category')
-         .populate('client', 'username businessName');
-
+            { new: true, runValidators: true }
+        );
+        
         if (!lead) {
-            return res.status(404).json({ message: 'Lead not found' });
+            return res.status(404).json({ message: 'Lead not found or unauthorized' });
         }
-
+        
         res.json(lead);
     } catch (error) {
-        console.error('Error updating lead:', error);
-        res.status(400).json({ message: 'Error updating lead' });
+        next(error);
     }
 });
 
 // Delete lead
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, async (req, res, next) => {
     try {
         const lead = await Lead.findOneAndDelete({
             _id: req.params.id,
             client: req.user.id
         });
-
+        
         if (!lead) {
-            return res.status(404).json({ message: 'Lead not found' });
+            return res.status(404).json({ message: 'Lead not found or unauthorized' });
         }
-
+        
         res.json({ message: 'Lead deleted successfully' });
     } catch (error) {
-        console.error('Error deleting lead:', error);
-        res.status(500).json({ message: 'Error deleting lead' });
+        next(error);
     }
 });
 
 // Submit proposal
-router.post('/:id/proposals', auth, async (req, res) => {
+router.post('/:id/proposals', auth, async (req, res, next) => {
     try {
         const lead = await Lead.findById(req.params.id);
         
         if (!lead) {
             return res.status(404).json({ message: 'Lead not found' });
+        }
+
+        // Check if user already submitted a proposal
+        const existingProposal = lead.proposals.find(
+            p => p.contractor.toString() === req.user.id
+        );
+
+        if (existingProposal) {
+            return res.status(400).json({ message: 'You have already submitted a proposal' });
         }
 
         lead.proposals.push({
@@ -165,29 +182,10 @@ router.post('/:id/proposals', auth, async (req, res) => {
         await lead.save();
         res.status(201).json(lead);
     } catch (error) {
-        console.error('Error submitting proposal:', error);
-        res.status(400).json({ message: 'Error submitting proposal' });
+        next(error);
     }
 });
 
-// Put lead
-router.put('/:id', auth, async (req, res) => {
-    try {
-        const lead = await Lead.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            { new: true }
-        );
-        
-        if (!lead) {
-            return res.status(404).json({ message: 'Lead not found' });
-        }
-        
-        res.json(lead);
-    } catch (error) {
-        console.error('Error updating lead:', error);
-        res.status(500).json({ message: 'Error updating lead' });
-    }
-});
+router.use(errorHandler);
 
 module.exports = router;

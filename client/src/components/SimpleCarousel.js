@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Paper, Button, MobileStepper } from '@mui/material';
+import { Paper, Button, MobileStepper, Typography, Box } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import styled from 'styled-components';
-import api, { endpoints } from '../services/api';
+import leadService from '../services/leadService';
 
 const CarouselContainer = styled(Paper)`
   max-width: 800px;
@@ -26,179 +26,92 @@ const SlideContent = styled.div`
   }
 `;
 
-const LeadTitle = styled.h3`
-  margin: 0 0 10px;
+const LeadTitle = styled(Typography)`
+  margin-bottom: 1rem;
   color: ${({ theme }) => theme.colors?.primary?.main || '#2962ff'};
 `;
 
-const LeadDescription = styled.p`
-  margin: 0 0 15px;
+const LeadDescription = styled(Typography)`
+  margin-bottom: 1rem;
   color: ${({ theme }) => theme.colors?.text?.secondary || '#666'};
 `;
 
-const LeadMeta = styled.div`
+const LeadMeta = styled(Box)`
   display: flex;
   justify-content: space-between;
-  align-items: center;
   color: ${({ theme }) => theme.colors?.text?.secondary || '#666'};
-  font-size: 0.9em;
+  margin-bottom: 1rem;
 `;
 
-const SimpleCarousel = ({ items, type }) => {
+const SimpleCarousel = () => {
+  const [items, setItems] = useState([]);
   const [activeStep, setActiveStep] = useState(0);
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // Minimum swipe distance (in px)
-  const minSwipeDistance = 50;
-
-  const handleNext = useCallback(() => {
-    setActiveStep((prevStep) => (prevStep + 1) % items.length);
-  }, [items.length]);
-
-  const handleBack = useCallback(() => {
-    setActiveStep((prevStep) => (prevStep - 1 + items.length) % items.length);
-  }, [items.length]);
-
-  // Handle keyboard navigation
   useEffect(() => {
-    const handleKeyPress = (event) => {
-      if (event.key === 'ArrowLeft') {
-        handleBack();
-      } else if (event.key === 'ArrowRight') {
-        handleNext();
+    const fetchLatestLeads = async () => {
+      try {
+        const latestLeads = await leadService.getLatestLeads();
+        setItems(latestLeads);
+      } catch (err) {
+        setError('Failed to fetch latest leads');
+        console.error('Error fetching leads:', err);
+      } finally {
+        setLoading(false);
       }
     };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [handleNext, handleBack]);
+    fetchLatestLeads();
+  }, []);
 
-  // Handle touch events for swipe
-  const onTouchStart = (e) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
+  const handleNext = () => {
+    setActiveStep((prevStep) => (prevStep + 1) % items.length);
   };
 
-  const onTouchMove = (e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+  const handleBack = () => {
+    setActiveStep((prevStep) => (prevStep - 1 + items.length) % items.length);
   };
 
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
+  const handleViewItem = useCallback((e, id) => {
+    e.preventDefault();
+    navigate(`/leads/${id}`);
+  }, [navigate]);
 
-    if (isLeftSwipe) {
-      handleNext();
-    } else if (isRightSwipe) {
-      handleBack();
-    }
-  };
-
-  // Auto-play effect
-  useEffect(() => {
-    const autoPlay = setInterval(() => {
-      handleNext();
-    }, 6000);
-    return () => clearInterval(autoPlay);
-  }, [handleNext]);
-
-  if (!items || items.length === 0) {
-    return null;
-  }
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+  if (items.length === 0) return null;
 
   const currentItem = items[activeStep];
-  if (!currentItem) return null;
-
-  const handleViewItem = (e, itemId) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    switch(type) {
-      case 'lead':
-        navigate(`/lead/${itemId}`);
-        break;
-      case 'job':
-        navigate(`/job/${itemId}`);
-        break;
-      case 'product':
-        navigate(`/product/${itemId}`);
-        break;
-      default:
-        console.warn('Unknown item type:', type);
-    }
-  };
 
   const renderItemContent = (item) => {
-    switch(type) {
-      case 'lead':
-        return (
-          <>
-            <LeadTitle>{item.title}</LeadTitle>
-            <LeadDescription>
-              {item.description?.substring(0, 150)}
-              {item.description?.length > 150 ? '...' : ''}
-            </LeadDescription>
-            <LeadMeta>
-              <span>
-                Budget: ${item.budget?.min || 0} - ${item.budget?.max || 0}
-              </span>
-              <span>
-                Posted: {new Date(item.createdAt).toLocaleDateString()}
-              </span>
-            </LeadMeta>
-          </>
-        );
-      
-      case 'job':
-        return (
-          <>
-            <LeadTitle>{item.title}</LeadTitle>
-            <LeadDescription>
-              {item.description?.substring(0, 150)}
-              {item.description?.length > 150 ? '...' : ''}
-            </LeadDescription>
-            <LeadMeta>
-              <span>{item.location}</span>
-              <span>Posted: {new Date(item.createdAt).toLocaleDateString()}</span>
-            </LeadMeta>
-          </>
-        );
-      
-      case 'product':
-        return (
-          <>
-            <LeadTitle>{item.name}</LeadTitle>
-            <LeadDescription>
-              {item.description?.substring(0, 150)}
-              {item.description?.length > 150 ? '...' : ''}
-            </LeadDescription>
-            <LeadMeta>
-              <span>Price: ${item.price}</span>
-              {item.category && <span>Category: {item.category}</span>}
-            </LeadMeta>
-          </>
-        );
-      
-      default:
-        return null;
-    }
+    if (!item) return null;
+
+    const locationString = item.location?.city 
+      ? `${item.location.city}${item.location.state ? `, ${item.location.state}` : ''}`
+      : '';
+
+    return (
+      <>
+        <LeadTitle variant="h5">{item.title}</LeadTitle>
+        <LeadDescription variant="body1">{item.description}</LeadDescription>
+        <LeadMeta>
+          <Typography variant="body2">
+            {locationString}
+          </Typography>
+          <Typography variant="body2">
+            Budget: £{item.budget?.min?.toLocaleString()} - £{item.budget?.max?.toLocaleString()}
+          </Typography>
+        </LeadMeta>
+      </>
+    );
   };
 
   return (
     <CarouselContainer elevation={3}>
-      <SlideContent
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      >
-        <div>
-          {renderItemContent(currentItem)}
-        </div>
+      <SlideContent>
+        {renderItemContent(currentItem)}
         <Button
           variant="contained"
           color="primary"

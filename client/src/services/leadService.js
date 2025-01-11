@@ -1,14 +1,101 @@
-import { api } from '../contexts/AuthContext';
+import api from '../services/api';
 
-export const getUserLeads = async (userId) => {
-  try {
-    const response = await api.get(`/leads/user/${userId}`);
-    return response.data;
-  } catch (error) {
-    if (error.isTimeout) {
-      console.error('Lead fetch timeout:', error);
-      return { leads: [], error: 'Request timed out. Please try again.' };
+export const leadService = {
+  // Get all leads with optional filters
+  getLeads: async (filters = {}) => {
+    try {
+      const response = await api.get('/api/leads', { params: filters });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching leads:', error);
+      throw error;
     }
-    throw error;
+  },
+
+  // Get a single lead by ID
+  getLead: async (id) => {
+    try {
+      const response = await api.get(`/api/leads/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching lead:', error);
+      throw error;
+    }
+  },
+
+  // Get leads for a specific user
+  getUserLeads: async (userId) => {
+    try {
+      const response = await api.get('/api/leads', {
+        params: { userId }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user leads:', error);
+      throw error;
+    }
+  },
+
+  // Create a new lead
+  createLead: async (leadData) => {
+    try {
+      const response = await api.post('/api/leads', leadData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating lead:', error);
+      throw error;
+    }
+  },
+
+  // Update an existing lead
+  updateLead: async (id, updateData) => {
+    try {
+      const response = await api.patch(`/api/leads/${id}`, updateData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating lead:', error);
+      throw error;
+    }
+  },
+
+  // Delete a lead
+  deleteLead: async (id) => {
+    try {
+      const response = await api.delete(`/api/leads/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting lead:', error);
+      throw error;
+    }
+  },
+
+  // Submit a proposal for a lead
+  submitProposal: async (leadId, proposalData) => {
+    try {
+      const response = await api.post(`/api/leads/${leadId}/proposals`, proposalData);
+      return response.data;
+    } catch (error) {
+      console.error('Error submitting proposal:', error);
+      throw error;
+    }
+  },
+
+  // Get latest leads for carousel
+  getLatestLeads: async (limit = 5) => {
+    try {
+      const response = await api.get('/api/leads', {
+        params: {
+          limit,
+          status: 'active',
+          sort: '-createdAt'
+        }
+      });
+      return response.data.leads;
+    } catch (error) {
+      console.error('Error fetching latest leads:', error);
+      throw error;
+    }
   }
-}; 
+};
+
+export default leadService; 
