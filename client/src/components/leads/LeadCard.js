@@ -118,19 +118,24 @@ const LeadCard = ({ lead }) => {
         displayLocation = location;
       } 
       // If location is an object
-      else if (typeof location === 'object') {
+      else if (typeof location === 'object' && location !== null) {
+        // First try formatted address
         if (location.formatted) {
           displayLocation = location.formatted;
-        } else {
+        } 
+        // Then try individual components
+        else {
           const parts = [];
+          // Only add parts that exist
           if (location.city) parts.push(location.city);
           if (location.state) parts.push(location.state);
           if (location.country) parts.push(location.country);
-          displayLocation = parts.join(', ') || location.toString();
+          // If no parts, try to get a string representation
+          displayLocation = parts.length > 0 ? parts.join(', ') : String(location);
         }
       }
 
-      // If we still don't have a display location, use a default
+      // If we still don't have a display location, return null
       if (!displayLocation) {
         return null;
       }
@@ -144,7 +149,7 @@ const LeadCard = ({ lead }) => {
         </LeadMeta>
       );
     } catch (error) {
-      console.error('Error rendering location:', error);
+      console.error('Error rendering location:', error, location);
       return null;
     }
   };

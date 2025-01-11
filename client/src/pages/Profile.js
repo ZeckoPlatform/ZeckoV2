@@ -28,9 +28,9 @@ const Profile = () => {
             username: user?.username || '',
             email: user?.email || '',
             businessName: user?.businessName || '',
-            phone: user?.phone || '',
-            location: user?.location || '',
-            bio: user?.bio || ''
+            phone: user?.profile?.phone || '',
+            location: user?.profile?.location || '',
+            bio: user?.profile?.bio || ''
         };
     });
     const [loading, setLoading] = useState(false);
@@ -56,12 +56,11 @@ const Profile = () => {
         setError(null);
 
         try {
-            // Create the update object
             const updateData = {
                 username: formData.username,
                 businessName: formData.businessName,
                 phone: formData.phone,
-                location: formData.location || '',
+                location: formData.location,
                 bio: formData.bio
             };
 
@@ -70,20 +69,22 @@ const Profile = () => {
             const response = await api.put('/api/users/profile', updateData);
             
             if (response.data) {
-                console.log('Server response:', response.data);
-                
-                // Update both local state and global context
+                // Update form data with the nested profile structure
                 setFormData(prev => ({
                     ...prev,
-                    ...response.data,
-                    location: response.data.profile?.location || ''
+                    username: response.data.username,
+                    email: response.data.email,
+                    businessName: response.data.businessName,
+                    phone: response.data.profile?.phone || '',
+                    location: response.data.profile?.location || '',
+                    bio: response.data.profile?.bio || ''
                 }));
                 
                 updateUser(response.data);
                 setSuccess(true);
-
-                // Force a page reload to ensure all components update
-                window.location.reload();
+                
+                // Save to localStorage
+                localStorage.setItem('profileFormData', JSON.stringify(formData));
             }
         } catch (err) {
             console.error('Profile update error:', err);
