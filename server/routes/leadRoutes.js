@@ -27,6 +27,8 @@ router.get('/', async (req, res) => {
             .populate('client', 'username businessName')
             .sort({ createdAt: -1 })
             .limit(10);
+        
+        console.log('Leads being sent:', JSON.stringify(leads, null, 2));
             
         res.json(leads);
     } catch (error) {

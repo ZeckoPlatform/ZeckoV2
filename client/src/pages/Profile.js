@@ -21,43 +21,30 @@ const StyledPaper = styled(Paper)`
 
 const Profile = () => {
     const { user, updateUser } = useAuth();
-    const [formData, setFormData] = useState(() => {
-        // Try to load from localStorage first
-        const savedData = localStorage.getItem('profileFormData');
-        if (savedData) {
-            try {
-                return JSON.parse(savedData);
-            } catch (e) {
-                console.error('Error parsing saved profile data:', e);
-            }
-        }
-        
-        // Fall back to user data
-        return {
-            username: user?.username || '',
-            email: user?.email || '',
-            businessName: user?.businessName || '',
-            phone: user?.profile?.phone || '',
-            location: user?.profile?.location || '',
-            bio: user?.profile?.bio || ''
-        };
+    const [formData, setFormData] = useState({
+        username: '',
+        email: '',
+        businessName: '',
+        phone: '',
+        location: '',
+        bio: ''
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
 
-    // Update form data when user data changes
+    // Load user data
     useEffect(() => {
         if (user) {
-            setFormData(prev => ({
-                ...prev,
-                username: user.username || prev.username,
-                email: user.email || prev.email,
-                businessName: user.businessName || prev.businessName,
-                phone: user.profile?.phone || prev.phone,
-                location: user.profile?.location || prev.location,
-                bio: user.profile?.bio || prev.bio
-            }));
+            console.log('Loading user data:', user);
+            setFormData({
+                username: user.username || '',
+                email: user.email || '',
+                businessName: user.businessName || '',
+                phone: user.profile?.phone || '',
+                location: user.profile?.location || '',
+                bio: user.profile?.bio || ''
+            });
         }
     }, [user]);
 
@@ -75,8 +62,9 @@ const Profile = () => {
         setError(null);
 
         try {
-            // Create the update object with the correct structure
-            const updateData = {
+            console.log('Submitting data:', formData);
+
+            const response = await api.put('/api/users/profile', {
                 username: formData.username,
                 email: formData.email,
                 businessName: formData.businessName,
@@ -85,25 +73,16 @@ const Profile = () => {
                     location: formData.location,
                     bio: formData.bio
                 }
-            };
+            });
 
-            console.log('Submitting profile data:', updateData);
+            console.log('Server response:', response.data);
 
-            const response = await api.put('/api/users/profile', updateData);
-            
             if (response.data) {
-                // Update local storage
-                localStorage.setItem('profileFormData', JSON.stringify(formData));
-                
-                // Update context
                 updateUser(response.data);
-                
                 setSuccess(true);
                 
-                // Show success message
-                setTimeout(() => {
-                    setSuccess(false);
-                }, 3000);
+                // Force reload after successful update
+                window.location.reload();
             }
         } catch (err) {
             console.error('Profile update error:', err);

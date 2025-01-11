@@ -80,22 +80,19 @@ const StatusChip = styled(Chip)`
 `;
 
 const LeadCard = ({ lead }) => {
-  console.log('Lead Data:', {
-    id: lead?._id,
-    location: lead?.location,
-    fullLead: lead
-  });
+  console.group('LeadCard Render');
+  console.log('Full lead data:', lead);
+  console.log('Location data:', lead?.location);
+  console.groupEnd();
 
-  if (!lead) {
-    return null;
-  }
+  if (!lead) return null;
 
   const {
     _id,
     title,
     description,
     budget,
-    location,
+    location = {},
     category,
     client,
     status,
@@ -104,61 +101,42 @@ const LeadCard = ({ lead }) => {
   } = lead;
 
   const renderLocation = () => {
-    // If no location, return null
-    if (!location) return null;
-
-    let displayLocation = '';
+    if (!location || Object.keys(location).length === 0) {
+      return null;
+    }
 
     try {
-      // If location is a string, use it directly
-      if (typeof location === 'string') {
-        displayLocation = location;
-      } 
-      // If location is an object
-      else if (location && typeof location === 'object') {
-        // Check if it's an empty object
-        if (Object.keys(location).length === 0) {
+      const locationParts = [];
+      
+      if (location.city) locationParts.push(location.city);
+      if (location.state) locationParts.push(location.state);
+      if (location.country) locationParts.push(location.country);
+      
+      if (locationParts.length === 0) {
+        if (location.address) {
+          locationParts.push(location.address);
+        } else {
           return null;
         }
-        
-        // First try formatted address
-        if (location.formatted) {
-          displayLocation = location.formatted;
-        } 
-        // Then try individual components
-        else {
-          const parts = [];
-          // Safely check each property
-          if (location?.city) parts.push(location.city);
-          if (location?.state) parts.push(location.state);
-          if (location?.country) parts.push(location.country);
-          
-          // If we have parts, join them
-          if (parts.length > 0) {
-            displayLocation = parts.join(', ');
-          }
-          // If no parts but we have a string representation
-          else if (location.toString() !== '[object Object]') {
-            displayLocation = location.toString();
-          }
-        }
       }
 
-      // If we don't have a display location, return null
-      if (!displayLocation) {
-        return null;
-      }
+      const displayLocation = locationParts.join(', ');
 
-      return (
+      return displayLocation ? (
         <LeadMeta>
           <LocationOn fontSize="small" />
           <Typography variant="body2">
             {displayLocation}
           </Typography>
         </LeadMeta>
-      );
+      ) : null;
     } catch (error) {
-      console.error('Error rendering location:', error, { location });
+      console.error('Location render error:', {
+        error,
+        location,
+        locationTypeof: typeof location,
+        lead: _id
+      });
       return null;
     }
   };
