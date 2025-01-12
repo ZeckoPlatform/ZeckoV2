@@ -46,8 +46,8 @@ const LeadMeta = styled(Box)`
 const SimpleCarousel = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [leads, setLeads] = useState([]);
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   // Minimum swipe distance (in px)
@@ -99,26 +99,23 @@ const SimpleCarousel = () => {
     }
   };
 
-  // Fetch leads effect
+  // Add useEffect to fetch leads
   useEffect(() => {
-    const fetchLatestLeads = async () => {
+    const fetchLeads = async () => {
       try {
-        const response = await leadService.getLatestLeads(5);
-        console.log('Latest leads response:', response);
-        
-        const leadsArray = Array.isArray(response) ? response : 
-                         response?.leads ? response.leads : [];
-        
-        setLeads(leadsArray);
+        setLoading(true);
+        const fetchedLeads = await leadService.getLatestLeads();
+        console.log('Fetched leads:', fetchedLeads); // Debug log
+        setLeads(fetchedLeads);
       } catch (error) {
-        console.error('Error fetching latest leads:', error);
-        setLeads([]);
+        console.error('Error fetching leads:', error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchLatestLeads();
-    const interval = setInterval(fetchLatestLeads, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    fetchLeads();
   }, []);
 
   // Auto-play effect
@@ -129,9 +126,10 @@ const SimpleCarousel = () => {
     return () => clearInterval(autoPlay);
   }, [handleNext]);
 
-  if (leads.length === 0) {
-    return null;
-  }
+  // Add loading and error states
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+  if (leads.length === 0) return null;
 
   const handleViewLead = (leadId) => {
     navigate(`/leads/${leadId}`);

@@ -88,6 +88,24 @@ router.get('/', async (req, res, next) => {
     }
 });
 
+// Get latest leads for carousel
+router.get('/latest', async (req, res, next) => {
+    try {
+        const leads = await Lead.find({
+            status: { $in: ['active', 'open'] },
+            visibility: 'public'
+        })
+        .populate('client', 'username businessName')
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select('title description budget location category client createdAt');
+        
+        res.json({ leads });
+    } catch (error) {
+        next(error);
+    }
+});
+
 // Get single lead
 router.get('/:id', async (req, res, next) => {
     try {
@@ -186,24 +204,6 @@ router.post('/:id/proposals', auth, async (req, res, next) => {
 
         await lead.save();
         res.status(201).json(lead);
-    } catch (error) {
-        next(error);
-    }
-});
-
-// Add this new route for latest leads
-router.get('/latest', async (req, res, next) => {
-    try {
-        const leads = await Lead.find({
-            status: { $in: ['active', 'open'] },
-            visibility: 'public'
-        })
-        .populate('client', 'username businessName')
-        .sort({ createdAt: -1 })
-        .limit(5)
-        .select('title description budget location category client createdAt');
-        
-        res.json({ leads });
     } catch (error) {
         next(error);
     }

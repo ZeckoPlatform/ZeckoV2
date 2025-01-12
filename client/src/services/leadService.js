@@ -26,9 +26,11 @@ export const leadService = {
   // Get leads for a specific user
   getUserLeads: async (userId) => {
     try {
+      console.log('Fetching user leads for:', userId); // Debug log
       const response = await api.get(endpoints.leads.list, {
         params: { userId }
       });
+      console.log('User leads response:', response); // Debug log
       return response.data;
     } catch (error) {
       console.error('Error fetching user leads:', error);
@@ -83,6 +85,7 @@ export const leadService = {
   // Get latest leads for carousel
   getLatestLeads: async (limit = 5) => {
     try {
+      console.log('Fetching latest leads...'); // Debug log
       const response = await api.get(endpoints.leads.latest, {
         params: {
           limit,
@@ -90,6 +93,7 @@ export const leadService = {
           sort: '-createdAt'
         }
       });
+      console.log('Latest leads response:', response); // Debug log
       return Array.isArray(response.data) ? response.data : 
              response.data?.leads ? response.data.leads : [];
     } catch (error) {

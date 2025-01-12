@@ -155,7 +155,8 @@ const Dashboard = () => {
         setLoading(true);
         setError(null);
         const response = await leadService.getUserLeads(user._id);
-        setLeads(response.leads || []);
+        console.log('Dashboard leads response:', response); // Debug log
+        setLeads(Array.isArray(response) ? response : response?.leads || []);
       } catch (error) {
         console.error('Error fetching leads:', error);
         setError('Failed to load leads. Please try again later.');
