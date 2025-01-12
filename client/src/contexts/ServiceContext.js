@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
-import { jobCategories } from '../data/leadCategories.js';
+import { jobCategories } from '../data/leadCategories';
 
 const ServiceContext = createContext();
 
