@@ -1,10 +1,10 @@
-import api from '../services/api';
+import api, { endpoints } from './api';
 
 export const leadService = {
   // Get all leads with optional filters
   getLeads: async (filters = {}) => {
     try {
-      const response = await api.get('/api/leads', { params: filters });
+      const response = await api.get(endpoints.leads.list, { params: filters });
       return response.data;
     } catch (error) {
       console.error('Error fetching leads:', error);
@@ -15,7 +15,7 @@ export const leadService = {
   // Get a single lead by ID
   getLead: async (id) => {
     try {
-      const response = await api.get(`/api/leads/${id}`);
+      const response = await api.get(endpoints.leads.get(id));
       return response.data;
     } catch (error) {
       console.error('Error fetching lead:', error);
@@ -26,7 +26,7 @@ export const leadService = {
   // Get leads for a specific user
   getUserLeads: async (userId) => {
     try {
-      const response = await api.get('/api/leads', {
+      const response = await api.get(endpoints.leads.list, {
         params: { userId }
       });
       return response.data;
@@ -83,14 +83,15 @@ export const leadService = {
   // Get latest leads for carousel
   getLatestLeads: async (limit = 5) => {
     try {
-      const response = await api.get('/api/leads', {
+      const response = await api.get(endpoints.leads.latest, {
         params: {
           limit,
           status: 'active',
           sort: '-createdAt'
         }
       });
-      return response.data.leads;
+      return Array.isArray(response.data) ? response.data : 
+             response.data?.leads ? response.data.leads : [];
     } catch (error) {
       console.error('Error fetching latest leads:', error);
       throw error;

@@ -11,25 +11,25 @@ const api = axios.create({
 // Define API endpoints
 export const endpoints = {
   auth: {
-    login: '/api/users/login',
-    register: '/api/users/register',
-    verify: '/api/users/verify-2fa',
-    logout: '/api/users/logout',
-    refresh: '/api/users/refresh-token'
+    login: '/users/login',
+    register: '/users/register',
+    verify: '/users/verify-2fa',
+    logout: '/users/logout',
+    refresh: '/users/refresh-token'
   },
   users: {
-    profile: '/api/users/profile',
-    addresses: '/api/users/addresses',
-    security: '/api/users/security-settings',
-    avatar: '/api/users/profile/avatar'
+    profile: '/users/profile',
+    addresses: '/users/addresses',
+    security: '/users/security-settings',
+    avatar: '/users/profile/avatar'
   },
   leads: {
-    list: '/api/leads',
-    create: '/api/leads',
-    get: '/api/leads',
-    update: '/api/leads',
-    delete: '/api/leads',
-    latest: '/api/leads'
+    list: '/leads',
+    create: '/leads',
+    get: (id) => `/leads/${id}`,
+    update: (id) => `/leads/${id}`,
+    delete: (id) => `/leads/${id}`,
+    latest: '/leads/latest'
   }
 };
 

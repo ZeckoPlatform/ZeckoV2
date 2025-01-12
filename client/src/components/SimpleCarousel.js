@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Paper, Button, MobileStepper, Typography, Box } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import styled from 'styled-components';
-import leadService from '../services/leadService';
+import api, { endpoints } from '../services/api';
 
 const CarouselContainer = styled(Paper)`
   max-width: 800px;
@@ -44,46 +44,101 @@ const LeadMeta = styled(Box)`
 `;
 
 const SimpleCarousel = () => {
-  const [items, setItems] = useState([]);
   const [activeStep, setActiveStep] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [leads, setLeads] = useState([]);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
   const navigate = useNavigate();
 
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
+
+  const handleNext = useCallback(() => {
+    setActiveStep((prevStep) => (prevStep + 1) % leads.length);
+  }, [leads.length]);
+
+  const handleBack = useCallback(() => {
+    setActiveStep((prevStep) => (prevStep - 1 + leads.length) % leads.length);
+  }, [leads.length]);
+
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      if (event.key === 'ArrowLeft') {
+        handleBack();
+      } else if (event.key === 'ArrowRight') {
+        handleNext();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [handleNext, handleBack]);
+
+  // Handle touch events for swipe
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      handleNext();
+    } else if (isRightSwipe) {
+      handleBack();
+    }
+  };
+
+  // Fetch leads effect
   useEffect(() => {
     const fetchLatestLeads = async () => {
       try {
-        const latestLeads = await leadService.getLatestLeads();
-        setItems(latestLeads);
-      } catch (err) {
-        setError('Failed to fetch latest leads');
-        console.error('Error fetching leads:', err);
-      } finally {
-        setLoading(false);
+        const response = await api.get(endpoints.leads.latest);
+        console.log('Latest leads response:', response);
+        
+        const leadsArray = Array.isArray(response.data) ? response.data : 
+                         response.data?.leads ? response.data.leads : [];
+        
+        setLeads(leadsArray);
+      } catch (error) {
+        console.error('Error fetching latest leads:', error);
+        setLeads([]);
       }
     };
 
     fetchLatestLeads();
+    const interval = setInterval(fetchLatestLeads, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  const handleNext = () => {
-    setActiveStep((prevStep) => (prevStep + 1) % items.length);
+  // Auto-play effect
+  useEffect(() => {
+    const autoPlay = setInterval(() => {
+      handleNext();
+    }, 6000);
+    return () => clearInterval(autoPlay);
+  }, [handleNext]);
+
+  if (leads.length === 0) {
+    return null;
+  }
+
+  const handleViewLead = (leadId) => {
+    navigate(`/leads/${leadId}`);
   };
 
-  const handleBack = () => {
-    setActiveStep((prevStep) => (prevStep - 1 + items.length) % items.length);
-  };
-
-  const handleViewItem = useCallback((e, id) => {
-    e.preventDefault();
-    navigate(`/leads/${id}`);
-  }, [navigate]);
-
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
-  if (items.length === 0) return null;
-
-  const currentItem = items[activeStep];
+  const currentLead = leads[activeStep];
+  if (!currentLead) return null;
 
   const renderItemContent = (item) => {
     if (!item) return null;
@@ -110,26 +165,30 @@ const SimpleCarousel = () => {
 
   return (
     <CarouselContainer elevation={3}>
-      <SlideContent>
-        {renderItemContent(currentItem)}
+      <SlideContent
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        {renderItemContent(currentLead)}
         <Button
           variant="contained"
           color="primary"
-          onClick={(e) => handleViewItem(e, currentItem._id)}
+          onClick={() => handleViewLead(currentLead._id)}
           sx={{ alignSelf: 'flex-end', mt: 2 }}
         >
           View Details
         </Button>
       </SlideContent>
       <MobileStepper
-        steps={items.length}
+        steps={leads.length}
         position="static"
         activeStep={activeStep}
         nextButton={
           <Button 
             size="small" 
             onClick={handleNext}
-            disabled={items.length <= 1}
+            disabled={leads.length <= 1}
           >
             Next <KeyboardArrowRight />
           </Button>
@@ -138,7 +197,7 @@ const SimpleCarousel = () => {
           <Button 
             size="small" 
             onClick={handleBack}
-            disabled={items.length <= 1}
+            disabled={leads.length <= 1}
           >
             <KeyboardArrowLeft /> Back
           </Button>

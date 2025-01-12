@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNotification } from '../../contexts/NotificationContext';
-import { fetchData, endpoints } from '../../services/api';
+import { leadService } from '../../services/leadService';
+import { Button } from '@mui/material';
 import styled from 'styled-components';
 import { Avatar, Typography, Box } from '@mui/material';
 import LeadCard from '../LeadCard';
@@ -143,20 +143,24 @@ const ProfileSummary = () => {
 const Dashboard = () => {
   const { user } = useAuth();
   const [leads, setLeads] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserLeads = async () => {
       try {
-        // Update this to fetch only user's leads
-        const response = await api.get(`${endpoints.leads.list}?userId=${user.id}`);
-        setLeads(response.data);
+        setLoading(true);
+        const response = await leadService.getUserLeads(user?._id);
+        setLeads(response.leads || []);
       } catch (error) {
         console.error('Error fetching leads:', error);
+        setLeads([]);
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (user) {
+    if (user?._id) {
       fetchUserLeads();
     }
   }, [user]);
