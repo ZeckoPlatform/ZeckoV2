@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../services/api';
-import { jobCategories } from '../data/leadCategories';
+import { jobCategories } from '../data/leadCategories';  // Updated import path
 
 const ServiceCategoryContext = createContext({
   categories: [],

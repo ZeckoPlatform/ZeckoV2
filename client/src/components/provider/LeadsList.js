@@ -12,6 +12,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useService } from '../../contexts/ServiceContext';
 import styled from 'styled-components';
+import { jobCategories } from '../../data/leadCategories';
 
 const LeadItem = styled(ListItem)`
     border-bottom: 1px solid ${props => props.theme.colors.background.paper};

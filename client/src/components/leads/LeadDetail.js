@@ -16,6 +16,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { BusinessCenter, LocationOn, AttachMoney, Person } from '@mui/icons-material';
 import styled from 'styled-components';
 import leadService from '../../services/leadService';
+import { jobCategories } from '../../data/leadCategories';
 
 const StyledPaper = styled(Paper)`
   padding: 2rem;
