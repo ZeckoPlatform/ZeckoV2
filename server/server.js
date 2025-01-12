@@ -16,7 +16,7 @@ const os = require('os');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/userRoutes');
 const profileRoutes = require('./routes/api/profile');
-const leadRoutes = require('./routes/leadRoutes');
+const leadRoutes = require('./routes/api/lead');
 const productRoutes = require('./routes/productRoutes');
 const serviceCategoryRoutes = require('./routes/serviceCategoryRoutes');
 const serviceRequestRoutes = require('./routes/serviceRequestRoutes');
@@ -68,7 +68,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Mount routes
+// API Routes (all before static files)
 app.use('/api/profile', profileRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -78,22 +78,19 @@ app.use('/api', serviceCategoryRoutes);
 app.use('/api', serviceRequestRoutes);
 app.use('/api', messageRoutes);
 
-// Serve static files from the React app in production
-if (process.env.NODE_ENV === 'production') {
-  // Serve static files from the React app
-  app.use(express.static(path.join(__dirname, '../client/build')));
-
-  // Handle React routing, return all requests to React app
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
-  });
-}
-
-// Handle 404 for API routes only
+// API 404 handler
 app.use('/api/*', (req, res) => {
     console.log('404 for API route:', req.originalUrl);
     res.status(404).json({ message: 'Route not found' });
 });
+
+// Static files (after API routes)
+if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, '../client/build')));
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+    });
+}
 
 // Error handling middleware
 app.use((err, req, res, next) => {

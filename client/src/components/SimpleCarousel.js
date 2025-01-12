@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Paper, Button, MobileStepper, Typography, Box } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import styled from 'styled-components';
-import api, { endpoints } from '../services/api';
+import { leadService } from '../services/leadService';
 
 const CarouselContainer = styled(Paper)`
   max-width: 800px;
@@ -103,11 +103,11 @@ const SimpleCarousel = () => {
   useEffect(() => {
     const fetchLatestLeads = async () => {
       try {
-        const response = await api.get(endpoints.leads.latest);
+        const response = await leadService.getLatestLeads(5);
         console.log('Latest leads response:', response);
         
-        const leadsArray = Array.isArray(response.data) ? response.data : 
-                         response.data?.leads ? response.data.leads : [];
+        const leadsArray = Array.isArray(response) ? response : 
+                         response?.leads ? response.leads : [];
         
         setLeads(leadsArray);
       } catch (error) {

@@ -39,7 +39,7 @@ export const leadService = {
   // Create a new lead
   createLead: async (leadData) => {
     try {
-      const response = await api.post('/api/leads', leadData);
+      const response = await api.post(endpoints.leads.create, leadData);
       return response.data;
     } catch (error) {
       console.error('Error creating lead:', error);
@@ -50,7 +50,7 @@ export const leadService = {
   // Update an existing lead
   updateLead: async (id, updateData) => {
     try {
-      const response = await api.patch(`/api/leads/${id}`, updateData);
+      const response = await api.patch(endpoints.leads.update(id), updateData);
       return response.data;
     } catch (error) {
       console.error('Error updating lead:', error);
@@ -61,7 +61,7 @@ export const leadService = {
   // Delete a lead
   deleteLead: async (id) => {
     try {
-      const response = await api.delete(`/api/leads/${id}`);
+      const response = await api.delete(endpoints.leads.delete(id));
       return response.data;
     } catch (error) {
       console.error('Error deleting lead:', error);
@@ -72,7 +72,7 @@ export const leadService = {
   // Submit a proposal for a lead
   submitProposal: async (leadId, proposalData) => {
     try {
-      const response = await api.post(`/api/leads/${leadId}/proposals`, proposalData);
+      const response = await api.post(`${endpoints.leads.get(leadId)}/proposals`, proposalData);
       return response.data;
     } catch (error) {
       console.error('Error submitting proposal:', error);

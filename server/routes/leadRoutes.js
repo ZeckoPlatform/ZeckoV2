@@ -36,25 +36,30 @@ router.get('/', async (req, res, next) => {
             status,
             search,
             limit = 10,
-            page = 1
+            page = 1,
+            featured
         } = req.query;
         
         let query = {};
         
+        // If userId is provided, get user's leads
         if (userId && userId !== 'undefined') {
             query.client = userId;
         } else {
-            query = {
-                status: { $in: ['active', 'open'] },
-                visibility: 'public'
-            };
+            // Otherwise, get public leads
+            query.status = { $in: ['active', 'open'] };
+            query.visibility = 'public';
         }
 
-        if (category && validateCategory(category)) {
+        if (featured === 'true') {
+            query.featured = true;
+        }
+
+        if (category) {
             query.category = category;
         }
 
-        if (status) {
+        if (status && status !== 'all') {
             query.status = status;
         }
 
@@ -181,6 +186,24 @@ router.post('/:id/proposals', auth, async (req, res, next) => {
 
         await lead.save();
         res.status(201).json(lead);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Add this new route for latest leads
+router.get('/latest', async (req, res, next) => {
+    try {
+        const leads = await Lead.find({
+            status: { $in: ['active', 'open'] },
+            visibility: 'public'
+        })
+        .populate('client', 'username businessName')
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select('title description budget location category client createdAt');
+        
+        res.json({ leads });
     } catch (error) {
         next(error);
     }

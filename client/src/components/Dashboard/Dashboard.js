@@ -144,25 +144,28 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserLeads = async () => {
+      if (!user?._id) return;
+      
       try {
         setLoading(true);
-        const response = await leadService.getUserLeads(user?._id);
+        setError(null);
+        const response = await leadService.getUserLeads(user._id);
         setLeads(response.leads || []);
       } catch (error) {
         console.error('Error fetching leads:', error);
+        setError('Failed to load leads. Please try again later.');
         setLeads([]);
       } finally {
         setLoading(false);
       }
     };
 
-    if (user?._id) {
-      fetchUserLeads();
-    }
+    fetchUserLeads();
   }, [user]);
 
   const handlePostLead = () => {
@@ -188,17 +191,14 @@ const Dashboard = () => {
           <h2>Your Recent Leads</h2>
         </CardHeader>
         <CardContent>
-          {leads.length > 0 ? (
+          {loading ? (
+            <LoadingContainer>Loading your leads...</LoadingContainer>
+          ) : error ? (
+            <Typography color="error">{error}</Typography>
+          ) : leads.length > 0 ? (
             <LeadsList>
               {leads.map((lead) => (
-                <LeadItem key={lead._id}>
-                  <LeadTitle>{lead.title}</LeadTitle>
-                  <LeadDetails>
-                    <span>{lead.category}</span>
-                    <span>{new Date(lead.createdAt).toLocaleDateString()}</span>
-                    <span>{lead.status}</span>
-                  </LeadDetails>
-                </LeadItem>
+                <LeadCard key={lead._id} lead={lead} />
               ))}
             </LeadsList>
           ) : (
