@@ -6,7 +6,7 @@ import {
   MenuItem, 
   FormHelperText 
 } from '@mui/material';
-import { jobCategories } from '../../data/leadCategories';
+import { jobCategories } from '../../data/leadCategories.js';
 
 const CategorySelect = ({ 
   category, 
