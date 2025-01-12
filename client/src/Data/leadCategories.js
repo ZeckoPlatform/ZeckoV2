@@ -1,5 +1,4 @@
-// Client-side categories (with the same data structure as server)
-export const jobCategories = {
+const categories = {
   "construction-&-building": {
     name: "Construction & Building",
     description: "Professional construction, renovation, and building services",
@@ -153,12 +152,254 @@ export const jobCategories = {
       "Interior Design"
     ]
   },
-  // ... (copying all other categories from server/data/leadCategories.js)
+  "Technology & Digital": {
+    name: "Technology & Digital",
+    description: "Professional technology and digital services for modern businesses",
+    icon: "FaLaptop",
+    subcategories: [
+      "Web Development",
+      "Mobile App Development",
+      "Software Development",
+      "IT Support",
+      "Network Security",
+      "Cloud Services",
+      "Data Analytics",
+      "Digital Marketing",
+      "SEO Services",
+      "Social Media Management",
+      "Content Creation",
+      "Graphic Design",
+      "UI/UX Design",
+      "E-commerce Solutions",
+      "System Administration",
+      "Database Management",
+      "Cybersecurity",
+      "IT Consulting",
+      "Technical Support",
+      "Hardware Repair",
+      "VoIP Services",
+      "Backup Solutions",
+      "Domain Services",
+      "Email Marketing",
+      "Virtual Reality"
+    ]
+  },
+  "Creative & Design": {
+    name: "Creative & Design",
+    description: "Professional creative and design services for businesses and individuals",
+    icon: "FaPaintBrush",
+    subcategories: [
+      "Graphic Design",
+      "Web Design",
+      "Logo Design",
+      "Brand Identity",
+      "Illustration",
+      "Animation",
+      "Video Production",
+      "Photography",
+      "Interior Design",
+      "Product Design",
+      "Fashion Design",
+      "Packaging Design",
+      "Print Design",
+      "Art Direction",
+      "3D Design",
+      "Motion Graphics",
+      "UI/UX Design",
+      "Game Design",
+      "Industrial Design",
+      "Architectural Design",
+      "Furniture Design",
+      "Textile Design",
+      "Sound Design",
+      "Exhibition Design",
+      "Lighting Design"
+    ]
+  },
+  "Events & Entertainment": {
+    name: "Events & Entertainment",
+    description: "Professional event planning and entertainment services",
+    icon: "FaGlassCheers",
+    subcategories: [
+      "Event Planning",
+      "Wedding Planning",
+      "Corporate Events",
+      "Party Planning",
+      "DJs",
+      "Live Bands",
+      "Photographers",
+      "Videographers",
+      "Catering",
+      "Event Rentals",
+      "Entertainment Booking",
+      "Sound & Lighting",
+      "Event Decoration",
+      "Event Security",
+      "Event Marketing"
+    ]
+  },
+  "Wedding Services": {
+    name: "Wedding Services",
+    description: "Professional wedding planning and services",
+    icon: "FaRing",
+    subcategories: [
+      "Wedding Photography",
+      "Wedding Videography",
+      "Wedding Venues",
+      "Wedding Catering",
+      "Wedding Planning",
+      "Wedding Cars",
+      "Wedding Flowers",
+      "Wedding Cakes",
+      "Wedding Dresses",
+      "Wedding Entertainment",
+      "Bridal Hair & Makeup",
+      "Wedding Decorations",
+      "Wedding Invitations",
+      "Wedding DJ",
+      "Wedding Band",
+      "Wedding Favours",
+      "Wedding Rings",
+      "Bridesmaids Dresses",
+      "Wedding Suit Hire",
+      "Wedding Accessories"
+    ]
+  },
+  "Pet Services": {
+    name: "Pet Services",
+    description: "Professional pet care and animal services",
+    icon: "FaPaw",
+    subcategories: [
+      "Pet Grooming",
+      "Dog Walking",
+      "Pet Sitting",
+      "Veterinary Services",
+      "Pet Training",
+      "Pet Boarding",
+      "Pet Transportation",
+      "Pet Photography",
+      "Pet Supply Delivery",
+      "Aquarium Maintenance",
+      "Horse Training",
+      "Pet Behavioral Consulting"
+    ]
+  },
+  "Business Services": {
+    name: "Business Services",
+    description: "Professional business support and consulting services",
+    icon: "FaBusinessTime",
+    subcategories: [
+      "Business Consulting",
+      "Marketing Services",
+      "Accounting Services",
+      "Legal Services",
+      "HR Services",
+      "Office Cleaning",
+      "Security Services",
+      "Printing Services",
+      "Shipping Services",
+      "Virtual Assistant",
+      "Data Entry",
+      "Translation Services"
+    ]
+  },
+  "Education & Training": {
+    name: "Education & Training",
+    description: "Comprehensive educational and training services for all ages and levels",
+    icon: "FaGraduationCap",
+    subcategories: [
+      "Academic Tutoring",
+      "Professional Training",
+      "Language Education",
+      "Technical Training",
+      "Vocational Training",
+      "Online Education",
+      "Special Education",
+      "Adult Education",
+      "Corporate Training",
+      "Skills Development",
+      "Test Preparation",
+      "Music Education",
+      "Art Education",
+      "Sports Training",
+      "Safety Training",
+      "Computer Training",
+      "Leadership Development",
+      "Professional Certification",
+      "Educational Consulting",
+      "Curriculum Development",
+      "Educational Technology",
+      "Distance Learning",
+      "Early Childhood Education",
+      "Life Skills Training",
+      "Career Counseling"
+    ]
+  },
+  "Specialized Services": {
+    name: "Specialized Services",
+    description: "Unique and specialized professional services",
+    icon: "FaTools",
+    subcategories: [
+      "Antique Restoration",
+      "Art Restoration",
+      "Clock & Watch Repair",
+      "Instrument Repair",
+      "Jewelry Design",
+      "Custom Metalwork",
+      "Taxidermy",
+      "Boat Repair",
+      "Aircraft Maintenance",
+      "Wine Consulting",
+      "Personal Styling",
+      "Color Consulting",
+      "Genealogy Research",
+      "Voice Acting",
+      "Translation Services",
+      "Interpretation Services",
+      "Calligraphy",
+      "Custom Framing",
+      "Rare Book Dealing",
+      "Memorabilia Authentication",
+      "Personal Shopping",
+      "Professional Organization",
+      "Relocation Services",
+      "Virtual Assistant",
+      "Custom Publishing"
+    ]
+  },
+  "Automotive": {
+    name: "Automotive",
+    description: "Professional automotive repair and maintenance services",
+    icon: "FaCar",
+    subcategories: [
+      "Car Servicing",
+      "Car Repairs",
+      "MOT Testing",
+      "Car Valeting",
+      "Mobile Mechanics",
+      "Breakdown Recovery",
+      "Tire Fitting",
+      "Vehicle Diagnostics",
+      "Car Body Repairs",
+      "Car Paint Work",
+      "Car Electronics",
+      "Car Air Conditioning",
+      "Windscreen Repair",
+      "Car Detailing",
+      "Vehicle Wrapping",
+      "Car Audio Installation",
+      "Car Security Systems",
+      "Electric Vehicle Services",
+      "Classic Car Restoration",
+      "Motorcycle Repairs"
+    ]
+  }
 };
 
-// Helper functions
+export const jobCategories = categories;
+
 export const getAllCategories = () => {
-  return Object.entries(jobCategories).map(([id, category]) => ({
+  return Object.entries(categories).map(([id, category]) => ({
     _id: id,
     name: category.name,
     description: category.description,
@@ -169,19 +410,19 @@ export const getAllCategories = () => {
 };
 
 export const getSubcategories = (categoryId) => {
-  return jobCategories[categoryId]?.subcategories || [];
+  return categories[categoryId]?.subcategories || [];
 };
 
 export const validateCategory = (categoryId) => {
-  return Boolean(jobCategories[categoryId]);
+  return Boolean(categories[categoryId]);
 };
 
 export const validateSubcategory = (categoryId, subcategory) => {
-  return jobCategories[categoryId]?.subcategories?.includes(subcategory) || false;
+  return categories[categoryId]?.subcategories?.includes(subcategory) || false;
 };
 
 export const getCategoryById = (categoryId) => {
-  const category = jobCategories[categoryId];
+  const category = categories[categoryId];
   if (!category) return null;
   
   return {
