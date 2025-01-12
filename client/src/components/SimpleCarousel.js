@@ -48,6 +48,8 @@ const SimpleCarousel = () => {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
   const navigate = useNavigate();
 
   // Minimum swipe distance (in px)
