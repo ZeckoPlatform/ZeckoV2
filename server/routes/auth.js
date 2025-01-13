@@ -194,116 +194,13 @@ router.post('/logout', authenticateToken, async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        
-        console.log('Login attempt for:', email);
-
-        if (!email || !password) {
-            console.log('Missing credentials:', { email: !!email, password: !!password });
-            return res.status(400).json({ 
-                error: 'Email and password are required' 
-            });
-        }
-
-        // Try to find user in all collections
-        let user = null;
-        let userType = 'regular'; // Change to lowercase default
-
-        try {
-            // Check each user type collection
-            console.log('Checking User collection...');
-            const regularUser = await User.findOne({ email }).select('+password');
-            
-            console.log('Checking BusinessUser collection...');
-            const businessUser = await BusinessUser.findOne({ email }).select('+password');
-            
-            console.log('Checking VendorUser collection...');
-            const vendorUser = await VendorUser.findOne({ email }).select('+password');
-
-            if (regularUser) {
-                user = regularUser;
-                userType = 'regular';  // Use lowercase
-                console.log('Found regular user');
-            } else if (businessUser) {
-                user = businessUser;
-                userType = 'business';  // Use lowercase
-                console.log('Found business user');
-            } else if (vendorUser) {
-                user = vendorUser;
-                userType = 'vendor';  // Use lowercase
-                console.log('Found vendor user');
-            }
-        } catch (dbError) {
-            console.error('Database error during user lookup:', dbError);
-            return res.status(500).json({
-                error: 'Database error during user lookup',
-                details: dbError.message
-            });
-        }
-
-        if (!user) {
-            console.log('No user found with email:', email);
-            return res.status(401).json({ 
-                error: 'Invalid email or password' 
-            });
-        }
-
-        // Verify password
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ 
-                error: 'Invalid email or password' 
-            });
-        }
-
-        // Create JWT token with lowercase account type
-        const token = jwt.sign(
-            {
-                userId: user._id,
-                accountType: userType,  // Already lowercase
-                role: user.role || 'user'
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' }
-        );
-
-        // Prepare user response with lowercase account type
-        const userData = {
-            id: user._id,
-            email: user.email,
-            username: user.username || user.email,
-            accountType: userType,  // Use lowercase type
-            role: user.role || 'user',
-            name: user.name || user.businessName || user.username,
-            avatarUrl: user.avatarUrl || null,
-            profile: user.profile || {}
-        };
-
-        // Add type-specific fields
-        if (userType === 'business') {  // Match lowercase type
-            userData.businessName = user.businessName;
-            userData.businessType = user.businessType;
-            userData.serviceCategories = user.serviceCategories;
-        } else if (userType === 'vendor') {  // Match lowercase type
-            userData.businessName = user.businessName;
-            userData.vendorCategory = user.vendorCategory;
-            userData.storeSettings = user.storeSettings;
-        }
-
-        console.log('Login successful for:', email);
-        res.json({
-            token,
-            user: userData
-        });
-
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ 
-            error: 'Server error during login',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
-    }
+  try {
+    const { email, password } = req.body;
+    // ... your login logic ...
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Error during login' });
+  }
 });
 
 module.exports = router; 
