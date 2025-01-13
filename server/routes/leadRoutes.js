@@ -90,20 +90,23 @@ router.get('/', async (req, res, next) => {
 
 // Get latest leads for carousel
 router.get('/latest', async (req, res, next) => {
-    try {
-        const leads = await Lead.find({
-            status: { $in: ['active', 'open'] },
-            visibility: 'public'
-        })
-        .populate('client', 'username businessName')
-        .sort({ createdAt: -1 })
-        .limit(5)
-        .select('title description budget location category client createdAt');
-        
-        res.json({ leads });
-    } catch (error) {
-        next(error);
-    }
+  try {
+    console.log('Fetching latest leads');
+    const leads = await Lead.find({
+      status: { $in: ['active', 'open'] },
+      visibility: 'public'
+    })
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .populate('client', 'username businessName')
+    .select('title description budget location category client createdAt');
+
+    console.log('Found latest leads:', leads.length);
+    res.json({ leads });
+  } catch (error) {
+    console.error('Error fetching latest leads:', error);
+    next(error);
+  }
 });
 
 // Get single lead

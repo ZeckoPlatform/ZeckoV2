@@ -1,25 +1,22 @@
 import axios from 'axios';
 
-// Create axios instance with base URL
+const baseURL = process.env.NODE_ENV === 'production' 
+  ? 'https://zeckov2-deceb43992ac.herokuapp.com/api'
+  : '/api';
+
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || '/api',
+  baseURL,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// Define API endpoints
 export const endpoints = {
   auth: {
     login: '/auth/login',
     register: '/auth/register',
     logout: '/auth/logout',
-    refresh: '/auth/refresh',
     verify: '/auth/verify'
-  },
-  users: {
-    profile: '/users/profile',
-    update: '/users/update'
   },
   leads: {
     list: '/leads',
@@ -27,7 +24,8 @@ export const endpoints = {
     create: '/leads',
     update: (id) => `/leads/${id}`,
     delete: (id) => `/leads/${id}`,
-    latest: '/leads/latest'
+    latest: '/leads/latest',
+    proposals: (id) => `/leads/${id}/proposals`
   }
 };
 
