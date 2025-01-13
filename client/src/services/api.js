@@ -25,7 +25,7 @@ export const endpoints = {
     update: (id) => `/api/leads/${id}`,
     delete: (id) => `/api/leads/${id}`,
     latest: '/api/leads/latest',
-    proposals: (id) => `/api/leads/${id}/proposals'
+    proposals: (id) => `/api/leads/${id}/proposals`
   },
   categories: '/api/categories'
 };
