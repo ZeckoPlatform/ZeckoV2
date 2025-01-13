@@ -138,24 +138,27 @@ router.post('/:id/proposals', authenticateToken, async (req, res) => {
     }
 });
 
-// Get latest leads for carousel
+// Get latest leads
 router.get('/latest', async (req, res) => {
     try {
-        const latestLeads = await Lead.find({
-            status: 'active',
+        console.log('Fetching latest leads');
+        const leads = await Lead.find({
+            status: { $in: ['active', 'open'] },
             visibility: 'public'
         })
-        .populate('category')
-        .populate('client', 'username businessName')
         .sort({ createdAt: -1 })
-        .limit(10)
-        .select('title description budget location createdAt category client')
-        .lean();
+        .limit(parseInt(req.query.limit) || 5)
+        .populate('client', 'username businessName')
+        .select('title description budget location category client createdAt');
 
-        res.json(latestLeads);
-    } catch (err) {
-        console.error('Error fetching latest leads:', err);
-        res.status(500).json({ message: 'Error fetching latest leads' });
+        console.log('Found latest leads:', leads.length);
+        res.json({ leads });
+    } catch (error) {
+        console.error('Error fetching latest leads:', error);
+        res.status(500).json({ 
+            message: 'Error fetching latest leads',
+            error: error.message 
+        });
     }
 });
 

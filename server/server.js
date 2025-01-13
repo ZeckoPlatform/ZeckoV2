@@ -94,8 +94,17 @@ if (process.env.NODE_ENV === 'production') {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({ message: err.message });
+  console.error('Error details:', {
+    message: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method
+  });
+  res.status(500).json({ 
+    message: err.message,
+    path: req.path,
+    method: req.method
+  });
 });
 
 // Handle 404

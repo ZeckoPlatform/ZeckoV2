@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const baseURL = process.env.NODE_ENV === 'production' 
-  ? 'https://zeckov2-deceb43992ac.herokuapp.com/api'
-  : '/api';
+  ? 'https://zeckov2-deceb43992ac.herokuapp.com'
+  : '';
 
 const api = axios.create({
   baseURL,
@@ -13,20 +13,21 @@ const api = axios.create({
 
 export const endpoints = {
   auth: {
-    login: '/auth/login',
-    register: '/auth/register',
-    logout: '/auth/logout',
-    verify: '/auth/verify'
+    login: '/api/auth/login',
+    register: '/api/auth/register',
+    logout: '/api/auth/logout',
+    verify: '/api/auth/verify'
   },
   leads: {
-    list: '/leads',
-    get: (id) => `/leads/${id}`,
-    create: '/leads',
-    update: (id) => `/leads/${id}`,
-    delete: (id) => `/leads/${id}`,
-    latest: '/leads/latest',
-    proposals: (id) => `/leads/${id}/proposals`
-  }
+    list: '/api/leads',
+    get: (id) => `/api/leads/${id}`,
+    create: '/api/leads',
+    update: (id) => `/api/leads/${id}`,
+    delete: (id) => `/api/leads/${id}`,
+    latest: '/api/leads/latest',
+    proposals: (id) => `/api/leads/${id}/proposals'
+  },
+  categories: '/api/categories'
 };
 
 // Add request interceptor for auth token
