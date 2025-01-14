@@ -141,20 +141,23 @@ router.post('/:id/proposals', authenticateToken, async (req, res) => {
 // Get latest leads
 router.get('/latest', async (req, res) => {
     try {
-        console.log('Fetching latest leads');
-        const leads = await Lead.find({
-            status: { $in: ['active', 'open'] },
+        console.log('Fetching latest leads with query:', req.query);
+        const query = {
+            status: 'active',
             visibility: 'public'
-        })
-        .sort({ createdAt: -1 })
-        .limit(parseInt(req.query.limit) || 5)
-        .populate('client', 'username businessName')
-        .select('title description budget location category client createdAt');
+        };
 
-        console.log('Found latest leads:', leads.length);
+        const leads = await Lead.find(query)
+            .sort({ createdAt: -1 })
+            .limit(parseInt(req.query.limit) || 5)
+            .populate('client', 'username businessName')
+            .populate('category')
+            .select('title description budget location category client createdAt');
+
+        console.log(`Found ${leads.length} latest leads`);
         res.json({ leads });
     } catch (error) {
-        console.error('Error fetching latest leads:', error);
+        console.error('Error in /latest:', error);
         res.status(500).json({ 
             message: 'Error fetching latest leads',
             error: error.message 

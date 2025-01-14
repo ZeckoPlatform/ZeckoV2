@@ -3,8 +3,14 @@ import api, { endpoints } from './api';
 export const authService = {
   login: async (credentials) => {
     try {
-      console.log('Login attempt with:', credentials);
-      const response = await api.post(endpoints.auth.login, credentials);
+      const loginData = {
+        email: credentials.email.value || credentials.email,
+        password: credentials.password
+      };
+
+      console.log('Login attempt with:', { ...loginData, password: '***' });
+      const response = await api.post(endpoints.auth.login, loginData);
+      
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
       }

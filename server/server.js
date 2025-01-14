@@ -64,19 +64,20 @@ app.use('/uploads', express.static(uploadsPath));
 
 // Debug middleware
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`, 
+    req.method === 'POST' ? JSON.stringify(req.body) : '');
   next();
 });
 
 // API Routes (all before static files)
-app.use('/api/profile', profileRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/leads', leadRoutes);
+app.use('/api/categories', serviceCategoryRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api', serviceCategoryRoutes);
-app.use('/api', serviceRequestRoutes);
-app.use('/api', messageRoutes);
+app.use('/api/service-requests', serviceRequestRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/profile', profileRoutes);
 
 // API 404 handler
 app.use('/api/*', (req, res) => {
