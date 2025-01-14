@@ -178,10 +178,23 @@ router.get('/featured', async (req, res) => {
         .populate('category')
         .select('title description budget location category client createdAt');
 
+        // Transform the data to match the expected format
+        const transformedLeads = leads.map(lead => ({
+            id: lead._id,
+            title: lead.title,
+            description: lead.description,
+            budget: lead.budget,
+            location: lead.location,
+            category: lead.category,
+            client: lead.client,
+            createdAt: lead.createdAt,
+            type: 'featured'  // Add a type field to identify featured items
+        }));
+
         console.log(`Found ${leads.length} featured leads`);
         res.json({ 
-            leads,
-            total: leads.length,
+            items: transformedLeads,  // Change 'leads' to 'items' to match expected format
+            total: transformedLeads.length,
             pages: 1
         });
     } catch (error) {

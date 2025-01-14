@@ -85,7 +85,7 @@ export const leadService = {
   // Get latest leads for carousel
   getLatestLeads: async (limit = 5) => {
     try {
-      console.log('Fetching latest leads...'); // Debug log
+      console.log('Fetching latest leads...'); 
       const response = await api.get(endpoints.leads.latest, {
         params: {
           limit,
@@ -93,11 +93,28 @@ export const leadService = {
           sort: '-createdAt'
         }
       });
-      console.log('Latest leads response:', response); // Debug log
-      return Array.isArray(response.data) ? response.data : 
-             response.data?.leads ? response.data.leads : [];
+      console.log('Latest leads response:', response);
+      
+      // Handle different response formats
+      if (response.data?.leads) {
+        return response.data.leads;
+      } else if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      return [];
     } catch (error) {
       console.error('Error fetching latest leads:', error);
+      throw error;
+    }
+  },
+
+  getFeaturedLeads: async () => {
+    try {
+      const response = await api.get(endpoints.leads.featured);
+      console.log('Featured leads response:', response);
+      return response.data?.items || [];
+    } catch (error) {
+      console.error('Error fetching featured leads:', error);
       throw error;
     }
   }

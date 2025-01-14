@@ -25,6 +25,7 @@ export const endpoints = {
     update: (id) => `/api/leads/${id}`,
     delete: (id) => `/api/leads/${id}`,
     latest: '/api/leads/latest',
+    featured: '/api/leads/featured',
     proposals: (id) => `/api/leads/${id}/proposals`
   },
   categories: '/api/categories'
@@ -40,6 +41,15 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('API Error:', error.response?.data || error.message);
     return Promise.reject(error);
   }
 );

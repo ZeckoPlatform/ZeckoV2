@@ -3,15 +3,15 @@ import api, { endpoints } from './api';
 export const authService = {
   login: async (credentials) => {
     try {
-      const email = credentials.email?.email || credentials.email;
-      const password = credentials.email?.password || credentials.password;
-      
       const loginData = {
-        email,
-        password
+        email: credentials.email,
+        password: credentials.password
       };
 
-      console.log('Login attempt with:', { ...loginData, password: '***' });
+      if (!loginData.email || !loginData.password) {
+        throw new Error('Email and password are required');
+      }
+
       const response = await api.post(endpoints.auth.login, loginData);
       
       if (response.data.token) {

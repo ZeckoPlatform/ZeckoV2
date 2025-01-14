@@ -78,14 +78,14 @@ const ErrorMessage = styled.div`
 `;
 
 const Login = () => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData(prev => ({
@@ -101,15 +101,13 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await login(formData);
-      
+      const response = await login(formData.email, formData.password);
       if (response?.user) {
-        const path = response.user.accountType === 'admin' ? '/admin' : '/dashboard';
-        navigate(path);
+        navigate('/dashboard');
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'An error occurred during login');
+      setError(err.response?.data?.message || 'Login failed');
     } finally {
       setIsLoading(false);
     }

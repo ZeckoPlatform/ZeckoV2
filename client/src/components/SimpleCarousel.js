@@ -106,9 +106,16 @@ const SimpleCarousel = () => {
     const fetchLeads = async () => {
       try {
         setLoading(true);
-        const fetchedLeads = await leadService.getLatestLeads();
-        console.log('Fetched leads:', fetchedLeads); // Debug log
-        setLeads(fetchedLeads);
+        const [latestLeads, featuredLeads] = await Promise.all([
+          leadService.getLatestLeads(5),
+          leadService.getFeaturedLeads()
+        ]);
+        
+        // Combine and deduplicate leads
+        const allLeads = [...(latestLeads || []), ...(featuredLeads || [])];
+        const uniqueLeads = Array.from(new Map(allLeads.map(lead => [lead._id, lead])).values());
+        
+        setLeads(uniqueLeads);
       } catch (error) {
         console.error('Error fetching leads:', error);
         setError(error.message);
