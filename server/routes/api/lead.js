@@ -3,6 +3,33 @@ const router = express.Router();
 const { authenticateToken } = require('../../middleware/auth');
 const Lead = require('../../models/Lead');
 
+// Get latest leads (MUST BE BEFORE /:id route)
+router.get('/latest', async (req, res) => {
+    try {
+        console.log('Fetching latest leads with query:', req.query);
+        const query = {
+            status: req.query.status || 'active',
+            visibility: 'public'
+        };
+
+        const leads = await Lead.find(query)
+            .sort({ createdAt: -1 })
+            .limit(parseInt(req.query.limit) || 5)
+            .populate('client', 'username businessName')
+            .populate('category')
+            .select('title description budget location category client createdAt');
+
+        console.log(`Found ${leads.length} latest leads`);
+        res.json({ leads });
+    } catch (error) {
+        console.error('Error in /latest:', error);
+        res.status(500).json({ 
+            message: 'Error fetching latest leads',
+            error: error.message 
+        });
+    }
+});
+
 // Get all leads with filtering
 router.get('/', async (req, res) => {
     try {
@@ -135,33 +162,6 @@ router.post('/:id/proposals', authenticateToken, async (req, res) => {
     } catch (err) {
         console.error('Error submitting proposal:', err);
         res.status(400).json({ message: err.message });
-    }
-});
-
-// Get latest leads
-router.get('/latest', async (req, res) => {
-    try {
-        console.log('Fetching latest leads with query:', req.query);
-        const query = {
-            status: 'active',
-            visibility: 'public'
-        };
-
-        const leads = await Lead.find(query)
-            .sort({ createdAt: -1 })
-            .limit(parseInt(req.query.limit) || 5)
-            .populate('client', 'username businessName')
-            .populate('category')
-            .select('title description budget location category client createdAt');
-
-        console.log(`Found ${leads.length} latest leads`);
-        res.json({ leads });
-    } catch (error) {
-        console.error('Error in /latest:', error);
-        res.status(500).json({ 
-            message: 'Error fetching latest leads',
-            error: error.message 
-        });
     }
 });
 

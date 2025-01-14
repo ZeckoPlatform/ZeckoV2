@@ -3,8 +3,10 @@ import api, { endpoints } from './api';
 export const authService = {
   login: async (credentials) => {
     try {
+      const email = typeof credentials.email === 'object' ? credentials.email.value : credentials.email;
+      
       const loginData = {
-        email: credentials.email.value || credentials.email,
+        email,
         password: credentials.password
       };
 

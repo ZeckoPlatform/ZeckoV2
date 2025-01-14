@@ -73,7 +73,7 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/leads', leadRoutes);
-app.use('/api/categories', serviceCategoryRoutes);
+app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/products', productRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
 app.use('/api/messages', messageRoutes);
@@ -99,7 +99,8 @@ app.use((err, req, res, next) => {
     message: err.message,
     stack: err.stack,
     path: req.path,
-    method: req.method
+    method: req.method,
+    body: req.method === 'POST' ? req.body : undefined
   });
   res.status(500).json({ 
     message: err.message,
