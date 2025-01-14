@@ -165,4 +165,32 @@ router.post('/:id/proposals', authenticateToken, async (req, res) => {
     }
 });
 
+// Get featured leads
+router.get('/featured', async (req, res) => {
+    try {
+        const leads = await Lead.find({ 
+            featured: true,
+            status: 'active',
+            visibility: 'public'
+        })
+        .sort({ createdAt: -1 })
+        .populate('client', 'username businessName')
+        .populate('category')
+        .select('title description budget location category client createdAt');
+
+        console.log(`Found ${leads.length} featured leads`);
+        res.json({ 
+            leads,
+            total: leads.length,
+            pages: 1
+        });
+    } catch (error) {
+        console.error('Error fetching featured leads:', error);
+        res.status(500).json({ 
+            message: 'Error fetching featured leads',
+            error: error.message 
+        });
+    }
+});
+
 module.exports = router;

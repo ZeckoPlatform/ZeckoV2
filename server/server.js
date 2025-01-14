@@ -93,25 +93,41 @@ if (process.env.NODE_ENV === 'production') {
     });
 }
 
-// Error handling middleware
+// Error handling middleware - make it more detailed
 app.use((err, req, res, next) => {
   console.error('Error details:', {
     message: err.message,
     stack: err.stack,
     path: req.path,
     method: req.method,
-    body: req.method === 'POST' ? req.body : undefined
+    body: req.method === 'POST' ? req.body : undefined,
+    query: req.query,
+    params: req.params
   });
-  res.status(500).json({ 
+  
+  // Send appropriate status code based on error type
+  const statusCode = err.statusCode || 500;
+  res.status(statusCode).json({ 
     message: err.message,
     path: req.path,
-    method: req.method
+    method: req.method,
+    status: statusCode
   });
 });
 
-// Handle 404
+// Handle 404 with more detail
 app.use((req, res) => {
-    res.status(404).json({ message: 'Route not found' });
+    console.log('404 Not Found:', {
+        path: req.path,
+        method: req.method,
+        query: req.query,
+        body: req.method === 'POST' ? req.body : undefined
+    });
+    res.status(404).json({ 
+        message: 'Route not found',
+        path: req.path,
+        method: req.method
+    });
 });
 
 // MongoDB connection
