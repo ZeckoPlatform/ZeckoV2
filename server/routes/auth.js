@@ -195,24 +195,28 @@ router.post('/logout', authenticateToken, async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
-    console.log('Login attempt received:', req.body);
     const { email, password } = req.body;
+    console.log('Login attempt received:', { email, password: '***' });
 
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    // Find user
-    const user = await User.findOne({ email: email.value || email });
+    const user = await User.findOne({ email });
+    
     if (!user) {
-      console.log('User not found:', email);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Check password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      console.log('Password mismatch for user:', email);
+    // Check if user has a password hash
+    if (!user.password) {
+      console.error('User found but password hash is missing');
+      return res.status(500).json({ message: 'Account configuration error' });
+    }
+
+    const isValid = await bcrypt.compare(password, user.password);
+    
+    if (!isValid) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
@@ -234,7 +238,10 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error during login', error: error.message });
+    res.status(500).json({ 
+      message: 'Server error during login', 
+      error: error.message 
+    });
   }
 });
 

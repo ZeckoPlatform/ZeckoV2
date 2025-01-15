@@ -5,6 +5,7 @@ const leadSchema = new mongoose.Schema({
   description: { type: String, required: true, trim: true },
   category: { type: String, required: true },
   subcategory: { type: String, required: true },
+  featured: { type: Boolean, default: false },
   budget: {
     min: { type: Number, required: true, min: 0 },
     max: { type: Number, required: true, min: 0 },

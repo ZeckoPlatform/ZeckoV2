@@ -168,34 +168,16 @@ router.post('/:id/proposals', authenticateToken, async (req, res) => {
 // Get featured leads
 router.get('/featured', async (req, res) => {
     try {
-        const leads = await Lead.find({ 
+        const featuredLeads = await Lead.find({ 
             featured: true,
-            status: 'active',
-            visibility: 'public'
+            status: 'active'
         })
-        .sort({ createdAt: -1 })
-        .populate('client', 'username businessName')
-        .populate('category')
-        .select('title description budget location category client createdAt');
+        .sort('-createdAt')
+        .limit(5);
 
-        // Transform the data to match the expected format
-        const transformedLeads = leads.map(lead => ({
-            id: lead._id,
-            title: lead.title,
-            description: lead.description,
-            budget: lead.budget,
-            location: lead.location,
-            category: lead.category,
-            client: lead.client,
-            createdAt: lead.createdAt,
-            type: 'featured'  // Add a type field to identify featured items
-        }));
-
-        console.log(`Found ${leads.length} featured leads`);
-        res.json({ 
-            items: transformedLeads,  // Change 'leads' to 'items' to match expected format
-            total: transformedLeads.length,
-            pages: 1
+        res.json({
+            items: featuredLeads,
+            total: featuredLeads.length
         });
     } catch (error) {
         console.error('Error fetching featured leads:', error);
