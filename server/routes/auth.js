@@ -196,8 +196,7 @@ router.post('/logout', authenticateToken, async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log('Login attempt received:', { email, password: '***' });
-
+    
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
     }
@@ -208,40 +207,29 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Check if user has a password hash
-    if (!user.password) {
-      console.error('User found but password hash is missing');
-      return res.status(500).json({ message: 'Account configuration error' });
-    }
-
     const isValid = await bcrypt.compare(password, user.password);
     
     if (!isValid) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Generate token
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
-    console.log('Login successful for user:', email);
     res.json({
       token,
       user: {
         id: user._id,
         email: user.email,
-        username: user.username
+        name: user.name
       }
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ 
-      message: 'Server error during login', 
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Error during login' });
   }
 });
 
