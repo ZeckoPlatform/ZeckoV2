@@ -3,7 +3,11 @@ const mongoose = require('mongoose');
 const leadSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true },
   description: { type: String, required: true, trim: true },
-  category: { type: String, required: true },
+  category: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Category', 
+    required: true 
+  },
   subcategory: { type: String, required: true },
   featured: { type: Boolean, default: false },
   budget: {

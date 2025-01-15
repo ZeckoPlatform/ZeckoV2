@@ -94,6 +94,30 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
+// Get featured leads (add this BEFORE the /:id route)
+router.get('/featured', async (req, res) => {
+  try {
+    const { status = 'active', limit = 5 } = req.query;
+    
+    const leads = await Lead.find({ 
+      featured: true,
+      status 
+    })
+    .populate('category')
+    .populate('client', 'username businessName')
+    .sort('-createdAt')
+    .limit(parseInt(limit));
+
+    res.json({
+      leads,
+      total: leads.length
+    });
+  } catch (err) {
+    console.error('Error fetching featured leads:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Get lead by ID
 router.get('/:id', async (req, res) => {
     try {
@@ -165,28 +189,36 @@ router.post('/:id/proposals', authenticateToken, async (req, res) => {
     }
 });
 
-// Get featured leads
-router.get('/featured', async (req, res) => {
-    try {
-        const query = { featured: true };
-        if (req.query.status) {
-            query.status = req.query.status;
-        }
-        
-        const leads = await Lead.find(query)
-            .sort('-createdAt')
-            .limit(parseInt(req.query.limit) || 5);
-
-        res.json({
-            items: leads,
-            total: leads.length
-        });
-    } catch (error) {
-        console.error('Error fetching featured leads:', error);
-        res.status(500).json({ 
-            message: error.message || 'Error fetching featured leads'
-        });
+// Get leads (including featured)
+router.get('/leads', async (req, res) => {
+  try {
+    const { featured, ...otherFilters } = req.query;
+    const query = { ...otherFilters };
+    
+    if (featured === 'true') {
+      query.featured = true;
     }
+
+    const leads = await Lead.find(query)
+      .sort('-createdAt')
+      .limit(parseInt(req.query.limit) || 10);
+
+    res.json({
+      items: leads,
+      total: leads.length
+    });
+  } catch (error) {
+    console.error('Error fetching leads:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Update the featured endpoint to use the main leads endpoint
+router.get('/leads/featured', (req, res) => {
+  req.query.featured = 'true';
+  req.query.limit = req.query.limit || 5;
+  req.query.status = req.query.status || 'active';
+  return router.handle(req, res);
 });
 
 module.exports = router;

@@ -201,10 +201,19 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const user = await User.findOne({ email });
+    // Try to find user in all user models
+    const user = await User.findOne({ email }) 
+      || await BusinessUser.findOne({ email })
+      || await VendorUser.findOne({ email });
     
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Check if password exists in user document
+    if (!user.password) {
+      console.error('User found but password field is missing:', user._id);
+      return res.status(500).json({ message: 'Account configuration error' });
     }
 
     const isValid = await bcrypt.compare(password, user.password);
@@ -213,8 +222,17 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    // Determine account type
+    let accountType = 'user';
+    if (user instanceof BusinessUser) accountType = 'business';
+    if (user instanceof VendorUser) accountType = 'vendor';
+
     const token = jwt.sign(
-      { userId: user._id },
+      { 
+        userId: user._id,
+        accountType,
+        role: user.role
+      },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -224,7 +242,9 @@ router.post('/login', async (req, res) => {
       user: {
         id: user._id,
         email: user.email,
-        name: user.name
+        name: user.name || user.username,
+        accountType,
+        role: user.role
       }
     });
   } catch (error) {
