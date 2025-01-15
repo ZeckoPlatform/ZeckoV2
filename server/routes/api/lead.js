@@ -168,22 +168,23 @@ router.post('/:id/proposals', authenticateToken, async (req, res) => {
 // Get featured leads
 router.get('/featured', async (req, res) => {
     try {
-        const featuredLeads = await Lead.find({ 
-            featured: true,
-            status: 'active'
-        })
-        .sort('-createdAt')
-        .limit(5);
+        const query = { featured: true };
+        if (req.query.status) {
+            query.status = req.query.status;
+        }
+        
+        const leads = await Lead.find(query)
+            .sort('-createdAt')
+            .limit(parseInt(req.query.limit) || 5);
 
         res.json({
-            items: featuredLeads,
-            total: featuredLeads.length
+            items: leads,
+            total: leads.length
         });
     } catch (error) {
         console.error('Error fetching featured leads:', error);
         res.status(500).json({ 
-            message: 'Error fetching featured leads',
-            error: error.message 
+            message: error.message || 'Error fetching featured leads'
         });
     }
 });

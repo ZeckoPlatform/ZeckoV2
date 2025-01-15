@@ -108,10 +108,15 @@ export const leadService = {
     }
   },
 
-  getFeaturedLeads: async () => {
+  getFeaturedLeads: async (params = {}) => {
     try {
-      const response = await api.get(endpoints.leads.featured);
-      console.log('Featured leads response:', response);
+      const response = await api.get(endpoints.leads.featured, { 
+        params: {
+          status: 'active',
+          limit: params.limit || 5,
+          ...params
+        }
+      });
       return response.data?.items || [];
     } catch (error) {
       console.error('Error fetching featured leads:', error);
