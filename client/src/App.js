@@ -18,7 +18,6 @@ import Register from './pages/Register';
 import Dashboard from './components/Dashboard';
 import AdminDashboard from './components/admin/AdminDashboard';
 import Home from './pages/Home';
-import Profile from './components/Profile';
 import UserProfile from './pages/Profile/UserProfile';
 import PostLead from './pages/PostLead';
 import DashboardProfile from './components/Dashboard/Profile';
