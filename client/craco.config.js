@@ -7,14 +7,6 @@ module.exports = {
         configure: (webpackConfig) => {
             // Production only
             if (process.env.NODE_ENV === 'production') {
-                // Add bundle analyzer
-                webpackConfig.plugins.push(
-                    new BundleAnalyzerPlugin({
-                        analyzerMode: 'static',
-                        reportFilename: 'bundle-report.html',
-                    })
-                );
-                
                 // Enable production optimizations
                 whenProd(() => {
                     webpackConfig.optimization = {
@@ -41,6 +33,16 @@ module.exports = {
                         },
                     };
                 });
+            }
+
+            // Add bundle analyzer only in development
+            if (process.env.NODE_ENV === 'development') {
+                webpackConfig.plugins.push(
+                    new BundleAnalyzerPlugin({
+                        analyzerMode: 'static',
+                        reportFilename: 'bundle-report.html',
+                    })
+                );
             }
 
             // Add image optimization
