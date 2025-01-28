@@ -7,7 +7,7 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { ServiceProvider } from './contexts/ServiceContext';
 import { ServiceCategoryProvider } from './contexts/ServiceCategoryContext';
 import ErrorBoundary from './components/ErrorBoundary';
-import LoadingSpinner from './components/UI/LoadingSpinner';
+import LoadingSpinner from './components/common/LoadingSpinner';
 import { AppProvider } from './context/AppContext';
 import axios from 'axios';
 
@@ -85,7 +85,7 @@ function AppContent() {
                     <ServiceCategoryProvider>
                         <ServiceProvider>
                             <AppProvider>
-                                <Suspense fallback={<LoadingSpinner />}>
+                                <Suspense fallback={<LoadingSpinner size={50} fullscreen text="Loading application..." />}>
                                     <Routes>
                                         {/* Public routes */}
                                         <Route path="/" element={
