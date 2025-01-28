@@ -1,0 +1,82 @@
+{
+  "name": "client",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@craco/craco": "^7.1.0",
+    "@emotion/react": "^11.13.5",
+    "@emotion/styled": "^11.13.5",
+    "@mui/icons-material": "^6.1.10",
+    "@mui/material": "^6.1.10",
+    "@mui/styles": "^6.1.10",
+    "@mui/x-data-grid": "^7.23.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.0.1",
+    "@testing-library/user-event": "^14.5.2",
+    "ajv": "^8.17.1",
+    "axios": "^1.7.9",
+    "chart.js": "^4.4.7",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^11.15.0",
+    "qrcode.react": "^4.1.0",
+    "react": "^18.3.1",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.3.1",
+    "react-feather": "^2.0.10",
+    "react-icons": "^5.4.0",
+    "react-router": "^6.20.0",
+    "react-router-dom": "^6.20.0",
+    "react-scripts": "5.0.1",
+    "react-slick": "^0.30.3",
+    "react-swipeable-views": "^0.14.0",
+    "react-swipeable-views-utils": "^0.14.0",
+    "react-toastify": "^10.0.6",
+    "react-virtualized-auto-sizer": "^1.0.25",
+    "react-window": "^1.8.11",
+    "recharts": "^2.15.0",
+    "slick-carousel": "^1.8.1",
+    "socket.io-client": "^4.8.1",
+    "source-map-explorer": "^2.5.3",
+    "styled-components": "^6.1.13",
+    "swiper": "^11.2.0",
+    "web-vitals": "^4.2.4",
+    "zxcvbn": "^4.4.2"
+  },
+  "scripts": {
+    "start": "craco start",
+    "build": "craco build",
+    "test": "craco test",
+    "eject": "react-scripts eject",
+    "optimize-images": "node scripts/optimizeImages.js",
+    "analyze": "source-map-explorer 'build/static/js/*.js'"
+  },
+  "resolutions": {
+    "nth-check": "^2.0.1",
+    "postcss": "^8.4.31"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@babel/plugin-transform-private-property-in-object": "^7.25.9",
+    "cross-env": "^7.0.3"
+  },
+  "proxy": "https://zeckov2-deceb43992ac.herokuapp.com"
+}

@@ -1,0 +1,23 @@
+# Development files
+*.test.js
+*.spec.js
+/tests/
+/coverage/
+
+# Documentation
+/docs/ 
+
+# Node modules (will be reinstalled during build)
+/client/node_modules/
+/server/node_modules/
+
+# Git files
+.git/
+
+# Logs
+*.log
+
+# Keep these files
+!server/data/leadCategories.js
+!server/controllers/serviceCategoryController.js
+!server/models/serviceCategoryModel.js 
