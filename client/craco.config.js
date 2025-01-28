@@ -1,4 +1,3 @@
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin');
 const { whenProd } = require('@craco/craco');
 
@@ -33,16 +32,6 @@ module.exports = {
                         },
                     };
                 });
-            }
-
-            // Add bundle analyzer only in development
-            if (process.env.NODE_ENV === 'development') {
-                webpackConfig.plugins.push(
-                    new BundleAnalyzerPlugin({
-                        analyzerMode: 'static',
-                        reportFilename: 'bundle-report.html',
-                    })
-                );
             }
 
             // Add image optimization
