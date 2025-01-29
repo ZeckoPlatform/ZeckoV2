@@ -33,18 +33,22 @@ export const AppProvider = ({ children }) => {
     // ... hide logic ...
   }, []);
 
+  const updateUser = useCallback((userData) => {
+    dispatch({ type: 'UPDATE_USER', payload: userData });
+  }, []);
+
+  const updateLeads = useCallback((leads) => {
+    dispatch({ type: 'UPDATE_LEADS', payload: leads });
+  }, []);
+
   const contextValue = useMemo(() => ({
     ...state,
     dispatch,
-    updateUser: useCallback((userData) => {
-      dispatch({ type: 'UPDATE_USER', payload: userData });
-    }, []),
-    updateLeads: useCallback((leads) => {
-      dispatch({ type: 'UPDATE_LEADS', payload: leads });
-    }, []),
+    updateUser,
+    updateLeads,
     showNotification,
     hideNotification,
-  }), [state]);
+  }), [state, updateUser, updateLeads, showNotification, hideNotification]);
 
   return (
     <AppContext.Provider value={contextValue}>
