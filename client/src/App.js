@@ -19,7 +19,6 @@ import Dashboard from './components/Dashboard';
 import Home from './pages/Home';
 import UserProfile from './pages/Profile/UserProfile';
 import PostLead from './pages/PostLead';
-import DashboardProfile from './components/Dashboard/Profile';
 import EditLead from './pages/EditLead';
 import LeadDetail from './components/leads/LeadDetail';
 import ProductDetails from './pages/ProductDetails';
@@ -130,13 +129,6 @@ function AppContent() {
 
                                         {/* Profile routes */}
                                         <Route path="/profile" element={
-                                            <PrivateRoute>
-                                                <Layout>
-                                                    <UserProfile />
-                                                </Layout>
-                                            </PrivateRoute>
-                                        } />
-                                        <Route path="/dashboard/profile" element={
                                             <PrivateRoute>
                                                 <Layout>
                                                     <ProfileLazy />
