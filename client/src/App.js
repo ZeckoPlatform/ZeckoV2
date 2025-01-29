@@ -29,7 +29,6 @@ import Products from './components/Dashboard/Products';
 // Lazy load routes
 const DashboardLazy = lazy(() => import('./pages/Dashboard'));
 const ProfileLazy = lazy(() => import('./pages/Profile'));
-const AuthLazy = lazy(() => import('./pages/Auth'));
 const MessagesLazy = lazy(() => import('./components/Messaging'));
 const LeadListing = lazy(() => import('./components/leads/LeadListing'));
 const AuctionMonitor = lazy(() => import('./components/auction/AuctionMonitor'));
