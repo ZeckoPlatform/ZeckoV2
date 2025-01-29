@@ -16,7 +16,6 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './components/Dashboard';
-import AdminDashboard from './components/admin/AdminDashboard';
 import Home from './pages/Home';
 import UserProfile from './pages/Profile/UserProfile';
 import PostLead from './pages/PostLead';
@@ -25,6 +24,7 @@ import EditLead from './pages/EditLead';
 import LeadDetail from './components/leads/LeadDetail';
 import ProductDetails from './pages/ProductDetails';
 import Products from './components/Dashboard/Products';
+import AdminDashboard from './pages/Dashboard/AdminDashboard';
 
 // Lazy load routes
 const DashboardLazy = lazy(() => import('./pages/Dashboard'));
@@ -32,6 +32,7 @@ const ProfileLazy = lazy(() => import('./pages/Profile'));
 const MessagesLazy = lazy(() => import('./components/Messaging'));
 const LeadListing = lazy(() => import('./components/leads/LeadListing'));
 const AuctionMonitor = lazy(() => import('./components/auction/AuctionMonitor'));
+const AdminDashboardLazy = lazy(() => import('./pages/Dashboard/AdminDashboard'));
 
 // Update axios configuration for API versioning
 axios.interceptors.request.use((config) => {
@@ -152,6 +153,15 @@ function AppContent() {
                                         {/* New routes */}
                                         <Route path="/leads" element={<LeadListing />} />
                                         <Route path="/auctions" element={<AuctionMonitor />} />
+
+                                        {/* Admin route */}
+                                        <Route path="/admin/dashboard" element={
+                                            <AdminRoute>
+                                                <Layout>
+                                                    <AdminDashboardLazy />
+                                                </Layout>
+                                            </AdminRoute>
+                                        } />
 
                                         {/* Catch all route */}
                                         <Route path="*" element={<Navigate to="/" replace />} />
