@@ -17,6 +17,7 @@ import { Typography, Button } from '@mui/material';
 import { getVendorStats } from '../../services/api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { useNavigate } from 'react-router-dom';
+import { Line } from 'react-chartjs-2';
 
 const VendorDashboard = () => {
   const [stats, setStats] = useState(null);

@@ -17,6 +17,7 @@ import { Typography, Button, Chip } from '@mui/material';
 import { getBusinessStats } from '../../services/api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { useNavigate } from 'react-router-dom';
+import { Line } from 'react-chartjs-2';
 
 const ContractorDashboard = () => {
   const [stats, setStats] = useState(null);

@@ -34,7 +34,7 @@ const LeadSummary = styled(Box)`
   border-radius: 4px;
 `;
 
-const ProposalForm = ({ onSubmit, onCancel, leadBudget }) => {
+const ProposalForm = ({ lead, onSubmit, onCancel, leadBudget }) => {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [loading, setLoading] = useState(false);
 

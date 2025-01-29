@@ -25,6 +25,14 @@ const appReducer = (state, action) => {
 export const AppProvider = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
+  const showNotification = useCallback((message, type = 'info') => {
+    // ... notification logic ...
+  }, []);
+
+  const hideNotification = useCallback(() => {
+    // ... hide logic ...
+  }, []);
+
   const contextValue = useMemo(() => ({
     ...state,
     dispatch,
@@ -34,6 +42,8 @@ export const AppProvider = ({ children }) => {
     updateLeads: useCallback((leads) => {
       dispatch({ type: 'UPDATE_LEADS', payload: leads });
     }, []),
+    showNotification,
+    hideNotification,
   }), [state]);
 
   return (
