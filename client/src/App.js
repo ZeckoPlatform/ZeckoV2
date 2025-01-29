@@ -15,7 +15,6 @@ import axios from 'axios';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Dashboard from './components/Dashboard';
 import Home from './pages/Home';
 import UserProfile from './pages/Profile/UserProfile';
 import PostLead from './pages/PostLead';
