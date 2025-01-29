@@ -136,6 +136,32 @@ function Messaging() {
           </ul>
         )}
       </div>
+
+      {selectedConversation && (
+        <div className="messages-section">
+          <h3>Messages with {selectedConversation.participants.find(p => p._id !== localStorage.getItem('userId')).username}</h3>
+          <div className="messages-list">
+            {messages.map((message) => (
+              <div 
+                key={message._id}
+                className={`message ${message.sender === localStorage.getItem('userId') ? 'sent' : 'received'}`}
+              >
+                <p>{message.content}</p>
+                <small>{new Date(message.createdAt).toLocaleString()}</small>
+              </div>
+            ))}
+          </div>
+          <form onSubmit={handleSendMessage} className="message-input">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type your message..."
+            />
+            <button type="submit">Send</button>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
