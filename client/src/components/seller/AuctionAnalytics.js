@@ -26,7 +26,7 @@ import {
     Legend
 } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
-import { formatCurrency } from '@/utils/format';
+import { formatCurrency } from '../../utils/format';
 
 const AuctionAnalytics = () => {
     const [timeRange, setTimeRange] = useState('7d');

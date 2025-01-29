@@ -18,7 +18,7 @@ import {
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import { formatDistance } from 'date-fns';
-import { formatCurrency } from '@/utils/format';
+import { formatCurrency } from '../../utils/format';
 import { useSocket } from '@/contexts/SocketContext';
 import BidTimer from '../bidding/BidTimer';
 

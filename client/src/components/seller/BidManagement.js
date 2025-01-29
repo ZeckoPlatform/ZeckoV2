@@ -22,7 +22,7 @@ import {
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { formatDistance } from 'date-fns';
-import { formatCurrency } from '@/utils/format';
+import { formatCurrency } from '../../utils/format';
 
 const BidManagement = ({ productId }) => {
     const [bids, setBids] = useState([]);

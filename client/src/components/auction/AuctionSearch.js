@@ -18,7 +18,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import CloseIcon from '@mui/icons-material/Close';
 import { useQuery } from '@tanstack/react-query';
-import { formatCurrency } from '@/utils/format';
+import { formatCurrency } from '../../utils/format';
 
 const AuctionSearch = ({ onSearch }) => {
     const [searchTerm, setSearchTerm] = useState('');

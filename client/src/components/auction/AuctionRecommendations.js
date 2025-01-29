@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { formatCurrency } from '@/utils/format';
+import { formatCurrency } from '../../utils/format';
 import BidTimer from '../bidding/BidTimer';
 import OptimizedImage from '../common/OptimizedImage';
 

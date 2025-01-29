@@ -22,7 +22,7 @@ import {
     Tooltip,
     ResponsiveContainer
 } from 'recharts';
-import { formatCurrency } from '@/utils/format';
+import { formatCurrency } from '../../utils/format';
 
 const BidAnalytics = ({ productId }) => {
     const [analytics, setAnalytics] = useState(null);

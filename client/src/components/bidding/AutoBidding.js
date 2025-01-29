@@ -10,7 +10,7 @@ import {
     FormControlLabel,
     CircularProgress
 } from '@mui/material';
-import { formatCurrency } from '@/utils/format';
+import { formatCurrency } from '../../utils/format';
 
 const AutoBidding = ({ product, onSetAutoBid, currentAutoBid, isLoading }) => {
     const [maxAmount, setMaxAmount] = useState(currentAutoBid?.maxAmount || '');

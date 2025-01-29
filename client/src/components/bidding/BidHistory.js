@@ -11,7 +11,7 @@ import {
     Paper
 } from '@mui/material';
 import { formatDistance } from 'date-fns';
-import { formatCurrency } from '@/utils/format';
+import { formatCurrency } from '../../utils/format';
 import OptimizedImage from '../common/OptimizedImage';
 
 const BidHistory = ({ bids, isLoading }) => {

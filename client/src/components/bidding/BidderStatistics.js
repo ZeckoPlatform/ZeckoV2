@@ -26,7 +26,7 @@ import {
     ResponsiveContainer
 } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
-import { formatCurrency } from '@/utils/format';
+import { formatCurrency } from '../../utils/format';
 import { format } from 'date-fns';
 
 const BidderStatistics = () => {

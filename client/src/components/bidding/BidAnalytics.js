@@ -16,7 +16,7 @@ import {
     TimelineContent,
     TimelineDot
 } from '@mui/lab';
-import { formatCurrency } from '@/utils/format';
+import { formatCurrency } from '../../utils/format';
 import { formatDistance } from 'date-fns';
 
 const BidAnalytics = ({ bids, product, isLoading }) => {

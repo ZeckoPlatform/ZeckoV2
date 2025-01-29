@@ -3,7 +3,7 @@ import { Box, Typography, TextField, Button, Alert, CircularProgress } from '@mu
 import { useBidding } from '@/hooks/useBidding';
 import BidHistory from './BidHistory';
 import BidTimer from './BidTimer';
-import { formatCurrency } from '@/utils/format';
+import { formatCurrency } from '../../utils/format';
 import { useAuth } from '@/contexts/AuthContext';
 
 const BiddingSection = ({ product }) => {
