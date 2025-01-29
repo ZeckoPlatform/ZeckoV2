@@ -309,4 +309,14 @@ export const disable2FA = async () => {
     }
 };
 
+export const purchaseLead = async (leadId) => {
+  try {
+    const response = await api.post(`/leads/${leadId}/purchase`);
+    return response.data;
+  } catch (error) {
+    console.error('Purchase lead error:', error);
+    throw error;
+  }
+};
+
 export default api;
