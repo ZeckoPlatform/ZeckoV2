@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Typography, TextField, Button, Alert, CircularProgress } from '@mui/material';
-import { useBidding } from '@/hooks/useBidding';
+import { useBidding } from '../../hooks/useBidding';
 import BidHistory from './BidHistory';
 import BidTimer from './BidTimer';
 import { formatCurrency } from '../../utils/format';
