@@ -4,7 +4,7 @@ import { useBidding } from '@/hooks/useBidding';
 import BidHistory from './BidHistory';
 import BidTimer from './BidTimer';
 import { formatCurrency } from '../../utils/format';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const BiddingSection = ({ product }) => {
     const [bidAmount, setBidAmount] = useState('');

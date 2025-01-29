@@ -15,7 +15,7 @@ import {
 import BidManagement from './BidManagement';
 import BidAnalytics from './BidAnalytics';
 import AuctionMonitor from '../auction/AuctionMonitor';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 
 const TabPanel = ({ children, value, index, ...other }) => (

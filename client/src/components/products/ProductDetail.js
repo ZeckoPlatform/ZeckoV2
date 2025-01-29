@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import styled from 'styled-components';
 import BiddingWrapper from './BiddingWrapper';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import OptimizedImage from '../common/OptimizedImage';
 
 const ProductImage = styled(Box)`

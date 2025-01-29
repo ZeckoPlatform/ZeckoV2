@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { formatDistance } from 'date-fns';
 import { useBidUpdates } from '@/hooks/useBidUpdates';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency } from '../../utils/format';
 import BidTimer from './BidTimer';
 import OptimizedImage from '../common/OptimizedImage';

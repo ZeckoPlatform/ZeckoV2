@@ -3,7 +3,7 @@ import { Box, Paper } from '@mui/material';
 import BiddingSection from '../bidding/BiddingSection';
 import AutoBidding from '../bidding/AutoBidding';
 import BidAnalytics from '../bidding/BidAnalytics';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const BiddingWrapper = ({ product, autoBid, onAutoBidUpdate }) => {
     const { user } = useAuth();

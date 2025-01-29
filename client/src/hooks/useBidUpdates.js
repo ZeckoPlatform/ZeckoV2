@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSocket } from '../contexts/SocketContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { notificationService } from '@/services/notificationService';
 
 export const useBidUpdates = (auctionId) => {
