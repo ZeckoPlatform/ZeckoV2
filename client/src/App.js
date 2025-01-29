@@ -29,9 +29,9 @@ import AdminDashboard from './pages/Dashboard/AdminDashboard';
 const DashboardLazy = lazy(() => import('./pages/Dashboard'));
 const ProfileLazy = lazy(() => import('./pages/Profile'));
 const MessagesLazy = lazy(() => import('./components/Messaging'));
-const LeadListing = lazy(() => import('./components/leads/LeadListing'));
 const AuctionMonitor = lazy(() => import('./components/auction/AuctionMonitor'));
 const AdminDashboardLazy = lazy(() => import('./pages/Dashboard/AdminDashboard'));
+const LeadsList = lazy(() => import('./pages/LeadList'));
 
 // Update axios configuration for API versioning
 axios.interceptors.request.use((config) => {
@@ -143,7 +143,11 @@ function AppContent() {
                                         <Route path="/products" element={<Products />} />
 
                                         {/* New routes */}
-                                        <Route path="/leads" element={<LeadListing />} />
+                                        <Route path="/leads" element={
+                                            <Layout>
+                                                <LeadsList />
+                                            </Layout>
+                                        } />
                                         <Route path="/auctions" element={<AuctionMonitor />} />
 
                                         {/* Admin route */}
