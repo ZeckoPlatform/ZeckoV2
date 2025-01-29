@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
-import { motion } from 'framer-motion/motion';
-import { AnimatePresence } from 'framer-motion/AnimatePresence';
+import { motion, AnimatePresence } from 'framer-motion';
 import DashboardCard from './common/DashboardCard';
 import { FiEdit2, FiTrash2, FiPlus, FiImage } from 'react-icons/fi';
 import OptimizedImage from '../common/OptimizedImage';
