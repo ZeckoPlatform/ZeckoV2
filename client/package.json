@@ -42,7 +42,8 @@
     "web-vitals": "^4.2.4",
     "webpack-bundle-analyzer": "^4.10.2",
     "zxcvbn": "^4.4.2",
-    "react-hook-form": "^7.49.3"
+    "react-hook-form": "^7.49.3",
+    "@mui/lab": "^5.0.0-alpha.165"
   },
   "scripts": {
     "start": "craco start",
