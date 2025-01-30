@@ -25,52 +25,51 @@ const formatAccountType = (type) => {
 };
 
 router.get('/verify', authenticateToken, async (req, res) => {
-  try {
-    console.log('Verify endpoint called with user:', req.user);
-    
-    let Model;
-    switch(req.user.accountType) {
-      case 'business':
-        Model = BusinessUser;
-        break;
-      case 'vendor':
-        Model = VendorUser;
-        break;
-      default:
-        Model = User;
+    try {
+        console.log('Verify endpoint called with user:', req.user);
+        
+        let Model;
+        switch(req.user.accountType) {
+            case 'business':
+                Model = BusinessUser;
+                break;
+            case 'vendor':
+                Model = VendorUser;
+                break;
+            default:
+                Model = User;
+        }
+
+        const user = await Model.findById(req.user.userId)
+            .select('-password')
+            .lean();
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const userData = {
+            id: user._id,
+            userId: user._id,
+            email: user.email,
+            username: user.username || user.email,
+            accountType: req.user.accountType.toLowerCase(),
+            role: user.role,
+            createdAt: user.createdAt,
+            avatarUrl: user.avatarUrl || null,
+            address: user.address || '',
+            phone: user.phone || '',
+            businessName: ['business', 'vendor'].includes(req.user.accountType) ? user.businessName : '',
+            vendorCategory: req.user.accountType === 'vendor' ? user.vendorCategory : undefined,
+            serviceCategories: req.user.accountType === 'business' ? user.serviceCategories : undefined
+        };
+
+        console.log('Verify response:', userData);
+        res.json({ user: userData, verified: true });
+    } catch (error) {
+        console.error('Verification error:', error);
+        res.status(500).json({ message: 'Server error during verification' });
     }
-
-    const user = await Model.findById(req.user.userId)
-      .select('-password')
-      .lean();
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Build response object with ALL fields
-    const userData = {
-      id: user._id,
-      userId: user._id,
-      email: user.email,
-      username: user.username || user.email,
-      accountType: req.user.accountType.toLowerCase(),
-      role: user.role,
-      createdAt: user.createdAt,
-      avatarUrl: user.avatarUrl || null,
-      address: user.address || '',
-      phone: user.phone || '',
-      businessName: ['business', 'vendor'].includes(req.user.accountType) ? user.businessName : '',
-      vendorCategory: req.user.accountType === 'vendor' ? user.vendorCategory : undefined,
-      serviceCategories: req.user.accountType === 'business' ? user.serviceCategories : undefined
-    };
-
-    console.log('Verify response:', userData);
-    res.json({ user: userData, verified: true });
-  } catch (error) {
-    console.error('Verification error:', error);
-    res.status(500).json({ message: 'Server error during verification' });
-  }
 });
 
 router.post('/register', RateLimitService.registrationLimiter, userController.register);
