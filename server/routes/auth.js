@@ -19,68 +19,19 @@ console.log('Available controller methods:', Object.keys(userController));
 
 const router = express.Router();
 
+// Basic middleware
 router.use(timeout('25s'));
-
 router.use((req, res, next) => {
     if (!req.timedout) next();
 });
 
+// Helper function
 const formatAccountType = (type) => {
-  return type.charAt(0).toUpperCase() + type.slice(1);
+    return type.charAt(0).toUpperCase() + type.slice(1);
 };
 
-router.get('/verify', authenticateToken, async (req, res) => {
-    try {
-        console.log('Verify endpoint called with user:', req.user);
-        
-        let Model;
-        switch(req.user.accountType) {
-            case 'business':
-                Model = BusinessUser;
-                break;
-            case 'vendor':
-                Model = VendorUser;
-                break;
-            default:
-                Model = User;
-        }
-
-        const user = await Model.findById(req.user.userId)
-            .select('-password')
-            .lean();
-
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        const userData = {
-            id: user._id,
-            userId: user._id,
-            email: user.email,
-            username: user.username || user.email,
-            accountType: req.user.accountType.toLowerCase(),
-            role: user.role,
-            createdAt: user.createdAt,
-            avatarUrl: user.avatarUrl || null,
-            address: user.address || '',
-            phone: user.phone || '',
-            businessName: ['business', 'vendor'].includes(req.user.accountType) ? user.businessName : '',
-            vendorCategory: req.user.accountType === 'vendor' ? user.vendorCategory : undefined,
-            serviceCategories: req.user.accountType === 'business' ? user.serviceCategories : undefined
-        };
-
-        console.log('Verify response:', userData);
-        res.json({ user: userData, verified: true });
-    } catch (error) {
-        console.error('Verification error:', error);
-        res.status(500).json({ message: 'Server error during verification' });
-    }
-});
-
+// Authentication routes (POST methods first)
 router.post('/register', RateLimitService.registrationLimiter, userController.register);
-
-router.post('/logout', authenticateToken, userController.logout);
-
 router.post('/login', RateLimitService.authLimiter, [
     body('email').isEmail(),
     body('password').exists(),
@@ -130,7 +81,9 @@ router.post('/login', RateLimitService.authLimiter, [
         res.status(500).json({ message: 'Login failed' });
     }
 });
-
+router.post('/logout', authenticateToken, userController.logout);
+router.post('/refresh-token', RateLimitService.refreshTokenLimiter, userController.refreshToken);
+router.post('/change-password', authenticateToken, userController.changePassword);
 router.post('/forgot-password', RateLimitService.passwordResetLimiter, async (req, res) => {
     try {
         const { email, accountType = 'user' } = req.body;
@@ -161,7 +114,6 @@ router.post('/forgot-password', RateLimitService.passwordResetLimiter, async (re
         res.status(500).json({ message: 'Error processing request' });
     }
 });
-
 router.post('/reset-password/:token', RateLimitService.passwordResetLimiter, async (req, res) => {
     try {
         const { password, accountType = 'user' } = req.body;
@@ -199,19 +151,66 @@ router.post('/reset-password/:token', RateLimitService.passwordResetLimiter, asy
     }
 });
 
-router.post('/refresh-token', RateLimitService.refreshTokenLimiter, userController.refreshToken);
-
+// Protected GET routes
 router.get('/profile', authenticateToken, userController.getProfile);
+router.get('/verify', authenticateToken, async (req, res) => {
+    try {
+        console.log('Verify endpoint called with user:', req.user);
+        
+        let Model;
+        switch(req.user.accountType) {
+            case 'business':
+                Model = BusinessUser;
+                break;
+            case 'vendor':
+                Model = VendorUser;
+                break;
+            default:
+                Model = User;
+        }
 
+        const user = await Model.findById(req.user.userId)
+            .select('-password')
+            .lean();
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const userData = {
+            id: user._id,
+            userId: user._id,
+            email: user.email,
+            username: user.username || user.email,
+            accountType: req.user.accountType.toLowerCase(),
+            role: user.role,
+            createdAt: user.createdAt,
+            avatarUrl: user.avatarUrl || null,
+            address: user.address || '',
+            phone: user.phone || '',
+            businessName: ['business', 'vendor'].includes(req.user.accountType) ? user.businessName : '',
+            vendorCategory: req.user.accountType === 'vendor' ? user.vendorCategory : undefined,
+            serviceCategories: req.user.accountType === 'business' ? user.serviceCategories : undefined
+        };
+
+        console.log('Verify response:', userData);
+        res.json({ user: userData, verified: true });
+    } catch (error) {
+        console.error('Verification error:', error);
+        res.status(500).json({ message: 'Server error during verification' });
+    }
+});
+
+// Protected PUT routes
 router.put('/profile', authenticateToken, userController.updateProfile);
 
-router.post('/change-password', authenticateToken, userController.changePassword);
-
-// Add this debug check before exporting
-const routeHandlers = router.stack.map(layer => ({
-    path: layer.route?.path,
-    methods: layer.route?.methods
-}));
-console.log('Configured routes:', routeHandlers);
+// Debug logging
+console.log('Routes configured:', router.stack
+    .filter(r => r.route)
+    .map(r => ({
+        path: r.route.path,
+        methods: Object.keys(r.route.methods)
+    }))
+);
 
 module.exports = router; 
