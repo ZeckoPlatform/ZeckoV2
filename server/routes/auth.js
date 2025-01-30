@@ -7,9 +7,6 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const timeout = require('connect-timeout');
 const validationMiddleware = require('../middleware/validation');
-const authController = require('../controllers/authController');
-const { body } = require('express-validator');
-const { handleValidationErrors } = require('../middleware/validation');
 const userController = require('../controllers/userController');
 const refreshTokenLimiter = require('../middleware/refreshTokenRateLimit');
 const RateLimitService = require('../services/rateLimitService');
@@ -203,5 +200,7 @@ router.post('/refresh-token', RateLimitService.refreshTokenLimiter, userControll
 router.get('/profile', authenticateToken, userController.getProfile);
 
 router.put('/profile', authenticateToken, userController.updateProfile);
+
+router.post('/change-password', authenticateToken, userController.changePassword);
 
 module.exports = router; 
