@@ -30,6 +30,9 @@ const formatAccountType = (type) => {
     return type.charAt(0).toUpperCase() + type.slice(1);
 };
 
+// Debug logging
+console.log('Setting up routes with controller methods:', Object.keys(userController));
+
 // Authentication routes (POST methods first)
 router.post('/register', RateLimitService.registrationLimiter, userController.register);
 router.post('/login', RateLimitService.authLimiter, [
@@ -204,13 +207,11 @@ router.get('/verify', authenticateToken, async (req, res) => {
 // Protected PUT routes
 router.put('/profile', authenticateToken, userController.updateProfile);
 
-// Debug logging
-console.log('Routes configured:', router.stack
+// Final debug check
+router.stack
     .filter(r => r.route)
-    .map(r => ({
-        path: r.route.path,
-        methods: Object.keys(r.route.methods)
-    }))
-);
+    .forEach(r => {
+        console.log(`Route: ${r.route.path}, Methods: ${Object.keys(r.route.methods)}`);
+    });
 
 module.exports = router; 
