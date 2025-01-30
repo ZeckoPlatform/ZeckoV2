@@ -25,13 +25,45 @@ const sanitizeAndValidate = (value, options = {}) => {
         });
 };
 
+// Define validation chains first
+const emailValidation = body('email')
+    .trim()
+    .isEmail()
+    .normalizeEmail()
+    .custom(value => sanitizeInput(value))
+    .withMessage('Please provide a valid email address');
+
+const passwordValidation = body('password')
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters long');
+
+const nameValidation = body('name')
+    .trim()
+    .not()
+    .isEmpty()
+    .custom(value => sanitizeInput(value))
+    .withMessage('Please provide your name');
+
+const loginPasswordValidation = body('password')
+    .not()
+    .isEmpty()
+    .withMessage('Please provide your password');
+
+// Validation error handler
+const handleValidationErrors = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const errorMessages = errors.array().map(err => err.msg);
+        return next(new AppError(errorMessages.join(', '), 400));
+    }
+    next();
+};
+
 const validationMiddleware = {
     validateUser: [
-        body('email').isEmail().normalizeEmail(),
-        body('password')
-            .isLength({ min: 8 })
-            .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/),
-        body('name').trim().isLength({ min: 2 }),
+        emailValidation,
+        passwordValidation,
+        nameValidation,
         handleValidationErrors
     ],
 
@@ -56,16 +88,6 @@ const validationMiddleware = {
         body('paymentMethod').isIn(['card', 'bank_transfer']),
         handleValidationErrors
     ]
-};
-
-// Helper function to handle validation errors
-const handleValidationErrors = (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        const errorMessages = errors.array().map(err => err.msg);
-        return next(new AppError(errorMessages.join(', '), 400));
-    }
-    next();
 };
 
 // Common validation patterns that can be reused across routes
@@ -96,5 +118,16 @@ module.exports = {
     validationMiddleware,
     commonValidations,
     handleValidationErrors,
-    sanitizeAndValidate
+    sanitizeAndValidate,
+    validateRegistration: [
+        emailValidation,
+        passwordValidation,
+        nameValidation,
+        handleValidationErrors
+    ],
+    validateLogin: [
+        emailValidation,
+        loginPasswordValidation,
+        handleValidationErrors
+    ]
 }; 
