@@ -14,6 +14,9 @@ const { AppError } = require('../utils/appError');
 const { body } = require('express-validator');
 const { handleValidationErrors } = require('../middleware/validation');
 
+// Add this debug logging
+console.log('Available controller methods:', Object.keys(userController));
+
 const router = express.Router();
 
 router.use(timeout('25s'));
@@ -203,5 +206,12 @@ router.get('/profile', authenticateToken, userController.getProfile);
 router.put('/profile', authenticateToken, userController.updateProfile);
 
 router.post('/change-password', authenticateToken, userController.changePassword);
+
+// Add this debug check before exporting
+const routeHandlers = router.stack.map(layer => ({
+    path: layer.route?.path,
+    methods: layer.route?.methods
+}));
+console.log('Configured routes:', routeHandlers);
 
 module.exports = router; 
