@@ -1,7 +1,31 @@
 const mongoose = require('mongoose');
+const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
+// Define the bidding preferences schema first
+const biddingPreferencesSchema = new mongoose.Schema({
+    maxBidAmount: {
+        type: Number,
+        default: 0
+    },
+    autoBidEnabled: {
+        type: Boolean,
+        default: false
+    },
+    notificationPreferences: {
+        outbid: {
+            type: Boolean,
+            default: true
+        },
+        auctionEnd: {
+            type: Boolean,
+            default: true
+        }
+    }
+});
+
+// Then use it in the user schema
 const userSchema = new mongoose.Schema({
     username: {
         type: String,
@@ -204,41 +228,6 @@ userSchema.methods.generatePasswordReset = function() {
 userSchema.methods.isAccountLocked = function() {
     return this.isLocked && this.lockUntil && this.lockUntil > Date.now();
 };
-
-const biddingPreferencesSchema = new mongoose.Schema({
-    notifyOutbid: {
-        type: Boolean,
-        default: true
-    },
-    notifyAuctionEnd: {
-        type: Boolean,
-        default: true
-    },
-    notifyWatchedItems: {
-        type: Boolean,
-        default: true
-    },
-    autoBidEnabled: {
-        type: Boolean,
-        default: false
-    },
-    maxBidAmount: {
-        type: Number,
-        default: 0
-    },
-    bidIncrement: {
-        type: Number,
-        default: 0
-    },
-    preferredCategories: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Category'
-    }],
-    emailNotifications: {
-        type: Boolean,
-        default: true
-    }
-}, { _id: false });
 
 const User = mongoose.model('User', userSchema);
 
