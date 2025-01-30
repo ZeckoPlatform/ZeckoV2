@@ -1,5 +1,6 @@
 const { body, param, query, validationResult } = require('express-validator');
-const { sanitizeHtml, sanitizeResponse } = require('../utils/securityUtils');
+const { sanitizeHtml, sanitizeResponse, sanitizeInput } = require('../utils/securityUtils');
+const AppError = require('../utils/appError');
 
 const sanitizeAndValidate = (value, options = {}) => {
     return body(value)
@@ -61,17 +62,9 @@ const validationMiddleware = {
 const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json(sanitizeResponse({
-            errors: errors.array()
-        }));
+        const errorMessages = errors.array().map(err => err.msg);
+        return next(new AppError(errorMessages.join(', '), 400));
     }
-    
-    // Add response sanitization to res.json
-    const originalJson = res.json;
-    res.json = function (data) {
-        return originalJson.call(this, sanitizeResponse(data));
-    };
-    
     next();
 };
 
