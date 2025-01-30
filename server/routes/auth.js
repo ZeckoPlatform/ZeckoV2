@@ -11,6 +11,8 @@ const userController = require('../controllers/userController');
 const refreshTokenLimiter = require('../middleware/refreshTokenRateLimit');
 const RateLimitService = require('../services/rateLimitService');
 const { AppError } = require('../utils/appError');
+const { body } = require('express-validator');
+const { handleValidationErrors } = require('../middleware/validation');
 
 const router = express.Router();
 
