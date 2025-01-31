@@ -38,7 +38,7 @@ const bodyParser = require('body-parser');
 
 // Import routes
 const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/api/userRoutes');
+const userRoutes = require('./routes/userRoutes');
 const profileRoutes = require('./routes/api/profile');
 const leadRoutes = require('./routes/api/lead');
 const productRoutes = require('./routes/productRoutes');
