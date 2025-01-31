@@ -213,7 +213,7 @@ router.get('/verify', authenticateToken, async (req, res) => {
     }
 });
 
-// Protected PUT routes
+// Single PUT route for profile
 router.put('/profile', 
     authenticateToken,
     async (req, res, next) => {
@@ -225,7 +225,7 @@ router.put('/profile',
     }
 );
 
-// Add debug logging for configured routes
+// Debug logging
 router.stack
     .filter(r => r.route)
     .forEach(r => {
