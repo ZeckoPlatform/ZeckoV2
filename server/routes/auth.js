@@ -17,6 +17,11 @@ const { handleValidationErrors } = require('../middleware/validation');
 // Add this debug logging
 console.log('Available controller methods:', Object.keys(userController));
 
+// Debug the actual controller object
+console.log('userController object:', userController);
+console.log('userController.register type:', typeof userController.register);
+console.log('userController.login type:', typeof userController.login);
+
 const router = express.Router();
 
 // Basic middleware
@@ -34,12 +39,26 @@ const formatAccountType = (type) => {
 console.log('Setting up routes with controller methods:', Object.keys(userController));
 
 // Authentication routes (POST methods first)
-router.post('/register', RateLimitService.registrationLimiter, userController.register);
+router.post('/register', RateLimitService.registrationLimiter, async (req, res, next) => {
+    try {
+        await userController.register(req, res, next);
+    } catch (error) {
+        next(error);
+    }
+});
+
 router.post('/login', RateLimitService.authLimiter, [
     body('email').isEmail(),
     body('password').exists(),
     handleValidationErrors
-], userController.login);
+], async (req, res, next) => {
+    try {
+        await userController.login(req, res, next);
+    } catch (error) {
+        next(error);
+    }
+});
+
 router.post('/logout', authenticateToken, userController.logout);
 router.post('/refresh-token', RateLimitService.refreshTokenLimiter, userController.refreshToken);
 router.post('/change-password', authenticateToken, userController.changePassword);
