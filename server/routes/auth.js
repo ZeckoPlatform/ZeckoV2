@@ -48,7 +48,13 @@ console.log('Setting up routes with controller methods:', Object.keys(userContro
 
 // Authentication routes (POST methods first)
 router.post('/register', 
-    RateLimitService.registrationLimiter,
+    (req, res, next) => {
+        if (RateLimitService && typeof RateLimitService.registrationLimiter === 'function') {
+            RateLimitService.registrationLimiter(req, res, next);
+        } else {
+            next();
+        }
+    },
     async (req, res, next) => {
         try {
             await userController.register(req, res, next);
@@ -59,7 +65,13 @@ router.post('/register',
 );
 
 router.post('/login', 
-    RateLimitService.authLimiter,
+    (req, res, next) => {
+        if (RateLimitService && typeof RateLimitService.authLimiter === 'function') {
+            RateLimitService.authLimiter(req, res, next);
+        } else {
+            next();
+        }
+    },
     [
         body('email').isEmail(),
         body('password').exists(),
@@ -86,7 +98,13 @@ router.post('/logout',
 );
 
 router.post('/refresh-token', 
-    RateLimitService.authLimiter,
+    (req, res, next) => {
+        if (RateLimitService && typeof RateLimitService.authLimiter === 'function') {
+            RateLimitService.authLimiter(req, res, next);
+        } else {
+            next();
+        }
+    },
     async (req, res, next) => {
         try {
             await userController.refreshToken(req, res, next);
@@ -238,6 +256,14 @@ console.log('Rate limiters configured:', {
     auth: !!RateLimitService.authLimiter,
     refreshToken: !!RateLimitService.refreshTokenLimiter,
     passwordReset: !!RateLimitService.passwordResetLimiter
+});
+
+// Add debug logging for rate limiters
+console.log('RateLimitService status:', {
+    exists: !!RateLimitService,
+    registrationLimiter: typeof RateLimitService?.registrationLimiter,
+    authLimiter: typeof RateLimitService?.authLimiter,
+    passwordResetLimiter: typeof RateLimitService?.passwordResetLimiter
 });
 
 module.exports = router; 
