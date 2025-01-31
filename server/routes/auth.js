@@ -59,9 +59,30 @@ router.post('/login', RateLimitService.authLimiter, [
     }
 });
 
-router.post('/logout', authenticateToken, userController.logout);
-router.post('/refresh-token', RateLimitService.refreshTokenLimiter, userController.refreshToken);
-router.post('/change-password', authenticateToken, userController.changePassword);
+router.post('/logout', authenticateToken, async (req, res, next) => {
+    try {
+        await userController.logout(req, res, next);
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.post('/refresh-token', RateLimitService.refreshTokenLimiter, async (req, res, next) => {
+    try {
+        await userController.refreshToken(req, res, next);
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.post('/change-password', authenticateToken, async (req, res, next) => {
+    try {
+        await userController.changePassword(req, res, next);
+    } catch (error) {
+        next(error);
+    }
+});
+
 router.post('/forgot-password', RateLimitService.passwordResetLimiter, async (req, res) => {
     try {
         const { email, accountType = 'user' } = req.body;
@@ -92,6 +113,7 @@ router.post('/forgot-password', RateLimitService.passwordResetLimiter, async (re
         res.status(500).json({ message: 'Error processing request' });
     }
 });
+
 router.post('/reset-password/:token', RateLimitService.passwordResetLimiter, async (req, res) => {
     try {
         const { password, accountType = 'user' } = req.body;
@@ -130,7 +152,14 @@ router.post('/reset-password/:token', RateLimitService.passwordResetLimiter, asy
 });
 
 // Protected GET routes
-router.get('/profile', authenticateToken, userController.getProfile);
+router.get('/profile', authenticateToken, async (req, res, next) => {
+    try {
+        await userController.getProfile(req, res, next);
+    } catch (error) {
+        next(error);
+    }
+});
+
 router.get('/verify', authenticateToken, async (req, res) => {
     try {
         console.log('Verify endpoint called with user:', req.user);
@@ -180,7 +209,13 @@ router.get('/verify', authenticateToken, async (req, res) => {
 });
 
 // Protected PUT routes
-router.put('/profile', authenticateToken, userController.updateProfile);
+router.put('/profile', authenticateToken, async (req, res, next) => {
+    try {
+        await userController.updateProfile(req, res, next);
+    } catch (error) {
+        next(error);
+    }
+});
 
 // Final debug check
 router.stack
