@@ -74,13 +74,16 @@ router.post('/login',
     }
 );
 
-router.post('/logout', authenticateToken, async (req, res, next) => {
-    try {
-        await userController.logout(req, res, next);
-    } catch (error) {
-        next(error);
+router.post('/logout', 
+    authenticateToken,
+    async (req, res, next) => {
+        try {
+            await userController.logout(req, res, next);
+        } catch (error) {
+            next(error);
+        }
     }
-});
+);
 
 router.post('/refresh-token', 
     RateLimitService.authLimiter,
@@ -93,38 +96,29 @@ router.post('/refresh-token',
     }
 );
 
-router.post('/change-password', authenticateToken, async (req, res, next) => {
-    try {
-        await userController.changePassword(req, res, next);
-    } catch (error) {
-        next(error);
+router.post('/change-password', 
+    authenticateToken,
+    async (req, res, next) => {
+        try {
+            await userController.changePassword(req, res, next);
+        } catch (error) {
+            next(error);
+        }
     }
-});
+);
 
 router.post('/forgot-password', RateLimitService.passwordResetLimiter, async (req, res) => {
     try {
         const { email, accountType = 'user' } = req.body;
+        let Model = accountType.toLowerCase() === 'business' ? BusinessUser : 
+                   accountType.toLowerCase() === 'vendor' ? VendorUser : User;
         
-        let Model;
-        switch(accountType.toLowerCase()) {
-            case 'business':
-                Model = BusinessUser;
-                break;
-            case 'vendor':
-                Model = VendorUser;
-                break;
-            default:
-                Model = User;
-        }
-
         const user = await Model.findOne({ email });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
         await user.generatePasswordReset();
-        // TODO: Send password reset email using your email service
-        
         res.json({ message: 'Password reset email sent' });
     } catch (error) {
         console.error('Forgot password error:', error);
@@ -135,18 +129,8 @@ router.post('/forgot-password', RateLimitService.passwordResetLimiter, async (re
 router.post('/reset-password/:token', RateLimitService.passwordResetLimiter, async (req, res) => {
     try {
         const { password, accountType = 'user' } = req.body;
-        
-        let Model;
-        switch(accountType.toLowerCase()) {
-            case 'business':
-                Model = BusinessUser;
-                break;
-            case 'vendor':
-                Model = VendorUser;
-                break;
-            default:
-                Model = User;
-        }
+        let Model = accountType.toLowerCase() === 'business' ? BusinessUser : 
+                   accountType.toLowerCase() === 'vendor' ? VendorUser : User;
 
         const user = await Model.findOne({
             resetPasswordToken: req.params.token,
@@ -170,13 +154,16 @@ router.post('/reset-password/:token', RateLimitService.passwordResetLimiter, asy
 });
 
 // Protected GET routes
-router.get('/profile', authenticateToken, async (req, res, next) => {
-    try {
-        await userController.getProfile(req, res, next);
-    } catch (error) {
-        next(error);
+router.get('/profile', 
+    authenticateToken,
+    async (req, res, next) => {
+        try {
+            await userController.getProfile(req, res, next);
+        } catch (error) {
+            next(error);
+        }
     }
-});
+);
 
 router.get('/verify', authenticateToken, async (req, res) => {
     try {
@@ -227,13 +214,16 @@ router.get('/verify', authenticateToken, async (req, res) => {
 });
 
 // Protected PUT routes
-router.put('/profile', authenticateToken, async (req, res, next) => {
-    try {
-        await userController.updateProfile(req, res, next);
-    } catch (error) {
-        next(error);
+router.put('/profile', 
+    authenticateToken,
+    async (req, res, next) => {
+        try {
+            await userController.updateProfile(req, res, next);
+        } catch (error) {
+            next(error);
+        }
     }
-});
+);
 
 // Add debug logging for configured routes
 router.stack
