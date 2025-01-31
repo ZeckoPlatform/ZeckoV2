@@ -125,51 +125,69 @@ router.post('/change-password',
     }
 );
 
-router.post('/forgot-password', RateLimitService.passwordResetLimiter, async (req, res) => {
-    try {
-        const { email, accountType = 'user' } = req.body;
-        let Model = accountType.toLowerCase() === 'business' ? BusinessUser : 
-                   accountType.toLowerCase() === 'vendor' ? VendorUser : User;
-        
-        const user = await Model.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+router.post('/forgot-password', 
+    (req, res, next) => {
+        if (RateLimitService && typeof RateLimitService.passwordResetLimiter === 'function') {
+            RateLimitService.passwordResetLimiter(req, res, next);
+        } else {
+            next();
         }
+    },
+    async (req, res) => {
+        try {
+            const { email, accountType = 'user' } = req.body;
+            let Model = accountType.toLowerCase() === 'business' ? BusinessUser : 
+                       accountType.toLowerCase() === 'vendor' ? VendorUser : User;
+            
+            const user = await Model.findOne({ email });
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
 
-        await user.generatePasswordReset();
-        res.json({ message: 'Password reset email sent' });
-    } catch (error) {
-        console.error('Forgot password error:', error);
-        res.status(500).json({ message: 'Error processing request' });
-    }
-});
-
-router.post('/reset-password/:token', RateLimitService.passwordResetLimiter, async (req, res) => {
-    try {
-        const { password, accountType = 'user' } = req.body;
-        let Model = accountType.toLowerCase() === 'business' ? BusinessUser : 
-                   accountType.toLowerCase() === 'vendor' ? VendorUser : User;
-
-        const user = await Model.findOne({
-            resetPasswordToken: req.params.token,
-            resetPasswordExpires: { $gt: Date.now() }
-        });
-
-        if (!user) {
-            return res.status(400).json({ message: 'Invalid or expired token' });
+            await user.generatePasswordReset();
+            res.json({ message: 'Password reset email sent' });
+        } catch (error) {
+            console.error('Forgot password error:', error);
+            res.status(500).json({ message: 'Error processing request' });
         }
-
-        user.password = password;
-        user.resetPasswordToken = undefined;
-        user.resetPasswordExpires = undefined;
-        await user.save();
-
-        res.json({ message: 'Password reset successful' });
-    } catch (error) {
-        console.error('Reset password error:', error);
-        res.status(500).json({ message: 'Error resetting password' });
     }
-});
+);
+
+router.post('/reset-password/:token', 
+    (req, res, next) => {
+        if (RateLimitService && typeof RateLimitService.passwordResetLimiter === 'function') {
+            RateLimitService.passwordResetLimiter(req, res, next);
+        } else {
+            next();
+        }
+    },
+    async (req, res) => {
+        try {
+            const { password, accountType = 'user' } = req.body;
+            let Model = accountType.toLowerCase() === 'business' ? BusinessUser : 
+                       accountType.toLowerCase() === 'vendor' ? VendorUser : User;
+
+            const user = await Model.findOne({
+                resetPasswordToken: req.params.token,
+                resetPasswordExpires: { $gt: Date.now() }
+            });
+
+            if (!user) {
+                return res.status(400).json({ message: 'Invalid or expired token' });
+            }
+
+            user.password = password;
+            user.resetPasswordToken = undefined;
+            user.resetPasswordExpires = undefined;
+            await user.save();
+
+            res.json({ message: 'Password reset successful' });
+        } catch (error) {
+            console.error('Reset password error:', error);
+            res.status(500).json({ message: 'Error resetting password' });
+        }
+    }
+);
 
 // Protected GET routes
 router.get('/profile', 
