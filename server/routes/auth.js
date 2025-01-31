@@ -39,51 +39,7 @@ router.post('/login', RateLimitService.authLimiter, [
     body('email').isEmail(),
     body('password').exists(),
     handleValidationErrors
-], async (req, res, next) => {
-    try {
-        const { email, password } = req.body;
-        
-        let Model;
-        switch(req.body.accountType.toLowerCase()) {
-            case 'business':
-                Model = BusinessUser;
-                break;
-            case 'vendor':
-                Model = VendorUser;
-                break;
-            default:
-                Model = User;
-        }
-
-        const user = await Model.findOne({ email })
-            .select('+password +twoFactorAuth.enabled');
-
-        if (!user || !await user.comparePassword(password)) {
-            return res.status(401).json({ message: 'Invalid credentials' });
-        }
-
-        // Initial session setup
-        req.session.user = {
-            id: user._id,
-            email: user.email,
-            twoFactorEnabled: user.twoFactorAuth.enabled
-        };
-
-        // If 2FA is enabled, require verification
-        if (user.twoFactorAuth.enabled) {
-            return res.json({
-                require2FA: true,
-                userId: user._id
-            });
-        }
-
-        // No 2FA, complete login
-        req.session.twoFactorVerified = true;
-        res.json({ message: 'Login successful' });
-    } catch (error) {
-        res.status(500).json({ message: 'Login failed' });
-    }
-});
+], userController.login);
 router.post('/logout', authenticateToken, userController.logout);
 router.post('/refresh-token', RateLimitService.refreshTokenLimiter, userController.refreshToken);
 router.post('/change-password', authenticateToken, userController.changePassword);
