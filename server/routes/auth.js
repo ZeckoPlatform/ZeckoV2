@@ -21,6 +21,9 @@ console.log('userController object:', userController);
 console.log('userController.register type:', typeof userController.register);
 console.log('userController.login type:', typeof userController.login);
 
+// Add debug logging for RateLimitService
+console.log('RateLimitService methods:', Object.keys(RateLimitService));
+
 const router = express.Router();
 
 // Basic middleware
@@ -28,6 +31,12 @@ router.use(timeout('25s'));
 router.use((req, res, next) => {
     if (!req.timedout) next();
 });
+
+// Verify RateLimitService methods exist
+if (!RateLimitService || !RateLimitService.registrationLimiter) {
+    console.error('RateLimitService or its methods are not properly defined');
+    throw new Error('Rate limit service not properly configured');
+}
 
 // Helper function
 const formatAccountType = (type) => {
@@ -38,25 +47,46 @@ const formatAccountType = (type) => {
 console.log('Setting up routes with controller methods:', Object.keys(userController));
 
 // Authentication routes (POST methods first)
-router.post('/register', RateLimitService.registrationLimiter, async (req, res, next) => {
-    try {
-        await userController.register(req, res, next);
-    } catch (error) {
-        next(error);
+router.post('/register', 
+    (req, res, next) => {
+        if (!RateLimitService.registrationLimiter) {
+            console.error('registrationLimiter is undefined');
+            next();
+        } else {
+            RateLimitService.registrationLimiter(req, res, next);
+        }
+    },
+    async (req, res, next) => {
+        try {
+            await userController.register(req, res, next);
+        } catch (error) {
+            next(error);
+        }
     }
-});
+);
 
-router.post('/login', RateLimitService.authLimiter, [
-    body('email').isEmail(),
-    body('password').exists(),
-    handleValidationErrors
-], async (req, res, next) => {
-    try {
-        await userController.login(req, res, next);
-    } catch (error) {
-        next(error);
+router.post('/login', 
+    (req, res, next) => {
+        if (!RateLimitService.authLimiter) {
+            console.error('authLimiter is undefined');
+            next();
+        } else {
+            RateLimitService.authLimiter(req, res, next);
+        }
+    },
+    [
+        body('email').isEmail(),
+        body('password').exists(),
+        handleValidationErrors
+    ],
+    async (req, res, next) => {
+        try {
+            await userController.login(req, res, next);
+        } catch (error) {
+            next(error);
+        }
     }
-});
+);
 
 router.post('/logout', authenticateToken, async (req, res, next) => {
     try {
@@ -222,5 +252,13 @@ router.stack
     .forEach(r => {
         console.log(`Route: ${r.route.path}, Methods: ${Object.keys(r.route.methods)}`);
     });
+
+// Add final check for rate limiters
+console.log('Rate limiters configured:', {
+    registration: !!RateLimitService.registrationLimiter,
+    auth: !!RateLimitService.authLimiter,
+    refreshToken: !!RateLimitService.refreshTokenLimiter,
+    passwordReset: !!RateLimitService.passwordResetLimiter
+});
 
 module.exports = router; 
