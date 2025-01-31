@@ -2,8 +2,7 @@ const express = require('express');
 const User = require('../models/userModel');
 const BusinessUser = require('../models/businessUserModel');
 const VendorUser = require('../models/vendorUserModel');
-const auth = require('../middleware/auth');
-const { authenticateToken } = auth;
+const { protect: authenticateToken } = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const timeout = require('connect-timeout');
@@ -29,9 +28,9 @@ console.log('RateLimitService methods:', Object.keys(RateLimitService));
 console.log('authenticateToken type:', typeof authenticateToken);
 
 // Add debug logging for the auth module
-console.log('Auth module:', {
-    exists: !!auth,
-    authenticateToken: typeof auth.authenticateToken
+console.log('Auth middleware:', {
+    protect: typeof authenticateToken,
+    exists: !!authenticateToken
 });
 
 const router = express.Router();
@@ -55,6 +54,24 @@ const formatAccountType = (type) => {
 
 // Debug logging
 console.log('Setting up routes with controller methods:', Object.keys(userController));
+
+// Temporary authentication middleware until we fix the auth module
+const tempAuthMiddleware = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
+        next();
+    } catch (error) {
+        return res.status(403).json({ message: 'Invalid token' });
+    }
+};
 
 // Authentication routes (POST methods first)
 router.post('/register', 
@@ -97,19 +114,9 @@ router.post('/login',
 );
 
 router.post('/logout', 
-    (req, res, next) => {
-        // Fallback middleware if authenticateToken is not available
-        if (!auth || typeof auth.authenticateToken !== 'function') {
-            console.error('Authentication middleware not available');
-            return res.status(500).json({ message: 'Authentication service unavailable' });
-        }
-        auth.authenticateToken(req, res, next);
-    },
+    authenticateToken,
     (req, res) => {
         try {
-            if (!userController || typeof userController.logout !== 'function') {
-                throw new Error('Logout controller not available');
-            }
             return userController.logout(req, res);
         } catch (error) {
             console.error('Logout error:', error);
