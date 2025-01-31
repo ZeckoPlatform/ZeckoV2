@@ -2,7 +2,8 @@ const express = require('express');
 const User = require('../models/userModel');
 const BusinessUser = require('../models/businessUserModel');
 const VendorUser = require('../models/vendorUserModel');
-const { authenticateToken } = require('../middleware/auth');
+const auth = require('../middleware/auth');
+const { authenticateToken } = auth;
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const timeout = require('connect-timeout');
@@ -26,6 +27,12 @@ console.log('RateLimitService methods:', Object.keys(RateLimitService));
 
 // Verify authenticateToken is properly imported
 console.log('authenticateToken type:', typeof authenticateToken);
+
+// Add debug logging for the auth module
+console.log('Auth module:', {
+    exists: !!auth,
+    authenticateToken: typeof auth.authenticateToken
+});
 
 const router = express.Router();
 
@@ -91,18 +98,23 @@ router.post('/login',
 
 router.post('/logout', 
     (req, res, next) => {
-        if (typeof authenticateToken !== 'function') {
-            console.error('authenticateToken is not a function:', authenticateToken);
+        // Fallback middleware if authenticateToken is not available
+        if (!auth || typeof auth.authenticateToken !== 'function') {
+            console.error('Authentication middleware not available');
             return res.status(500).json({ message: 'Authentication service unavailable' });
         }
-        authenticateToken(req, res, next);
+        auth.authenticateToken(req, res, next);
     },
-    (req, res, next) => {
-        if (typeof userController.logout !== 'function') {
-            console.error('logout controller is not a function:', userController.logout);
-            return res.status(500).json({ message: 'Logout service unavailable' });
+    (req, res) => {
+        try {
+            if (!userController || typeof userController.logout !== 'function') {
+                throw new Error('Logout controller not available');
+            }
+            return userController.logout(req, res);
+        } catch (error) {
+            console.error('Logout error:', error);
+            return res.status(500).json({ message: 'Logout service error' });
         }
-        userController.logout(req, res, next);
     }
 );
 
