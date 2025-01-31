@@ -88,11 +88,11 @@ router.post('/login',
 
 router.post('/logout', 
     authenticateToken,
-    async (req, res, next) => {
-        try {
-            await userController.logout(req, res, next);
-        } catch (error) {
-            next(error);
+    (req, res, next) => {
+        if (userController && typeof userController.logout === 'function') {
+            userController.logout(req, res, next).catch(next);
+        } else {
+            res.status(500).json({ message: 'Logout functionality not available' });
         }
     }
 );
@@ -282,6 +282,12 @@ console.log('RateLimitService status:', {
     registrationLimiter: typeof RateLimitService?.registrationLimiter,
     authLimiter: typeof RateLimitService?.authLimiter,
     passwordResetLimiter: typeof RateLimitService?.passwordResetLimiter
+});
+
+// Add debug logging for userController methods
+console.log('userController logout method:', {
+    exists: !!userController?.logout,
+    type: typeof userController?.logout
 });
 
 module.exports = router; 
