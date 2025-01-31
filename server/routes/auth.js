@@ -48,14 +48,7 @@ console.log('Setting up routes with controller methods:', Object.keys(userContro
 
 // Authentication routes (POST methods first)
 router.post('/register', 
-    (req, res, next) => {
-        if (!RateLimitService.registrationLimiter) {
-            console.error('registrationLimiter is undefined');
-            next();
-        } else {
-            RateLimitService.registrationLimiter(req, res, next);
-        }
-    },
+    RateLimitService.registrationLimiter,
     async (req, res, next) => {
         try {
             await userController.register(req, res, next);
@@ -66,14 +59,7 @@ router.post('/register',
 );
 
 router.post('/login', 
-    (req, res, next) => {
-        if (!RateLimitService.authLimiter) {
-            console.error('authLimiter is undefined');
-            next();
-        } else {
-            RateLimitService.authLimiter(req, res, next);
-        }
-    },
+    RateLimitService.authLimiter,
     [
         body('email').isEmail(),
         body('password').exists(),
@@ -96,13 +82,16 @@ router.post('/logout', authenticateToken, async (req, res, next) => {
     }
 });
 
-router.post('/refresh-token', RateLimitService.refreshTokenLimiter, async (req, res, next) => {
-    try {
-        await userController.refreshToken(req, res, next);
-    } catch (error) {
-        next(error);
+router.post('/refresh-token', 
+    RateLimitService.authLimiter,
+    async (req, res, next) => {
+        try {
+            await userController.refreshToken(req, res, next);
+        } catch (error) {
+            next(error);
+        }
     }
-});
+);
 
 router.post('/change-password', authenticateToken, async (req, res, next) => {
     try {
@@ -246,11 +235,11 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
     }
 });
 
-// Final debug check
+// Add debug logging for configured routes
 router.stack
     .filter(r => r.route)
     .forEach(r => {
-        console.log(`Route: ${r.route.path}, Methods: ${Object.keys(r.route.methods)}`);
+        console.log(`Route configured: ${r.route.path} [${Object.keys(r.route.methods)}]`);
     });
 
 // Add final check for rate limiters
