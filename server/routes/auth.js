@@ -86,9 +86,16 @@ router.post('/login',
     }
 );
 
-router.post('/logout', authenticateToken, (req, res, next) => {
-    userController.logout(req, res, next);
-});
+router.post('/logout', 
+    authenticateToken,
+    async (req, res, next) => {
+        try {
+            await userController.logout(req, res, next);
+        } catch (error) {
+            next(error);
+        }
+    }
+);
 
 router.post('/refresh-token', 
     (req, res, next) => {
