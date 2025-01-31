@@ -86,16 +86,9 @@ router.post('/login',
     }
 );
 
-router.post('/logout', 
-    authenticateToken,
-    (req, res, next) => {
-        if (userController && typeof userController.logout === 'function') {
-            userController.logout(req, res, next).catch(next);
-        } else {
-            res.status(500).json({ message: 'Logout functionality not available' });
-        }
-    }
-);
+router.post('/logout', authenticateToken, (req, res, next) => {
+    userController.logout(req, res, next);
+});
 
 router.post('/refresh-token', 
     (req, res, next) => {
