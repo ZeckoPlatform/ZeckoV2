@@ -563,7 +563,14 @@ router.delete('/addresses/:addressId', auth, async (req, res) => {
 });
 
 // GET /api/users/me
-router.get('/me', [auth, cache(120)], userController.getProfile);
+router.get('/me', [auth, cache(120)], async (req, res) => {
+    try {
+        return await userController.getProfile(req, res);
+    } catch (error) {
+        console.error('Profile fetch error:', error);
+        return res.status(500).json({ message: 'Error fetching profile' });
+    }
+});
 
 // Avatar upload route
 router.post('/profile/avatar', auth, upload.single('avatar'), async (req, res) => {
