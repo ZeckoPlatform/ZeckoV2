@@ -24,6 +24,9 @@ console.log('userController.login type:', typeof userController.login);
 // Add debug logging for RateLimitService
 console.log('RateLimitService methods:', Object.keys(RateLimitService));
 
+// Verify authenticateToken is properly imported
+console.log('authenticateToken type:', typeof authenticateToken);
+
 const router = express.Router();
 
 // Basic middleware
@@ -87,13 +90,19 @@ router.post('/login',
 );
 
 router.post('/logout', 
-    authenticateToken,
-    async (req, res, next) => {
-        try {
-            await userController.logout(req, res, next);
-        } catch (error) {
-            next(error);
+    (req, res, next) => {
+        if (typeof authenticateToken !== 'function') {
+            console.error('authenticateToken is not a function:', authenticateToken);
+            return res.status(500).json({ message: 'Authentication service unavailable' });
         }
+        authenticateToken(req, res, next);
+    },
+    (req, res, next) => {
+        if (typeof userController.logout !== 'function') {
+            console.error('logout controller is not a function:', userController.logout);
+            return res.status(500).json({ message: 'Logout service unavailable' });
+        }
+        userController.logout(req, res, next);
     }
 );
 
@@ -288,6 +297,12 @@ console.log('RateLimitService status:', {
 console.log('userController logout method:', {
     exists: !!userController?.logout,
     type: typeof userController?.logout
+});
+
+// Add debug logging at the end
+console.log('Auth middleware check:', {
+    authenticateToken: typeof authenticateToken,
+    userControllerLogout: typeof userController.logout
 });
 
 module.exports = router; 
