@@ -8,7 +8,6 @@ const bcrypt = require('bcryptjs');
 const timeout = require('connect-timeout');
 const validationMiddleware = require('../middleware/validation');
 const userController = require('../controllers/userController');
-const refreshTokenLimiter = require('../middleware/refreshTokenRateLimit');
 const RateLimitService = require('../services/rateLimitService');
 const { AppError } = require('../utils/appError');
 const { body } = require('express-validator');
