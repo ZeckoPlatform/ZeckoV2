@@ -19,6 +19,10 @@ console.log('Loading userRoutes.js - START');
 
 // Import controllers
 const userController = require('../controllers/userController');
+console.log('userController methods:', {
+    getProfile: typeof userController.getProfile,
+    methods: Object.keys(userController)
+});
 
 // Configure Cloudinary
 cloudinary.config({
@@ -563,12 +567,28 @@ router.delete('/addresses/:addressId', auth, async (req, res) => {
 });
 
 // GET /api/users/me
-router.get('/me', [auth, cache(120)], async (req, res) => {
+router.get('/me', [auth, cache(120)], (req, res, next) => {
+    console.log('ME route handler - auth user:', req.user);
+    console.log('userController.getProfile exists:', !!userController.getProfile);
+    
+    if (!userController.getProfile) {
+        console.error('getProfile method is undefined in route handler');
+        return res.status(500).json({ message: 'Internal server error - getProfile undefined' });
+    }
+    
+    if (!req.user || !req.user.userId) {
+        console.error('No user ID in request:', req.user);
+        return res.status(401).json({ message: 'Authentication required' });
+    }
+
     try {
-        return await userController.getProfile(req, res);
+        return userController.getProfile(req, res, next);
     } catch (error) {
         console.error('Profile fetch error:', error);
-        return res.status(500).json({ message: 'Error fetching profile' });
+        return res.status(500).json({ 
+            message: 'Error fetching profile',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
