@@ -21,6 +21,7 @@ console.log('Loading userRoutes.js - START');
 const userController = require('../controllers/userController');
 console.log('Loading routes with controller:', {
     getProfile: typeof userController.getProfile,
+    updateProfile: typeof userController.updateProfile,
     methods: Object.keys(userController)
 });
 
@@ -257,7 +258,32 @@ router.post('/verify-2fa', async (req, res) => {
 // Protected routes
 // router.get('/profile', auth, async (req, res) => { ... });
 
-// Add the new consolidated PUT route using the controller
+// Add consolidated profile routes
+router.get('/me', [auth, cache(120)], (req, res, next) => {
+    console.log('ME route handler - auth user:', req.user);
+    console.log('userController.getProfile exists:', !!userController.getProfile);
+    
+    if (!userController.getProfile) {
+        console.error('getProfile method is undefined in route handler');
+        return res.status(500).json({ message: 'Internal server error - getProfile undefined' });
+    }
+    
+    if (!req.user || !req.user.userId) {
+        console.error('No user ID in request:', req.user);
+        return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    try {
+        return userController.getProfile(req, res, next);
+    } catch (error) {
+        console.error('Profile fetch error:', error);
+        return res.status(500).json({ 
+            message: 'Error fetching profile',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
 router.put('/me', [auth], async (req, res) => {
     console.log('Profile update request:', req.body);
     
@@ -530,32 +556,6 @@ router.delete('/addresses/:addressId', auth, async (req, res) => {
     console.error('Error deleting address:', error);
     res.status(500).json({ message: 'Error deleting address' });
   }
-});
-
-// GET /api/users/me
-router.get('/me', [auth, cache(120)], (req, res, next) => {
-    console.log('ME route handler - auth user:', req.user);
-    console.log('userController.getProfile exists:', !!userController.getProfile);
-    
-    if (!userController.getProfile) {
-        console.error('getProfile method is undefined in route handler');
-        return res.status(500).json({ message: 'Internal server error - getProfile undefined' });
-    }
-    
-    if (!req.user || !req.user.userId) {
-        console.error('No user ID in request:', req.user);
-        return res.status(401).json({ message: 'Authentication required' });
-    }
-
-    try {
-        return userController.getProfile(req, res, next);
-    } catch (error) {
-        console.error('Profile fetch error:', error);
-        return res.status(500).json({ 
-            message: 'Error fetching profile',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
-    }
 });
 
 // Avatar upload route
