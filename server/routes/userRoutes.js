@@ -66,6 +66,7 @@ router.post('/refresh-token',
     userController.refreshToken
 );
 
+// Password management routes
 router.post('/change-password', 
     authenticateToken,
     userController.changePassword
@@ -90,11 +91,6 @@ router.get('/me',
 router.put('/me', 
     authenticateToken,
     userController.updateProfile
-);
-
-router.get('/verify-token', 
-    authenticateToken,
-    userController.verifyToken
 );
 
 // If you need the verify functionality, move it to a new route name
