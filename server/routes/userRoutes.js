@@ -304,15 +304,15 @@ router.put('/me', [auth], async (req, res) => {
 });
 
 // Delete account
-router.delete('/profile', auth, async (req, res) => {
+router.delete('/me', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.userId || req.user.id);
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    await User.findByIdAndDelete(req.user.id);
+    await User.findByIdAndDelete(req.user.userId || req.user.id);
     res.json({ message: 'Account deleted successfully' });
   } catch (error) {
     console.error('Account deletion error:', error);
@@ -559,13 +559,13 @@ router.delete('/addresses/:addressId', auth, async (req, res) => {
 });
 
 // Avatar upload route
-router.post('/profile/avatar', auth, upload.single('avatar'), async (req, res) => {
+router.post('/me/avatar', auth, upload.single('avatar'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.userId || req.user.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
