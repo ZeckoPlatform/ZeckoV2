@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
-const { auth } = require('../middleware/auth');
+const { protect: authenticateToken } = require('../middleware/auth');
 const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -14,13 +14,21 @@ const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cache = require('../middleware/cache');
 const redis = require('../config/redis');
-const { protect: authenticateToken } = require('../middleware/auth');
 const userController = require('../controllers/userController');
 const RateLimitService = require('../services/rateLimitService');
 const { body } = require('express-validator');
 const { handleValidationErrors } = require('../middleware/validation');
 
 console.log('Loading userRoutes.js - START');
+
+// Debug logging for userController methods
+console.log('Available controller methods:', Object.keys(userController));
+console.log('userController object:', userController);
+console.log('userController.register type:', typeof userController.register);
+console.log('userController.login type:', typeof userController.login);
+console.log('RateLimitService methods:', Object.keys(RateLimitService));
+console.log('authenticateToken type:', typeof authenticateToken);
+console.log('Auth middleware:', { protect: typeof authenticateToken, exists: !!authenticateToken });
 
 // Configure Cloudinary
 cloudinary.config({
@@ -40,27 +48,34 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 
-// Authentication routes
-router.post('/register', 
-    RateLimitService.registrationLimiter,
-    [
-        body('email').isEmail(),
-        body('password').isLength({ min: 6 }),
-        body('username').trim().isLength({ min: 3 }),
-        handleValidationErrors
-    ],
-    userController.register
-);
+// Verify controller methods exist before setting up routes
+console.log('Setting up routes with controller methods:', Object.keys(userController));
 
-router.post('/login', 
-    RateLimitService.authLimiter,
-    [
-        body('email').isEmail(),
-        body('password').exists(),
-        handleValidationErrors
-    ],
-    userController.login
-);
+// Authentication routes
+if (typeof userController.register === 'function') {
+    router.post('/register', 
+        RateLimitService.registrationLimiter,
+        [
+            body('email').isEmail(),
+            body('password').isLength({ min: 6 }),
+            body('username').trim().isLength({ min: 3 }),
+            handleValidationErrors
+        ],
+        userController.register
+    );
+}
+
+if (typeof userController.login === 'function') {
+    router.post('/login', 
+        RateLimitService.authLimiter,
+        [
+            body('email').isEmail(),
+            body('password').exists(),
+            handleValidationErrors
+        ],
+        userController.login
+    );
+}
 
 router.post('/logout', 
     authenticateToken,
@@ -118,7 +133,7 @@ router.put('/me',
 );
 
 // If you need the verify functionality, move it to a new route name
-router.get('/verify-token', auth, async (req, res) => {
+router.get('/verify-token', authenticateToken, async (req, res) => {
     try {
         console.log('Verify endpoint called with user:', req.user);
         
@@ -167,7 +182,7 @@ router.get('/verify-token', auth, async (req, res) => {
 });
 
 // Delete account
-router.delete('/me', auth, async (req, res) => {
+router.delete('/me', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId || req.user.id);
     
@@ -184,7 +199,7 @@ router.delete('/me', auth, async (req, res) => {
 });
 
 // Security Settings routes
-router.get('/security-settings', [auth, cache(300)], async (req, res) => {
+router.get('/security-settings', [authenticateToken, cache(300)], async (req, res) => {
   console.log('GET security-settings - user:', req.user);
   try {
     const user = await User.findById(req.user.userId || req.user.id);
@@ -210,7 +225,7 @@ router.get('/security-settings', [auth, cache(300)], async (req, res) => {
   }
 });
 
-router.patch('/security-settings', auth, async (req, res) => {
+router.patch('/security-settings', authenticateToken, async (req, res) => {
   console.log('PATCH security-settings - body:', req.body);
   try {
     const user = await User.findById(req.user.userId || req.user.id);
@@ -242,7 +257,7 @@ router.patch('/security-settings', auth, async (req, res) => {
 });
 
 // 2FA routes
-router.post('/2fa/setup', auth, async (req, res) => {
+router.post('/2fa/setup', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId || req.user.id);
     if (!user) {
@@ -268,7 +283,7 @@ router.post('/2fa/setup', auth, async (req, res) => {
   }
 });
 
-router.post('/2fa/verify', auth, async (req, res) => {
+router.post('/2fa/verify', authenticateToken, async (req, res) => {
   try {
     const { code, secret } = req.body;
     const user = await User.findById(req.user.userId || req.user.id);
@@ -303,7 +318,7 @@ router.post('/2fa/verify', auth, async (req, res) => {
 });
 
 // Get all addresses
-router.get('/addresses', [auth, cache(300)], async (req, res) => {
+router.get('/addresses', [authenticateToken, cache(300)], async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -322,7 +337,7 @@ const clearAddressCache = async (userId) => {
 };
 
 // Add address
-router.post('/addresses', auth, async (req, res) => {
+router.post('/addresses', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -350,7 +365,7 @@ router.post('/addresses', auth, async (req, res) => {
 });
 
 // Update address
-router.put('/addresses/:addressId', auth, async (req, res) => {
+router.put('/addresses/:addressId', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -379,7 +394,7 @@ router.put('/addresses/:addressId', auth, async (req, res) => {
 });
 
 // Delete address
-router.delete('/addresses/:addressId', auth, async (req, res) => {
+router.delete('/addresses/:addressId', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -400,7 +415,7 @@ router.delete('/addresses/:addressId', auth, async (req, res) => {
 });
 
 // Avatar upload route
-router.post('/me/avatar', auth, upload.single('avatar'), async (req, res) => {
+router.post('/me/avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
@@ -433,6 +448,34 @@ router.post('/me/avatar', auth, upload.single('avatar'), async (req, res) => {
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
+});
+
+// Debug logging for rate limiters
+console.log('Rate limiters configured:', {
+    registration: !!RateLimitService.registrationLimiter,
+    auth: !!RateLimitService.authLimiter,
+    refreshToken: !!RateLimitService.refreshToken,
+    passwordReset: !!RateLimitService.passwordResetLimiter
+});
+
+// Debug logging for auth middleware
+console.log('RateLimitService status:', {
+    exists: !!RateLimitService,
+    registrationLimiter: typeof RateLimitService.registrationLimiter,
+    authLimiter: typeof RateLimitService.authLimiter,
+    passwordResetLimiter: typeof RateLimitService.passwordResetLimiter
+});
+
+// Verify logout method exists
+console.log('userController logout method:', {
+    exists: !!userController.logout,
+    type: typeof userController.logout
+});
+
+// Debug auth middleware
+console.log('Auth middleware check:', {
+    authenticateToken: typeof authenticateToken,
+    userControllerLogout: typeof userController.logout
 });
 
 // Debug logging
