@@ -31,31 +31,14 @@ router.post('/login',
 router.post('/logout', authenticateToken, userController.logout);
 router.post('/refresh-token', RateLimitService.authLimiter, userController.refreshToken);
 
+// Profile routes
+router.get('/profile', authenticateToken, userController.getProfile);
+router.put('/profile', authenticateToken, userController.updateProfile);
+
 // Password management
-router.post('/change-password', 
-    authenticateToken,
-    [
-        body('currentPassword').exists(),
-        body('newPassword').isLength({ min: 6 }),
-        handleValidationErrors
-    ],
-    userController.changePassword
-);
-
-router.post('/forgot-password', 
-    RateLimitService.passwordResetLimiter,
-    [body('email').isEmail(), handleValidationErrors],
-    userController.forgotPassword
-);
-
-router.post('/reset-password/:token', 
-    RateLimitService.passwordResetLimiter,
-    [body('password').isLength({ min: 6 }), handleValidationErrors],
-    userController.resetPassword
-);
-
-// Verification
-router.get('/verify-token', authenticateToken, userController.verifyToken);
+router.post('/change-password', authenticateToken, userController.changePassword);
+router.post('/forgot-password', userController.forgotPassword);
+router.post('/reset-password/:token', userController.resetPassword);
 
 // Security settings
 router.get('/security-settings', authenticateToken, userController.getSecuritySettings);
@@ -64,5 +47,8 @@ router.patch('/security-settings', authenticateToken, userController.updateSecur
 // 2FA
 router.post('/2fa/setup', authenticateToken, userController.setup2FA);
 router.post('/2fa/verify', authenticateToken, userController.verify2FA);
+
+// Token verification
+router.get('/verify-token', authenticateToken, userController.verifyToken);
 
 module.exports = router;

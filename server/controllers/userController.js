@@ -8,6 +8,7 @@ const PasswordService = require('../services/passwordService');
 const AccountSecurityService = require('../services/accountSecurityService');
 const BusinessUser = require('../models/businessUserModel');
 const VendorUser = require('../models/vendorUserModel');
+const speakeasy = require('speakeasy');
 
 const register = async (req, res) => {
     try {
@@ -431,7 +432,147 @@ const resetPassword = async (req, res) => {
     }
 };
 
-const controller = {
+const verifyToken = async (req, res) => {
+    try {
+        let Model;
+        switch(req.user.accountType) {
+            case 'business':
+                Model = BusinessUser;
+                break;
+            case 'vendor':
+                Model = VendorUser;
+                break;
+            default:
+                Model = User;
+        }
+
+        const user = await Model.findById(req.user.userId)
+            .select('-password')
+            .lean();
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const userData = {
+            id: user._id,
+            userId: user._id,
+            email: user.email,
+            username: user.username || user.email,
+            accountType: req.user.accountType.toLowerCase(),
+            role: user.role,
+            createdAt: user.createdAt,
+            avatarUrl: user.avatarUrl || null,
+            address: user.address || '',
+            phone: user.phone || '',
+            businessName: ['business', 'vendor'].includes(req.user.accountType) ? user.businessName : '',
+            vendorCategory: req.user.accountType === 'vendor' ? user.vendorCategory : undefined,
+            serviceCategories: req.user.accountType === 'business' ? user.serviceCategories : undefined
+        };
+
+        res.json({ user: userData, verified: true });
+    } catch (error) {
+        console.error('Verification error:', error);
+        res.status(500).json({ message: 'Server error during verification' });
+    }
+};
+
+const getSecuritySettings = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (!user.securitySettings) {
+            user.securitySettings = {
+                twoFactorEnabled: false,
+                emailNotifications: true,
+                loginAlerts: true
+            };
+            await user.save();
+        }
+
+        res.json(user.securitySettings);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching security settings' });
+    }
+};
+
+const updateSecuritySettings = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        user.securitySettings = {
+            ...user.securitySettings,
+            ...req.body
+        };
+
+        await user.save();
+        res.json(user.securitySettings);
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating security settings' });
+    }
+};
+
+const setup2FA = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const secret = speakeasy.generateSecret({
+            name: `YourApp:${user.email}`
+        });
+
+        user.tempSecret = secret.base32;
+        await user.save();
+
+        res.json({ 
+            secret: secret.base32,
+            message: '2FA setup initiated'
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error setting up 2FA' });
+    }
+};
+
+const verify2FA = async (req, res) => {
+    try {
+        const { code, secret } = req.body;
+        const user = await User.findById(req.user.userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const verified = speakeasy.totp.verify({
+            secret: secret,
+            encoding: 'base32',
+            token: code,
+            window: 2
+        });
+
+        if (!verified) {
+            return res.status(400).json({ message: 'Invalid verification code' });
+        }
+
+        user.twoFactorSecret = secret;
+        user.tempSecret = undefined;
+        user.securitySettings.twoFactorEnabled = true;
+        await user.save();
+
+        res.json({ message: '2FA setup successful' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error verifying 2FA' });
+    }
+};
+
+const userController = {
     register,
     login,
     refreshToken,
@@ -440,10 +581,15 @@ const controller = {
     updateProfile,
     changePassword,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    verifyToken,
+    getSecuritySettings,
+    updateSecuritySettings,
+    setup2FA,
+    verify2FA
 };
 
-console.log('Controller object being exported:', Object.keys(controller));
+console.log('Controller object being exported:', Object.keys(userController));
 console.log('Loading userController.js - END');
 
-module.exports = controller; 
+module.exports = userController; 
