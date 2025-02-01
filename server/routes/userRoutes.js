@@ -257,48 +257,22 @@ router.post('/verify-2fa', async (req, res) => {
 // Protected routes
 // router.get('/profile', auth, async (req, res) => { ... });
 
-router.put('/profile', auth, async (req, res) => {
+// Add the new consolidated PUT route using the controller
+router.put('/me', [auth], async (req, res) => {
+    console.log('Profile update request:', req.body);
+    
+    if (!userController.updateProfile) {
+        console.error('updateProfile method is undefined');
+        return res.status(500).json({ message: 'Internal server error - updateProfile undefined' });
+    }
+
     try {
-        const { username, businessName, phone, location, bio } = req.body;
-        
-        // Create the update object
-        const updates = {
-            'profile.bio': bio,
-            'profile.phone': phone,
-            businessName: businessName
-        };
-
-        // Only add location if it exists
-        if (location) {
-            if (typeof location === 'string') {
-                updates['profile.location'] = location;
-            } else if (typeof location === 'object') {
-                updates['profile.location'] = location;
-            }
-        }
-
-        console.log('Updating user with:', updates);
-
-        const updatedUser = await User.findByIdAndUpdate(
-            req.user.id,
-            { $set: updates },
-            { 
-                new: true,
-                runValidators: true 
-            }
-        ).select('-password');
-
-        console.log('Updated user:', updatedUser);
-        
-        // Clear user profile cache
-        await redis.del(`cache:/api/users/me`);
-        
-        res.json(updatedUser);
+        return await userController.updateProfile(req, res);
     } catch (error) {
         console.error('Profile update error:', error);
-        res.status(500).json({ 
-            error: 'Error updating profile',
-            details: error.message 
+        return res.status(500).json({ 
+            message: 'Error updating profile',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 });
