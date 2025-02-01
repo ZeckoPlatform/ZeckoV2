@@ -411,19 +411,14 @@ router.post('/me/avatar', auth, upload.single('avatar'), async (req, res) => {
   }
 });
 
-// Debug log before each route definition
-router.use((req, res, next) => {
-    console.log('Route being accessed:', req.method, req.path);
-    next();
-});
-
+// Debug logging
 console.log('Loading userRoutes.js - END');
-console.log('Routes configured:', router.stack
+
+// Log configured routes
+router.stack
     .filter(r => r.route)
-    .map(r => ({
-        path: r.route.path,
-        methods: Object.keys(r.route.methods)
-    }))
-);
+    .forEach(r => {
+        console.log(`Route configured: ${r.route.path} [${Object.keys(r.route.methods)}]`);
+    });
 
 module.exports = router;
