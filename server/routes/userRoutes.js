@@ -255,8 +255,8 @@ router.post('/verify-2fa', async (req, res) => {
   }
 });
 
-// Define the profile routes directly instead of using the routes array
-router.get('/me', [auth, cache(120)], (req, res, next) => {
+// Instead, keep only these consolidated /me routes:
+router.get('/me', [auth, cache(120)], async (req, res, next) => {
     console.log('ME route handler - auth user:', req.user);
     console.log('userController.getProfile exists:', !!userController.getProfile);
     
@@ -271,7 +271,7 @@ router.get('/me', [auth, cache(120)], (req, res, next) => {
     }
 
     try {
-        return userController.getProfile(req, res, next);
+        await userController.getProfile(req, res, next);
     } catch (error) {
         console.error('Profile fetch error:', error);
         return res.status(500).json({ 
@@ -281,7 +281,7 @@ router.get('/me', [auth, cache(120)], (req, res, next) => {
     }
 });
 
-router.put('/me', [auth], async (req, res) => {
+router.put('/me', [auth], async (req, res, next) => {
     console.log('Profile update request:', req.body);
     
     if (!userController.updateProfile) {
@@ -290,13 +290,62 @@ router.put('/me', [auth], async (req, res) => {
     }
 
     try {
-        return await userController.updateProfile(req, res);
+        await userController.updateProfile(req, res, next);
     } catch (error) {
         console.error('Profile update error:', error);
         return res.status(500).json({ 
             message: 'Error updating profile',
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
+    }
+});
+
+// If you need the verify functionality, move it to a new route name
+router.get('/verify-token', auth, async (req, res) => {
+    try {
+        console.log('Verify endpoint called with user:', req.user);
+        
+        let Model;
+        switch(req.user.accountType) {
+            case 'business':
+                Model = BusinessUser;
+                break;
+            case 'vendor':
+                Model = VendorUser;
+                break;
+            default:
+                Model = User;
+        }
+
+        const user = await Model.findById(req.user.userId)
+            .select('-password')
+            .lean();
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const userData = {
+            id: user._id,
+            userId: user._id,
+            email: user.email,
+            username: user.username || user.email,
+            accountType: req.user.accountType.toLowerCase(),
+            role: user.role,
+            createdAt: user.createdAt,
+            avatarUrl: user.avatarUrl || null,
+            address: user.address || '',
+            phone: user.phone || '',
+            businessName: ['business', 'vendor'].includes(req.user.accountType) ? user.businessName : '',
+            vendorCategory: req.user.accountType === 'vendor' ? user.vendorCategory : undefined,
+            serviceCategories: req.user.accountType === 'business' ? user.serviceCategories : undefined
+        };
+
+        console.log('Verify response:', userData);
+        res.json({ user: userData, verified: true });
+    } catch (error) {
+        console.error('Verification error:', error);
+        res.status(500).json({ message: 'Server error during verification' });
     }
 });
 
