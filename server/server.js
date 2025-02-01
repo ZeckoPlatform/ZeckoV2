@@ -55,16 +55,16 @@ const twoFactorAuthRoutes = require('./routes/twoFactorAuth');
 const app = express();
 const server = http.createServer(app);
 
-// Initialize Socket.IO with CORS
+// Initialize Socket.IO
 const io = new Server(server, {
-  cors: {
-    origin: process.env.NODE_ENV === 'production' 
-      ? 'https://zeckov2-deceb43992ac.herokuapp.com'
-      : 'http://localhost:3000',
-    methods: ['GET', 'POST'],
-    credentials: true
-  },
-  path: '/socket.io'
+    cors: {
+        origin: process.env.NODE_ENV === 'production' 
+            ? 'https://zeckov2-deceb43992ac.herokuapp.com'
+            : 'http://localhost:3000',
+        methods: ['GET', 'POST'],
+        credentials: true
+    },
+    path: '/socket.io'
 });
 
 // Initialize auction scheduler after socket.io
@@ -122,114 +122,48 @@ const notifyAuction = (io, auctionId, event, data) => {
 app.set('notifyUser', notifyUser);
 app.set('notifyAuction', notifyAuction);
 
-// Apply Helmet middleware early in the middleware stack
+// Basic middleware (order is important)
 app.use(helmet());
-
-// Configure specific security headers
-app.use(
-    helmet({
-        contentSecurityPolicy: {
-            directives: {
-                defaultSrc: ["'self'"],
-                scriptSrc: ["'self'", "'unsafe-inline'"],
-                styleSrc: ["'self'", "'unsafe-inline'"],
-                imgSrc: ["'self'", "data:", "https:"],
-                connectSrc: ["'self'"],
-                fontSrc: ["'self'"],
-                objectSrc: ["'none'"],
-                mediaSrc: ["'self'"],
-                frameSrc: ["'none'"],
-            },
-        },
-        crossOriginEmbedderPolicy: true,
-        crossOriginOpenerPolicy: { policy: "same-origin" },
-        crossOriginResourcePolicy: { policy: "same-site" },
-        dnsPrefetchControl: { allow: false },
-        frameguard: { action: "deny" },
-        hidePoweredBy: true,
-        hsts: {
-            maxAge: 31536000,
-            includeSubDomains: true,
-            preload: true
-        },
-        ieNoOpen: true,
-        noSniff: true,
-        originAgentCluster: true,
-        permittedCrossDomainPolicies: { permittedPolicies: "none" },
-        referrerPolicy: { policy: "strict-origin-when-cross-origin" },
-        xssFilter: true
-    })
-);
-
-// XSS clean middleware
+app.use(cors(corsOptions));
+app.use(morgan('dev'));
+app.use(compression());
+app.use(cookieParser());
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+app.use(session(sessionConfig));
 app.use(xss());
 
-// Security Middleware
-app.use(cors(corsOptions));
-app.use(limiter);
-
-// Configure body-parser with increased limits
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ 
-  extended: true,
-  limit: '10mb'
-}));
-
-// Custom compression filter
-const shouldCompress = (req, res) => {
-  // Don't compress responses with this request header
-  if (req.headers['x-no-compression']) {
-    return false;
-  }
-  
-  // Use compression filter function
-  return compression.filter(req, res);
-};
-
-// Add compression middleware with custom settings
-app.use(compression({
-  filter: shouldCompress,
-  level: 6, // Compression level (0-9, 9 being best compression but slowest)
-  threshold: '1kb' // Only compress responses above 1kb
-}));
-
-// Setup CSRF protection
+// Security middleware
+app.use(securityHeaders);
 setupCSRF(app);
 
-// Add error handler for CSRF errors
-app.use((err, req, res, next) => {
-    if (err.code === 'EBADCSRFTOKEN') {
-        return res.status(403).json({
-            status: 'error',
-            message: 'Invalid CSRF token'
-        });
-    }
-    return next(err);
-});
+// Rate limiting (before routes)
+app.use('/api', RateLimitService.apiLimiter);
+app.use('/api/auth', RateLimitService.authLimiter);
+app.use('/api/users/register', RateLimitService.registrationLimiter);
 
-// Set up static file serving for uploads
-const uploadsPath = path.join(os.tmpdir(), 'uploads');
-app.use('/uploads', express.static(uploadsPath));
-
-// Debug middleware
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`, req.body);
-  next();
-});
-
-// Apply XSS protection middleware
+// Custom middleware
 app.use(sanitizeInput);
 app.use(secureResponse);
+app.use(performanceMonitor);
 
-// API Routes (all before static files)
-app.use('/api/profile', profileRoutes);
+// Debug middleware (only in development)
+if (process.env.NODE_ENV !== 'production') {
+    app.use((req, res, next) => {
+        console.log(`${req.method} ${req.path}`, req.body);
+        next();
+    });
+}
+
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/profile', profileRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api', serviceCategoryRoutes);
-app.use('/api', serviceRequestRoutes);
-app.use('/api', messageRoutes);
+app.use('/api/service-categories', serviceCategoryRoutes);
+app.use('/api/service-requests', serviceRequestRoutes);
+app.use('/api/messages', messageRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/credits', creditRoutes);
 app.use('/api/reviews', reviewRoutes);
@@ -239,17 +173,19 @@ app.use('/api/static', staticRoutes);
 
 // API 404 handler
 app.use('/api/*', (req, res) => {
-    console.log('404 for API route:', req.originalUrl);
-    res.status(404).json({ message: 'Route not found' });
+    res.status(404).json({ message: 'API route not found' });
 });
 
-// Static files (after API routes)
+// Static files serving (after API routes)
 if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '../client/build')));
     app.get('*', (req, res) => {
         res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
     });
 }
+
+// Error handling (must be last)
+app.use(errorHandler);
 
 // Health check endpoint
 app.get('/health', async (req, res) => {
@@ -261,19 +197,8 @@ app.get('/health', async (req, res) => {
     });
 });
 
-// Setup error handling (should be after all routes)
-setupErrorHandling(app);
-
 // Start token cleanup service
 TokenCleanupService.startCleanupSchedule();
-
-// Apply general rate limiting to all API routes
-app.use('/api', RateLimitService.apiLimiter);
-
-// Apply specific rate limits to auth-related routes
-app.use('/api/auth', RateLimitService.authLimiter);
-app.use('/api/business-auth', RateLimitService.authLimiter);
-app.use('/api/vendor-auth', RateLimitService.authLimiter);
 
 // Apply specific rate limits to sensitive routes
 app.use('/api/security', RateLimitService.passwordResetLimiter);
@@ -282,7 +207,6 @@ app.use('/api/subscription', RateLimitService.paymentLimiter);
 app.use('/api/credit', RateLimitService.paymentLimiter);
 
 // Apply registration rate limit
-app.use('/api/users/register', RateLimitService.registrationLimiter);
 app.use('/api/business/register', RateLimitService.registrationLimiter);
 app.use('/api/vendor/register', RateLimitService.registrationLimiter);
 
@@ -294,9 +218,6 @@ redisClient.on('error', (err) => {
 redisClient.on('connect', () => {
     logger.info('Connected to Redis successfully');
 });
-
-// Apply session middleware
-app.use(session(sessionConfig));
 
 // Session activity middleware
 app.use((req, res, next) => {
@@ -381,9 +302,6 @@ mongoose.connection.on('query', (query) => {
     });
   }
 });
-
-// Apply performance monitoring middleware
-app.use(performanceMonitor);
 
 module.exports = { app, server };
 

@@ -43,6 +43,12 @@ const upload = multer({ storage: storage });
 // Authentication routes
 router.post('/register', 
     RateLimitService.registrationLimiter,
+    [
+        body('email').isEmail(),
+        body('password').isLength({ min: 6 }),
+        body('username').trim().isLength({ min: 3 }),
+        handleValidationErrors
+    ],
     userController.register
 );
 
@@ -69,16 +75,29 @@ router.post('/refresh-token',
 // Password management routes
 router.post('/change-password', 
     authenticateToken,
+    [
+        body('currentPassword').exists(),
+        body('newPassword').isLength({ min: 6 }),
+        handleValidationErrors
+    ],
     userController.changePassword
 );
 
 router.post('/forgot-password', 
     RateLimitService.passwordResetLimiter,
+    [
+        body('email').isEmail(),
+        handleValidationErrors
+    ],
     userController.forgotPassword
 );
 
 router.post('/reset-password/:token', 
     RateLimitService.passwordResetLimiter,
+    [
+        body('password').isLength({ min: 6 }),
+        handleValidationErrors
+    ],
     userController.resetPassword
 );
 
@@ -90,6 +109,11 @@ router.get('/me',
 
 router.put('/me', 
     authenticateToken,
+    [
+        body('email').optional().isEmail(),
+        body('username').optional().trim().isLength({ min: 3 }),
+        handleValidationErrors
+    ],
     userController.updateProfile
 );
 
@@ -415,10 +439,12 @@ router.post('/me/avatar', auth, upload.single('avatar'), async (req, res) => {
 console.log('Loading userRoutes.js - END');
 
 // Log configured routes
-router.stack
-    .filter(r => r.route)
-    .forEach(r => {
-        console.log(`Route configured: ${r.route.path} [${Object.keys(r.route.methods)}]`);
-    });
+if (process.env.NODE_ENV !== 'production') {
+    router.stack
+        .filter(r => r.route)
+        .forEach(r => {
+            console.log(`Route configured: ${r.route.path} [${Object.keys(r.route.methods)}]`);
+        });
+}
 
 module.exports = router;
