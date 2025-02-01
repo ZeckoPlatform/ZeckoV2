@@ -19,7 +19,7 @@ console.log('Loading userRoutes.js - START');
 
 // Import controllers
 const userController = require('../controllers/userController');
-console.log('userController methods:', {
+console.log('Loading routes with controller:', {
     getProfile: typeof userController.getProfile,
     methods: Object.keys(userController)
 });
@@ -255,15 +255,7 @@ router.post('/verify-2fa', async (req, res) => {
 });
 
 // Protected routes
-router.get('/profile', auth, async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id).select('-password');
-        res.json(user);
-    } catch (error) {
-        console.error('Error fetching profile:', error);
-        res.status(500).json({ error: 'Error fetching profile' });
-    }
-});
+// router.get('/profile', auth, async (req, res) => { ... });
 
 router.put('/profile', auth, async (req, res) => {
     try {
@@ -628,6 +620,18 @@ router.post('/profile/avatar', auth, upload.single('avatar'), async (req, res) =
   }
 });
 
+// Debug log before each route definition
+router.use((req, res, next) => {
+    console.log('Route being accessed:', req.method, req.path);
+    next();
+});
+
 console.log('Loading userRoutes.js - END');
+
+// At the end of the file
+console.log('All routes registered:', router.stack.map(r => ({
+    path: r.route?.path,
+    methods: r.route?.methods
+})).filter(r => r.path));
 
 module.exports = router;
