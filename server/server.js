@@ -39,7 +39,6 @@ const bodyParser = require('body-parser');
 // Import routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/userRoutes');
-const profileRoutes = require('./routes/profileRoutes');
 const leadRoutes = require('./routes/api/lead');
 const productRoutes = require('./routes/productRoutes');
 const serviceCategoryRoutes = require('./routes/serviceCategoryRoutes');
@@ -158,7 +157,6 @@ if (process.env.NODE_ENV !== 'production') {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/profile', profileRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/service-categories', serviceCategoryRoutes);
