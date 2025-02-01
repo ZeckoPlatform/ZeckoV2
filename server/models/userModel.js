@@ -85,8 +85,8 @@ const userSchema = new mongoose.Schema({
     },
     accountType: {
         type: String,
-        enum: ['personal', 'business'],
-        default: 'personal'
+        enum: ['Regular', 'Business', 'Vendor'],
+        default: 'Regular'
     },
     status: {
         type: String,
@@ -145,6 +145,14 @@ const userSchema = new mongoose.Schema({
     biddingPreferences: {
         type: biddingPreferencesSchema,
         default: () => ({})
+    },
+    passwordHistory: [{
+        type: String,
+        select: false
+    }],
+    vendor: {
+        businessName: String,
+        // other vendor specific fields
     }
 }, {
     timestamps: true
@@ -227,6 +235,26 @@ userSchema.methods.generatePasswordReset = function() {
 // Check if account is locked
 userSchema.methods.isAccountLocked = function() {
     return this.isLocked && this.lockUntil && this.lockUntil > Date.now();
+};
+
+// Add these methods to your userSchema
+userSchema.methods.toProfileJSON = function() {
+    return {
+        id: this._id,
+        email: this.email,
+        username: this.username,
+        name: this.name,
+        accountType: this.accountType,
+        profile: this.profile,
+        preferences: this.preferences,
+        ...((['Business', 'Vendor'].includes(this.accountType)) && {
+            vendor: this.vendor
+        })
+    };
+};
+
+userSchema.methods.isPasswordExpired = function() {
+    return this.passwordExpiresAt && this.passwordExpiresAt < new Date();
 };
 
 const User = mongoose.model('User', userSchema);

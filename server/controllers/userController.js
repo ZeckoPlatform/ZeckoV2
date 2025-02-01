@@ -6,6 +6,8 @@ const User = require('../models/userModel');
 const RefreshToken = require('../models/refreshTokenModel');
 const PasswordService = require('../services/passwordService');
 const AccountSecurityService = require('../services/accountSecurityService');
+const BusinessUser = require('../models/businessUserModel');
+const VendorUser = require('../models/vendorUserModel');
 
 const register = async (req, res) => {
     try {
@@ -236,18 +238,43 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
     try {
-        const { username, email, address, phone, businessName } = req.body;
+        const { username, email, name, phone, address, businessName } = req.body;
         
+        // Find user first to check account type
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
         // Create update object with only the fields that are present
         const updateFields = {};
         if (username) updateFields.username = username;
         if (email) updateFields.email = email;
-        if (address) updateFields['profile.address'] = address;
+        if (name) updateFields.name = name;
         if (phone) updateFields['profile.phone'] = phone;
+        if (address) {
+            // Handle address as an array with isDefault flag
+            if (!user.profile.address) {
+                updateFields['profile.address'] = [{...address, isDefault: true}];
+            } else {
+                // Add new address or update existing one
+                const addresses = [...user.profile.address];
+                const existingIndex = addresses.findIndex(a => 
+                    a.street === address.street && 
+                    a.city === address.city
+                );
+                
+                if (existingIndex >= 0) {
+                    addresses[existingIndex] = {...addresses[existingIndex], ...address};
+                } else {
+                    addresses.push({...address, isDefault: false});
+                }
+                updateFields['profile.address'] = addresses;
+            }
+        }
         
-        // Only add businessName if user is not Regular account type
-        const user = await User.findById(req.user.userId);
-        if (user.accountType !== 'Regular' && businessName) {
+        // Handle business name for Business/Vendor accounts
+        if (['Business', 'Vendor'].includes(user.accountType) && businessName) {
             updateFields['vendor.businessName'] = businessName;
         }
 
@@ -255,7 +282,7 @@ const updateProfile = async (req, res) => {
         const updatedUser = await User.findByIdAndUpdate(
             req.user.userId,
             { $set: updateFields },
-            { new: true }
+            { new: true, runValidators: true }
         ).select('-password');
         
         if (!updatedUser) {
@@ -267,19 +294,30 @@ const updateProfile = async (req, res) => {
             id: updatedUser._id,
             email: updatedUser.email,
             username: updatedUser.username,
+            name: updatedUser.name,
             accountType: updatedUser.accountType,
             profile: {
+                phone: updatedUser.profile?.phone,
                 address: updatedUser.profile?.address,
-                phone: updatedUser.profile?.phone
+                bio: updatedUser.profile?.bio
             },
-            ...(updatedUser.accountType !== 'Regular' && {
-                businessName: updatedUser.vendor?.businessName
+            preferences: updatedUser.preferences,
+            ...((['Business', 'Vendor'].includes(updatedUser.accountType)) && {
+                vendor: {
+                    businessName: updatedUser.vendor?.businessName
+                }
             })
         };
         
         res.json(response);
     } catch (error) {
         console.error('Profile update error:', error);
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ 
+                error: 'Validation error', 
+                details: Object.values(error.errors).map(e => e.message)
+            });
+        }
         res.status(500).json({ error: 'Server error', details: error.message });
     }
 };
@@ -328,6 +366,71 @@ const changePassword = async (req, res) => {
     }
 };
 
+const forgotPassword = async (req, res) => {
+    try {
+        const { email, accountType = 'user' } = req.body;
+        let Model = accountType.toLowerCase() === 'business' ? BusinessUser : 
+                   accountType.toLowerCase() === 'vendor' ? VendorUser : User;
+        
+        const user = await Model.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Generate reset token
+        const resetToken = jwt.sign(
+            { userId: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        // Save reset token to user
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+        await user.save();
+
+        // In a real application, send email with reset link
+        // For now, just return the token
+        res.json({ 
+            message: 'Password reset email sent',
+            resetToken // Remove this in production
+        });
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({ message: 'Error processing request', error: error.message });
+    }
+};
+
+const resetPassword = async (req, res) => {
+    try {
+        const { password, accountType = 'user' } = req.body;
+        const { token } = req.params;
+
+        let Model = accountType.toLowerCase() === 'business' ? BusinessUser : 
+                   accountType.toLowerCase() === 'vendor' ? VendorUser : User;
+
+        const user = await Model.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired token' });
+        }
+
+        // Update password
+        user.password = password;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+
+        res.json({ message: 'Password reset successful' });
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({ message: 'Error resetting password', error: error.message });
+    }
+};
+
 const controller = {
     register,
     login,
@@ -335,7 +438,9 @@ const controller = {
     logout,
     getProfile,
     updateProfile,
-    changePassword
+    changePassword,
+    forgotPassword,
+    resetPassword
 };
 
 console.log('Controller object being exported:', Object.keys(controller));

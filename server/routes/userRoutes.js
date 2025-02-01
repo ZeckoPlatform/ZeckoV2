@@ -14,16 +14,13 @@ const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cache = require('../middleware/cache');
 const redis = require('../config/redis');
+const { protect: authenticateToken } = require('../middleware/auth');
+const userController = require('../controllers/userController');
+const RateLimitService = require('../services/rateLimitService');
+const { body } = require('express-validator');
+const { handleValidationErrors } = require('../middleware/validation');
 
 console.log('Loading userRoutes.js - START');
-
-// Import controllers
-const userController = require('../controllers/userController');
-console.log('Loading routes with controller:', {
-    getProfile: typeof userController.getProfile,
-    updateProfile: typeof userController.updateProfile,
-    methods: Object.keys(userController)
-});
 
 // Configure Cloudinary
 cloudinary.config({
@@ -43,262 +40,62 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 
-// Auth routes
-router.post('/register', async (req, res) => {
-    try {
-        const { 
-            username, 
-            email, 
-            password, 
-            accountType,
-            name,
-            businessName,
-            businessType,
-            vendorCategory,
-            location,
-            description
-        } = req.body;
+// Authentication routes
+router.post('/register', 
+    RateLimitService.registrationLimiter,
+    userController.register
+);
 
-        // Check if email already exists in any user collection
-        const existingUser = await User.findOne({ email }) || 
-                            await BusinessUser.findOne({ email }) || 
-                            await VendorUser.findOne({ email });
+router.post('/login', 
+    RateLimitService.authLimiter,
+    [
+        body('email').isEmail(),
+        body('password').exists(),
+        handleValidationErrors
+    ],
+    userController.login
+);
 
-        if (existingUser) {
-            return res.status(400).json({ error: 'Email already registered' });
-        }
+router.post('/logout', 
+    authenticateToken,
+    userController.logout
+);
 
-        // Create user based on account type
-        let newUser;
+router.post('/refresh-token', 
+    RateLimitService.authLimiter,
+    userController.refreshToken
+);
 
-        switch(accountType) {
-            case 'business':
-                newUser = new BusinessUser({
-                    username,
-                    email,
-                    password,
-                    businessName,
-                    businessType,
-                    location,
-                    description
-                });
-                break;
-            case 'vendor':
-                newUser = new VendorUser({
-                    username,
-                    email,
-                    password,
-                    businessName,
-                    businessType,
-                    vendorCategory
-                });
-                break;
-            default:
-                newUser = new User({
-                    username,
-                    email,
-                    password,
-                    name: username,
-                    role: 'user'
-                });
-        }
+router.post('/change-password', 
+    authenticateToken,
+    userController.changePassword
+);
 
-        await newUser.save();
+router.post('/forgot-password', 
+    RateLimitService.passwordResetLimiter,
+    userController.forgotPassword
+);
 
-        res.status(201).json({ 
-            message: 'Registration successful',
-            accountType
-        });
+router.post('/reset-password/:token', 
+    RateLimitService.passwordResetLimiter,
+    userController.resetPassword
+);
 
-    } catch (error) {
-        console.error('Registration error:', error);
-        res.status(500).json({ 
-            error: 'Registration failed', 
-            details: error.message 
-        });
-    }
-});
+// Profile routes
+router.get('/me', 
+    authenticateToken,
+    userController.getProfile
+);
 
-// Add this after the register route and before the verify-2fa route
-router.post('/login', async (req, res) => {
-  try {
-    console.log('Login request body:', req.body);
-    
-    // Extract email and password, handling both nested and flat structures
-    const email = req.body.email?.email || req.body.email;
-    const password = req.body.email?.password || req.body.password;
-    
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
-    }
+router.put('/me', 
+    authenticateToken,
+    userController.updateProfile
+);
 
-    // Find user by email
-    const user = await User.findOne({ email }).select('+password +twoFactorSecret +securitySettings');
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    // Verify password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    // Check if 2FA is enabled
-    if (user.securitySettings?.twoFactorEnabled) {
-      // Generate temporary token for 2FA
-      const tempToken = jwt.sign(
-        { tempUserId: user._id },
-        process.env.JWT_SECRET,
-        { expiresIn: '5m' }
-      );
-      return res.json({
-        requiresTwoFactor: true,
-        tempToken,
-        message: '2FA verification required'
-      });
-    }
-
-    // Generate token
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    // Remove sensitive data before sending response
-    const userResponse = {
-      _id: user._id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      avatarUrl: user.avatarUrl,
-      profile: user.profile
-    };
-
-    res.json({
-      token,
-      user: userResponse
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error during login' });
-  }
-});
-
-// Add a new route for 2FA verification during login
-router.post('/verify-2fa', async (req, res) => {
-  try {
-    // Get token from Authorization header
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ message: 'No authorization token provided' });
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const { code } = req.body;
-
-    if (!code) {
-      return res.status(400).json({ message: 'Verification code is required' });
-    }
-
-    // Log the verification attempt
-    console.log('2FA verification attempt:', { code });
-
-    // Verify temp token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded.tempUserId) {
-      return res.status(401).json({ message: 'Invalid token' });
-    }
-
-    // Find user and include twoFactorSecret
-    const user = await User.findById(decoded.tempUserId).select('+twoFactorSecret');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Verify 2FA code
-    const verified = speakeasy.totp.verify({
-      secret: user.twoFactorSecret,
-      encoding: 'base32',
-      token: code,
-      window: 2
-    });
-
-    if (!verified) {
-      console.log('Invalid 2FA code:', { code, userId: user._id });
-      return res.status(401).json({ message: 'Invalid verification code' });
-    }
-
-    // Generate new token
-    const newToken = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    // Return success response
-    res.json({
-      token: newToken,
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        role: user.role
-      },
-      message: '2FA verification successful'
-    });
-
-  } catch (error) {
-    console.error('2FA verification error:', error);
-    res.status(500).json({ message: 'Server error during verification' });
-  }
-});
-
-// Instead, keep only these consolidated /me routes:
-router.get('/me', [auth, cache(120)], async (req, res, next) => {
-    console.log('ME route handler - auth user:', req.user);
-    console.log('userController.getProfile exists:', !!userController.getProfile);
-    
-    if (!userController.getProfile) {
-        console.error('getProfile method is undefined in route handler');
-        return res.status(500).json({ message: 'Internal server error - getProfile undefined' });
-    }
-    
-    if (!req.user || !req.user.userId) {
-        console.error('No user ID in request:', req.user);
-        return res.status(401).json({ message: 'Authentication required' });
-    }
-
-    try {
-        await userController.getProfile(req, res, next);
-    } catch (error) {
-        console.error('Profile fetch error:', error);
-        return res.status(500).json({ 
-            message: 'Error fetching profile',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
-    }
-});
-
-router.put('/me', [auth], async (req, res, next) => {
-    console.log('Profile update request:', req.body);
-    
-    if (!userController.updateProfile) {
-        console.error('updateProfile method is undefined');
-        return res.status(500).json({ message: 'Internal server error - updateProfile undefined' });
-    }
-
-    try {
-        await userController.updateProfile(req, res, next);
-    } catch (error) {
-        console.error('Profile update error:', error);
-        return res.status(500).json({ 
-            message: 'Error updating profile',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
-    }
-});
+router.get('/verify-token', 
+    authenticateToken,
+    userController.verifyToken
+);
 
 // If you need the verify functionality, move it to a new route name
 router.get('/verify-token', auth, async (req, res) => {
@@ -482,28 +279,6 @@ router.post('/2fa/verify', auth, async (req, res) => {
   } catch (error) {
     console.error('2FA verification error:', error);
     res.status(500).json({ message: 'Error verifying 2FA' });
-  }
-});
-
-// Add this route to your existing userRoutes.js
-router.post('/refresh-token', auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Generate new token
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    res.json({ token });
-  } catch (error) {
-    console.error('Token refresh error:', error);
-    res.status(500).json({ message: 'Error refreshing token' });
   }
 });
 
