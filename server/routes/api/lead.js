@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../../middleware/auth');
 const Lead = require('../../models/Lead');
+const leadController = require('../../controllers/leadController');
 
 // Get all leads with filtering
 router.get('/', async (req, res) => {
@@ -116,27 +117,10 @@ router.patch('/:id', authenticateToken, async (req, res) => {
 });
 
 // Submit proposal
-router.post('/:id/proposals', authenticateToken, async (req, res) => {
-    try {
-        const lead = await Lead.findById(req.params.id);
-        
-        if (!lead) {
-            return res.status(404).json({ message: 'Lead not found' });
-        }
-
-        lead.proposals.push({
-            contractor: req.user.id,
-            amount: req.body.amount,
-            message: req.body.message
-        });
-
-        await lead.save();
-        res.status(201).json(lead);
-    } catch (err) {
-        console.error('Error submitting proposal:', err);
-        res.status(400).json({ message: err.message });
-    }
-});
+router.post('/:leadId/proposals', 
+    authenticateToken, 
+    leadController.submitProposal
+);
 
 // Get latest leads for carousel
 router.get('/latest', async (req, res) => {
@@ -158,5 +142,17 @@ router.get('/latest', async (req, res) => {
         res.status(500).json({ message: 'Error fetching latest leads' });
     }
 });
+
+// Update proposal status
+router.patch('/:leadId/proposals/:proposalId/status', 
+    authenticateToken, 
+    leadController.updateProposalStatus
+);
+
+// Add the new routes that use controller methods
+router.post('/:leadId/purchase', 
+    authenticateToken, 
+    leadController.purchaseLead
+);
 
 module.exports = router;
