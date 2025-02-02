@@ -1,13 +1,53 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../../middleware/auth');
+const { protect: authenticateToken } = require('../../middleware/auth');
 const Lead = require('../../models/Lead');
 const mongoose = require('mongoose');
 
-// Add debugging
+// Add debugging at the start
 console.log('Setting up lead routes');
-console.log('authenticateToken exists:', !!authenticateToken);
-console.log('createLead exists:', !!createLead);
+console.log('authenticateToken exists:', typeof authenticateToken === 'function');
+
+// Create new lead - Define the function before using it
+const createLead = async (req, res) => {
+    console.log('Creating lead with user:', req.user);
+    try {
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ message: 'Authentication required' });
+        }
+
+        const leadData = {
+            title: req.body.title,
+            description: req.body.description,
+            category: req.body.category,
+            subcategory: req.body.subcategory,
+            budget: req.body.budget,
+            client: req.user.id,
+            leadPrice: req.body.leadPrice,
+            location: req.body.location || {},
+            requirements: req.body.requirements || [],
+            attachments: req.body.attachments || [],
+            status: 'active',
+            visibility: req.body.visibility || 'public'
+        };
+
+        const lead = new Lead(leadData);
+        const savedLead = await lead.save();
+        
+        await savedLead.populate([
+            { path: 'category' },
+            { path: 'client', select: 'username businessName' }
+        ]);
+        
+        res.status(201).json(savedLead);
+    } catch (err) {
+        console.error('Error creating lead:', err);
+        res.status(400).json({ message: err.message });
+    }
+};
+
+// Now we can log it after it's defined
+console.log('createLead exists:', typeof createLead === 'function');
 
 // Get latest leads for carousel
 router.get('/latest', async (req, res) => {
@@ -74,44 +114,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Create new lead
-const createLead = async (req, res) => {
-    console.log('createLead called with body:', req.body);
-    try {
-        if (!req.user || !req.user.id) {
-            return res.status(401).json({ message: 'Authentication required' });
-        }
-
-        const leadData = {
-            title: req.body.title,
-            description: req.body.description,
-            category: req.body.category,
-            subcategory: req.body.subcategory,
-            budget: req.body.budget,
-            client: req.user.id,
-            leadPrice: req.body.leadPrice,
-            location: req.body.location || {},
-            requirements: req.body.requirements || [],
-            attachments: req.body.attachments || [],
-            status: 'active',
-            visibility: req.body.visibility || 'public'
-        };
-
-        const lead = new Lead(leadData);
-        const savedLead = await lead.save();
-        
-        await savedLead.populate([
-            { path: 'category' },
-            { path: 'client', select: 'username businessName' }
-        ]);
-        
-        res.status(201).json(savedLead);
-    } catch (err) {
-        console.error('Error creating lead:', err);
-        res.status(400).json({ message: err.message });
-    }
-};
-
+// Use the createLead function in the route
 router.post('/', authenticateToken, createLead);
 
 // Get lead by ID
