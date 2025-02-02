@@ -4,6 +4,27 @@ const { authenticateToken } = require('../../middleware/auth');
 const Lead = require('../../models/Lead');
 const leadController = require('../../controllers/leadController');
 
+// Get latest leads for carousel - this needs to be BEFORE /:id route
+router.get('/latest', async (req, res) => {
+    try {
+        const latestLeads = await Lead.find({
+            status: 'active',
+            visibility: 'public'
+        })
+        .populate('category')
+        .populate('client', 'username businessName')
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .select('title description budget location createdAt category client')
+        .lean();
+
+        res.json(latestLeads);
+    } catch (err) {
+        console.error('Error fetching latest leads:', err);
+        res.status(500).json({ message: 'Error fetching latest leads' });
+    }
+});
+
 // Get all leads with filtering
 router.get('/', async (req, res) => {
     try {
@@ -122,37 +143,10 @@ router.post('/:leadId/proposals',
     leadController.submitProposal
 );
 
-// Get latest leads for carousel
-router.get('/latest', async (req, res) => {
-    try {
-        const latestLeads = await Lead.find({
-            status: 'active',
-            visibility: 'public'
-        })
-        .populate('category')
-        .populate('client', 'username businessName')
-        .sort({ createdAt: -1 })
-        .limit(10)
-        .select('title description budget location createdAt category client')
-        .lean();
-
-        res.json(latestLeads);
-    } catch (err) {
-        console.error('Error fetching latest leads:', err);
-        res.status(500).json({ message: 'Error fetching latest leads' });
-    }
-});
-
 // Update proposal status
 router.patch('/:leadId/proposals/:proposalId/status', 
     authenticateToken, 
     leadController.updateProposalStatus
-);
-
-// Add the new routes that use controller methods
-router.post('/:leadId/purchase', 
-    authenticateToken, 
-    leadController.purchaseLead
 );
 
 module.exports = router;
