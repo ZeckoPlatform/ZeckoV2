@@ -15,268 +15,237 @@ cloudinary.config({
 
 class ProductController {
     // Create new product
-    async createProduct(req, res, next) {
-        try {
-            const { files, body } = req;
-            
-            // Handle image uploads
-            const images = [];
-            if (files && files.length > 0) {
-                for (const file of files) {
-                    // Convert buffer to base64
-                    const fileStr = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-                    
-                    const uploadResult = await cloudinary.uploader.upload(fileStr, {
-                        folder: 'products',
-                        resource_type: 'auto'
-                    });
-                    
-                    images.push({
-                        url: uploadResult.secure_url,
-                        publicId: uploadResult.public_id,
-                        alt: body.title,
-                        isMain: images.length === 0
-                    });
-                }
-            }
-
-            const product = new Product({
-                ...body,
-                seller: req.user._id,
-                images
-            });
-
-            await product.save();
-
-            scheduleAuction(req, product);
-
-            res.status(201).json({
-                status: 'success',
-                data: product
-            });
-        } catch (error) {
-            next(error);
-        }
-    }
-
-    // Get all products with filtering, sorting, and pagination
-    async getProducts(req, res, next) {
-        try {
-            let query = Product.find();
-            
-            // Build filter object
-            const filter = { status: 'published' };
-            if (req.query.category) {
-                filter.category = req.query.category;
-            }
-            if (req.query.vendor) {
-                filter.vendor = req.query.vendor;
-            }
-            if (req.query.priceMin || req.query.priceMax) {
-                filter['price.regular'] = {};
-                if (req.query.priceMin) filter['price.regular'].$gte = Number(req.query.priceMin);
-                if (req.query.priceMax) filter['price.regular'].$lte = Number(req.query.priceMax);
-            }
-            
-            // Apply filters
-            query = query.find(filter);
-
-            // Search functionality
-            if (req.query.search) {
-                query = query.find({
-                    $text: { $search: req.query.search }
+    createProduct = catchAsync(async (req, res, next) => {
+        const { files, body } = req;
+        
+        // Handle image uploads
+        const images = [];
+        if (files && files.length > 0) {
+            for (const file of files) {
+                const fileStr = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+                
+                const uploadResult = await cloudinary.uploader.upload(fileStr, {
+                    folder: 'products',
+                    resource_type: 'auto'
+                });
+                
+                images.push({
+                    url: uploadResult.secure_url,
+                    publicId: uploadResult.public_id,
+                    alt: body.title,
+                    isMain: images.length === 0
                 });
             }
-
-            // Sorting
-            if (req.query.sort) {
-                const sortBy = req.query.sort.split(',').join(' ');
-                query = query.sort(sortBy);
-            } else {
-                query = query.sort('-createdAt');
-            }
-
-            // Pagination
-            const page = parseInt(req.query.page, 10) || 1;
-            const limit = parseInt(req.query.limit, 10) || 10;
-            const skip = (page - 1) * limit;
-            
-            query = query.skip(skip).limit(limit);
-
-            // Execute query
-            const [products, total] = await Promise.all([
-                query.exec(),
-                Product.countDocuments(filter)
-            ]);
-
-            res.status(200).json({
-                status: 'success',
-                results: products.length,
-                pagination: {
-                    currentPage: page,
-                    totalPages: Math.ceil(total / limit),
-                    totalResults: total,
-                    resultsPerPage: limit
-                },
-                data: products
-            });
-        } catch (error) {
-            next(error);
         }
-    }
+
+        const product = await Product.create({
+            ...body,
+            seller: req.user._id,
+            images
+        });
+
+        scheduleAuction(req, product);
+
+        res.status(201).json({
+            status: 'success',
+            data: product
+        });
+    });
+
+    // Get all products with filtering, sorting, and pagination
+    getProducts = catchAsync(async (req, res, next) => {
+        let query = Product.find();
+        
+        // Build filter object
+        const filter = { status: 'published' };
+        if (req.query.category) {
+            filter.category = req.query.category;
+        }
+        if (req.query.vendor) {
+            filter.vendor = req.query.vendor;
+        }
+        if (req.query.priceMin || req.query.priceMax) {
+            filter['price.regular'] = {};
+            if (req.query.priceMin) filter['price.regular'].$gte = Number(req.query.priceMin);
+            if (req.query.priceMax) filter['price.regular'].$lte = Number(req.query.priceMax);
+        }
+        
+        // Apply filters
+        query = query.find(filter);
+
+        // Search functionality
+        if (req.query.search) {
+            query = query.find({
+                $text: { $search: req.query.search }
+            });
+        }
+
+        // Sorting
+        if (req.query.sort) {
+            const sortBy = req.query.sort.split(',').join(' ');
+            query = query.sort(sortBy);
+        } else {
+            query = query.sort('-createdAt');
+        }
+
+        // Pagination
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 10;
+        const skip = (page - 1) * limit;
+        
+        query = query.skip(skip).limit(limit);
+
+        // Execute query
+        const [products, total] = await Promise.all([
+            query.exec(),
+            Product.countDocuments(filter)
+        ]);
+
+        res.status(200).json({
+            status: 'success',
+            results: products.length,
+            pagination: {
+                currentPage: page,
+                totalPages: Math.ceil(total / limit),
+                totalResults: total,
+                resultsPerPage: limit
+            },
+            data: products
+        });
+    });
 
     // Get single product
-    async getProduct(req, res, next) {
-        try {
-            const product = await Product.findOne({
-                $or: [
-                    { _id: mongoose.Types.ObjectId.isValid(req.params.id) ? req.params.id : null },
-                    { slug: req.params.id }
-                ]
-            }).populate('category vendor');
+    getProduct = catchAsync(async (req, res, next) => {
+        const product = await Product.findOne({
+            $or: [
+                { _id: mongoose.Types.ObjectId.isValid(req.params.id) ? req.params.id : null },
+                { slug: req.params.id }
+            ]
+        }).populate('category vendor');
 
-            if (!product) {
-                throw new ApiError('Product not found', 404);
-            }
-
-            res.status(200).json({
-                status: 'success',
-                data: product
-            });
-        } catch (error) {
-            next(error);
+        if (!product) {
+            throw new ApiError('Product not found', 404);
         }
-    }
+
+        res.status(200).json({
+            status: 'success',
+            data: product
+        });
+    });
 
     // Update product
-    async updateProduct(req, res, next) {
-        try {
-            const { files, body } = req;
-            const product = await Product.findById(req.params.id);
+    updateProduct = catchAsync(async (req, res, next) => {
+        const { files, body } = req;
+        const product = await Product.findById(req.params.id);
 
-            if (!product) {
-                throw new ApiError('Product not found', 404);
-            }
-
-            // Check ownership
-            if (product.seller.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-                throw new ApiError('Not authorized to update this product', 403);
-            }
-
-            // Handle image uploads
-            if (files && files.length > 0) {
-                // Delete old images from Cloudinary
-                for (const image of product.images) {
-                    if (image.publicId) {
-                        await cloudinary.uploader.destroy(image.publicId);
-                    }
-                }
-
-                // Upload new images
-                const images = [];
-                for (const file of files) {
-                    const fileStr = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-                    const uploadResult = await cloudinary.uploader.upload(fileStr, {
-                        folder: 'products',
-                        resource_type: 'auto'
-                    });
-                    
-                    images.push({
-                        url: uploadResult.secure_url,
-                        publicId: uploadResult.public_id,
-                        alt: body.title || product.title,
-                        isMain: images.length === 0
-                    });
-                }
-                body.images = images;
-            }
-
-            // Update product
-            const updatedProduct = await Product.findByIdAndUpdate(
-                req.params.id,
-                { $set: body },
-                { new: true, runValidators: true }
-            );
-
-            scheduleAuction(req, updatedProduct);
-
-            res.status(200).json({
-                status: 'success',
-                data: updatedProduct
-            });
-        } catch (error) {
-            next(error);
+        if (!product) {
+            throw new ApiError('Product not found', 404);
         }
-    }
 
-    // Delete product
-    async deleteProduct(req, res, next) {
-        try {
-            const product = await Product.findById(req.params.id);
+        // Check ownership
+        if (product.seller.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+            throw new ApiError('Not authorized to update this product', 403);
+        }
 
-            if (!product) {
-                throw new ApiError('Product not found', 404);
-            }
-
-            // Check ownership
-            if (product.seller.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-                throw new ApiError('Not authorized to delete this product', 403);
-            }
-
-            // Delete images from Cloudinary
+        // Handle image uploads
+        if (files && files.length > 0) {
+            // Delete old images from Cloudinary
             for (const image of product.images) {
                 if (image.publicId) {
                     await cloudinary.uploader.destroy(image.publicId);
                 }
             }
 
-            await product.remove();
-
-            res.status(204).json({
-                status: 'success',
-                data: null
-            });
-        } catch (error) {
-            next(error);
+            // Upload new images
+            const images = [];
+            for (const file of files) {
+                const fileStr = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+                const uploadResult = await cloudinary.uploader.upload(fileStr, {
+                    folder: 'products',
+                    resource_type: 'auto'
+                });
+                
+                images.push({
+                    url: uploadResult.secure_url,
+                    publicId: uploadResult.public_id,
+                    alt: body.title || product.title,
+                    isMain: images.length === 0
+                });
+            }
+            body.images = images;
         }
-    }
+
+        // Update product
+        const updatedProduct = await Product.findByIdAndUpdate(
+            req.params.id,
+            { $set: body },
+            { new: true, runValidators: true }
+        );
+
+        scheduleAuction(req, updatedProduct);
+
+        res.status(200).json({
+            status: 'success',
+            data: updatedProduct
+        });
+    });
+
+    // Delete product
+    deleteProduct = catchAsync(async (req, res, next) => {
+        const product = await Product.findById(req.params.id);
+
+        if (!product) {
+            throw new ApiError('Product not found', 404);
+        }
+
+        // Check ownership
+        if (product.seller.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+            throw new ApiError('Not authorized to delete this product', 403);
+        }
+
+        // Delete images from Cloudinary
+        for (const image of product.images) {
+            if (image.publicId) {
+                await cloudinary.uploader.destroy(image.publicId);
+            }
+        }
+
+        await product.remove();
+
+        res.status(204).json({
+            status: 'success',
+            data: null
+        });
+    });
 
     // Get vendor products
-    async getSellerProducts(req, res, next) {
-        try {
-            const products = await Product.find({ seller: req.user._id })
-                .sort('-createdAt');
+    getSellerProducts = catchAsync(async (req, res) => {
+        const products = await Product.find({ seller: req.user._id })
+            .sort('-createdAt');
 
-            res.status(200).json({
-                status: 'success',
-                results: products.length,
-                data: products
-            });
-        } catch (error) {
-            next(error);
-        }
-    }
+        res.status(200).json({
+            status: 'success',
+            results: products.length,
+            data: products
+        });
+    });
 
     // Update product stock
-    async updateStock(req, res, next) {
-        try {
-            const { quantity, operation } = req.body;
-            const product = await Product.findById(req.params.id);
+    updateStock = catchAsync(async (req, res, next) => {
+        const { quantity, operation } = req.body;
+        const product = await Product.findById(req.params.id);
 
-            if (!product) {
-                throw new ApiError('Product not found', 404);
-            }
-
-            await product.updateStock(quantity, operation);
-
-            res.status(200).json({
-                status: 'success',
-                data: product
-            });
-        } catch (error) {
-            next(error);
+        if (!product) {
+            throw new ApiError('Product not found', 404);
         }
-    }
+
+        await product.updateStock(quantity, operation);
+
+        res.status(200).json({
+            status: 'success',
+            data: product
+        });
+    });
 }
 
 const scheduleAuction = (req, product) => {
