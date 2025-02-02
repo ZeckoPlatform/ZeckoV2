@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticateToken } = require('../../middleware/auth');
 const Lead = require('../../models/Lead');
 const leadController = require('../../controllers/leadController');
+const mongoose = require('mongoose');
 
 // Get latest leads for carousel - this needs to be BEFORE /:id route
 router.get('/latest', async (req, res) => {
@@ -138,13 +139,94 @@ router.patch('/:id', authenticateToken, async (req, res) => {
 });
 
 // Submit proposal
-router.post('/:id/proposals', authenticateToken, (req, res) => {
-    leadController.submitProposal(req, res);
+router.post('/:id/proposals', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { amount, message } = req.body;
+        const businessId = req.user.id;
+
+        const lead = await Lead.findById(id);
+        if (!lead) {
+            return res.status(404).json({ message: 'Lead not found' });
+        }
+
+        const existingProposal = lead.proposals.find(
+            p => p.contractor.toString() === businessId.toString()
+        );
+        if (existingProposal) {
+            return res.status(400).json({ message: 'Already submitted a proposal' });
+        }
+
+        lead.proposals.push({
+            contractor: businessId,
+            amount,
+            message
+        });
+
+        await lead.save();
+        await lead.populate('proposals.contractor', 'username businessName');
+        
+        res.status(201).json(lead);
+    } catch (error) {
+        console.error('Submit proposal error:', error);
+        res.status(500).json({ message: 'Error submitting proposal' });
+    }
 });
 
 // Update proposal status
-router.patch('/:id/proposals/:proposalId/status', authenticateToken, (req, res) => {
-    leadController.updateProposalStatus(req, res);
+router.patch('/:id/proposals/:proposalId/status', authenticateToken, async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const { id, proposalId } = req.params;
+        const { status } = req.body;
+
+        const lead = await Lead.findById(id);
+        if (!lead) {
+            throw new Error('Lead not found');
+        }
+
+        if (lead.client.toString() !== req.user.id.toString()) {
+            throw new Error('Unauthorized to update proposal status');
+        }
+
+        const proposal = lead.proposals.id(proposalId);
+        if (!proposal) {
+            throw new Error('Proposal not found');
+        }
+
+        if (proposal.status !== 'pending') {
+            throw new Error('Can only update pending proposals');
+        }
+
+        proposal.status = status;
+
+        if (status === 'accepted') {
+            const hasAcceptedProposal = lead.proposals.some(
+                p => p.status === 'accepted' && p._id.toString() !== proposalId
+            );
+            
+            if (hasAcceptedProposal) {
+                throw new Error('Another proposal has already been accepted');
+            }
+
+            lead.status = 'in_progress';
+            lead.selectedContractor = proposal.contractor;
+        }
+
+        await lead.save({ session });
+        await session.commitTransaction();
+        await lead.populate('proposals.contractor', 'username businessName');
+        
+        res.json(lead);
+    } catch (error) {
+        await session.abortTransaction();
+        console.error('Update proposal status error:', error);
+        res.status(400).json({ message: error.message });
+    } finally {
+        session.endSession();
+    }
 });
 
 module.exports = router;
