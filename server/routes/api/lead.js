@@ -4,6 +4,11 @@ const { authenticateToken } = require('../../middleware/auth');
 const Lead = require('../../models/Lead');
 const mongoose = require('mongoose');
 
+// Add debugging
+console.log('Setting up lead routes');
+console.log('authenticateToken exists:', !!authenticateToken);
+console.log('createLead exists:', !!createLead);
+
 // Get latest leads for carousel
 router.get('/latest', async (req, res) => {
     try {
@@ -70,41 +75,26 @@ router.get('/', async (req, res) => {
 });
 
 // Create new lead
-router.post('/', authenticateToken, async (req, res) => {
-    if (!req.user || !req.user.id) {
-        return res.status(401).json({ message: 'Authentication required' });
-    }
-
+const createLead = async (req, res) => {
+    console.log('createLead called with body:', req.body);
     try {
-        const requiredFields = ['title', 'description', 'category', 'subcategory', 'budget', 'leadPrice'];
-        const missingFields = requiredFields.filter(field => !req.body[field]);
-        
-        if (missingFields.length > 0) {
-            return res.status(400).json({ 
-                message: `Missing required fields: ${missingFields.join(', ')}` 
-            });
-        }
-
-        if (!req.body.budget || !req.body.budget.min || !req.body.budget.max || !req.body.budget.currency) {
-            return res.status(400).json({
-                message: 'Budget must include min, max, and currency'
-            });
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ message: 'Authentication required' });
         }
 
         const leadData = {
-            ...req.body,
+            title: req.body.title,
+            description: req.body.description,
+            category: req.body.category,
+            subcategory: req.body.subcategory,
+            budget: req.body.budget,
             client: req.user.id,
-            status: 'active',
-            visibility: req.body.visibility || 'public',
-            location: req.body.location || {
-                address: '',
-                city: '',
-                state: '',
-                country: '',
-                postalCode: ''
-            },
+            leadPrice: req.body.leadPrice,
+            location: req.body.location || {},
             requirements: req.body.requirements || [],
-            attachments: req.body.attachments || []
+            attachments: req.body.attachments || [],
+            status: 'active',
+            visibility: req.body.visibility || 'public'
         };
 
         const lead = new Lead(leadData);
@@ -120,7 +110,9 @@ router.post('/', authenticateToken, async (req, res) => {
         console.error('Error creating lead:', err);
         res.status(400).json({ message: err.message });
     }
-});
+};
+
+router.post('/', authenticateToken, createLead);
 
 // Get lead by ID
 router.get('/:id', async (req, res) => {
