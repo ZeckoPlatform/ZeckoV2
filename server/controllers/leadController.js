@@ -181,11 +181,11 @@ exports.purchaseLead = async (req, res) => {
 // Submit proposal
 exports.submitProposal = async (req, res) => {
     try {
-        const { id } = req.params; // Changed from leadId to id to match route
+        const { leadId } = req.params; // Changed from id to leadId to match route
         const { amount, message } = req.body;
-        const businessId = req.user.id; // Changed from _id to id to match auth
+        const businessId = req.user.id;
 
-        const lead = await Lead.findById(id);
+        const lead = await Lead.findById(leadId);
         if (!lead) {
             return res.status(404).json({ message: 'Lead not found' });
         }
