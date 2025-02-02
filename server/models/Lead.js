@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const leadSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true },
   description: { type: String, required: true, trim: true },
-  category: { type: String, required: true },
+  category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
   subcategory: { type: String, required: true },
   budget: {
     min: { type: Number, required: true, min: 0 },
@@ -29,7 +29,7 @@ const leadSchema = new mongoose.Schema({
   }],
   status: {
     type: String,
-    enum: ['active', 'in-progress', 'completed', 'cancelled'],
+    enum: ['active', 'in_progress', 'completed', 'cancelled'],
     default: 'active'
   },
   visibility: {
@@ -40,17 +40,14 @@ const leadSchema = new mongoose.Schema({
   proposals: [{
     contractor: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Business',
+      ref: 'BusinessUser',
       required: true
     },
     amount: {
       type: Number,
       required: true
     },
-    description: {
-      type: String,
-      required: true
-    },
+    message: String,
     status: {
       type: String,
       enum: ['pending', 'accepted', 'rejected'],
@@ -61,10 +58,18 @@ const leadSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
+  selectedContractor: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'BusinessUser'
+  },
+  contractors: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'BusinessUser'
+  }],
   metrics: {
     viewCount: { type: Number, default: 0 },
     proposalCount: { type: Number, default: 0 },
-    averageProposal: Number
+    averageProposal: { type: Number }
   },
   leadPrice: {
     type: Number,

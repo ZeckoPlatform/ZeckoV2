@@ -83,13 +83,13 @@ router.post('/', authenticateToken, async (req, res) => {
         }
 
         // Validate budget structure
-        if (!req.body.budget.min || !req.body.budget.max || !req.body.budget.currency) {
+        if (!req.body.budget || !req.body.budget.min || !req.body.budget.max || !req.body.budget.currency) {
             return res.status(400).json({
                 message: 'Budget must include min, max, and currency'
             });
         }
 
-        const leadData = {
+        const lead = new Lead({
             title: req.body.title,
             description: req.body.description,
             category: req.body.category,
@@ -97,7 +97,7 @@ router.post('/', authenticateToken, async (req, res) => {
             budget: {
                 min: req.body.budget.min,
                 max: req.body.budget.max,
-                currency: req.body.budget.currency
+                currency: req.body.budget.currency || 'GBP'
             },
             location: req.body.location || {
                 address: '',
@@ -111,17 +111,14 @@ router.post('/', authenticateToken, async (req, res) => {
             attachments: req.body.attachments || [],
             status: 'active',
             visibility: req.body.visibility || 'public',
-            leadPrice: req.body.leadPrice,
-            metrics: {
-                viewCount: 0,
-                proposalCount: 0
-            }
-        };
+            leadPrice: req.body.leadPrice
+        });
 
-        const lead = new Lead(leadData);
         const newLead = await lead.save();
-        
-        await newLead.populate('client', 'username businessName');
+        await newLead.populate([
+            { path: 'category' },
+            { path: 'client', select: 'username businessName' }
+        ]);
         
         res.status(201).json(newLead);
     } catch (err) {
