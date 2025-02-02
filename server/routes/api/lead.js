@@ -4,7 +4,7 @@ const { authenticateToken } = require('../../middleware/auth');
 const Lead = require('../../models/Lead');
 const mongoose = require('mongoose');
 
-// Get latest leads for carousel - this needs to be BEFORE /:id route
+// Get latest leads for carousel
 router.get('/latest', async (req, res) => {
     try {
         const latestLeads = await Lead.find({
@@ -134,6 +134,39 @@ router.patch('/:id', authenticateToken, async (req, res) => {
     } catch (err) {
         console.error('Error updating lead:', err);
         res.status(400).json({ message: err.message });
+    }
+});
+
+// Purchase lead
+router.post('/:id/purchase', authenticateToken, async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const { id } = req.params;
+        const businessId = req.user._id;
+
+        const lead = await Lead.findById(id);
+        if (!lead) {
+            throw new Error('Lead not found');
+        }
+
+        if (lead.contractors.includes(businessId)) {
+            throw new Error('Already purchased this lead');
+        }
+
+        // Add contractor to lead
+        lead.contractors.push(businessId);
+        await lead.save({ session });
+
+        await session.commitTransaction();
+        res.json({ message: 'Lead purchased successfully' });
+    } catch (error) {
+        await session.abortTransaction();
+        console.error('Purchase lead error:', error);
+        res.status(400).json({ message: error.message });
+    } finally {
+        session.endSession();
     }
 });
 
