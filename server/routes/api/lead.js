@@ -4,7 +4,7 @@ const { authenticateToken } = require('../../middleware/auth');
 const Lead = require('../../models/Lead');
 const leadController = require('../../controllers/leadController');
 
-// Get latest leads for carousel - this needs to be BEFORE /:id route
+// Get latest leads for carousel - this needs to be BEFORE /:id routes
 router.get('/latest', async (req, res) => {
     try {
         const latestLeads = await Lead.find({
@@ -138,15 +138,25 @@ router.patch('/:id', authenticateToken, async (req, res) => {
 });
 
 // Submit proposal
-router.post('/:leadId/proposals', 
-    authenticateToken, 
-    leadController.submitProposal
-);
+router.post('/:id/proposals', authenticateToken, async (req, res) => {
+    try {
+        const result = await leadController.submitProposal(req, res);
+        return result;
+    } catch (err) {
+        console.error('Error in proposal route:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
 
 // Update proposal status
-router.patch('/:leadId/proposals/:proposalId/status', 
-    authenticateToken, 
-    leadController.updateProposalStatus
-);
+router.patch('/:id/proposals/:proposalId/status', authenticateToken, async (req, res) => {
+    try {
+        const result = await leadController.updateProposalStatus(req, res);
+        return result;
+    } catch (err) {
+        console.error('Error in update proposal status route:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
 
 module.exports = router;
