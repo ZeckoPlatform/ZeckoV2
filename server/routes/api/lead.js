@@ -72,14 +72,55 @@ router.get('/', async (req, res) => {
 // Create new lead
 router.post('/', authenticateToken, async (req, res) => {
     try {
-        const lead = new Lead({
-            ...req.body,
-            client: req.user.id,
-            status: 'active'
-        });
+        // Validate required fields based on the schema
+        const requiredFields = ['title', 'description', 'category', 'subcategory', 'budget', 'leadPrice'];
+        const missingFields = requiredFields.filter(field => !req.body[field]);
         
+        if (missingFields.length > 0) {
+            return res.status(400).json({ 
+                message: `Missing required fields: ${missingFields.join(', ')}` 
+            });
+        }
+
+        // Validate budget structure
+        if (!req.body.budget.min || !req.body.budget.max || !req.body.budget.currency) {
+            return res.status(400).json({
+                message: 'Budget must include min, max, and currency'
+            });
+        }
+
+        const leadData = {
+            title: req.body.title,
+            description: req.body.description,
+            category: req.body.category,
+            subcategory: req.body.subcategory,
+            budget: {
+                min: req.body.budget.min,
+                max: req.body.budget.max,
+                currency: req.body.budget.currency
+            },
+            location: req.body.location || {
+                address: '',
+                city: '',
+                state: '',
+                country: '',
+                postalCode: ''
+            },
+            client: req.user.id,
+            requirements: req.body.requirements || [],
+            attachments: req.body.attachments || [],
+            status: 'active',
+            visibility: req.body.visibility || 'public',
+            leadPrice: req.body.leadPrice,
+            metrics: {
+                viewCount: 0,
+                proposalCount: 0
+            }
+        };
+
+        const lead = new Lead(leadData);
         const newLead = await lead.save();
-        await newLead.populate('category');
+        
         await newLead.populate('client', 'username businessName');
         
         res.status(201).json(newLead);
