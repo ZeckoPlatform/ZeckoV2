@@ -72,7 +72,6 @@ router.get('/', async (req, res) => {
 // Create new lead
 router.post('/', authenticateToken, async (req, res) => {
     try {
-        // Validate required fields based on the schema
         const requiredFields = ['title', 'description', 'category', 'subcategory', 'budget', 'leadPrice'];
         const missingFields = requiredFields.filter(field => !req.body[field]);
         
@@ -82,14 +81,13 @@ router.post('/', authenticateToken, async (req, res) => {
             });
         }
 
-        // Validate budget structure
         if (!req.body.budget || !req.body.budget.min || !req.body.budget.max || !req.body.budget.currency) {
             return res.status(400).json({
                 message: 'Budget must include min, max, and currency'
             });
         }
 
-        const lead = new Lead({
+        const leadData = {
             title: req.body.title,
             description: req.body.description,
             category: req.body.category,
@@ -97,7 +95,7 @@ router.post('/', authenticateToken, async (req, res) => {
             budget: {
                 min: req.body.budget.min,
                 max: req.body.budget.max,
-                currency: req.body.budget.currency || 'GBP'
+                currency: req.body.budget.currency
             },
             location: req.body.location || {
                 address: '',
@@ -112,15 +110,17 @@ router.post('/', authenticateToken, async (req, res) => {
             status: 'active',
             visibility: req.body.visibility || 'public',
             leadPrice: req.body.leadPrice
-        });
+        };
 
-        const newLead = await lead.save();
-        await newLead.populate([
+        const lead = new Lead(leadData);
+        const savedLead = await lead.save();
+        
+        await savedLead.populate([
             { path: 'category' },
             { path: 'client', select: 'username businessName' }
         ]);
         
-        res.status(201).json(newLead);
+        res.status(201).json(savedLead);
     } catch (err) {
         console.error('Error creating lead:', err);
         res.status(400).json({ message: err.message });
