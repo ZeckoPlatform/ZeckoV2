@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../../middleware/auth');
 const Lead = require('../../models/Lead');
-const leadController = require('../../controllers/leadController');
 const mongoose = require('mongoose');
 
 // Get latest leads for carousel - this needs to be BEFORE /:id route
