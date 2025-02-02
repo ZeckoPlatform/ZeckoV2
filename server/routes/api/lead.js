@@ -71,6 +71,10 @@ router.get('/', async (req, res) => {
 
 // Create new lead
 router.post('/', authenticateToken, async (req, res) => {
+    if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: 'Authentication required' });
+    }
+
     try {
         const requiredFields = ['title', 'description', 'category', 'subcategory', 'budget', 'leadPrice'];
         const missingFields = requiredFields.filter(field => !req.body[field]);
@@ -88,15 +92,10 @@ router.post('/', authenticateToken, async (req, res) => {
         }
 
         const leadData = {
-            title: req.body.title,
-            description: req.body.description,
-            category: req.body.category,
-            subcategory: req.body.subcategory,
-            budget: {
-                min: req.body.budget.min,
-                max: req.body.budget.max,
-                currency: req.body.budget.currency
-            },
+            ...req.body,
+            client: req.user.id,
+            status: 'active',
+            visibility: req.body.visibility || 'public',
             location: req.body.location || {
                 address: '',
                 city: '',
@@ -104,12 +103,8 @@ router.post('/', authenticateToken, async (req, res) => {
                 country: '',
                 postalCode: ''
             },
-            client: req.user.id,
             requirements: req.body.requirements || [],
-            attachments: req.body.attachments || [],
-            status: 'active',
-            visibility: req.body.visibility || 'public',
-            leadPrice: req.body.leadPrice
+            attachments: req.body.attachments || []
         };
 
         const lead = new Lead(leadData);
@@ -181,20 +176,16 @@ router.post('/:id/purchase', authenticateToken, async (req, res) => {
     session.startTransaction();
 
     try {
-        const { id } = req.params;
-        const businessId = req.user._id;
-
-        const lead = await Lead.findById(id);
+        const lead = await Lead.findById(req.params.id);
         if (!lead) {
             throw new Error('Lead not found');
         }
 
-        if (lead.contractors.includes(businessId)) {
+        if (lead.contractors.includes(req.user.id)) {
             throw new Error('Already purchased this lead');
         }
 
-        // Add contractor to lead
-        lead.contractors.push(businessId);
+        lead.contractors.push(req.user.id);
         await lead.save({ session });
 
         await session.commitTransaction();
@@ -211,26 +202,22 @@ router.post('/:id/purchase', authenticateToken, async (req, res) => {
 // Submit proposal
 router.post('/:id/proposals', authenticateToken, async (req, res) => {
     try {
-        const { id } = req.params;
-        const { amount, message } = req.body;
-        const businessId = req.user.id;
-
-        const lead = await Lead.findById(id);
+        const lead = await Lead.findById(req.params.id);
         if (!lead) {
             return res.status(404).json({ message: 'Lead not found' });
         }
 
         const existingProposal = lead.proposals.find(
-            p => p.contractor.toString() === businessId.toString()
+            p => p.contractor.toString() === req.user.id.toString()
         );
         if (existingProposal) {
             return res.status(400).json({ message: 'Already submitted a proposal' });
         }
 
         lead.proposals.push({
-            contractor: businessId,
-            amount,
-            message
+            contractor: req.user.id,
+            amount: req.body.amount,
+            message: req.body.message
         });
 
         await lead.save();
@@ -239,7 +226,7 @@ router.post('/:id/proposals', authenticateToken, async (req, res) => {
         res.status(201).json(lead);
     } catch (error) {
         console.error('Submit proposal error:', error);
-        res.status(500).json({ message: 'Error submitting proposal' });
+        res.status(500).json({ message: error.message });
     }
 });
 
@@ -249,10 +236,7 @@ router.patch('/:id/proposals/:proposalId/status', authenticateToken, async (req,
     session.startTransaction();
 
     try {
-        const { id, proposalId } = req.params;
-        const { status } = req.body;
-
-        const lead = await Lead.findById(id);
+        const lead = await Lead.findById(req.params.id);
         if (!lead) {
             throw new Error('Lead not found');
         }
@@ -261,26 +245,14 @@ router.patch('/:id/proposals/:proposalId/status', authenticateToken, async (req,
             throw new Error('Unauthorized to update proposal status');
         }
 
-        const proposal = lead.proposals.id(proposalId);
+        const proposal = lead.proposals.id(req.params.proposalId);
         if (!proposal) {
             throw new Error('Proposal not found');
         }
 
-        if (proposal.status !== 'pending') {
-            throw new Error('Can only update pending proposals');
-        }
-
-        proposal.status = status;
-
-        if (status === 'accepted') {
-            const hasAcceptedProposal = lead.proposals.some(
-                p => p.status === 'accepted' && p._id.toString() !== proposalId
-            );
-            
-            if (hasAcceptedProposal) {
-                throw new Error('Another proposal has already been accepted');
-            }
-
+        proposal.status = req.body.status;
+        
+        if (req.body.status === 'accepted') {
             lead.status = 'in_progress';
             lead.selectedContractor = proposal.contractor;
         }
