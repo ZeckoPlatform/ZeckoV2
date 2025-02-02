@@ -49,11 +49,15 @@ const productSchema = new mongoose.Schema({
             type: String,
             required: true
         },
+        publicId: {
+            type: String,
+            required: true
+        },
+        alt: String,
         isMain: {
             type: Boolean,
             default: false
-        },
-        order: Number
+        }
     }],
     inventory: {
         quantity: {

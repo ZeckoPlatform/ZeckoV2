@@ -1,10 +1,17 @@
 const Product = require('../models/productModel');
 const Category = require('../models/categoryModel');
 const ApiError = require('../utils/apiError');
-const { uploadToS3, deleteFromS3 } = require('../utils/s3Upload');
+const cloudinary = require('cloudinary').v2;
 const mongoose = require('mongoose');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+
+// Configure Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 class ProductController {
     // Create new product
@@ -16,18 +23,26 @@ class ProductController {
             const images = [];
             if (files && files.length > 0) {
                 for (const file of files) {
-                    const uploadResult = await uploadToS3(file);
+                    // Convert buffer to base64
+                    const fileStr = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+                    
+                    const uploadResult = await cloudinary.uploader.upload(fileStr, {
+                        folder: 'products',
+                        resource_type: 'auto'
+                    });
+                    
                     images.push({
-                        url: uploadResult.Location,
-                        alt: body.name,
-                        isMain: images.length === 0 // First image is main
+                        url: uploadResult.secure_url,
+                        publicId: uploadResult.public_id,
+                        alt: body.title,
+                        isMain: images.length === 0
                     });
                 }
             }
 
             const product = new Product({
                 ...body,
-                vendor: req.user._id,
+                seller: req.user._id,
                 images
             });
 
@@ -144,24 +159,32 @@ class ProductController {
             }
 
             // Check ownership
-            if (product.vendor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+            if (product.seller.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
                 throw new ApiError('Not authorized to update this product', 403);
             }
 
             // Handle image uploads
             if (files && files.length > 0) {
-                // Delete old images from S3
+                // Delete old images from Cloudinary
                 for (const image of product.images) {
-                    await deleteFromS3(image.url);
+                    if (image.publicId) {
+                        await cloudinary.uploader.destroy(image.publicId);
+                    }
                 }
 
                 // Upload new images
                 const images = [];
                 for (const file of files) {
-                    const uploadResult = await uploadToS3(file);
+                    const fileStr = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+                    const uploadResult = await cloudinary.uploader.upload(fileStr, {
+                        folder: 'products',
+                        resource_type: 'auto'
+                    });
+                    
                     images.push({
-                        url: uploadResult.Location,
-                        alt: body.name || product.name,
+                        url: uploadResult.secure_url,
+                        publicId: uploadResult.public_id,
+                        alt: body.title || product.title,
                         isMain: images.length === 0
                     });
                 }
@@ -196,13 +219,15 @@ class ProductController {
             }
 
             // Check ownership
-            if (product.vendor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+            if (product.seller.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
                 throw new ApiError('Not authorized to delete this product', 403);
             }
 
-            // Delete images from S3
+            // Delete images from Cloudinary
             for (const image of product.images) {
-                await deleteFromS3(image.url);
+                if (image.publicId) {
+                    await cloudinary.uploader.destroy(image.publicId);
+                }
             }
 
             await product.remove();
@@ -217,9 +242,9 @@ class ProductController {
     }
 
     // Get vendor products
-    async getVendorProducts(req, res, next) {
+    async getSellerProducts(req, res, next) {
         try {
-            const products = await Product.find({ vendor: req.user._id })
+            const products = await Product.find({ seller: req.user._id })
                 .sort('-createdAt');
 
             res.status(200).json({
