@@ -36,7 +36,14 @@ class ProductController {
         if (req.files && req.files.length > 0) {
             imageUrls = await Promise.all(
                 req.files.map(async (file) => {
-                    const result = await cloudinary.uploader.upload(file.path);
+                    // Convert buffer to base64
+                    const b64 = Buffer.from(file.buffer).toString('base64');
+                    const dataURI = `data:${file.mimetype};base64,${b64}`;
+                    
+                    const result = await cloudinary.uploader.upload(dataURI, {
+                        folder: 'products',
+                        resource_type: 'auto'
+                    });
                     return result.secure_url;
                 })
             );
