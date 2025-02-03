@@ -4,13 +4,7 @@ const productController = require('../controllers/productController');
 const { auth, isVendor } = require('../middleware/auth');
 const validationMiddleware = require('../middleware/validation');
 const { body, param, query } = require('express-validator');
-const multer = require('multer');
-
-// Configure multer
-const upload = multer({ 
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 5 * 1024 * 1024 } // 5MB
-});
+const { upload } = require('../config/cloudinary');
 
 // Validation arrays
 const productValidations = [
@@ -32,44 +26,50 @@ const productQueryValidations = [
     validationMiddleware.handleValidationErrors
 ];
 
+// Seller products route (must be before /:id routes)
+router.get('/seller/products', auth, productController.getSellerProducts);
+
 // Public routes
 router.get('/', productQueryValidations, productController.getProducts);
 router.get('/:id', productController.getProduct);
 
 // Protected routes
-router.post('/', [
+router.post('/', 
     auth,
     isVendor,
     upload.array('images', 5),
-    ...productValidations
-], productController.createProduct);
+    [
+        body('title').trim().isLength({ min: 2 }),
+        body('description').trim().isLength({ min: 10 }),
+        body('price.current').isFloat({ min: 0 }),
+        validationMiddleware.handleValidationErrors
+    ],
+    productController.createProduct
+);
 
-router.put('/:id', [
+router.put('/:id',
     auth,
     isVendor,
     upload.array('images', 5),
-    param('id').isMongoId(),
-    ...productValidations
-], productController.updateProduct);
+    productController.updateProduct
+);
 
-router.delete('/:id', [
+router.delete('/:id',
     auth,
     isVendor,
-    param('id').isMongoId(),
-    validationMiddleware.handleValidationErrors
-], productController.deleteProduct);
-
-// Seller products route
-router.get('/seller/products', auth, productController.getSellerProducts);
+    productController.deleteProduct
+);
 
 // Stock update route
-router.patch('/:id/stock', [
+router.patch('/:id/stock',
     auth,
     isVendor,
-    param('id').isMongoId(),
-    body('quantity').isInt({ min: 1 }),
-    body('operation').isIn(['add', 'subtract']),
-    validationMiddleware.handleValidationErrors
-], productController.updateStock);
+    [
+        body('quantity').isInt({ min: 1 }),
+        body('operation').isIn(['add', 'subtract']),
+        validationMiddleware.handleValidationErrors
+    ],
+    productController.updateStock
+);
 
 module.exports = router;
