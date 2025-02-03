@@ -1,7 +1,7 @@
 const Product = require('../models/productModel');
 const Category = require('../models/categoryModel');
 const ApiError = require('../utils/apiError');
-const cloudinary = require('cloudinary').v2;
+const cloudinary = require('../config/cloudinary');
 const mongoose = require('mongoose');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
@@ -29,32 +29,28 @@ class ProductController {
 
     // Create new product
     createProduct = catchAsync(async (req, res, next) => {
-        const { files, body } = req;
+        const { title, description, price, category } = req.body;
         
         // Handle image uploads
-        const images = [];
-        if (files && files.length > 0) {
-            for (const file of files) {
-                const fileStr = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-                
-                const uploadResult = await cloudinary.uploader.upload(fileStr, {
-                    folder: 'products',
-                    resource_type: 'auto'
-                });
-                
-                images.push({
-                    url: uploadResult.secure_url,
-                    publicId: uploadResult.public_id,
-                    alt: body.title,
-                    isMain: images.length === 0
-                });
-            }
+        let imageUrls = [];
+        if (req.files && req.files.length > 0) {
+            imageUrls = await Promise.all(
+                req.files.map(async (file) => {
+                    const result = await cloudinary.uploader.upload(file.path);
+                    return result.secure_url;
+                })
+            );
         }
 
         const product = await Product.create({
-            ...body,
-            seller: req.user._id,
-            images
+            title,
+            description,
+            price: {
+                current: price.current
+            },
+            category,
+            images: imageUrls,
+            seller: req.user._id
         });
 
         scheduleAuction(req, product);
@@ -234,6 +230,7 @@ class ProductController {
     // Get vendor products
     getSellerProducts = catchAsync(async (req, res, next) => {
         const products = await Product.find({ seller: req.user._id })
+            .populate('category', 'name')
             .sort('-createdAt');
 
         res.status(200).json({
@@ -293,6 +290,7 @@ const scheduleAuction = (req, product) => {
     }
 };
 
+// Create a single instance and export it
 const productController = new ProductController();
 console.log('Exported controller methods:', Object.keys(productController));
 module.exports = productController; 
