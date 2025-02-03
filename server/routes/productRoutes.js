@@ -6,7 +6,7 @@ const validationMiddleware = require('../middleware/validation');
 const { body, param, query } = require('express-validator');
 const { upload } = require('../config/cloudinary');
 
-// Debug log to check controller methods
+// Debug log to verify controller methods
 console.log('Available product controller methods:', Object.keys(productController));
 
 // Validation arrays
@@ -29,14 +29,17 @@ const productQueryValidations = [
     validationMiddleware.handleValidationErrors
 ];
 
-// Seller products route (must be before /:id routes)
+// Public routes (must be first to avoid auth middleware)
+router.get('/', productController.getProducts);
+router.get('/:id', productController.getProduct);
+
+// Protected routes
 router.get('/seller/products', 
     auth, 
     isVendor, 
     productController.getSellerProducts
 );
 
-// Protected routes
 router.post('/', 
     auth,
     isVendor,
@@ -81,9 +84,5 @@ router.patch('/:id/stock',
     ],
     productController.updateStock
 );
-
-// Public routes (must be last)
-router.get('/', productController.getProducts);
-router.get('/:id', productController.getProduct);
 
 module.exports = router;
