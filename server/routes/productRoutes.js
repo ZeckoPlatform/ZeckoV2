@@ -6,6 +6,9 @@ const validationMiddleware = require('../middleware/validation');
 const { body, param, query } = require('express-validator');
 const { upload } = require('../config/cloudinary');
 
+// Debug log to check controller methods
+console.log('Available product controller methods:', Object.keys(productController));
+
 // Validation arrays
 const productValidations = [
     body('title').trim().isLength({ min: 2, max: 100 }),

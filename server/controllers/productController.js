@@ -6,8 +6,11 @@ const { cloudinary } = require('../config/cloudinary');
 class ProductController {
     // Get all products
     getProducts = catchAsync(async (req, res) => {
-        const products = await Product.find().populate('seller', 'name email');
-        res.json({
+        const products = await Product.find()
+            .populate('seller', 'name email')
+            .sort('-createdAt');
+            
+        res.status(200).json({
             status: 'success',
             results: products.length,
             data: products
@@ -16,11 +19,14 @@ class ProductController {
 
     // Get single product
     getProduct = catchAsync(async (req, res) => {
-        const product = await Product.findById(req.params.id).populate('seller', 'name email');
+        const product = await Product.findById(req.params.id)
+            .populate('seller', 'name email');
+            
         if (!product) {
             throw new ApiError('Product not found', 404);
         }
-        res.json({
+
+        res.status(200).json({
             status: 'success',
             data: product
         });
@@ -28,8 +34,10 @@ class ProductController {
 
     // Get seller's products
     getSellerProducts = catchAsync(async (req, res) => {
-        const products = await Product.find({ seller: req.user._id });
-        res.json({
+        const products = await Product.find({ seller: req.user._id })
+            .sort('-createdAt');
+            
+        res.status(200).json({
             status: 'success',
             results: products.length,
             data: products
@@ -42,24 +50,19 @@ class ProductController {
         
         let imageUrls = [];
         if (req.files && req.files.length > 0) {
-            try {
-                imageUrls = await Promise.all(
-                    req.files.map(async (file) => {
-                        const b64 = Buffer.from(file.buffer).toString('base64');
-                        const dataURI = `data:${file.mimetype};base64,${b64}`;
-                        
-                        const result = await cloudinary.uploader.upload(dataURI, {
-                            folder: 'products',
-                            allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
-                            transformation: [{ width: 800, crop: 'scale' }]
-                        });
-                        return result.secure_url;
-                    })
-                );
-            } catch (error) {
-                console.error('Cloudinary upload error:', error);
-                throw new ApiError('Image upload failed', 500);
-            }
+            imageUrls = await Promise.all(
+                req.files.map(async (file) => {
+                    const b64 = Buffer.from(file.buffer).toString('base64');
+                    const dataURI = `data:${file.mimetype};base64,${b64}`;
+                    
+                    const result = await cloudinary.uploader.upload(dataURI, {
+                        folder: 'products',
+                        allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
+                        transformation: [{ width: 800, crop: 'scale' }]
+                    });
+                    return result.secure_url;
+                })
+            );
         }
 
         const product = await Product.create({
@@ -91,7 +94,7 @@ class ProductController {
             throw new ApiError('Product not found or unauthorized', 404);
         }
 
-        res.json({
+        res.status(200).json({
             status: 'success',
             data: product
         });
@@ -108,7 +111,7 @@ class ProductController {
             throw new ApiError('Product not found or unauthorized', 404);
         }
 
-        res.json({
+        res.status(204).json({
             status: 'success',
             data: null
         });
@@ -137,12 +140,16 @@ class ProductController {
 
         await product.save();
 
-        res.json({
+        res.status(200).json({
             status: 'success',
             data: product
         });
     });
 }
 
+// Create a single instance and export it
 const productController = new ProductController();
 module.exports = productController;
+
+// For debugging
+console.log('Product controller methods:', Object.keys(productController));
