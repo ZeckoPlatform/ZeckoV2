@@ -47,64 +47,45 @@ router.get('/:id', [
 ], productController.getProduct);
 
 // Protected seller routes with cache invalidation
-router.post('/', [
+router.post('/', 
     auth, 
     isVendor,
     upload.array('images', 5),
-    ...productValidations
-], async (req, res, next) => {
-    try {
-        await productController.createProduct(req, res, next);
-        await redis.del('cache:/api/products');
-    } catch (error) {
-        next(error);
-    }
-});
+    productValidations,
+    productController.createProduct
+);
 
-router.put('/:id', [
+router.put('/:id', 
     auth, 
     isVendor,
     upload.array('images', 5),
     param('id').isMongoId(),
-    ...productValidations
-], async (req, res, next) => {
-    try {
-        await productController.updateProduct(req, res, next);
-        // Clear related caches
-        await redis.del('cache:/api/products');
-        await redis.del(`cache:/api/products/${req.params.id}`);
-    } catch (error) {
-        next(error);
-    }
-});
+    productValidations,
+    productController.updateProduct
+);
 
-router.delete('/:id', [
+router.delete('/:id', 
     auth, 
     isVendor,
     param('id').isMongoId(),
-    validationMiddleware.handleValidationErrors
-], async (req, res, next) => {
-    try {
-        await productController.deleteProduct(req, res, next);
-        // Clear related caches
-        await redis.del('cache:/api/products');
-        await redis.del(`cache:/api/products/${req.params.id}`);
-    } catch (error) {
-        next(error);
-    }
-});
+    validationMiddleware.handleValidationErrors,
+    productController.deleteProduct
+);
 
 // Seller products route
 router.get('/seller/products', auth, productController.getSellerProducts);
 
 // Stock update route
-router.patch('/:id/stock', [
+router.patch('/:id/stock', 
     auth,
     isVendor,
     param('id').isMongoId(),
-    body('quantity').isInt({ min: 1 }),
-    body('operation').isIn(['add', 'subtract']),
-    validationMiddleware.handleValidationErrors
-], productController.updateStock);
+    [
+        body('quantity').isInt({ min: 1 }),
+        body('operation').isIn(['add', 'subtract']),
+        validationMiddleware.handleValidationErrors
+    ],
+    productController.updateStock
+);
 
 module.exports = router;

@@ -8,6 +8,7 @@ const RefreshToken = require('../models/refreshTokenModel');
 const TokenBlacklistService = require('../services/tokenBlacklistService');
 const TokenMonitoringService = require('../services/tokenMonitoringService');
 const AppError = require('../utils/appError');
+const ApiError = require('../utils/apiError');
 
 // Rate limiting setup - BOBO
 const rateLimit = new Map();
@@ -282,6 +283,36 @@ const isAdmin = (req, res, next) => {
         return res.status(403).json({ message: 'Forbidden - Admin access required' });
     }
     next();
+};
+
+exports.auth = async (req, res, next) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        
+        if (!token) {
+            throw new ApiError('No token provided', 401);
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id);
+
+        if (!user) {
+            throw new ApiError('User not found', 401);
+        }
+
+        req.user = user;
+        next();
+    } catch (error) {
+        next(new ApiError('Not authorized', 401));
+    }
+};
+
+exports.isVendor = (req, res, next) => {
+    if (req.user && (req.user.role === 'vendor' || req.user.role === 'admin')) {
+        next();
+    } else {
+        next(new ApiError('Not authorized as vendor', 403));
+    }
 };
 
 module.exports = { ...auth, isAuthenticated, isAdmin };
