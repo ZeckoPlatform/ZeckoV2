@@ -26,17 +26,14 @@ const productQueryValidations = [
     validationMiddleware.handleValidationErrors
 ];
 
-// Public routes
-router.get('/', productController.getProducts);
-router.get('/:id', productController.getProduct);
-
-// Protected routes
+// Seller products route (must be before /:id routes)
 router.get('/seller/products', 
     auth, 
     isVendor, 
     productController.getSellerProducts
 );
 
+// Protected routes
 router.post('/', 
     auth,
     isVendor,
@@ -71,7 +68,6 @@ router.delete('/:id',
     productController.deleteProduct
 );
 
-// Stock update route
 router.patch('/:id/stock',
     auth,
     isVendor,
@@ -82,5 +78,9 @@ router.patch('/:id/stock',
     ],
     productController.updateStock
 );
+
+// Public routes (must be last)
+router.get('/', productController.getProducts);
+router.get('/:id', productController.getProduct);
 
 module.exports = router;
