@@ -26,14 +26,17 @@ const productQueryValidations = [
     validationMiddleware.handleValidationErrors
 ];
 
-// Seller products route (must be before /:id routes)
-router.get('/seller/products', auth, productController.getSellerProducts);
-
 // Public routes
-router.get('/', productQueryValidations, productController.getProducts);
+router.get('/', productController.getProducts);
 router.get('/:id', productController.getProduct);
 
 // Protected routes
+router.get('/seller/products', 
+    auth, 
+    isVendor, 
+    productController.getSellerProducts
+);
+
 router.post('/', 
     auth,
     isVendor,
@@ -42,6 +45,7 @@ router.post('/',
         body('title').trim().isLength({ min: 2 }),
         body('description').trim().isLength({ min: 10 }),
         body('price.current').isFloat({ min: 0 }),
+        body('category').trim().notEmpty(),
         validationMiddleware.handleValidationErrors
     ],
     productController.createProduct
@@ -51,6 +55,13 @@ router.put('/:id',
     auth,
     isVendor,
     upload.array('images', 5),
+    [
+        body('title').optional().trim().isLength({ min: 2 }),
+        body('description').optional().trim().isLength({ min: 10 }),
+        body('price.current').optional().isFloat({ min: 0 }),
+        body('category').optional().trim().notEmpty(),
+        validationMiddleware.handleValidationErrors
+    ],
     productController.updateProduct
 );
 
