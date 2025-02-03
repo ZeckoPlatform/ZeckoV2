@@ -121,65 +121,77 @@ const notifyAuction = (io, auctionId, event, data) => {
 app.set('notifyUser', notifyUser);
 app.set('notifyAuction', notifyAuction);
 
-// Initialize database connection before setting up routes
+// Core middleware (move these up before routes)
+app.use(helmet());
+app.use(cors(corsOptions));
+app.use(morgan('dev'));
+app.use(compression());
+app.use(cookieParser());
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+app.use(session(sessionConfig));
+app.use(xss());
+
+// Security middleware
+app.use(securityHeaders);
+setupCSRF(app);
+
+// Rate limiting
+app.use('/api', RateLimitService.apiLimiter);
+app.use('/api/auth', RateLimitService.authLimiter);
+app.use('/api/users/register', RateLimitService.registrationLimiter);
+
+// Custom middleware
+app.use(sanitizeInput);
+app.use(secureResponse);
+app.use(performanceMonitor);
+
+// Debug logging for routes
+if (process.env.NODE_ENV !== 'production') {
+    app.use((req, res, next) => {
+        console.log('Route handler:', {
+            method: req.method,
+            path: req.path,
+            handlers: req.route?.stack?.map(layer => layer.handle.name || 'anonymous') || []
+        });
+        next();
+    });
+}
+
+// Initialize database connection
 (async () => {
     try {
         await dbService.connect();
         
-        // Only set up routes after database is connected
-        app.use(helmet());
-        app.use(cors(corsOptions));
-        app.use(morgan('dev'));
-        app.use(compression());
-        app.use(cookieParser());
-        app.use(bodyParser.json({ limit: '10mb' }));
-        app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
-        app.use(session(sessionConfig));
-        app.use(xss());
+        // API Routes - with logging
+        console.log('Mounting routes...');
+        
+        const mountRoute = (path, router) => {
+            console.log(`Mounting route at ${path}...`);
+            console.log('Router methods:', Object.keys(router));
+            app.use(path, router);
+        };
 
-        // Security middleware
-        app.use(securityHeaders);
-        setupCSRF(app);
-
-        // Rate limiting (before routes)
-        app.use('/api', RateLimitService.apiLimiter);
-        app.use('/api/auth', RateLimitService.authLimiter);
-        app.use('/api/users/register', RateLimitService.registrationLimiter);
-
-        // Custom middleware
-        app.use(sanitizeInput);
-        app.use(secureResponse);
-        app.use(performanceMonitor);
-
-        // Debug middleware (only in development)
-        if (process.env.NODE_ENV !== 'production') {
-            app.use((req, res, next) => {
-                console.log(`${req.method} ${req.path}`, req.body);
-                next();
-            });
-        }
-
-        // API Routes
-        app.use('/api/auth', authRoutes);
-        app.use('/api/users', userRoutes);
-        app.use('/api/leads', leadRoutes);
-        app.use('/api/products', productRoutes);
-        app.use('/api/service-categories', serviceCategoryRoutes);
-        app.use('/api/service-requests', serviceRequestRoutes);
-        app.use('/api/messages', messageRoutes);
-        app.use('/api/dashboard', dashboardRoutes);
-        app.use('/api/credits', creditRoutes);
-        app.use('/api/reviews', reviewRoutes);
-        app.use('/api/projects', projectRoutes);
-        app.use('/api/2fa', twoFactorAuthRoutes);
-        app.use('/api/static', staticRoutes);
+        mountRoute('/api/auth', authRoutes);
+        mountRoute('/api/users', userRoutes);
+        mountRoute('/api/leads', leadRoutes);
+        mountRoute('/api/products', productRoutes);
+        mountRoute('/api/service-categories', serviceCategoryRoutes);
+        mountRoute('/api/service-requests', serviceRequestRoutes);
+        mountRoute('/api/messages', messageRoutes);
+        mountRoute('/api/dashboard', dashboardRoutes);
+        mountRoute('/api/credits', creditRoutes);
+        mountRoute('/api/reviews', reviewRoutes);
+        mountRoute('/api/projects', projectRoutes);
+        mountRoute('/api/2fa', twoFactorAuthRoutes);
+        mountRoute('/api/static', staticRoutes);
 
         // API 404 handler
         app.use('/api/*', (req, res) => {
             res.status(404).json({ message: 'API route not found' });
         });
 
-        // Static files serving (after API routes)
+        // Static files serving
         if (process.env.NODE_ENV === 'production') {
             app.use(express.static(path.join(__dirname, '../client/build')));
             app.get('*', (req, res) => {
@@ -190,76 +202,10 @@ app.set('notifyAuction', notifyAuction);
         // Error handling (must be last)
         app.use(errorHandler);
 
-        // Health check endpoint
-        app.get('/health', async (req, res) => {
-            const dbHealth = await dbService.healthCheck();
-            res.json({
-                status: 'ok',
-                timestamp: new Date(),
-                database: dbHealth
-            });
-        });
-
-        // Start token cleanup service
-        TokenCleanupService.startCleanupSchedule();
-
-        // Apply specific rate limits to sensitive routes
-        app.use('/api/security', RateLimitService.passwordResetLimiter);
-        app.use('/api/payment', RateLimitService.paymentLimiter);
-        app.use('/api/subscription', RateLimitService.paymentLimiter);
-        app.use('/api/credit', RateLimitService.paymentLimiter);
-
-        // Apply registration rate limit
-        app.use('/api/business/register', RateLimitService.registrationLimiter);
-        app.use('/api/vendor/register', RateLimitService.registrationLimiter);
-
-        // Redis health check
-        redisClient.on('error', (err) => {
-            logger.error('Redis Client Error:', err);
-        });
-
-        redisClient.on('connect', () => {
-            logger.info('Connected to Redis successfully');
-        });
-
-        // Session activity middleware
-        app.use((req, res, next) => {
-            if (req.session && req.session.user) {
-                // Extend session if user is active
-                req.session.touch();
-                // Update last activity timestamp
-                req.session.lastActivity = Date.now();
-            }
-            next();
-        });
-
-        // Session cleanup middleware
-        const cleanupInactiveSessions = async () => {
-            try {
-                const keys = await redisClient.keys('session:*');
-                for (const key of keys) {
-                    const session = await redisClient.get(key);
-                    if (session) {
-                        const sessionData = JSON.parse(session);
-                        const lastActivity = sessionData.lastActivity || 0;
-                        // Remove sessions inactive for more than 24 hours
-                        if (Date.now() - lastActivity > 24 * 60 * 60 * 1000) {
-                            await redisClient.del(key);
-                        }
-                    }
-                }
-            } catch (error) {
-                logger.error('Session cleanup error:', error);
-            }
-        };
-
-        // Run cleanup every 6 hours
-        setInterval(cleanupInactiveSessions, 6 * 60 * 60 * 1000);
-
-        // Start server only after database is connected
+        // Start server
         const port = process.env.PORT || 5000;
         server.listen(port, () => {
-            logger.info(`Server running on port ${port}`);
+            console.log(`Server running on port ${port}`);
         });
 
     } catch (error) {

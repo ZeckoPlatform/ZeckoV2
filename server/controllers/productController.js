@@ -14,6 +14,19 @@ cloudinary.config({
 });
 
 class ProductController {
+    // Add logging to see what's being exported
+    constructor() {
+        console.log('ProductController methods:', {
+            createProduct: !!this.createProduct,
+            getProducts: !!this.getProducts,
+            getProduct: !!this.getProduct,
+            updateProduct: !!this.updateProduct,
+            deleteProduct: !!this.deleteProduct,
+            getSellerProducts: !!this.getSellerProducts,
+            updateStock: !!this.updateStock
+        });
+    }
+
     // Create new product
     createProduct = catchAsync(async (req, res, next) => {
         const { files, body } = req;
@@ -219,7 +232,7 @@ class ProductController {
     });
 
     // Get vendor products
-    getSellerProducts = catchAsync(async (req, res) => {
+    getSellerProducts = catchAsync(async (req, res, next) => {
         const products = await Product.find({ seller: req.user._id })
             .sort('-createdAt');
 
@@ -280,4 +293,6 @@ const scheduleAuction = (req, product) => {
     }
 };
 
-module.exports = new ProductController(); 
+const productController = new ProductController();
+console.log('Exported controller methods:', Object.keys(productController));
+module.exports = productController; 

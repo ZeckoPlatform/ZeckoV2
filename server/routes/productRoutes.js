@@ -8,6 +8,13 @@ const redis = require('../config/redis');
 const multer = require('multer');
 const productController = require('../controllers/productController');
 
+// Debug logging
+console.log('Controller methods:', {
+    createProduct: !!productController.createProduct,
+    getProducts: !!productController.getProducts,
+    getProduct: !!productController.getProduct
+});
+
 // Configure multer for memory storage
 const storage = multer.memoryStorage();
 const upload = multer({
