@@ -57,17 +57,17 @@ class ProductController {
         let query = Product.find();
         
         // Build filter object
-        const filter = { status: 'published' };
+        const filter = { status: 'active' };
         if (req.query.category) {
             filter.category = req.query.category;
         }
-        if (req.query.vendor) {
-            filter.vendor = req.query.vendor;
+        if (req.query.seller) {
+            filter.seller = req.query.seller;
         }
         if (req.query.priceMin || req.query.priceMax) {
-            filter['price.regular'] = {};
-            if (req.query.priceMin) filter['price.regular'].$gte = Number(req.query.priceMin);
-            if (req.query.priceMax) filter['price.regular'].$lte = Number(req.query.priceMax);
+            filter['price.current'] = {};
+            if (req.query.priceMin) filter['price.current'].$gte = Number(req.query.priceMin);
+            if (req.query.priceMax) filter['price.current'].$lte = Number(req.query.priceMax);
         }
         
         // Apply filters
@@ -118,10 +118,10 @@ class ProductController {
     getProduct = catchAsync(async (req, res, next) => {
         const product = await Product.findOne({
             $or: [
-                { _id: mongoose.Types.ObjectId.isValid(req.params.id) ? req.params.id : null },
+                { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null },
                 { slug: req.params.id }
             ]
-        }).populate('category vendor');
+        }).populate('category seller');
 
         if (!product) {
             throw new ApiError('Product not found', 404);
@@ -210,7 +210,7 @@ class ProductController {
             }
         }
 
-        await product.remove();
+        await Product.findByIdAndDelete(req.params.id);
 
         res.status(204).json({
             status: 'success',
@@ -239,7 +239,24 @@ class ProductController {
             throw new ApiError('Product not found', 404);
         }
 
-        await product.updateStock(quantity, operation);
+        // Check ownership
+        if (product.seller.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+            throw new ApiError('Not authorized to update this product', 403);
+        }
+
+        // Update inventory quantity based on operation
+        if (operation === 'add') {
+            product.inventory.quantity += Number(quantity);
+        } else if (operation === 'subtract') {
+            if (product.inventory.quantity < Number(quantity)) {
+                throw new ApiError('Insufficient stock', 400);
+            }
+            product.inventory.quantity -= Number(quantity);
+        } else {
+            throw new ApiError('Invalid operation', 400);
+        }
+
+        await product.save();
 
         res.status(200).json({
             status: 'success',
@@ -250,8 +267,16 @@ class ProductController {
 
 const scheduleAuction = (req, product) => {
     if (product.bidding?.enabled && product.bidding?.endTime) {
-        const auctionScheduler = req.app.get('auctionScheduler');
-        auctionScheduler.scheduleAuction(product);
+        try {
+            const auctionScheduler = req.app.get('auctionScheduler');
+            if (auctionScheduler) {
+                auctionScheduler.scheduleAuction(product);
+            } else {
+                console.warn('Auction scheduler not initialized');
+            }
+        } catch (error) {
+            console.error('Failed to schedule auction:', error);
+        }
     }
 };
 
