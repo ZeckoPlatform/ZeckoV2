@@ -29,17 +29,14 @@ const productQueryValidations = [
     validationMiddleware.handleValidationErrors
 ];
 
-// Public routes (must be first to avoid auth middleware)
-router.get('/', productController.getProducts);
-router.get('/:id', productController.getProduct);
-
-// Protected routes
+// Protected routes that need to come first
 router.get('/seller/products', 
     auth, 
     isVendor, 
     productController.getSellerProducts
 );
 
+// Protected routes for specific products
 router.post('/', 
     auth,
     isVendor,
@@ -84,5 +81,18 @@ router.patch('/:id/stock',
     ],
     productController.updateStock
 );
+
+// Public routes (must be last)
+router.get('/', productController.getProducts);
+router.get('/:id', productController.getProduct);
+
+// Add error handling middleware
+router.use((err, req, res, next) => {
+    console.error('Route error:', err);
+    res.status(err.status || 500).json({
+        status: 'error',
+        message: err.message || 'Internal server error'
+    });
+});
 
 module.exports = router;
