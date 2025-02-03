@@ -4,8 +4,18 @@ const ApiError = require('../utils/apiError');
 const { cloudinary } = require('../config/cloudinary');
 
 class ProductController {
-    // Get all products
-    getProducts = catchAsync(async (req, res) => {
+    constructor() {
+        // Bind all methods to ensure proper 'this' context
+        this.getProducts = this.getProducts.bind(this);
+        this.getProduct = this.getProduct.bind(this);
+        this.getSellerProducts = this.getSellerProducts.bind(this);
+        this.createProduct = this.createProduct.bind(this);
+        this.updateProduct = this.updateProduct.bind(this);
+        this.deleteProduct = this.deleteProduct.bind(this);
+        this.updateStock = this.updateStock.bind(this);
+    }
+
+    async getProducts(req, res) {
         const products = await Product.find()
             .populate('seller', 'name email')
             .sort('-createdAt');
@@ -15,10 +25,9 @@ class ProductController {
             results: products.length,
             data: products
         });
-    });
+    }
 
-    // Get single product
-    getProduct = catchAsync(async (req, res) => {
+    async getProduct(req, res) {
         const product = await Product.findById(req.params.id)
             .populate('seller', 'name email');
             
@@ -30,10 +39,9 @@ class ProductController {
             status: 'success',
             data: product
         });
-    });
+    }
 
-    // Get seller's products
-    getSellerProducts = catchAsync(async (req, res) => {
+    async getSellerProducts(req, res) {
         const products = await Product.find({ seller: req.user._id })
             .sort('-createdAt');
             
@@ -42,10 +50,9 @@ class ProductController {
             results: products.length,
             data: products
         });
-    });
+    }
 
-    // Create product
-    createProduct = catchAsync(async (req, res) => {
+    async createProduct(req, res) {
         const { title, description, price, category } = req.body;
         
         let imageUrls = [];
@@ -80,10 +87,9 @@ class ProductController {
             status: 'success',
             data: product
         });
-    });
+    }
 
-    // Update product
-    updateProduct = catchAsync(async (req, res) => {
+    async updateProduct(req, res) {
         const product = await Product.findOneAndUpdate(
             { _id: req.params.id, seller: req.user._id },
             req.body,
@@ -98,10 +104,9 @@ class ProductController {
             status: 'success',
             data: product
         });
-    });
+    }
 
-    // Delete product
-    deleteProduct = catchAsync(async (req, res) => {
+    async deleteProduct(req, res) {
         const product = await Product.findOneAndDelete({
             _id: req.params.id,
             seller: req.user._id
@@ -115,10 +120,9 @@ class ProductController {
             status: 'success',
             data: null
         });
-    });
+    }
 
-    // Update stock
-    updateStock = catchAsync(async (req, res) => {
+    async updateStock(req, res) {
         const { quantity, operation } = req.body;
         const product = await Product.findOne({
             _id: req.params.id,
@@ -144,12 +148,20 @@ class ProductController {
             status: 'success',
             data: product
         });
-    });
+    }
 }
 
 // Create a single instance and export it
 const productController = new ProductController();
-module.exports = productController;
+
+// Wrap all methods with catchAsync
+Object.getOwnPropertyNames(ProductController.prototype).forEach(method => {
+    if (method !== 'constructor') {
+        productController[method] = catchAsync(productController[method]);
+    }
+});
 
 // For debugging
 console.log('Product controller methods:', Object.keys(productController));
+
+module.exports = productController;
