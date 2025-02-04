@@ -6,8 +6,10 @@ const Business = require('../models/businessModel');
 const BusinessUser = require('../models/businessUserModel');
 const VendorUser = require('../models/vendorUserModel');
 const Product = require('../models/productModel');
-const { auth } = require('../middleware/auth');
-const dashboardController = require('../controllers/dashboardController');
+const { auth, protect } = require('../middleware/auth');
+const DashboardController = require('../controllers/dashboardController');
+
+const dashboardController = new DashboardController();
 
 // Main dashboard route
 router.get('/', auth, async (req, res) => {
@@ -158,12 +160,37 @@ router.get('/subscription', auth, async (req, res) => {
     }
 });
 
-// General stats route - will return different stats based on user type
-router.get('/stats', auth, dashboardController.getStats);
+// Get dashboard overview data
+router.get('/overview', protect, dashboardController.getOverview);
 
-// Specific stats routes
-router.get('/user-stats', auth, dashboardController.getUserStats);
-router.get('/vendor-stats', auth, dashboardController.getVendorStats);
-router.get('/business-stats', auth, dashboardController.getBusinessStats);
+// Get recent activity
+router.get('/activity', protect, dashboardController.getRecentActivity);
+
+// Get user statistics
+router.get('/stats', protect, dashboardController.getUserStats);
+
+// Get earnings overview
+router.get('/earnings', protect, dashboardController.getEarningsOverview);
+
+// Get notifications
+router.get('/notifications', protect, dashboardController.getNotifications);
+
+// Mark notification as read
+router.put('/notifications/:id/read', protect, dashboardController.markNotificationAsRead);
+
+// Get tasks/todos
+router.get('/tasks', protect, dashboardController.getTasks);
+
+// Update task status
+router.put('/tasks/:id', protect, dashboardController.updateTaskStatus);
+
+// Error handling middleware
+router.use((err, req, res, next) => {
+    console.error('Dashboard route error:', err);
+    res.status(err.status || 500).json({
+        status: 'error',
+        message: err.message || 'Internal server error'
+    });
+});
 
 module.exports = router;
