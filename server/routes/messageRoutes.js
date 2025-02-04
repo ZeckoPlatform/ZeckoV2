@@ -1,28 +1,44 @@
 const express = require('express');
 const router = express.Router();
-const { auth } = require('../middleware/auth');
-const {
-    sendMessage,
-    getMessages,
-    getUnreadCount
-} = require('../controllers/messageController');
+const messageController = require('../controllers/messageController');
+const { protect } = require('../middleware/auth');
+const { body } = require('express-validator');
 const validationMiddleware = require('../middleware/validation');
-const { body, param } = require('express-validator');
 
-const messageValidations = [
-    body('recipientId').isMongoId(),
-    body('content').trim().isLength({ min: 1, max: 1000 }),
-    body('type').isIn(['text', 'image', 'file']),
-    body('metadata').optional().isObject(),
+// Validation middleware
+const validateMessage = [
+    body('content').trim().notEmpty().withMessage('Message content is required'),
+    body('conversationId').isMongoId().withMessage('Valid conversation ID is required'),
     validationMiddleware.handleValidationErrors
 ];
 
-router.post('/messages', auth, sendMessage);
-router.get('/messages/:requestId', auth, getMessages);
-router.get('/messages/unread/count', auth, getUnreadCount);
-router.post('/send', messageValidations, sendMessage);
-router.put('/:messageId/read', [
-    param('messageId').isMongoId()
-], sendMessage);
+// Routes
+router.get('/conversation/:conversationId', protect, messageController.getMessages);
+
+router.post('/', 
+    protect, 
+    validateMessage,
+    messageController.sendMessage
+);
+
+router.put('/:messageId',
+    protect,
+    [
+        body('content').trim().notEmpty().withMessage('Message content is required'),
+        validationMiddleware.handleValidationErrors
+    ],
+    messageController.updateMessage
+);
+
+router.delete('/:messageId', protect, messageController.deleteMessage);
+
+// Error handling middleware
+router.use((err, req, res, next) => {
+    console.error('Message route error:', err);
+    res.status(err.status || 500).json({
+        status: 'error',
+        message: err.message || 'Internal server error'
+    });
+});
 
 module.exports = router; 
