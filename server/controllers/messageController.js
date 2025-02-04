@@ -1,191 +1,136 @@
 const Message = require('../models/messageModel');
-const ServiceRequest = require('../models/serviceRequestModel');
-const { validateRequest } = require('../utils/validator');
-const Lead = require('../models/leadModel');
+const Conversation = require('../models/conversationModel');
+const User = require('../models/userModel');
+const ApiError = require('../utils/apiError');
+const catchAsync = require('../utils/catchAsync');
 
-exports.sendMessage = async (req, res) => {
-    try {
-        const { error } = validateRequest(req.body, {
-            requestId: 'required|mongoId',
-            recipientId: 'required|mongoId',
-            content: 'required|string|min:1'
-        });
+class MessageController {
+    // Send a new message
+    async sendMessage(req, res) {
+        const { conversationId, content } = req.body;
+        const senderId = req.user.id;
 
-        if (error) {
-            return res.status(400).json({ error: error.message });
+        try {
+            // Check if conversation exists
+            const conversation = await Conversation.findById(conversationId);
+            if (!conversation) {
+                throw new ApiError('Conversation not found', 404);
+            }
+
+            // Verify sender is part of conversation
+            if (!conversation.participants.includes(senderId)) {
+                throw new ApiError('Not authorized to send messages in this conversation', 403);
+            }
+
+            const message = await Message.create({
+                conversation: conversationId,
+                sender: senderId,
+                content,
+                timestamp: new Date()
+            });
+
+            // Populate sender information
+            await message.populate('sender', 'name email');
+
+            // Update conversation's last message
+            conversation.lastMessage = message._id;
+            conversation.lastMessageAt = message.timestamp;
+            await conversation.save();
+
+            res.status(201).json({
+                status: 'success',
+                data: message
+            });
+        } catch (error) {
+            throw new ApiError(error.message, error.statusCode || 500);
         }
+    }
 
-        const { requestId, recipientId, content } = req.body;
+    // Get messages for a conversation
+    async getMessages(req, res) {
+        const { conversationId } = req.params;
+        const userId = req.user.id;
 
-        // Verify the request exists and user is involved
-        const request = await ServiceRequest.findById(requestId);
-        if (!request) {
-            return res.status(404).json({ error: 'Service request not found' });
+        try {
+            // Check if conversation exists and user is participant
+            const conversation = await Conversation.findOne({
+                _id: conversationId,
+                participants: userId
+            });
+
+            if (!conversation) {
+                throw new ApiError('Conversation not found or access denied', 404);
+            }
+
+            const messages = await Message.find({ conversation: conversationId })
+                .populate('sender', 'name email')
+                .sort('timestamp');
+
+            res.status(200).json({
+                status: 'success',
+                results: messages.length,
+                data: messages
+            });
+        } catch (error) {
+            throw new ApiError(error.message, error.statusCode || 500);
         }
+    }
 
-        // Verify user is involved in the request
-        const isInvolved = 
-            request.client.toString() === req.user.id ||
-            request.quotes.some(quote => quote.provider.toString() === req.user.id);
+    // Delete a message
+    async deleteMessage(req, res) {
+        const { messageId } = req.params;
+        const userId = req.user.id;
 
-        if (!isInvolved) {
-            return res.status(403).json({ error: 'Not authorized to send messages for this request' });
+        try {
+            const message = await Message.findOne({
+                _id: messageId,
+                sender: userId
+            });
+
+            if (!message) {
+                throw new ApiError('Message not found or unauthorized', 404);
+            }
+
+            await message.remove();
+
+            res.status(204).json({
+                status: 'success',
+                data: null
+            });
+        } catch (error) {
+            throw new ApiError(error.message, error.statusCode || 500);
         }
-
-        const message = new Message({
-            requestId,
-            sender: req.user.id,
-            recipient: recipientId,
-            content
-        });
-
-        await message.save();
-
-        // Populate sender details
-        await message.populate('sender', 'name profile.avatar');
-
-        res.status(201).json(message);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
     }
-};
 
-exports.getMessages = async (req, res) => {
-    try {
-        const { requestId } = req.params;
+    // Update a message
+    async updateMessage(req, res) {
+        const { messageId } = req.params;
+        const { content } = req.body;
+        const userId = req.user.id;
 
-        // Verify the request exists and user is involved
-        const request = await ServiceRequest.findById(requestId);
-        if (!request) {
-            return res.status(404).json({ error: 'Service request not found' });
+        try {
+            const message = await Message.findOneAndUpdate(
+                { _id: messageId, sender: userId },
+                { 
+                    content,
+                    edited: true,
+                    editedAt: new Date()
+                },
+                { new: true, runValidators: true }
+            ).populate('sender', 'name email');
+
+            if (!message) {
+                throw new ApiError('Message not found or unauthorized', 404);
+            }
+
+            res.status(200).json({
+                status: 'success',
+                data: message
+            });
+        } catch (error) {
+            throw new ApiError(error.message, error.statusCode || 500);
         }
-
-        const isInvolved = 
-            request.client.toString() === req.user.id ||
-            request.quotes.some(quote => quote.provider.toString() === req.user.id);
-
-        if (!isInvolved) {
-            return res.status(403).json({ error: 'Not authorized to view these messages' });
-        }
-
-        const messages = await Message.find({ requestId })
-            .sort('createdAt')
-            .populate('sender', 'name profile.avatar')
-            .populate('recipient', 'name profile.avatar');
-
-        // Mark messages as read
-        await Message.updateMany(
-            {
-                requestId,
-                recipient: req.user.id,
-                read: false
-            },
-            { read: true }
-        );
-
-        res.json(messages);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
     }
-};
+}
 
-exports.getUnreadCount = async (req, res) => {
-    try {
-        const count = await Message.countDocuments({
-            recipient: req.user.id,
-            read: false
-        });
-
-        res.json({ count });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
-
-// Add lead-specific messaging functionality
-exports.getLeadConversation = async (req, res) => {
-  try {
-    const { leadId } = req.params;
-    const userId = req.user._id;
-
-    const lead = await Lead.findById(leadId)
-      .populate('postedBy')
-      .populate('selectedContractor');
-
-    if (!lead) {
-      return res.status(404).json({ message: 'Lead not found' });
-    }
-
-    // Check if user is authorized to view conversation
-    const isAuthorized = 
-      lead.postedBy._id.toString() === userId.toString() ||
-      lead.contractors.includes(userId) ||
-      (lead.selectedContractor && lead.selectedContractor._id.toString() === userId.toString());
-
-    if (!isAuthorized) {
-      return res.status(403).json({ message: 'Not authorized to view this conversation' });
-    }
-
-    const messages = await Message.find({
-      leadId: leadId,
-      $or: [
-        { sender: userId },
-        { recipient: userId }
-      ]
-    })
-    .sort({ createdAt: 1 })
-    .populate('sender', 'name businessName')
-    .populate('recipient', 'name businessName');
-
-    res.json(messages);
-  } catch (error) {
-    console.error('Get lead conversation error:', error);
-    res.status(500).json({ message: 'Error fetching messages' });
-  }
-};
-
-exports.sendLeadMessage = async (req, res) => {
-  try {
-    const { leadId, recipientId, content } = req.body;
-    const senderId = req.user._id;
-
-    const lead = await Lead.findById(leadId);
-    if (!lead) {
-      return res.status(404).json({ message: 'Lead not found' });
-    }
-
-    // Verify sender and recipient are involved in the lead
-    const isValidParticipant = (userId) => 
-      lead.postedBy.toString() === userId.toString() ||
-      lead.contractors.includes(userId) ||
-      (lead.selectedContractor && lead.selectedContractor.toString() === userId.toString());
-
-    if (!isValidParticipant(senderId) || !isValidParticipant(recipientId)) {
-      return res.status(403).json({ message: 'Unauthorized to send message' });
-    }
-
-    const message = new Message({
-      leadId,
-      sender: senderId,
-      recipient: recipientId,
-      content,
-      read: false
-    });
-
-    await message.save();
-
-    // Use existing socket.io instance for real-time delivery
-    if (global.io) {
-      global.io.to(`user:${recipientId}`).emit('new_message', {
-        message: await Message.findById(message._id)
-          .populate('sender', 'name businessName')
-          .populate('recipient', 'name businessName')
-      });
-    }
-
-    res.status(201).json(message);
-  } catch (error) {
-    console.error('Send lead message error:', error);
-    res.status(500).json({ message: 'Error sending message' });
-  }
-}; 
+module.exports = new MessageController(); 
