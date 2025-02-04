@@ -1,62 +1,160 @@
 const express = require('express');
-const { protect, restrictTo } = require('../middleware/authMiddleware');
+const { protect, isBusiness } = require('../middleware/auth');
+const ServiceRequest = require('../models/serviceRequestModel');
+const { body } = require('express-validator');
 const validationMiddleware = require('../middleware/validation');
-const { body, param, query } = require('express-validator');
-const {
-    createServiceRequest,
-    getAllServiceRequests,
-    getServiceRequest,
-    updateServiceRequest,
-    deleteServiceRequest
-} = require('../controllers/serviceRequestController');
-
 const router = express.Router();
 
-const serviceRequestValidations = [
-    body('title').trim().isLength({ min: 5, max: 100 }),
-    body('description').trim().isLength({ min: 20, max: 1000 }),
-    body('category').isMongoId(),
-    body('budget').optional().isFloat({ min: 0 }),
-    body('deadline').optional().isISO8601(),
-    body('location').optional().isObject(),
-    body('location.address').optional().trim().isLength({ min: 5 }),
-    body('location.coordinates').optional().isArray(),
-    body('location.coordinates.*').optional().isFloat(),
-    body('attachments').optional().isArray(),
-    body('attachments.*.url').optional().isURL(),
-    body('attachments.*.type').optional().isIn(['image', 'document', 'other']),
+// Validation middleware
+const validateServiceRequest = [
+    body('title').trim().notEmpty().withMessage('Title is required'),
+    body('description').trim().notEmpty().withMessage('Description is required'),
+    body('budget').isNumeric().withMessage('Budget must be a number'),
+    body('deadline').isISO8601().withMessage('Valid deadline date is required'),
+    body('categories').isArray().withMessage('Categories must be an array'),
     validationMiddleware.handleValidationErrors
 ];
 
-// Protect all routes after this middleware
-router.use(protect);
+// GET all service requests
+router.get('/', async (req, res, next) => {
+    try {
+        const requests = await ServiceRequest.find()
+            .populate('businessId', 'businessName email')
+            .sort('-createdAt');
+        
+        res.status(200).json({
+            status: 'success',
+            results: requests.length,
+            data: requests
+        });
+    } catch (error) {
+        next(error);
+    }
+});
 
-router.route('/')
-    .get([
-        query('status').optional().isIn(['pending', 'active', 'completed', 'cancelled']),
-        query('category').optional().isMongoId(),
-        query('page').optional().isInt({ min: 1 }),
-        query('limit').optional().isInt({ min: 1, max: 50 }),
-        validationMiddleware.handleValidationErrors
-    ], getAllServiceRequests)
-    .post(serviceRequestValidations, createServiceRequest);
+// GET business's service requests
+router.get('/my-requests', protect, isBusiness, async (req, res, next) => {
+    try {
+        const requests = await ServiceRequest.find({ businessId: req.user.id })
+            .populate('businessId', 'businessName email')
+            .sort('-createdAt');
+        
+        res.status(200).json({
+            status: 'success',
+            results: requests.length,
+            data: requests
+        });
+    } catch (error) {
+        next(error);
+    }
+});
 
-router.route('/:id')
-    .get([
-        param('id').isMongoId(),
-        validationMiddleware.handleValidationErrors
-    ], getServiceRequest)
-    .patch([
-        param('id').isMongoId(),
-        ...serviceRequestValidations
-    ], updateServiceRequest)
-    .delete([
-        param('id').isMongoId(),
-        validationMiddleware.handleValidationErrors
-    ], deleteServiceRequest);
+// GET single service request
+router.get('/:id', async (req, res, next) => {
+    try {
+        const request = await ServiceRequest.findById(req.params.id)
+            .populate('businessId', 'businessName email');
+        
+        if (!request) {
+            return res.status(404).json({
+                status: 'fail',
+                message: 'Service request not found'
+            });
+        }
 
-// Admin routes
-router.use(restrictTo('admin'));
-router.route('/admin/all').get(getAllServiceRequests);
+        res.status(200).json({
+            status: 'success',
+            data: request
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// POST new service request
+router.post('/', [
+    protect,
+    isBusiness,
+    validateServiceRequest,
+    async (req, res, next) => {
+        try {
+            const request = await ServiceRequest.create({
+                ...req.body,
+                businessId: req.user.id,
+                status: 'open'
+            });
+
+            res.status(201).json({
+                status: 'success',
+                data: request
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+]);
+
+// PUT update service request
+router.put('/:id', [
+    protect,
+    isBusiness,
+    validateServiceRequest,
+    async (req, res, next) => {
+        try {
+            const request = await ServiceRequest.findOneAndUpdate(
+                { _id: req.params.id, businessId: req.user.id },
+                req.body,
+                { new: true, runValidators: true }
+            );
+
+            if (!request) {
+                return res.status(404).json({
+                    status: 'fail',
+                    message: 'Service request not found or unauthorized'
+                });
+            }
+
+            res.status(200).json({
+                status: 'success',
+                data: request
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+]);
+
+// DELETE service request
+router.delete('/:id', protect, isBusiness, async (req, res, next) => {
+    try {
+        const request = await ServiceRequest.findOneAndDelete({
+            _id: req.params.id,
+            businessId: req.user.id
+        });
+
+        if (!request) {
+            return res.status(404).json({
+                status: 'fail',
+                message: 'Service request not found or unauthorized'
+            });
+        }
+
+        res.status(204).json({
+            status: 'success',
+            data: null
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Error handling middleware
+router.use((err, req, res, next) => {
+    console.error('Service Request route error:', err);
+    res.status(err.status || 500).json({
+        status: 'error',
+        message: err.message || 'Internal server error'
+    });
+});
 
 module.exports = router; 
