@@ -14,21 +14,21 @@ Object.entries(productController).forEach(([name, method]) => {
     if (typeof method !== 'function') {
         throw new Error(`Controller method ${name} is not a function`);
     }
-    console.log(`Verified ${name} is a function`);
+    console.log(`Verified ${method.name || name} is a function:`, typeof method);
 });
 
 // Protected seller routes first (more specific routes)
-router.get('/seller/products', auth, isVendor, (req, res, next) => {
-    productController.getSellerProducts(req, res).catch(next);
+router.get('/seller/products', auth, isVendor, function sellerProducts(req, res, next) {
+    return productController.getSellerProducts(req, res).catch(next);
 });
 
 // Then general routes
-router.get('/', (req, res, next) => {
-    productController.getProducts(req, res).catch(next);
+router.get('/', function getAllProducts(req, res, next) {
+    return productController.getProducts(req, res).catch(next);
 });
 
-router.get('/:id', (req, res, next) => {
-    productController.getProduct(req, res).catch(next);
+router.get('/:id', function getOneProduct(req, res, next) {
+    return productController.getProduct(req, res).catch(next);
 });
 
 // Create product
@@ -43,8 +43,8 @@ router.post('/',
         body('category').trim().notEmpty(),
         validationMiddleware.handleValidationErrors
     ],
-    (req, res, next) => {
-        productController.createProduct(req, res).catch(next);
+    function createNewProduct(req, res, next) {
+        return productController.createProduct(req, res).catch(next);
     }
 );
 
@@ -60,8 +60,8 @@ router.put('/:id',
         body('category').optional().trim().notEmpty(),
         validationMiddleware.handleValidationErrors
     ],
-    (req, res, next) => {
-        productController.updateProduct(req, res).catch(next);
+    function updateExistingProduct(req, res, next) {
+        return productController.updateProduct(req, res).catch(next);
     }
 );
 
@@ -69,8 +69,8 @@ router.put('/:id',
 router.delete('/:id', 
     auth, 
     isVendor, 
-    (req, res, next) => {
-        productController.deleteProduct(req, res).catch(next);
+    function deleteExistingProduct(req, res, next) {
+        return productController.deleteProduct(req, res).catch(next);
     }
 );
 
@@ -83,14 +83,14 @@ router.patch('/:id/stock',
         body('operation').isIn(['add', 'subtract']),
         validationMiddleware.handleValidationErrors
     ],
-    (req, res, next) => {
-        productController.updateStock(req, res).catch(next);
+    function updateProductStock(req, res, next) {
+        return productController.updateStock(req, res).catch(next);
     }
 );
 
 // Error handling middleware
 router.use((err, req, res, next) => {
-    console.error('Route error:', err);
+    console.error('Route error:', err.stack);
     res.status(err.status || 500).json({
         status: 'error',
         message: err.message || 'Internal server error'
