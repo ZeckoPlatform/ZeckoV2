@@ -5,6 +5,7 @@ const { auth, isVendor } = require('../middleware/auth');
 const validationMiddleware = require('../middleware/validation');
 const { body, param, query } = require('express-validator');
 const { upload } = require('../config/cloudinary');
+const catchAsync = require('../utils/catchAsync');
 
 // Debug log to verify controller methods
 console.log('Available product controller methods:', Object.keys(productController));
@@ -21,18 +22,22 @@ const requiredMethods = [
 ];
 
 requiredMethods.forEach(method => {
-    if (!productController[method]) {
-        throw new Error(`Missing required controller method: ${method}`);
+    if (typeof productController[method] !== 'function') {
+        throw new Error(`Missing or invalid controller method: ${method}`);
     }
-    console.log(`Controller method ${method} exists:`, typeof productController[method]);
+    console.log(`Controller method ${method} exists and is type:`, typeof productController[method]);
 });
 
 // Protected seller routes
-router.get('/seller/products', auth, isVendor, productController.getSellerProducts);
+router.get('/seller/products', 
+    auth, 
+    isVendor, 
+    catchAsync(async (req, res) => productController.getSellerProducts(req, res))
+);
 
 // Product CRUD routes
-router.get('/', productController.getProducts);
-router.get('/:id', productController.getProduct);
+router.get('/', catchAsync(async (req, res) => productController.getProducts(req, res)));
+router.get('/:id', catchAsync(async (req, res) => productController.getProduct(req, res)));
 
 router.post('/',
     auth,
@@ -45,7 +50,7 @@ router.post('/',
         body('category').trim().notEmpty(),
         validationMiddleware.handleValidationErrors
     ],
-    productController.createProduct
+    catchAsync(async (req, res) => productController.createProduct(req, res))
 );
 
 router.put('/:id',
@@ -59,10 +64,14 @@ router.put('/:id',
         body('category').optional().trim().notEmpty(),
         validationMiddleware.handleValidationErrors
     ],
-    productController.updateProduct
+    catchAsync(async (req, res) => productController.updateProduct(req, res))
 );
 
-router.delete('/:id', auth, isVendor, productController.deleteProduct);
+router.delete('/:id', 
+    auth, 
+    isVendor, 
+    catchAsync(async (req, res) => productController.deleteProduct(req, res))
+);
 
 router.patch('/:id/stock',
     auth,
@@ -72,7 +81,7 @@ router.patch('/:id/stock',
         body('operation').isIn(['add', 'subtract']),
         validationMiddleware.handleValidationErrors
     ],
-    productController.updateStock
+    catchAsync(async (req, res) => productController.updateStock(req, res))
 );
 
 // Error handling middleware
