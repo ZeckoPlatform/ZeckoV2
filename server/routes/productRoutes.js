@@ -9,18 +9,26 @@ const validationMiddleware = require('../middleware/validation');
 // Debug log to verify controller methods
 console.log('Product controller methods:', Object.keys(productController));
 
-// Basic routes
-router.get('/', function(req, res, next) {
-    return productController.getProducts(req, res).catch(next);
+// Verify controller methods exist and are functions
+Object.entries(productController).forEach(([name, method]) => {
+    if (typeof method !== 'function') {
+        throw new Error(`Controller method ${name} is not a function`);
+    }
+    console.log(`Verified ${name} is a function`);
 });
 
-router.get('/:id', function(req, res, next) {
-    return productController.getProduct(req, res).catch(next);
+// Protected seller routes first (more specific routes)
+router.get('/seller/products', auth, isVendor, (req, res, next) => {
+    productController.getSellerProducts(req, res).catch(next);
 });
 
-// Protected seller routes
-router.get('/seller/products', auth, isVendor, function(req, res, next) {
-    return productController.getSellerProducts(req, res).catch(next);
+// Then general routes
+router.get('/', (req, res, next) => {
+    productController.getProducts(req, res).catch(next);
+});
+
+router.get('/:id', (req, res, next) => {
+    productController.getProduct(req, res).catch(next);
 });
 
 // Create product
@@ -35,8 +43,8 @@ router.post('/',
         body('category').trim().notEmpty(),
         validationMiddleware.handleValidationErrors
     ],
-    function(req, res, next) {
-        return productController.createProduct(req, res).catch(next);
+    (req, res, next) => {
+        productController.createProduct(req, res).catch(next);
     }
 );
 
@@ -52,8 +60,8 @@ router.put('/:id',
         body('category').optional().trim().notEmpty(),
         validationMiddleware.handleValidationErrors
     ],
-    function(req, res, next) {
-        return productController.updateProduct(req, res).catch(next);
+    (req, res, next) => {
+        productController.updateProduct(req, res).catch(next);
     }
 );
 
@@ -61,8 +69,8 @@ router.put('/:id',
 router.delete('/:id', 
     auth, 
     isVendor, 
-    function(req, res, next) {
-        return productController.deleteProduct(req, res).catch(next);
+    (req, res, next) => {
+        productController.deleteProduct(req, res).catch(next);
     }
 );
 
@@ -75,8 +83,8 @@ router.patch('/:id/stock',
         body('operation').isIn(['add', 'subtract']),
         validationMiddleware.handleValidationErrors
     ],
-    function(req, res, next) {
-        return productController.updateStock(req, res).catch(next);
+    (req, res, next) => {
+        productController.updateStock(req, res).catch(next);
     }
 );
 
