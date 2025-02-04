@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
-const { auth, isVendor } = require('../middleware/auth');
+const { protect, isVendor } = require('../middleware/auth');
 const { body } = require('express-validator');
 const { upload } = require('../config/cloudinary');
 const validationMiddleware = require('../middleware/validation');
@@ -13,22 +13,34 @@ console.log('Product controller:', {
     createProduct: typeof productController.createProduct
 });
 
-// GET routes with error handling
-router.get('/', (req, res, next) => {
-    productController.getProducts(req, res).catch(next);
+// GET routes
+router.get('/', async (req, res, next) => {
+    try {
+        await productController.getProducts(req, res);
+    } catch (error) {
+        next(error);
+    }
 });
 
-router.get('/seller/products', auth, isVendor, (req, res, next) => {
-    productController.getSellerProducts(req, res).catch(next);
+router.get('/seller/products', protect, isVendor, async (req, res, next) => {
+    try {
+        await productController.getSellerProducts(req, res);
+    } catch (error) {
+        next(error);
+    }
 });
 
-router.get('/:id', (req, res, next) => {
-    productController.getProduct(req, res).catch(next);
+router.get('/:id', async (req, res, next) => {
+    try {
+        await productController.getProduct(req, res);
+    } catch (error) {
+        next(error);
+    }
 });
 
-// POST route with validation
+// POST route
 router.post('/', [
-    auth,
+    protect,
     isVendor,
     upload.array('images', 5),
     body('title').trim().isLength({ min: 2 }),
@@ -36,14 +48,18 @@ router.post('/', [
     body('price.current').isFloat({ min: 0 }),
     body('category').trim().notEmpty(),
     validationMiddleware.handleValidationErrors,
-    (req, res, next) => {
-        productController.createProduct(req, res).catch(next);
+    async (req, res, next) => {
+        try {
+            await productController.createProduct(req, res);
+        } catch (error) {
+            next(error);
+        }
     }
 ]);
 
-// PUT route with validation
+// PUT route
 router.put('/:id', [
-    auth,
+    protect,
     isVendor,
     upload.array('images', 5),
     body('title').optional().trim().isLength({ min: 2 }),
@@ -51,25 +67,37 @@ router.put('/:id', [
     body('price.current').optional().isFloat({ min: 0 }),
     body('category').optional().trim().notEmpty(),
     validationMiddleware.handleValidationErrors,
-    (req, res, next) => {
-        productController.updateProduct(req, res).catch(next);
+    async (req, res, next) => {
+        try {
+            await productController.updateProduct(req, res);
+        } catch (error) {
+            next(error);
+        }
     }
 ]);
 
 // DELETE route
-router.delete('/:id', auth, isVendor, (req, res, next) => {
-    productController.deleteProduct(req, res).catch(next);
+router.delete('/:id', protect, isVendor, async (req, res, next) => {
+    try {
+        await productController.deleteProduct(req, res);
+    } catch (error) {
+        next(error);
+    }
 });
 
 // PATCH route for stock updates
 router.patch('/:id/stock', [
-    auth,
+    protect,
     isVendor,
     body('quantity').isInt({ min: 1 }),
     body('operation').isIn(['add', 'subtract']),
     validationMiddleware.handleValidationErrors,
-    (req, res, next) => {
-        productController.updateStock(req, res).catch(next);
+    async (req, res, next) => {
+        try {
+            await productController.updateStock(req, res);
+        } catch (error) {
+            next(error);
+        }
     }
 ]);
 
