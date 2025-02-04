@@ -2,43 +2,28 @@ const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
 const { auth, isVendor } = require('../middleware/auth');
-const validationMiddleware = require('../middleware/validation');
-const { body, param, query } = require('express-validator');
+const { body } = require('express-validator');
 const { upload } = require('../config/cloudinary');
-const catchAsync = require('../utils/catchAsync');
+const validationMiddleware = require('../middleware/validation');
 
 // Debug log to verify controller methods
-console.log('Available product controller methods:', Object.keys(productController));
+console.log('Product controller methods:', Object.keys(productController));
 
-// Verify all required controller methods exist
-const requiredMethods = [
-    'getProducts',
-    'getProduct',
-    'getSellerProducts',
-    'createProduct',
-    'updateProduct',
-    'deleteProduct',
-    'updateStock'
-];
+// Basic routes
+router.get('/', function(req, res, next) {
+    return productController.getProducts(req, res).catch(next);
+});
 
-requiredMethods.forEach(method => {
-    if (typeof productController[method] !== 'function') {
-        throw new Error(`Missing or invalid controller method: ${method}`);
-    }
-    console.log(`Controller method ${method} exists and is type:`, typeof productController[method]);
+router.get('/:id', function(req, res, next) {
+    return productController.getProduct(req, res).catch(next);
 });
 
 // Protected seller routes
-router.get('/seller/products', 
-    auth, 
-    isVendor, 
-    catchAsync(async (req, res) => productController.getSellerProducts(req, res))
-);
+router.get('/seller/products', auth, isVendor, function(req, res, next) {
+    return productController.getSellerProducts(req, res).catch(next);
+});
 
-// Product CRUD routes
-router.get('/', catchAsync(async (req, res) => productController.getProducts(req, res)));
-router.get('/:id', catchAsync(async (req, res) => productController.getProduct(req, res)));
-
+// Create product
 router.post('/',
     auth,
     isVendor,
@@ -50,9 +35,12 @@ router.post('/',
         body('category').trim().notEmpty(),
         validationMiddleware.handleValidationErrors
     ],
-    catchAsync(async (req, res) => productController.createProduct(req, res))
+    function(req, res, next) {
+        return productController.createProduct(req, res).catch(next);
+    }
 );
 
+// Update product
 router.put('/:id',
     auth,
     isVendor,
@@ -64,15 +52,21 @@ router.put('/:id',
         body('category').optional().trim().notEmpty(),
         validationMiddleware.handleValidationErrors
     ],
-    catchAsync(async (req, res) => productController.updateProduct(req, res))
+    function(req, res, next) {
+        return productController.updateProduct(req, res).catch(next);
+    }
 );
 
+// Delete product
 router.delete('/:id', 
     auth, 
     isVendor, 
-    catchAsync(async (req, res) => productController.deleteProduct(req, res))
+    function(req, res, next) {
+        return productController.deleteProduct(req, res).catch(next);
+    }
 );
 
+// Update stock
 router.patch('/:id/stock',
     auth,
     isVendor,
@@ -81,7 +75,9 @@ router.patch('/:id/stock',
         body('operation').isIn(['add', 'subtract']),
         validationMiddleware.handleValidationErrors
     ],
-    catchAsync(async (req, res) => productController.updateStock(req, res))
+    function(req, res, next) {
+        return productController.updateStock(req, res).catch(next);
+    }
 );
 
 // Error handling middleware
