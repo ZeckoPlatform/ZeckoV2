@@ -4,6 +4,15 @@ const ApiError = require('../utils/apiError');
 const { cloudinary } = require('../config/cloudinary');
 
 class ProductController {
+    constructor() {
+        // Bind all methods to this instance
+        Object.getOwnPropertyNames(ProductController.prototype)
+            .filter(prop => typeof this[prop] === 'function')
+            .forEach(method => {
+                this[method] = this[method].bind(this);
+            });
+    }
+
     getProducts = catchAsync(async (req, res) => {
         const products = await Product.find()
             .populate('seller', 'name email')

@@ -167,8 +167,7 @@ if (process.env.NODE_ENV !== 'production') {
         console.log('Mounting routes...');
         
         const mountRoute = (path, router) => {
-            console.log(`Mounting route at ${path}...`);
-            console.log('Router methods:', Object.keys(router));
+            console.log(`Mounting route at ${path}`);
             app.use(path, router);
         };
 
