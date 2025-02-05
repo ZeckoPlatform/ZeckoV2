@@ -7,7 +7,14 @@ const BusinessUser = require('../models/businessUserModel');
 const VendorUser = require('../models/vendorUserModel');
 const Product = require('../models/productModel');
 const { auth, protect } = require('../middleware/auth');
-const dashboardController = require('../controllers/dashboardController');
+const {
+    getOverview,
+    getRecentActivity,
+    getUserStats,
+    getEarningsOverview,
+    getTasks,
+    updateTaskStatus
+} = require('../controllers/dashboardController');
 
 // Main dashboard route
 router.get('/', auth, async (req, res) => {
@@ -158,29 +165,13 @@ router.get('/subscription', auth, async (req, res) => {
     }
 });
 
-// Get dashboard overview data
-router.get('/overview', protect, dashboardController.getOverview);
-
-// Get recent activity
-router.get('/activity', protect, dashboardController.getRecentActivity);
-
-// Get user statistics
-router.get('/stats', protect, dashboardController.getUserStats);
-
-// Get earnings overview
-router.get('/earnings', protect, dashboardController.getEarningsOverview);
-
-// Get notifications
-router.get('/notifications', protect, dashboardController.getNotifications);
-
-// Mark notification as read
-router.put('/notifications/:id/read', protect, dashboardController.markNotificationAsRead);
-
-// Get tasks
-router.get('/tasks', protect, dashboardController.getTasks);
-
-// Update task status
-router.put('/tasks/:id', protect, dashboardController.updateTaskStatus);
+// Dashboard routes
+router.get('/overview', protect, getOverview);
+router.get('/activity', protect, getRecentActivity);
+router.get('/stats', protect, getUserStats);
+router.get('/earnings', protect, getEarningsOverview);
+router.get('/tasks', protect, getTasks);
+router.put('/tasks/:id', protect, updateTaskStatus);
 
 // Error handling middleware
 router.use((err, req, res, next) => {
