@@ -9,6 +9,15 @@ const Product = require('../models/productModel');
 const { auth, protect } = require('../middleware/auth');
 const dashboardController = require('../controllers/dashboardController');
 
+console.log('Setting up dashboard routes with controller:', {
+    overview: typeof dashboardController.getOverview,
+    activity: typeof dashboardController.getRecentActivity,
+    stats: typeof dashboardController.getUserStats,
+    earnings: typeof dashboardController.getEarningsOverview,
+    tasks: typeof dashboardController.getTasks,
+    updateTask: typeof dashboardController.updateTaskStatus
+});
+
 // Main dashboard route
 router.get('/', auth, async (req, res) => {
     try {
