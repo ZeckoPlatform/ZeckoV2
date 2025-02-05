@@ -7,14 +7,7 @@ const BusinessUser = require('../models/businessUserModel');
 const VendorUser = require('../models/vendorUserModel');
 const Product = require('../models/productModel');
 const { auth, protect } = require('../middleware/auth');
-const {
-    getOverview,
-    getRecentActivity,
-    getUserStats,
-    getEarningsOverview,
-    getTasks,
-    updateTaskStatus
-} = require('../controllers/dashboardController');
+const dashboardController = require('../controllers/dashboardController');
 
 // Main dashboard route
 router.get('/', auth, async (req, res) => {
@@ -166,12 +159,12 @@ router.get('/subscription', auth, async (req, res) => {
 });
 
 // Dashboard routes
-router.get('/overview', protect, getOverview);
-router.get('/activity', protect, getRecentActivity);
-router.get('/stats', protect, getUserStats);
-router.get('/earnings', protect, getEarningsOverview);
-router.get('/tasks', protect, getTasks);
-router.put('/tasks/:id', protect, updateTaskStatus);
+router.get('/overview', protect, dashboardController.getOverview);
+router.get('/activity', protect, dashboardController.getRecentActivity);
+router.get('/stats', protect, dashboardController.getUserStats);
+router.get('/earnings', protect, dashboardController.getEarningsOverview);
+router.get('/tasks', protect, dashboardController.getTasks);
+router.put('/tasks/:id', protect, dashboardController.updateTaskStatus);
 
 // Error handling middleware
 router.use((err, req, res, next) => {

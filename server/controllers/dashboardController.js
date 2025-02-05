@@ -35,7 +35,7 @@ const calculateEarnings = async (userId) => {
 };
 
 // Get dashboard overview
-exports.getOverview = catchAsync(async (req, res) => {
+const getOverview = catchAsync(async (req, res) => {
     const userId = req.user.id;
 
     const [products, orders, tasks] = await Promise.all([
@@ -55,7 +55,7 @@ exports.getOverview = catchAsync(async (req, res) => {
 });
 
 // Get recent activity
-exports.getRecentActivity = catchAsync(async (req, res) => {
+const getRecentActivity = catchAsync(async (req, res) => {
     const userId = req.user.id;
     
     const [recentOrders, recentProducts, recentTasks] = await Promise.all([
@@ -75,7 +75,7 @@ exports.getRecentActivity = catchAsync(async (req, res) => {
 });
 
 // Get user statistics
-exports.getUserStats = catchAsync(async (req, res) => {
+const getUserStats = catchAsync(async (req, res) => {
     const userId = req.user.id;
     
     const stats = {
@@ -91,7 +91,7 @@ exports.getUserStats = catchAsync(async (req, res) => {
 });
 
 // Get earnings overview
-exports.getEarningsOverview = catchAsync(async (req, res) => {
+const getEarningsOverview = catchAsync(async (req, res) => {
     const userId = req.user.id;
     
     const orders = await Order.find({ 
@@ -141,7 +141,7 @@ const markNotificationAsRead = catchAsync(async (req, res) => {
 });
 
 // Get tasks
-exports.getTasks = catchAsync(async (req, res) => {
+const getTasks = catchAsync(async (req, res) => {
     const userId = req.user.id;
     const tasks = await Task.find({ user: userId }).sort('-createdAt');
 
@@ -152,7 +152,7 @@ exports.getTasks = catchAsync(async (req, res) => {
 });
 
 // Update task status
-exports.updateTaskStatus = catchAsync(async (req, res) => {
+const updateTaskStatus = catchAsync(async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
