@@ -38,12 +38,16 @@ const calculateEarnings = async (userId) => {
 const getOverview = catchAsync(async (req, res) => {
     const userId = req.user.id;
 
+    const [products, orders, tasks] = await Promise.all([
+        Product.countDocuments({ seller: userId }),
+        Order.countDocuments({ seller: userId }),
+        Task.countDocuments({ user: userId, status: 'pending' })
+    ]);
+
     const overview = {
-        totalProducts: await Product.countDocuments({ seller: userId }),
-        totalOrders: await Order.countDocuments({ seller: userId }),
-        totalEarnings: await calculateTotalEarnings(userId),
-        recentOrders: await getRecentOrders(userId),
-        pendingTasks: await Task.countDocuments({ user: userId, status: 'pending' })
+        totalProducts: products,
+        totalOrders: orders,
+        pendingTasks: tasks
     };
 
     res.status(200).json({
@@ -54,17 +58,31 @@ const getOverview = catchAsync(async (req, res) => {
 
 const getRecentActivity = catchAsync(async (req, res) => {
     const userId = req.user.id;
-    const activity = await fetchRecentActivity(userId);
+    
+    const [recentOrders, recentProducts, recentTasks] = await Promise.all([
+        Order.find({ seller: userId }).sort('-createdAt').limit(5),
+        Product.find({ seller: userId }).sort('-createdAt').limit(5),
+        Task.find({ user: userId }).sort('-createdAt').limit(5)
+    ]);
 
     res.status(200).json({
         status: 'success',
-        data: activity
+        data: {
+            orders: recentOrders,
+            products: recentProducts,
+            tasks: recentTasks
+        }
     });
 });
 
 const getUserStats = catchAsync(async (req, res) => {
     const userId = req.user.id;
-    const stats = await calculateUserStats(userId);
+    
+    const stats = {
+        products: await Product.countDocuments({ seller: userId }),
+        orders: await Order.countDocuments({ seller: userId }),
+        tasks: await Task.countDocuments({ user: userId })
+    };
 
     res.status(200).json({
         status: 'success',
@@ -74,11 +92,20 @@ const getUserStats = catchAsync(async (req, res) => {
 
 const getEarningsOverview = catchAsync(async (req, res) => {
     const userId = req.user.id;
-    const earnings = await calculateEarnings(userId);
+    
+    const orders = await Order.find({ 
+        seller: userId,
+        status: 'completed'
+    });
+
+    const earnings = orders.reduce((acc, order) => acc + order.total, 0);
 
     res.status(200).json({
         status: 'success',
-        data: earnings
+        data: {
+            totalEarnings: earnings,
+            orderCount: orders.length
+        }
     });
 });
 

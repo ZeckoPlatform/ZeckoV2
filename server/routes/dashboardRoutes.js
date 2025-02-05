@@ -176,7 +176,7 @@ router.get('/notifications', protect, dashboardController.getNotifications);
 // Mark notification as read
 router.put('/notifications/:id/read', protect, dashboardController.markNotificationAsRead);
 
-// Get tasks/todos
+// Get tasks
 router.get('/tasks', protect, dashboardController.getTasks);
 
 // Update task status
