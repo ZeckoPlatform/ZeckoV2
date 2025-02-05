@@ -36,13 +36,21 @@ const calculateEarnings = async (userId) => {
 
 class DashboardController {
     constructor() {
-        console.log('DashboardController initialized');
+        // Bind all methods to ensure proper 'this' context
+        this.getOverview = this.getOverview.bind(this);
+        this.getRecentActivity = this.getRecentActivity.bind(this);
+        this.getUserStats = this.getUserStats.bind(this);
+        this.getEarningsOverview = this.getEarningsOverview.bind(this);
+        this.getTasks = this.getTasks.bind(this);
+        this.updateTaskStatus = this.updateTaskStatus.bind(this);
+        
+        console.log('DashboardController initialized with methods:', 
+            Object.getOwnPropertyNames(DashboardController.prototype));
     }
 
-    // Get dashboard overview
-    getOverview = catchAsync(async (req, res) => {
-        console.log('Getting overview for user:', req.user.id);
+    async getOverview(req, res) {
         const userId = req.user.id;
+        console.log('Getting overview for user:', userId);
 
         const [products, orders, tasks] = await Promise.all([
             Product.countDocuments({ seller: userId }),
@@ -58,12 +66,11 @@ class DashboardController {
                 pendingTasks: tasks
             }
         });
-    });
+    }
 
-    // Get recent activity
-    getRecentActivity = catchAsync(async (req, res) => {
-        console.log('Getting recent activity for user:', req.user.id);
+    async getRecentActivity(req, res) {
         const userId = req.user.id;
+        console.log('Getting recent activity for user:', userId);
         
         const [recentOrders, recentProducts, recentTasks] = await Promise.all([
             Order.find({ seller: userId }).sort('-createdAt').limit(5),
@@ -79,12 +86,11 @@ class DashboardController {
                 tasks: recentTasks
             }
         });
-    });
+    }
 
-    // Get user statistics
-    getUserStats = catchAsync(async (req, res) => {
-        console.log('Getting stats for user:', req.user.id);
+    async getUserStats(req, res) {
         const userId = req.user.id;
+        console.log('Getting stats for user:', userId);
         
         const stats = {
             products: await Product.countDocuments({ seller: userId }),
@@ -96,12 +102,11 @@ class DashboardController {
             status: 'success',
             data: stats
         });
-    });
+    }
 
-    // Get earnings overview
-    getEarningsOverview = catchAsync(async (req, res) => {
-        console.log('Getting earnings for user:', req.user.id);
+    async getEarningsOverview(req, res) {
         const userId = req.user.id;
+        console.log('Getting earnings for user:', userId);
         
         const orders = await Order.find({ 
             seller: userId,
@@ -117,7 +122,7 @@ class DashboardController {
                 orderCount: orders.length
             }
         });
-    });
+    }
 
     const getNotifications = catchAsync(async (req, res) => {
         const userId = req.user.id;
@@ -149,23 +154,22 @@ class DashboardController {
         });
     });
 
-    // Get tasks
-    getTasks = catchAsync(async (req, res) => {
-        console.log('Getting tasks for user:', req.user.id);
+    async getTasks(req, res) {
         const userId = req.user.id;
+        console.log('Getting tasks for user:', userId);
+        
         const tasks = await Task.find({ user: userId }).sort('-createdAt');
 
         res.status(200).json({
             status: 'success',
             data: tasks
         });
-    });
+    }
 
-    // Update task status
-    updateTaskStatus = catchAsync(async (req, res) => {
-        console.log('Updating task:', req.params.id);
+    async updateTaskStatus(req, res) {
         const { id } = req.params;
         const { status } = req.body;
+        console.log('Updating task:', id, 'with status:', status);
 
         const task = await Task.findByIdAndUpdate(
             id,
@@ -181,10 +185,15 @@ class DashboardController {
             status: 'success',
             data: task
         });
-    });
+    }
 }
 
-// Create and export a single instance
-const dashboardController = new DashboardController();
-console.log('Dashboard controller methods:', Object.keys(dashboardController));
-module.exports = dashboardController;
+// Wrap all methods with catchAsync
+const controller = new DashboardController();
+Object.getOwnPropertyNames(DashboardController.prototype)
+    .filter(method => method !== 'constructor')
+    .forEach(method => {
+        controller[method] = catchAsync(controller[method]);
+    });
+
+module.exports = controller;
