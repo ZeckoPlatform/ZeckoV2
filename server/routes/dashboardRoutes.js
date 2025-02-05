@@ -167,11 +167,13 @@ router.get('/subscription', auth, async (req, res) => {
     }
 });
 
-// Dashboard routes
+// Overview routes
 router.get('/overview', protect, dashboardController.getOverview);
 router.get('/activity', protect, dashboardController.getRecentActivity);
 router.get('/stats', protect, dashboardController.getUserStats);
 router.get('/earnings', protect, dashboardController.getEarningsOverview);
+
+// Tasks routes
 router.get('/tasks', protect, dashboardController.getTasks);
 router.put('/tasks/:id', protect, dashboardController.updateTaskStatus);
 
