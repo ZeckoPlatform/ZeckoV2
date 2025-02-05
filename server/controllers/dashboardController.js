@@ -35,6 +35,10 @@ const calculateEarnings = async (userId) => {
 };
 
 class DashboardController {
+    constructor() {
+        console.log('DashboardController initialized');
+    }
+
     // Get dashboard overview
     getOverview = catchAsync(async (req, res) => {
         console.log('Getting overview for user:', req.user.id);
@@ -180,4 +184,7 @@ class DashboardController {
     });
 }
 
-module.exports = new DashboardController();
+// Create and export a single instance
+const dashboardController = new DashboardController();
+console.log('Dashboard controller methods:', Object.keys(dashboardController));
+module.exports = dashboardController;
