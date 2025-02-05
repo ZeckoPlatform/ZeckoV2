@@ -7,9 +7,7 @@ const BusinessUser = require('../models/businessUserModel');
 const VendorUser = require('../models/vendorUserModel');
 const Product = require('../models/productModel');
 const { auth, protect } = require('../middleware/auth');
-const DashboardController = require('../controllers/dashboardController');
-
-const dashboardController = new DashboardController();
+const dashboardController = require('../controllers/dashboardController');
 
 // Main dashboard route
 router.get('/', auth, async (req, res) => {
