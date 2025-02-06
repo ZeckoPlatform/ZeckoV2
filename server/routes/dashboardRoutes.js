@@ -7,18 +7,16 @@ const BusinessUser = require('../models/businessUserModel');
 const VendorUser = require('../models/vendorUserModel');
 const Product = require('../models/productModel');
 const { auth, protect } = require('../middleware/auth');
-const dashboardController = require('../controllers/dashboardController');
+const dashboard = require('../controllers/dashboardController');
 
 // Debug logging
-console.log('Dashboard routes setup:', {
-    controllerExists: !!dashboardController,
-    methods: Object.keys(dashboardController),
-    overviewExists: !!dashboardController.overview,
-    activityExists: !!dashboardController.activity,
-    statsExists: !!dashboardController.stats,
-    earningsExists: !!dashboardController.earnings,
-    tasksExists: !!dashboardController.tasks,
-    updateTaskExists: !!dashboardController.updateTask
+console.log('Dashboard controller methods:', {
+    overview: typeof dashboard.overview === 'function',
+    activity: typeof dashboard.activity === 'function',
+    stats: typeof dashboard.stats === 'function',
+    earnings: typeof dashboard.earnings === 'function',
+    tasks: typeof dashboard.tasks === 'function',
+    updateTask: typeof dashboard.updateTask === 'function'
 });
 
 // Main dashboard route
@@ -171,28 +169,11 @@ router.get('/subscription', auth, async (req, res) => {
 });
 
 // Define routes
-if (dashboardController.overview) {
-    router.get('/overview', protect, dashboardController.overview);
-}
-
-if (dashboardController.activity) {
-    router.get('/activity', protect, dashboardController.activity);
-}
-
-if (dashboardController.stats) {
-    router.get('/stats', protect, dashboardController.stats);
-}
-
-if (dashboardController.earnings) {
-    router.get('/earnings', protect, dashboardController.earnings);
-}
-
-if (dashboardController.tasks) {
-    router.get('/tasks', protect, dashboardController.tasks);
-}
-
-if (dashboardController.updateTask) {
-    router.put('/tasks/:id', protect, dashboardController.updateTask);
-}
+router.get('/overview', protect, (req, res, next) => dashboard.overview(req, res, next));
+router.get('/activity', protect, (req, res, next) => dashboard.activity(req, res, next));
+router.get('/stats', protect, (req, res, next) => dashboard.stats(req, res, next));
+router.get('/earnings', protect, (req, res, next) => dashboard.earnings(req, res, next));
+router.get('/tasks', protect, (req, res, next) => dashboard.tasks(req, res, next));
+router.put('/tasks/:id', protect, (req, res, next) => dashboard.updateTask(req, res, next));
 
 module.exports = router;
