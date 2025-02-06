@@ -7,16 +7,23 @@ const BusinessUser = require('../models/businessUserModel');
 const VendorUser = require('../models/vendorUserModel');
 const Product = require('../models/productModel');
 const { auth, protect } = require('../middleware/auth');
-const dashboardController = require('../controllers/dashboardController');
+const {
+    overview,
+    activity,
+    stats,
+    earnings,
+    tasks,
+    updateTask
+} = require('../controllers/dashboardController');
 
 // Debug logging
 console.log('Setting up dashboard routes with controller methods:', {
-    overview: typeof dashboardController.overview,
-    activity: typeof dashboardController.activity,
-    stats: typeof dashboardController.stats,
-    earnings: typeof dashboardController.earnings,
-    tasks: typeof dashboardController.tasks,
-    updateTask: typeof dashboardController.updateTask
+    overview: typeof overview,
+    activity: typeof activity,
+    stats: typeof stats,
+    earnings: typeof earnings,
+    tasks: typeof tasks,
+    updateTask: typeof updateTask
 });
 
 // Main dashboard route
@@ -169,14 +176,14 @@ router.get('/subscription', auth, async (req, res) => {
 });
 
 // Overview routes
-router.get('/overview', protect, dashboardController.overview);
-router.get('/activity', protect, dashboardController.activity);
-router.get('/stats', protect, dashboardController.stats);
-router.get('/earnings', protect, dashboardController.earnings);
+router.get('/overview', protect, overview);
+router.get('/activity', protect, activity);
+router.get('/stats', protect, stats);
+router.get('/earnings', protect, earnings);
 
 // Tasks routes
-router.get('/tasks', protect, dashboardController.tasks);
-router.put('/tasks/:id', protect, dashboardController.updateTask);
+router.get('/tasks', protect, tasks);
+router.put('/tasks/:id', protect, updateTask);
 
 // Error handling middleware
 router.use((err, req, res, next) => {
