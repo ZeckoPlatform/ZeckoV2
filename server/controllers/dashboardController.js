@@ -36,7 +36,8 @@ const calculateEarnings = async (userId) => {
 
 // Simple object with methods
 const dashboardController = {
-    getOverview: catchAsync(async (req, res) => {
+    // Overview endpoint
+    overview: catchAsync(async (req, res) => {
         const userId = req.user.id;
         const [products, orders, tasks] = await Promise.all([
             Product.countDocuments({ seller: userId }),
@@ -54,7 +55,8 @@ const dashboardController = {
         });
     }),
 
-    getRecentActivity: catchAsync(async (req, res) => {
+    // Activity endpoint
+    activity: catchAsync(async (req, res) => {
         const userId = req.user.id;
         const [recentOrders, recentProducts, recentTasks] = await Promise.all([
             Order.find({ seller: userId }).sort('-createdAt').limit(5),
@@ -72,7 +74,8 @@ const dashboardController = {
         });
     }),
 
-    getUserStats: catchAsync(async (req, res) => {
+    // Stats endpoint
+    stats: catchAsync(async (req, res) => {
         const userId = req.user.id;
         const stats = {
             products: await Product.countDocuments({ seller: userId }),
@@ -86,7 +89,8 @@ const dashboardController = {
         });
     }),
 
-    getEarningsOverview: catchAsync(async (req, res) => {
+    // Earnings endpoint
+    earnings: catchAsync(async (req, res) => {
         const userId = req.user.id;
         const orders = await Order.find({ 
             seller: userId,
@@ -104,7 +108,8 @@ const dashboardController = {
         });
     }),
 
-    getTasks: catchAsync(async (req, res) => {
+    // Tasks endpoints
+    tasks: catchAsync(async (req, res) => {
         const userId = req.user.id;
         const tasks = await Task.find({ user: userId }).sort('-createdAt');
 
@@ -114,7 +119,7 @@ const dashboardController = {
         });
     }),
 
-    updateTaskStatus: catchAsync(async (req, res) => {
+    updateTask: catchAsync(async (req, res) => {
         const { id } = req.params;
         const { status } = req.body;
 
