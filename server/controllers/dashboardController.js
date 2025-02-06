@@ -5,18 +5,9 @@ const Task = require('../models/taskModel');
 const ApiError = require('../utils/apiError');
 const catchAsync = require('../utils/catchAsync');
 
-class DashboardController {
-    constructor() {
-        // Bind all methods to this instance
-        this.overview = this.overview.bind(this);
-        this.activity = this.activity.bind(this);
-        this.stats = this.stats.bind(this);
-        this.earnings = this.earnings.bind(this);
-        this.tasks = this.tasks.bind(this);
-        this.updateTask = this.updateTask.bind(this);
-    }
-
-    overview = catchAsync(async (req, res) => {
+// Define controller methods
+exports.overview = catchAsync(async (req, res, next) => {
+    try {
         const userId = req.user.id;
         const [products, orders, tasks] = await Promise.all([
             Product.countDocuments({ seller: userId }),
@@ -32,9 +23,13 @@ class DashboardController {
                 pendingTasks: tasks
             }
         });
-    });
+    } catch (error) {
+        next(error);
+    }
+});
 
-    activity = catchAsync(async (req, res) => {
+exports.activity = catchAsync(async (req, res, next) => {
+    try {
         const userId = req.user.id;
         const [recentOrders, recentProducts, recentTasks] = await Promise.all([
             Order.find({ seller: userId }).sort('-createdAt').limit(5),
@@ -50,9 +45,13 @@ class DashboardController {
                 tasks: recentTasks
             }
         });
-    });
+    } catch (error) {
+        next(error);
+    }
+});
 
-    stats = catchAsync(async (req, res) => {
+exports.stats = catchAsync(async (req, res, next) => {
+    try {
         const userId = req.user.id;
         const stats = {
             products: await Product.countDocuments({ seller: userId }),
@@ -64,27 +63,35 @@ class DashboardController {
             status: 'success',
             data: stats
         });
-    });
+    } catch (error) {
+        next(error);
+    }
+});
 
-    earnings = catchAsync(async (req, res) => {
+exports.earnings = catchAsync(async (req, res, next) => {
+    try {
         const userId = req.user.id;
         const orders = await Order.find({ 
             seller: userId,
             status: 'completed'
         });
 
-        const earnings = orders.reduce((acc, order) => acc + order.total, 0);
+        const totalEarnings = orders.reduce((acc, order) => acc + order.total, 0);
 
         res.status(200).json({
             status: 'success',
             data: {
-                totalEarnings: earnings,
+                totalEarnings,
                 orderCount: orders.length
             }
         });
-    });
+    } catch (error) {
+        next(error);
+    }
+});
 
-    tasks = catchAsync(async (req, res) => {
+exports.tasks = catchAsync(async (req, res, next) => {
+    try {
         const userId = req.user.id;
         const tasks = await Task.find({ user: userId }).sort('-createdAt');
 
@@ -92,9 +99,13 @@ class DashboardController {
             status: 'success',
             data: tasks
         });
-    });
+    } catch (error) {
+        next(error);
+    }
+});
 
-    updateTask = catchAsync(async (req, res) => {
+exports.updateTask = catchAsync(async (req, res, next) => {
+    try {
         const { id } = req.params;
         const { status } = req.body;
 
@@ -112,7 +123,7 @@ class DashboardController {
             status: 'success',
             data: task
         });
-    });
-}
-
-module.exports = new DashboardController();
+    } catch (error) {
+        next(error);
+    }
+});
