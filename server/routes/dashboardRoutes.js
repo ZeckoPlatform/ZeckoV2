@@ -10,8 +10,16 @@ const { auth, protect } = require('../middleware/auth');
 const dashboardController = require('../controllers/dashboardController');
 
 // Debug logging
-console.log('Setting up dashboard routes with controller methods:', Object.keys(dashboardController));
-console.log('Protect middleware:', typeof protect);
+console.log('Dashboard controller:', {
+    type: typeof dashboardController,
+    methods: Object.keys(dashboardController),
+    overview: typeof dashboardController.overview,
+    activity: typeof dashboardController.activity,
+    stats: typeof dashboardController.stats,
+    earnings: typeof dashboardController.earnings,
+    tasks: typeof dashboardController.tasks,
+    updateTask: typeof dashboardController.updateTask
+});
 
 // Main dashboard route
 router.get('/', auth, async (req, res) => {
@@ -162,24 +170,12 @@ router.get('/subscription', auth, async (req, res) => {
     }
 });
 
-// Overview routes
-router.route('/overview')
-    .get(protect, dashboardController.overview);
-
-router.route('/activity')
-    .get(protect, dashboardController.activity);
-
-router.route('/stats')
-    .get(protect, dashboardController.stats);
-
-router.route('/earnings')
-    .get(protect, dashboardController.earnings);
-
-// Tasks routes
-router.route('/tasks')
-    .get(protect, dashboardController.tasks);
-
-router.route('/tasks/:id')
-    .put(protect, dashboardController.updateTask);
+// Define routes
+router.get('/overview', protect, (req, res, next) => dashboardController.overview(req, res, next));
+router.get('/activity', protect, (req, res, next) => dashboardController.activity(req, res, next));
+router.get('/stats', protect, (req, res, next) => dashboardController.stats(req, res, next));
+router.get('/earnings', protect, (req, res, next) => dashboardController.earnings(req, res, next));
+router.get('/tasks', protect, (req, res, next) => dashboardController.tasks(req, res, next));
+router.put('/tasks/:id', protect, (req, res, next) => dashboardController.updateTask(req, res, next));
 
 module.exports = router;
