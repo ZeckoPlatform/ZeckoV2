@@ -7,24 +7,11 @@ const BusinessUser = require('../models/businessUserModel');
 const VendorUser = require('../models/vendorUserModel');
 const Product = require('../models/productModel');
 const { auth, protect } = require('../middleware/auth');
-const {
-    overview,
-    activity,
-    stats,
-    earnings,
-    tasks,
-    updateTask
-} = require('../controllers/dashboardController');
+const dashboardController = require('../controllers/dashboardController');
 
 // Debug logging
-console.log('Setting up dashboard routes with controller methods:', {
-    overview: typeof overview,
-    activity: typeof activity,
-    stats: typeof stats,
-    earnings: typeof earnings,
-    tasks: typeof tasks,
-    updateTask: typeof updateTask
-});
+console.log('Setting up dashboard routes with controller methods:', Object.keys(dashboardController));
+console.log('Protect middleware:', typeof protect);
 
 // Main dashboard route
 router.get('/', auth, async (req, res) => {
@@ -176,22 +163,23 @@ router.get('/subscription', auth, async (req, res) => {
 });
 
 // Overview routes
-router.get('/overview', protect, overview);
-router.get('/activity', protect, activity);
-router.get('/stats', protect, stats);
-router.get('/earnings', protect, earnings);
+router.route('/overview')
+    .get(protect, dashboardController.overview);
+
+router.route('/activity')
+    .get(protect, dashboardController.activity);
+
+router.route('/stats')
+    .get(protect, dashboardController.stats);
+
+router.route('/earnings')
+    .get(protect, dashboardController.earnings);
 
 // Tasks routes
-router.get('/tasks', protect, tasks);
-router.put('/tasks/:id', protect, updateTask);
+router.route('/tasks')
+    .get(protect, dashboardController.tasks);
 
-// Error handling middleware
-router.use((err, req, res, next) => {
-    console.error('Dashboard route error:', err);
-    res.status(err.status || 500).json({
-        status: 'error',
-        message: err.message || 'Internal server error'
-    });
-});
+router.route('/tasks/:id')
+    .put(protect, dashboardController.updateTask);
 
 module.exports = router;

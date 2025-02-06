@@ -34,8 +34,8 @@ const calculateEarnings = async (userId) => {
     return {};
 };
 
-// Simple object with methods
-exports.overview = catchAsync(async (req, res) => {
+// Create controller functions
+const overview = catchAsync(async (req, res) => {
     const userId = req.user.id;
     const [products, orders, tasks] = await Promise.all([
         Product.countDocuments({ seller: userId }),
@@ -53,7 +53,7 @@ exports.overview = catchAsync(async (req, res) => {
     });
 });
 
-exports.activity = catchAsync(async (req, res) => {
+const activity = catchAsync(async (req, res) => {
     const userId = req.user.id;
     const [recentOrders, recentProducts, recentTasks] = await Promise.all([
         Order.find({ seller: userId }).sort('-createdAt').limit(5),
@@ -71,7 +71,7 @@ exports.activity = catchAsync(async (req, res) => {
     });
 });
 
-exports.stats = catchAsync(async (req, res) => {
+const stats = catchAsync(async (req, res) => {
     const userId = req.user.id;
     const stats = {
         products: await Product.countDocuments({ seller: userId }),
@@ -85,7 +85,7 @@ exports.stats = catchAsync(async (req, res) => {
     });
 });
 
-exports.earnings = catchAsync(async (req, res) => {
+const earnings = catchAsync(async (req, res) => {
     const userId = req.user.id;
     const orders = await Order.find({ 
         seller: userId,
@@ -103,7 +103,7 @@ exports.earnings = catchAsync(async (req, res) => {
     });
 });
 
-exports.tasks = catchAsync(async (req, res) => {
+const tasks = catchAsync(async (req, res) => {
     const userId = req.user.id;
     const tasks = await Task.find({ user: userId }).sort('-createdAt');
 
@@ -113,7 +113,7 @@ exports.tasks = catchAsync(async (req, res) => {
     });
 });
 
-exports.updateTask = catchAsync(async (req, res) => {
+const updateTask = catchAsync(async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
@@ -132,3 +132,13 @@ exports.updateTask = catchAsync(async (req, res) => {
         data: task
     });
 });
+
+// Export all functions
+module.exports = {
+    overview,
+    activity,
+    stats,
+    earnings,
+    tasks,
+    updateTask
+};
