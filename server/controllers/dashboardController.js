@@ -1,38 +1,9 @@
 const User = require('../models/userModel');
 const Product = require('../models/productModel');
 const Order = require('../models/orderModel');
-const Notification = require('../models/notificationModel');
 const Task = require('../models/taskModel');
 const ApiError = require('../utils/apiError');
 const catchAsync = require('../utils/catchAsync');
-
-// Helper functions
-const calculateTotalEarnings = async (userId) => {
-    const orders = await Order.find({ seller: userId, status: 'completed' });
-    return orders.reduce((total, order) => total + order.total, 0);
-};
-
-const getRecentOrders = async (userId) => {
-    return Order.find({ seller: userId })
-        .sort('-createdAt')
-        .limit(5)
-        .populate('buyer', 'name email');
-};
-
-const fetchRecentActivity = async (userId) => {
-    // Implement activity tracking logic
-    return [];
-};
-
-const calculateUserStats = async (userId) => {
-    // Implement user statistics calculation
-    return {};
-};
-
-const calculateEarnings = async (userId) => {
-    // Implement detailed earnings calculation
-    return {};
-};
 
 class DashboardController {
     constructor() {

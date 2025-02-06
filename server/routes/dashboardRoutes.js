@@ -7,18 +7,16 @@ const BusinessUser = require('../models/businessUserModel');
 const VendorUser = require('../models/vendorUserModel');
 const Product = require('../models/productModel');
 const { auth, protect } = require('../middleware/auth');
-const dashboardController = require('../controllers/dashboardController');
+const controller = require('../controllers/dashboardController');
 
 // Debug logging
-console.log('Dashboard controller:', {
-    type: typeof dashboardController,
-    methods: Object.keys(dashboardController),
-    overview: typeof dashboardController.overview,
-    activity: typeof dashboardController.activity,
-    stats: typeof dashboardController.stats,
-    earnings: typeof dashboardController.earnings,
-    tasks: typeof dashboardController.tasks,
-    updateTask: typeof dashboardController.updateTask
+console.log('Dashboard controller methods:', {
+    overview: typeof controller.overview,
+    activity: typeof controller.activity,
+    stats: typeof controller.stats,
+    earnings: typeof controller.earnings,
+    tasks: typeof controller.tasks,
+    updateTask: typeof controller.updateTask
 });
 
 // Main dashboard route
@@ -170,12 +168,14 @@ router.get('/subscription', auth, async (req, res) => {
     }
 });
 
-// Define routes
-router.get('/overview', protect, (req, res, next) => dashboardController.overview(req, res, next));
-router.get('/activity', protect, (req, res, next) => dashboardController.activity(req, res, next));
-router.get('/stats', protect, (req, res, next) => dashboardController.stats(req, res, next));
-router.get('/earnings', protect, (req, res, next) => dashboardController.earnings(req, res, next));
-router.get('/tasks', protect, (req, res, next) => dashboardController.tasks(req, res, next));
-router.put('/tasks/:id', protect, (req, res, next) => dashboardController.updateTask(req, res, next));
+// Overview routes
+router.get('/overview', protect, controller.overview);
+router.get('/activity', protect, controller.activity);
+router.get('/stats', protect, controller.stats);
+router.get('/earnings', protect, controller.earnings);
+
+// Tasks routes
+router.get('/tasks', protect, controller.tasks);
+router.put('/tasks/:id', protect, controller.updateTask);
 
 module.exports = router;
